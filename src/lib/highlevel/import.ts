@@ -117,7 +117,8 @@ export async function importToHighLevel(
     }
   }
 
-  // Step 2: Attempt funnel creation (best-effort)
+  // Step 2: Attempt funnel creation (best-effort; failure is non-fatal)
+  let funnelId: string | undefined;
   try {
     const funnelName =
       assets.offerSummary?.challengeConcept ?? "30-Day Challenge Funnel";
@@ -132,40 +133,55 @@ export async function importToHighLevel(
 
     if (res.ok) {
       const data = (await res.json()) as Record<string, unknown>;
-      const funnelId = extractId(data, "funnel");
-
+      funnelId = extractId(data, "funnel");
       if (funnelId) {
         result.funnelId = funnelId;
         result.funnelUrl = `https://app.gohighlevel.com/v2/location/${locationId}/funnels/${funnelId}`;
-
-        // Step 3: Attempt funnel step creation — opt-in + thank-you (best-effort)
-        const steps: HLFunnelStep[] = [];
-
-        const optInStep = await tryCreateFunnelStep(
-          funnelId,
-          locationId,
-          apiKey,
-          "Opt-in Page",
-          "opt-in"
-        );
-        if (optInStep) steps.push(optInStep);
-
-        const thankYouStep = await tryCreateFunnelStep(
-          funnelId,
-          locationId,
-          apiKey,
-          "Thank You Page",
-          "thank-you"
-        );
-        if (thankYouStep) steps.push(thankYouStep);
-
-        if (steps.length > 0) {
-          result.funnelSteps = steps;
-        }
       }
+    } else {
+      let errText = "";
+      try { errText = await res.text(); } catch { errText = "Unknown"; }
+      result.errors.push(`Funnel creation skipped: ${res.status} ${errText.slice(0, 80)}`);
     }
-  } catch {
-    // Funnel API may not be available — skip silently
+  } catch (err) {
+    result.errors.push(
+      `Funnel creation skipped: ${err instanceof Error ? err.message : "Network error"}`
+    );
+  }
+
+  // Step 3: Attempt funnel step creation — opt-in + thank-you (best-effort)
+  if (funnelId) {
+    const steps: HLFunnelStep[] = [];
+
+    const optInStep = await tryCreateFunnelStep(
+      funnelId,
+      locationId,
+      apiKey,
+      "Opt-in Page",
+      "opt-in"
+    );
+    if (optInStep) {
+      steps.push(optInStep);
+    } else {
+      result.errors.push("Funnel step creation skipped: Opt-in Page (API not available)");
+    }
+
+    const thankYouStep = await tryCreateFunnelStep(
+      funnelId,
+      locationId,
+      apiKey,
+      "Thank You Page",
+      "thank-you"
+    );
+    if (thankYouStep) {
+      steps.push(thankYouStep);
+    } else {
+      result.errors.push("Funnel step creation skipped: Thank You Page (API not available)");
+    }
+
+    if (steps.length > 0) {
+      result.funnelSteps = steps;
+    }
   }
 
   return result;

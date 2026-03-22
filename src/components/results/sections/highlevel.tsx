@@ -215,7 +215,7 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
                     className="flex items-center gap-1.5 rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:bg-[#1245b5] transition-colors"
                   >
                     <Settings className="h-3.5 w-3.5" />
-                    Connect HighLevel
+                    Connect HighLevel first →
                   </Link>
                   <span className="text-xs text-gray-500">Then return here to import</span>
                 </div>
