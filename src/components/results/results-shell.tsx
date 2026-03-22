@@ -65,7 +65,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
 
   const sections: Record<TabId, React.ReactNode> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
-    funnelPreview:   <FunnelPreviewSection   data={assets} />,
+    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,
