@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginAction } from "@/app/(auth)/actions";
 import { toast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -32,23 +31,32 @@ export function LoginForm() {
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
     try {
-      const result = await loginAction(data.email, data.password);
-      if (result.error) {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+        credentials: "same-origin",
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
         toast({
           title: "Login failed",
-          description: result.error,
+          description: json.error ?? "Invalid email or password.",
           variant: "destructive",
         });
         setIsLoading(false);
         return;
       }
-      // Session cookies are now set by the server action response.
-      // Use a full-page navigation so the browser sends the cookies with the request.
+
+      // Cookies are now set in the browser via the API response Set-Cookie headers.
+      // Hard-navigate so the browser sends those cookies with the request to /dashboard.
       window.location.href = "/dashboard";
-    } catch (err) {
+    } catch {
       toast({
         title: "Something went wrong",
-        description: "Please try again.",
+        description: "Please check your connection and try again.",
         variant: "destructive",
       });
       setIsLoading(false);
