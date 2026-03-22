@@ -1,45 +1,33 @@
-import { redirect, notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getProject, type StoredProject } from "@/lib/storage";
 import { ResultsShell } from "@/components/results/results-shell";
-import type { ProjectRow, ProjectOutputRow } from "@/types/project";
 
-export const metadata = {
-  title: "Funnel Results | Challenge Funnel in a Box",
-};
+export default function ResultsPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [project, setProject] = useState<StoredProject | null>(null);
+  const [ready, setReady] = useState(false);
 
-export default async function ResultsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const supabase = await createClient();
+  useEffect(() => {
+    const p = getProject(id);
+    if (!p) {
+      router.replace("/dashboard");
+      return;
+    }
+    if (p.status !== "complete" || !p.outputs) {
+      router.replace(`/projects/new?projectId=${id}`);
+      return;
+    }
+    setProject(p);
+    setReady(true);
+  }, [id, router]);
 
-  const { data: projectData } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", id)
-    .single();
+  if (!ready || !project || !project.outputs) return null;
 
-  const project = projectData as ProjectRow | null;
+  const isMock = Boolean(project.outputs._isMock);
 
-  if (!project) notFound();
-  if (project.status === "generating") redirect(`/projects/${id}/generating`);
-  if (project.status === "error")     redirect(`/projects/new?projectId=${id}`);
-  if (project.status !== "complete")  redirect(`/projects/new?projectId=${id}`);
-
-  const { data: outputData } = await supabase
-    .from("project_outputs")
-    .select("*")
-    .eq("project_id", id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  const output = outputData as ProjectOutputRow | null;
-  if (!output) redirect("/dashboard");
-
-  const isMock = Boolean((output.outputs as Record<string, unknown>)._isMock);
-
-  return <ResultsShell project={project} outputs={output.outputs} isMock={isMock} />;
+  return <ResultsShell project={project} outputs={project.outputs} isMock={isMock} />;
 }

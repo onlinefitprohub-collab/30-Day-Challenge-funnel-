@@ -11,9 +11,8 @@ import { StepAudiencePain } from "@/components/wizard/steps/step-audience-pain";
 import { StepBrandVoice } from "@/components/wizard/steps/step-brand-voice";
 import { StepTrafficInputs } from "@/components/wizard/steps/step-traffic-inputs";
 import { StepSocialProof } from "@/components/wizard/steps/step-social-proof";
-import { createClient } from "@/lib/supabase/client";
+import { newProject, saveProject, patchProject, getProject } from "@/lib/storage";
 import { toast } from "@/hooks/use-toast";
-import type { ProjectRow } from "@/types/project";
 
 const STEP_COMPONENTS = [
   StepBusinessBasics,
@@ -43,70 +42,30 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
   const isLastStep = currentStep === WIZARD_STEPS.length - 1;
   const isFirstStep = currentStep === 0;
 
-  // Upsert inputs to DB — called silently after each step
-  async function persistInputs(data: Partial<WizardInputs>, pid: string) {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("project_inputs")
-      .upsert(
-        { project_id: pid, inputs: data as Record<string, unknown> },
-        { onConflict: "project_id" }
-      );
-    if (error) throw new Error(error.message);
-  }
-
-  // Create the project row — happens once on completing step 1
-  async function createProject(data: Partial<WizardInputs>): Promise<string> {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.push("/login");
-      throw new Error("Not authenticated");
-    }
-
-    const name = data.businessName
+  function buildProjectName(data: Partial<WizardInputs>): string {
+    return data.businessName
       ? `${data.businessName} — ${data.challengeType ?? `${data.duration ?? 30}-Day Challenge`}`
       : "My 30-Day Challenge Funnel";
+  }
 
-    const { data: project, error } = await supabase
-      .from("projects")
-      .insert({ user_id: user.id, name, status: "draft" })
-      .select()
-      .single();
-
-    if (error || !project) throw new Error(error?.message ?? "Failed to create project");
-
-    return (project as ProjectRow).id;
+  function ensureProject(data: Partial<WizardInputs>): string {
+    if (projectId) {
+      patchProject(projectId, { inputs: data });
+      return projectId;
+    }
+    const project = newProject(buildProjectName(data), data);
+    saveProject(project);
+    setProjectId(project.id);
+    window.history.replaceState({}, "", `/projects/new?projectId=${project.id}`);
+    return project.id;
   }
 
   async function handleNext(stepData: Partial<WizardInputs>) {
     const merged = { ...formData, ...stepData };
     setFormData(merged);
     setSaveError(null);
-
-    try {
-      let pid = projectId;
-
-      // Create project on first step completion
-      if (!pid) {
-        pid = await createProject(merged);
-        setProjectId(pid);
-        // Soft URL update so a refresh will reload this project
-        window.history.replaceState({}, "", `/projects/new?projectId=${pid}`);
-      }
-
-      // Persist in background — don't block navigation
-      persistInputs(merged, pid).catch((err) => {
-        console.error("Background save failed:", err);
-      });
-
-      setCurrentStep((s) => s + 1);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to save progress";
-      setSaveError(message);
-      toast({ title: "Couldn't save progress", description: message, variant: "destructive" });
-    }
+    ensureProject(merged);
+    setCurrentStep((s) => s + 1);
   }
 
   function handleBack() {
@@ -120,27 +79,13 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
     setIsSubmitting(true);
     setSaveError(null);
 
+    const pid = ensureProject(allData);
+
     try {
-      const supabase = createClient();
-      let pid = projectId;
-
-      // Edge case: user somehow skipped step 1 project creation
-      if (!pid) {
-        pid = await createProject(allData);
-        setProjectId(pid);
-      }
-
-      // Save final inputs
-      await persistInputs(allData, pid);
-
-      // Mark as generating
-      await supabase.from("projects").update({ status: "generating" }).eq("id", pid);
-
-      // Call generation API
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: pid, inputs: allData }),
+        body: JSON.stringify({ inputs: allData }),
       });
 
       if (!response.ok) {
@@ -148,18 +93,17 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
         throw new Error((body as { error?: string }).error ?? "Generation failed");
       }
 
+      const result = (await response.json()) as { outputs: Record<string, unknown> };
+
+      patchProject(pid, { status: "complete", outputs: result.outputs });
+
       router.push(`/projects/${pid}/results`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong";
       setSaveError(message);
       toast({ title: "Generation failed", description: message, variant: "destructive" });
+      patchProject(pid, { status: "error" });
       setIsSubmitting(false);
-
-      // Reset project status on failure
-      if (projectId) {
-        const supabase = createClient();
-        await supabase.from("projects").update({ status: "draft" }).eq("id", projectId);
-      }
     }
   }
 
@@ -221,7 +165,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
       {/* Auto-save note */}
       {projectId && !isSubmitting && (
         <p className="mt-3 text-center text-xs text-gray-400">
-          Progress saved — you can close this tab and return any time.
+          Progress saved locally — you can close this tab and return any time.
         </p>
       )}
     </div>

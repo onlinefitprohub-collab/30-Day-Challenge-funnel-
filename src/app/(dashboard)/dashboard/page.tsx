@@ -1,43 +1,29 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Zap } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/project-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import type { ProjectRow } from "@/types/project";
+import { getProjects, type StoredProject } from "@/lib/storage";
 
-export const metadata = {
-  title: "Dashboard | Challenge Funnel in a Box",
-};
+export default function DashboardPage() {
+  const [projects, setProjects] = useState<StoredProject[]>([]);
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("*")
-    .order("updated_at", { ascending: false });
-
-  const typedProjects = (projects ?? []) as ProjectRow[];
-
-  const displayName =
-    user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Coach";
+  useEffect(() => {
+    setProjects(getProjects());
+  }, []);
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back, {displayName} 👋
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Your funnels</h1>
           <p className="mt-1 text-gray-500">
-            {typedProjects.length > 0
-              ? `You have ${typedProjects.length} funnel project${typedProjects.length === 1 ? "" : "s"}.`
+            {projects.length > 0
+              ? `You have ${projects.length} funnel project${projects.length === 1 ? "" : "s"}.`
               : "Ready to build your first challenge funnel?"}
           </p>
         </div>
@@ -50,28 +36,19 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats bar */}
-      {typedProjects.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {projects.length > 0 && (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {[
-            {
-              label: "Total projects",
-              value: typedProjects.length,
-              color: "text-gray-900",
-            },
+            { label: "Total projects", value: projects.length, color: "text-gray-900" },
             {
               label: "Complete",
-              value: typedProjects.filter((p) => p.status === "complete").length,
+              value: projects.filter((p) => p.status === "complete").length,
               color: "text-green-600",
             },
             {
               label: "In progress",
-              value: typedProjects.filter((p) => p.status === "draft").length,
+              value: projects.filter((p) => p.status === "draft").length,
               color: "text-amber-600",
-            },
-            {
-              label: "Generating",
-              value: typedProjects.filter((p) => p.status === "generating").length,
-              color: "text-blue-600",
             },
           ].map((stat) => (
             <div
@@ -86,15 +63,13 @@ export default async function DashboardPage() {
       )}
 
       {/* Projects */}
-      {typedProjects.length === 0 ? (
+      {projects.length === 0 ? (
         <EmptyState />
       ) : (
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Your projects
-          </h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Your projects</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {typedProjects.map((project) => (
+            {projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>
@@ -102,7 +77,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Quick tip for new users */}
-      {typedProjects.length === 0 && (
+      {projects.length === 0 && (
         <div className="rounded-xl border border-brand-100 bg-brand-50 p-6">
           <div className="flex gap-3">
             <Zap className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />

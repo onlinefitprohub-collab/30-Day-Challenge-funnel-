@@ -1,32 +1,25 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import type { ProjectRow } from "@/types/project";
+"use client";
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const supabase = await createClient();
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getProject } from "@/lib/storage";
 
-  const { data } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", id)
-    .single();
+export default function ProjectPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
-  const project = data as ProjectRow | null;
-  if (!project) redirect("/dashboard");
+  useEffect(() => {
+    const project = getProject(id);
+    if (!project) {
+      router.replace("/dashboard");
+      return;
+    }
+    if (project.status === "complete") {
+      router.replace(`/projects/${id}/results`);
+    } else {
+      router.replace(`/projects/new?projectId=${id}`);
+    }
+  }, [id, router]);
 
-  switch (project.status) {
-    case "complete":
-      redirect(`/projects/${id}/results`);
-    case "generating":
-      redirect(`/projects/${id}/generating`);
-    case "draft":
-    case "error":
-    default:
-      redirect(`/projects/new?projectId=${id}`);
-  }
+  return null;
 }

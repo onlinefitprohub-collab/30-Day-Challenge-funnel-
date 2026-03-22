@@ -1,31 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { type User } from "@supabase/supabase-js";
-import { Zap, LayoutDashboard, Settings, LogOut, Plus } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Zap, LayoutDashboard, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/account", label: "Settings", icon: Settings },
 ];
 
-export function DashboardNav({ user }: { user: User }) {
+export function DashboardNav() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
-
-  const displayName =
-    user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Coach";
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
@@ -60,30 +46,12 @@ export function DashboardNav({ user }: { user: User }) {
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
-          <Link href="/projects/new">
-            <Button size="sm" variant="gradient">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:block">New funnel</span>
-            </Button>
-          </Link>
-
-          <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-            <span className="hidden text-sm font-medium text-gray-700 md:block">
-              {displayName}
-            </span>
-            <button
-              onClick={handleSignOut}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              title="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <Link href="/projects/new">
+          <Button size="sm" variant="gradient">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:block">New funnel</span>
+          </Button>
+        </Link>
       </div>
     </header>
   );

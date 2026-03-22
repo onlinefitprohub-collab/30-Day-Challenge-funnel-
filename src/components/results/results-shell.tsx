@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import type { ProjectRow } from "@/types/project";
+import type { StoredProject } from "@/lib/storage";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
@@ -38,7 +38,7 @@ const tabs = [
 type TabId = (typeof tabs)[number]["id"];
 
 interface ResultsShellProps {
-  project: ProjectRow;
+  project: Pick<StoredProject, "name">;
   outputs: Record<string, unknown>;
   isMock: boolean;
 }

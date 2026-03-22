@@ -2,16 +2,15 @@ import Link from "next/link";
 import { ArrowRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import type { ProjectRow } from "@/types/project";
+import type { StoredProject } from "@/lib/storage";
 
-const statusConfig: Record<ProjectRow["status"], { label: string; variant: "draft" | "generating" | "complete" | "error" }> = {
+const statusConfig: Record<StoredProject["status"], { label: string; variant: "draft" | "complete" | "error" }> = {
   draft: { label: "Draft", variant: "draft" },
-  generating: { label: "Generating...", variant: "generating" },
   complete: { label: "Complete", variant: "complete" },
   error: { label: "Error", variant: "error" },
 };
 
-export function ProjectCard({ project }: { project: ProjectRow }) {
+export function ProjectCard({ project }: { project: StoredProject }) {
   const status = statusConfig[project.status] ?? statusConfig.draft;
 
   return (

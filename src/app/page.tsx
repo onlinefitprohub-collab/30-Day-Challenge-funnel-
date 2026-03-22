@@ -87,12 +87,12 @@ export default function HomePage() {
             <span className="font-bold text-gray-900">Challenge Funnel</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login">
+            <Link href="/dashboard">
               <Button variant="ghost" size="sm">
-                Log in
+                My funnels
               </Button>
             </Link>
-            <Link href="/signup">
+            <Link href="/projects/new">
               <Button size="sm" variant="gradient">
                 Get started free
               </Button>
@@ -119,7 +119,7 @@ export default function HomePage() {
             emails, SMS, ads, and more. Written for your audience, in your voice.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup">
+            <Link href="/projects/new">
               <Button size="xl" variant="gradient" className="w-full sm:w-auto">
                 Generate my funnel free
                 <ArrowRight className="h-5 w-5" />
@@ -254,7 +254,7 @@ export default function HomePage() {
             Join hundreds of fitness coaches who stopped guessing and started generating.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup">
+            <Link href="/projects/new">
               <Button size="xl" variant="gradient">
                 Generate my funnel — it&apos;s free
                 <ArrowRight className="h-5 w-5" />
