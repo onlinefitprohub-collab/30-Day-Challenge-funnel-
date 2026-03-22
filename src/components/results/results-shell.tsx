@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
-  ImageIcon, BarChart3, FlaskConical, Layers,
+  ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -22,19 +22,21 @@ import { AdCopySection }          from "./sections/ad-copy";
 import { CreativePromptsSection } from "./sections/creative-prompts";
 import { CampaignNamingSection }  from "./sections/campaign-naming";
 import { HighLevelSection }       from "./sections/highlevel";
+import { FunnelPreviewSection }   from "./sections/funnel-preview";
 
 const tabs = [
-  { id: "highlevel",       label: "HighLevel",      icon: Layers,        highlight: true },
-  { id: "offerSummary",    label: "Offer Summary",  icon: Target },
-  { id: "landingPage",     label: "Landing Page",   icon: FileText },
-  { id: "optInForm",       label: "Opt-in Form",    icon: FormInput },
-  { id: "thankYouPage",    label: "Thank You",      icon: ThumbsUp },
-  { id: "bookingPage",     label: "Booking Page",   icon: Calendar },
-  { id: "smsSequence",     label: "SMS Sequence",   icon: MessageSquare },
-  { id: "emailSequence",   label: "Email Sequence", icon: Mail },
-  { id: "adCopy",          label: "Ad Copy",        icon: Megaphone },
-  { id: "creativePrompts", label: "Creatives",      icon: ImageIcon },
-  { id: "campaignNaming",  label: "Campaign",       icon: BarChart3 },
+  { id: "highlevel",       label: "HighLevel",       icon: Layers,          highlight: true },
+  { id: "funnelPreview",   label: "Funnel Preview",  icon: LayoutTemplate },
+  { id: "offerSummary",    label: "Offer Summary",   icon: Target },
+  { id: "landingPage",     label: "Landing Page",    icon: FileText },
+  { id: "optInForm",       label: "Opt-in Form",     icon: FormInput },
+  { id: "thankYouPage",    label: "Thank You",       icon: ThumbsUp },
+  { id: "bookingPage",     label: "Booking Page",    icon: Calendar },
+  { id: "smsSequence",     label: "SMS Sequence",    icon: MessageSquare },
+  { id: "emailSequence",   label: "Email Sequence",  icon: Mail },
+  { id: "adCopy",          label: "Ad Copy",         icon: Megaphone },
+  { id: "creativePrompts", label: "Creatives",       icon: ImageIcon },
+  { id: "campaignNaming",  label: "Campaign",        icon: BarChart3 },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -63,6 +65,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
 
   const sections: Record<TabId, React.ReactNode> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
+    funnelPreview:   <FunnelPreviewSection   data={assets} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,
