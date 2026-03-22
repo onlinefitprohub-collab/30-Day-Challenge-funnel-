@@ -3,46 +3,36 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
-  Copy,
-  Check,
-  Target,
-  FileText,
-  FormInput,
-  ThumbsUp,
-  Calendar,
-  MessageSquare,
-  Mail,
-  Megaphone,
-  ImageIcon,
-  BarChart3,
+  ArrowLeft, Copy, Check, Target, FileText, FormInput,
+  ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
+  ImageIcon, BarChart3, FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
 import type { GeneratedFunnelAssets } from "@/types/generation";
-import { OfferSummarySection } from "./sections/offer-summary";
-import { LandingPageSection } from "./sections/landing-page";
-import { OptInFormSection } from "./sections/opt-in-form";
-import { ThankYouSection } from "./sections/thank-you";
-import { BookingSection } from "./sections/booking";
-import { SmsSection } from "./sections/sms";
-import { EmailSection } from "./sections/email";
-import { AdCopySection } from "./sections/ad-copy";
+import { OfferSummarySection }    from "./sections/offer-summary";
+import { LandingPageSection }     from "./sections/landing-page";
+import { OptInFormSection }       from "./sections/opt-in-form";
+import { ThankYouSection }        from "./sections/thank-you";
+import { BookingSection }         from "./sections/booking";
+import { SmsSection }             from "./sections/sms";
+import { EmailSection }           from "./sections/email";
+import { AdCopySection }          from "./sections/ad-copy";
 import { CreativePromptsSection } from "./sections/creative-prompts";
-import { CampaignNamingSection } from "./sections/campaign-naming";
+import { CampaignNamingSection }  from "./sections/campaign-naming";
 
 const tabs = [
-  { id: "offerSummary", label: "Offer Summary", icon: Target },
-  { id: "landingPage", label: "Landing Page", icon: FileText },
-  { id: "optInForm", label: "Opt-in Form", icon: FormInput },
-  { id: "thankYouPage", label: "Thank You", icon: ThumbsUp },
-  { id: "bookingPage", label: "Booking Page", icon: Calendar },
-  { id: "smsSequence", label: "SMS Sequence", icon: MessageSquare },
-  { id: "emailSequence", label: "Email Sequence", icon: Mail },
-  { id: "adCopy", label: "Ad Copy", icon: Megaphone },
-  { id: "creativePrompts", label: "Creatives", icon: ImageIcon },
-  { id: "campaignNaming", label: "Campaign", icon: BarChart3 },
+  { id: "offerSummary",    label: "Offer Summary",  icon: Target },
+  { id: "landingPage",     label: "Landing Page",   icon: FileText },
+  { id: "optInForm",       label: "Opt-in Form",    icon: FormInput },
+  { id: "thankYouPage",    label: "Thank You",      icon: ThumbsUp },
+  { id: "bookingPage",     label: "Booking Page",   icon: Calendar },
+  { id: "smsSequence",     label: "SMS Sequence",   icon: MessageSquare },
+  { id: "emailSequence",   label: "Email Sequence", icon: Mail },
+  { id: "adCopy",          label: "Ad Copy",        icon: Megaphone },
+  { id: "creativePrompts", label: "Creatives",      icon: ImageIcon },
+  { id: "campaignNaming",  label: "Campaign",       icon: BarChart3 },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -50,37 +40,55 @@ type TabId = (typeof tabs)[number]["id"];
 interface ResultsShellProps {
   project: ProjectRow;
   outputs: Record<string, unknown>;
+  isMock: boolean;
 }
 
-export function ResultsShell({ project, outputs }: ResultsShellProps) {
+export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
   const [activeTab, setActiveTab] = useState<TabId>("offerSummary");
-  const [copiedAll, setCopiedAll] = useState(false);
+  const [copiedAll, setCopiedAll]  = useState(false);
 
-  const assets = outputs as unknown as GeneratedFunnelAssets;
+  // Strip internal _isMock flag from the copy-all output
+  const { _isMock: _removed, ...cleanOutputs } = outputs;
+  const assets = cleanOutputs as unknown as GeneratedFunnelAssets;
 
   async function handleCopyAll() {
-    const text = JSON.stringify(assets, null, 2);
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(JSON.stringify(assets, null, 2));
     setCopiedAll(true);
     toast({ title: "All content copied!", description: "Paste it wherever you need it." });
     setTimeout(() => setCopiedAll(false), 2000);
   }
 
-  const sectionComponents: Record<TabId, React.ReactNode> = {
-    offerSummary: <OfferSummarySection data={assets.offerSummary} />,
-    landingPage: <LandingPageSection data={assets.landingPage} />,
-    optInForm: <OptInFormSection data={assets.optInForm} />,
-    thankYouPage: <ThankYouSection data={assets.thankYouPage} />,
-    bookingPage: <BookingSection data={assets.bookingPage} />,
-    smsSequence: <SmsSection data={assets.smsSequence} />,
-    emailSequence: <EmailSection data={assets.emailSequence} />,
-    adCopy: <AdCopySection data={assets.adCopy} />,
+  const sections: Record<TabId, React.ReactNode> = {
+    offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
+    landingPage:     <LandingPageSection     data={assets.landingPage} />,
+    optInForm:       <OptInFormSection       data={assets.optInForm} />,
+    thankYouPage:    <ThankYouSection        data={assets.thankYouPage} />,
+    bookingPage:     <BookingSection         data={assets.bookingPage} />,
+    smsSequence:     <SmsSection             data={assets.smsSequence} />,
+    emailSequence:   <EmailSection           data={assets.emailSequence} />,
+    adCopy:          <AdCopySection          data={assets.adCopy} />,
     creativePrompts: <CreativePromptsSection data={assets.creativePrompts} />,
-    campaignNaming: <CampaignNamingSection data={assets.campaignNaming} />,
+    campaignNaming:  <CampaignNamingSection  data={assets.campaignNaming} />,
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+
+      {/* Demo mode banner */}
+      {isMock && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <div>
+            <p className="font-semibold text-amber-900">Demo content — based on your inputs</p>
+            <p className="text-sm text-amber-700">
+              This funnel was generated without an AI key, so the copy is structured but not fully AI-written.
+              Add <code className="rounded bg-amber-100 px-1 font-mono text-xs">OPENAI_API_KEY</code> to your
+              environment and regenerate for fully tailored copy.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -96,23 +104,16 @@ export function ResultsShell({ project, outputs }: ResultsShellProps) {
           </div>
         </div>
         <Button variant="outline" onClick={handleCopyAll}>
-          {copiedAll ? (
-            <>
-              <Check className="h-4 w-4 text-green-500" />
-              Copied!
-            </>
-          ) : (
-            <>
-              <Copy className="h-4 w-4" />
-              Copy all
-            </>
-          )}
+          {copiedAll
+            ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
+            : <><Copy className="h-4 w-4" /> Copy all</>
+          }
         </Button>
       </div>
 
-      {/* Tab navigation */}
-      <div className="overflow-x-auto pb-1">
-        <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 w-max">
+      {/* Tab bar — scrollable on mobile */}
+      <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 w-max min-w-full sm:min-w-0">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -123,16 +124,16 @@ export function ResultsShell({ project, outputs }: ResultsShellProps) {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              <tab.icon className="h-3.5 w-3.5" />
-              {tab.label}
+              <tab.icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:block">{tab.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Active section */}
-      <div className="animate-fade-in">
-        {sectionComponents[activeTab]}
+      <div className="animate-fade-in" key={activeTab}>
+        {sections[activeTab]}
       </div>
     </div>
   );

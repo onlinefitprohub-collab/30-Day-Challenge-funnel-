@@ -12,47 +12,66 @@ interface WizardProgressProps {
 }
 
 export function WizardProgress({ currentStep, steps }: WizardProgressProps) {
+  const progressPct = steps.length > 1
+    ? (currentStep / (steps.length - 1)) * 100
+    : 0;
+
   return (
-    <div className="relative">
-      {/* Progress bar background */}
-      <div className="absolute left-0 right-0 top-4 h-0.5 bg-gray-200" />
-      {/* Active progress */}
-      <div
-        className="absolute left-0 top-4 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-500"
-        style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-      />
+    <div>
+      {/* Mobile: simple bar + label */}
+      <div className="sm:hidden">
+        <div className="mb-2 flex items-center justify-between text-sm">
+          <span className="font-medium text-gray-700">{steps[currentStep]?.title}</span>
+          <span className="text-gray-400">{currentStep + 1} / {steps.length}</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-500"
+            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          />
+        </div>
+      </div>
 
-      {/* Steps */}
-      <div className="relative flex justify-between">
-        {steps.map((step, index) => {
-          const isComplete = index < currentStep;
-          const isCurrent = index === currentStep;
+      {/* Desktop: step dots */}
+      <div className="relative hidden sm:block">
+        {/* Track line */}
+        <div className="absolute left-0 right-0 top-4 h-0.5 bg-gray-200" />
+        <div
+          className="absolute left-0 top-4 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-500"
+          style={{ width: `${progressPct}%` }}
+        />
 
-          return (
-            <div key={step.id} className="flex flex-col items-center">
-              <div
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all",
-                  isComplete
-                    ? "border-brand-600 bg-brand-600 text-white"
-                    : isCurrent
-                      ? "border-brand-600 bg-white text-brand-600"
-                      : "border-gray-200 bg-white text-gray-400"
-                )}
-              >
-                {isComplete ? <Check className="h-4 w-4" /> : step.id}
+        <div className="relative flex justify-between">
+          {steps.map((step, index) => {
+            const isComplete = index < currentStep;
+            const isCurrent  = index === currentStep;
+
+            return (
+              <div key={step.id} className="flex flex-col items-center">
+                <div
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
+                    isComplete ? "border-brand-600 bg-brand-600 text-white"
+                    : isCurrent  ? "border-brand-600 bg-white text-brand-600 shadow-sm"
+                    :              "border-gray-200 bg-white text-gray-400"
+                  )}
+                >
+                  {isComplete ? <Check className="h-3.5 w-3.5" /> : step.id}
+                </div>
+                <span
+                  className={cn(
+                    "mt-2 max-w-[72px] text-center text-xs font-medium leading-tight",
+                    isCurrent  ? "text-brand-700"
+                    : isComplete ? "text-gray-500"
+                    :              "text-gray-400"
+                  )}
+                >
+                  {step.title}
+                </span>
               </div>
-              <span
-                className={cn(
-                  "mt-2 hidden text-xs font-medium sm:block",
-                  isCurrent ? "text-brand-700" : "text-gray-400"
-                )}
-              >
-                {step.title}
-              </span>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

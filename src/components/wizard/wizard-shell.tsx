@@ -2,127 +2,168 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap } from "lucide-react";
-import { WIZARD_STEPS } from "@/types/wizard";
+import { Zap, AlertCircle } from "lucide-react";
+import { WIZARD_STEPS, type WizardInputs } from "@/types/wizard";
 import { WizardProgress } from "@/components/wizard/wizard-progress";
 import { StepBusinessBasics } from "@/components/wizard/steps/step-business-basics";
 import { StepOfferBasics } from "@/components/wizard/steps/step-offer-basics";
 import { StepAudiencePain } from "@/components/wizard/steps/step-audience-pain";
 import { StepBrandVoice } from "@/components/wizard/steps/step-brand-voice";
-import { StepTrafficSocial } from "@/components/wizard/steps/step-traffic-social";
-import type { WizardInputs } from "@/types/wizard";
-import type { ProjectRow } from "@/types/project";
+import { StepTrafficInputs } from "@/components/wizard/steps/step-traffic-inputs";
+import { StepSocialProof } from "@/components/wizard/steps/step-social-proof";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import type { ProjectRow } from "@/types/project";
 
 const STEP_COMPONENTS = [
   StepBusinessBasics,
   StepOfferBasics,
   StepAudiencePain,
   StepBrandVoice,
-  StepTrafficSocial,
+  StepTrafficInputs,
+  StepSocialProof,
 ];
 
-export function WizardShell() {
+interface WizardShellProps {
+  initialProjectId?: string;
+  initialData?: Partial<WizardInputs>;
+}
+
+export function WizardShell({ initialProjectId, initialData }: WizardShellProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<Partial<WizardInputs>>({
-    duration: 30,
-    trafficSources: [],
-  });
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<WizardInputs>>(
+    initialData ?? { duration: 30, trafficSources: [], hasBeforeAfter: false }
+  );
 
   const StepComponent = STEP_COMPONENTS[currentStep];
   const isLastStep = currentStep === WIZARD_STEPS.length - 1;
   const isFirstStep = currentStep === 0;
 
-  function handleStepData(data: Partial<WizardInputs>) {
-    setFormData((prev) => ({ ...prev, ...data }));
+  // Upsert inputs to DB — called silently after each step
+  async function persistInputs(data: Partial<WizardInputs>, pid: string) {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("project_inputs")
+      .upsert(
+        { project_id: pid, inputs: data as Record<string, unknown> },
+        { onConflict: "project_id" }
+      );
+    if (error) throw new Error(error.message);
   }
 
-  function handleNext(data: Partial<WizardInputs>) {
-    handleStepData(data);
-    if (!isLastStep) {
-      setCurrentStep((prev) => prev + 1);
+  // Create the project row — happens once on completing step 1
+  async function createProject(data: Partial<WizardInputs>): Promise<string> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      throw new Error("Not authenticated");
+    }
+
+    const name = data.businessName
+      ? `${data.businessName} — ${data.challengeType ?? `${data.duration ?? 30}-Day Challenge`}`
+      : "My 30-Day Challenge Funnel";
+
+    const { data: project, error } = await supabase
+      .from("projects")
+      .insert({ user_id: user.id, name, status: "draft" })
+      .select()
+      .single();
+
+    if (error || !project) throw new Error(error?.message ?? "Failed to create project");
+
+    return (project as ProjectRow).id;
+  }
+
+  async function handleNext(stepData: Partial<WizardInputs>) {
+    const merged = { ...formData, ...stepData };
+    setFormData(merged);
+    setSaveError(null);
+
+    try {
+      let pid = projectId;
+
+      // Create project on first step completion
+      if (!pid) {
+        pid = await createProject(merged);
+        setProjectId(pid);
+        // Soft URL update so a refresh will reload this project
+        window.history.replaceState({}, "", `/projects/new?projectId=${pid}`);
+      }
+
+      // Persist in background — don't block navigation
+      persistInputs(merged, pid).catch((err) => {
+        console.error("Background save failed:", err);
+      });
+
+      setCurrentStep((s) => s + 1);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to save progress";
+      setSaveError(message);
+      toast({ title: "Couldn't save progress", description: message, variant: "destructive" });
     }
   }
 
   function handleBack() {
-    if (!isFirstStep) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    setSaveError(null);
+    setCurrentStep((s) => Math.max(0, s - 1));
   }
 
-  async function handleSubmit(finalData: Partial<WizardInputs>) {
-    const allData = { ...formData, ...finalData };
+  async function handleSubmit(stepData: Partial<WizardInputs>) {
+    const allData = { ...formData, ...stepData };
+    setFormData(allData);
     setIsSubmitting(true);
+    setSaveError(null);
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      let pid = projectId;
 
-      if (!user) {
-        toast({ title: "Session expired", description: "Please log in again.", variant: "destructive" });
-        router.push("/login");
-        return;
+      // Edge case: user somehow skipped step 1 project creation
+      if (!pid) {
+        pid = await createProject(allData);
+        setProjectId(pid);
       }
 
-      const projectName = allData.businessName
-        ? `${allData.businessName} — ${allData.challengeType ?? "30-Day Challenge"}`
-        : "My 30-Day Challenge Funnel";
+      // Save final inputs
+      await persistInputs(allData, pid);
 
-      // Create project
-      const { data: projectData, error: projectError } = await supabase
-        .from("projects")
-        .insert({
-          user_id: user.id,
-          name: projectName,
-          status: "generating",
-        })
-        .select()
-        .single();
+      // Mark as generating
+      await supabase.from("projects").update({ status: "generating" }).eq("id", pid);
 
-      const project = projectData as ProjectRow | null;
-
-      if (projectError || !project) {
-        throw new Error(projectError?.message ?? "Failed to create project");
-      }
-
-      // Save inputs
-      await supabase.from("project_inputs").insert({
-        project_id: project.id,
-        inputs: allData as Record<string, unknown>,
-      });
-
-      // Trigger generation API
+      // Call generation API
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: project.id, inputs: allData }),
+        body: JSON.stringify({ projectId: pid, inputs: allData }),
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? "Generation failed");
+        const body = await response.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Generation failed");
       }
 
-      toast({
-        title: "Funnel generated!",
-        description: "Your complete challenge funnel is ready.",
-      });
-
-      router.push(`/projects/${project.id}/results`);
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        title: "Something went wrong",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+      router.push(`/projects/${pid}/results`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setSaveError(message);
+      toast({ title: "Generation failed", description: message, variant: "destructive" });
       setIsSubmitting(false);
+
+      // Reset project status on failure
+      if (projectId) {
+        const supabase = createClient();
+        await supabase.from("projects").update({ status: "draft" }).eq("id", projectId);
+      }
     }
   }
+
+  const step = WIZARD_STEPS[currentStep];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -133,26 +174,38 @@ export function WizardShell() {
             <Zap className="h-5 w-5 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Build your challenge funnel
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Build your challenge funnel</h1>
         <p className="mt-2 text-gray-500">
-          Answer these questions and we&apos;ll generate your complete funnel in seconds.
+          {initialProjectId
+            ? "Pick up where you left off — your answers are saved."
+            : "Answer 6 short sections. We'll generate your complete funnel."}
         </p>
       </div>
 
-      {/* Progress */}
+      {/* Progress bar */}
       <WizardProgress currentStep={currentStep} steps={WIZARD_STEPS} />
 
+      {/* Save error banner */}
+      {saveError && (
+        <div className="mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <div>
+            <p className="text-sm font-medium text-red-800">Something went wrong</p>
+            <p className="text-sm text-red-600">{saveError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Step card */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            {WIZARD_STEPS[currentStep].title}
-          </h2>
-          <p className="mt-1 text-gray-500">
-            {WIZARD_STEPS[currentStep].description}
-          </p>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-brand-600">
+              Step {step.id} of {WIZARD_STEPS.length}
+            </span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">{step.title}</h2>
+          <p className="mt-1 text-gray-500">{step.description}</p>
         </div>
 
         <StepComponent
@@ -164,6 +217,13 @@ export function WizardShell() {
           isSubmitting={isSubmitting}
         />
       </div>
+
+      {/* Auto-save note */}
+      {projectId && !isSubmitting && (
+        <p className="mt-3 text-center text-xs text-gray-400">
+          Progress saved — you can close this tab and return any time.
+        </p>
+      )}
     </div>
   );
 }

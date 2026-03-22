@@ -8,12 +8,12 @@ export const businessBasicsSchema = z.object({
   deliveryMode: z.enum(["online", "offline", "hybrid"], {
     required_error: "Please select a delivery mode",
   }),
-  targetAudience: z.string().min(10, "Please describe your target audience"),
+  targetAudience: z.string().min(10, "Please describe your target audience (at least 10 characters)"),
 });
 
 // Step 2: Offer Basics
 export const offerBasicsSchema = z.object({
-  challengeType: z.string().min(1, "Challenge type is required"),
+  challengeType: z.string().min(2, "Challenge type is required"),
   mainGoal: z.string().min(10, "Please describe the main goal"),
   duration: z.number().min(7).max(90).default(30),
   price: z.string().min(1, "Price or offer type is required"),
@@ -34,46 +34,54 @@ export const audiencePainSchema = z.object({
 
 // Step 4: Brand Voice
 export const brandVoiceSchema = z.object({
-  toneOfVoice: z.enum(
-    ["friendly", "bold", "premium", "simple", "motivational"],
-    {
-      required_error: "Please select a tone",
-    }
-  ),
+  toneOfVoice: z.enum(["friendly", "bold", "premium", "simple", "motivational"], {
+    required_error: "Please select a tone",
+  }),
   phrasesToInclude: z.string().optional(),
   phrasesToAvoid: z.string().optional(),
 });
 
-// Step 5: Traffic & Social Proof
-export const trafficSocialSchema = z.object({
+// Step 5: Traffic Inputs
+export const trafficInputsSchema = z.object({
   trafficSources: z
     .array(z.enum(["facebook", "instagram", "google", "local", "organic"]))
     .min(1, "Select at least one traffic source"),
+  primaryPlatform: z.enum(["facebook", "instagram", "google", "local", "organic"]).optional(),
   utmNamingPreference: z.string().optional(),
-  testimonials: z.string().optional(),
-  caseStudySnippets: z.string().optional(),
+  adBudgetRange: z.string().optional(),
 });
 
-// Combined wizard inputs
+// Step 6: Social Proof
+export const socialProofSchema = z.object({
+  testimonials: z.string().optional(),
+  caseStudySnippets: z.string().optional(),
+  resultsHighlights: z.string().optional(),
+  hasBeforeAfter: z.boolean().default(false),
+});
+
+// Combined wizard inputs — all steps merged
 export const wizardInputsSchema = z.object({
   ...businessBasicsSchema.shape,
   ...offerBasicsSchema.shape,
   ...audiencePainSchema.shape,
   ...brandVoiceSchema.shape,
-  ...trafficSocialSchema.shape,
+  ...trafficInputsSchema.shape,
+  ...socialProofSchema.shape,
 });
 
 export type BusinessBasics = z.infer<typeof businessBasicsSchema>;
 export type OfferBasics = z.infer<typeof offerBasicsSchema>;
 export type AudiencePain = z.infer<typeof audiencePainSchema>;
 export type BrandVoice = z.infer<typeof brandVoiceSchema>;
-export type TrafficSocial = z.infer<typeof trafficSocialSchema>;
+export type TrafficInputs = z.infer<typeof trafficInputsSchema>;
+export type SocialProof = z.infer<typeof socialProofSchema>;
 export type WizardInputs = z.infer<typeof wizardInputsSchema>;
 
 export const WIZARD_STEPS = [
-  { id: 1, title: "Business Basics", description: "Tell us about your business" },
-  { id: 2, title: "Your Offer", description: "Define your challenge offer" },
-  { id: 3, title: "Your Audience", description: "Who are you trying to reach?" },
-  { id: 4, title: "Brand Voice", description: "How do you want to sound?" },
-  { id: 5, title: "Traffic & Proof", description: "How will you get leads?" },
+  { id: 1, title: "Business Basics",  description: "Tell us about your business" },
+  { id: 2, title: "Your Offer",       description: "Define your challenge offer" },
+  { id: 3, title: "Your Audience",    description: "Who are you trying to reach?" },
+  { id: 4, title: "Brand Voice",      description: "How do you want to sound?" },
+  { id: 5, title: "Traffic",          description: "Where will your leads come from?" },
+  { id: 6, title: "Social Proof",     description: "Results, testimonials, and wins" },
 ] as const;

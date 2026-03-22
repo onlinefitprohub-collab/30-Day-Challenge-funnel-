@@ -23,13 +23,10 @@ export default async function ResultsPage({
 
   const project = projectData as ProjectRow | null;
 
-  if (!project) {
-    notFound();
-  }
-
-  if (project.status !== "complete") {
-    redirect(`/projects/${id}`);
-  }
+  if (!project) notFound();
+  if (project.status === "generating") redirect(`/projects/${id}/generating`);
+  if (project.status === "error")     redirect(`/projects/new?projectId=${id}`);
+  if (project.status !== "complete")  redirect(`/projects/new?projectId=${id}`);
 
   const { data: outputData } = await supabase
     .from("project_outputs")
@@ -40,10 +37,9 @@ export default async function ResultsPage({
     .single();
 
   const output = outputData as ProjectOutputRow | null;
+  if (!output) redirect("/dashboard");
 
-  if (!output) {
-    redirect("/dashboard");
-  }
+  const isMock = Boolean((output.outputs as Record<string, unknown>)._isMock);
 
-  return <ResultsShell project={project} outputs={output.outputs} />;
+  return <ResultsShell project={project} outputs={output.outputs} isMock={isMock} />;
 }

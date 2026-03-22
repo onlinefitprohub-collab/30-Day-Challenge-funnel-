@@ -1,92 +1,102 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateFunnelAssets } from "@/lib/ai/generate";
+import { generateMockAssets } from "@/lib/ai/mock";
 import { wizardInputsSchema } from "@/types/wizard";
 import type { GenerationRunRow, ProjectRow } from "@/types/project";
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  let runId: string | null = null;
+  let projectId: string | null = null;
+
   try {
-    const supabase = await createClient();
-
-    // Verify auth
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { projectId, inputs } = body as { projectId: string; inputs: unknown };
+    const body = await request.json() as { projectId?: string; inputs?: unknown };
+    projectId = body.projectId ?? null;
+    const inputs = body.inputs;
 
     if (!projectId || !inputs) {
-      return NextResponse.json(
-        { error: "Missing projectId or inputs" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing projectId or inputs" }, { status: 400 });
     }
 
-    // Validate project belongs to user
+    // Verify project belongs to this user
     const { data: projectData } = await supabase
       .from("projects")
-      .select("id, user_id")
+      .select("id, user_id, status")
       .eq("id", projectId)
       .eq("user_id", user.id)
       .single();
 
-    const project = projectData as Pick<ProjectRow, "id" | "user_id"> | null;
-
+    const project = projectData as Pick<ProjectRow, "id" | "user_id" | "status"> | null;
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Validate inputs
+    // Validate inputs with Zod
     const validatedInputs = wizardInputsSchema.parse(inputs);
 
-    // Create generation run
+    // Create a generation run record
     const { data: runData, error: runError } = await supabase
       .from("generation_runs")
-      .insert({
-        project_id: projectId,
-        status: "running",
-      })
+      .insert({ project_id: projectId, status: "running" })
       .select()
       .single();
 
-    const run = runData as GenerationRunRow | null;
+    if (runError || !runData) throw new Error("Failed to create generation run");
+    runId = (runData as GenerationRunRow).id;
 
-    if (runError || !run) {
-      throw new Error("Failed to create generation run");
-    }
+    // Use real AI if API key is present, otherwise mock
+    const isMockMode = !process.env.OPENAI_API_KEY;
+    const assets = isMockMode
+      ? generateMockAssets(validatedInputs)
+      : await generateFunnelAssets(validatedInputs);
 
-    // Generate
-    const assets = await generateFunnelAssets(validatedInputs);
-
-    // Save outputs
+    // Save outputs — include mock flag so results page can show a banner
     await supabase.from("project_outputs").insert({
       project_id: projectId,
-      generation_run_id: run.id,
-      outputs: assets as unknown as Record<string, unknown>,
+      generation_run_id: runId,
+      outputs: { ...assets, _isMock: isMockMode } as Record<string, unknown>,
     });
 
-    // Update run status
+    // Mark run complete
     await supabase
       .from("generation_runs")
       .update({ status: "complete", completed_at: new Date().toISOString() })
-      .eq("id", run.id);
+      .eq("id", runId);
 
-    // Update project status
+    // Mark project complete
     await supabase
       .from("projects")
       .update({ status: "complete" })
       .eq("id", projectId);
 
-    return NextResponse.json({ success: true, projectId });
+    return NextResponse.json({ success: true, projectId, isMock: isMockMode });
+
   } catch (error) {
     console.error("Generation error:", error);
-    const message =
-      error instanceof Error ? error.message : "Generation failed";
+    const message = error instanceof Error ? error.message : "Generation failed";
+
+    // Mark run as errored
+    if (runId) {
+      await supabase
+        .from("generation_runs")
+        .update({ status: "error", error_message: message })
+        .eq("id", runId);
+    }
+
+    // Reset project to draft so user can try again
+    if (projectId) {
+      await supabase
+        .from("projects")
+        .update({ status: "error" })
+        .eq("id", projectId);
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

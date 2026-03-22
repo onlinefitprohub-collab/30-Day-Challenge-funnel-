@@ -17,14 +17,16 @@ export default async function ProjectPage({
     .single();
 
   const project = data as ProjectRow | null;
+  if (!project) redirect("/dashboard");
 
-  if (!project) {
-    redirect("/dashboard");
+  switch (project.status) {
+    case "complete":
+      redirect(`/projects/${id}/results`);
+    case "generating":
+      redirect(`/projects/${id}/generating`);
+    case "draft":
+    case "error":
+    default:
+      redirect(`/projects/new?projectId=${id}`);
   }
-
-  if (project.status === "complete") {
-    redirect(`/projects/${id}/results`);
-  }
-
-  redirect(`/projects/new?projectId=${id}`);
 }
