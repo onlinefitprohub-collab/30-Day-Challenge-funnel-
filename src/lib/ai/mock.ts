@@ -10,7 +10,6 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     businessName,
     coachName,
     challengeType,
-    mainGoal,
     duration,
     price,
     ctaType,
@@ -20,7 +19,6 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     desiredOutcome,
     biggestStruggle,
     objections,
-    toneOfVoice,
     trafficSources,
     testimonials,
   } = inputs;
@@ -28,182 +26,221 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
   const isFree = price.toLowerCase().includes("free");
   const ctaLabel = ctaType === "booking" ? "book a free call" : "sign up now";
   const ctaButton = ctaType === "booking" ? "Book My Free Call" : "Join the Challenge";
-  const challenge = `${duration}-Day ${challengeType} Challenge`;
+
+  // Build the challenge label without doubling duration if challengeType already starts with a number
+  const challengeLabel = /^\d/.test(challengeType)
+    ? `${challengeType} challenge`
+    : `${duration}-day ${challengeType} challenge`;
+  const challengeTitle = challengeLabel.charAt(0).toUpperCase() + challengeLabel.slice(1);
+
+  // Clean helpers
+  const firstStruggle = biggestStruggle.split(/[.,]/)[0].trim().toLowerCase();
+  const firstInclusion = inclusions.split(",")[0]?.trim() ?? "daily guidance";
+  const firstBonus = bonuses?.split(",")[0]?.trim();
+  const firstObjection = objections.split(/[.,]/)[0].trim();
+  // Convert 3rd-person desired outcome to 2nd-person for ad/copy contexts
+  const outcomeYou = desiredOutcome
+    .replace(/\btheir\b/gi, "your")
+    .replace(/\bthey\b/gi, "you")
+    .replace(/\bthem\b/gi, "you")
+    .replace(/\bthemselves\b/gi, "yourself");
+  const outcomeCap = outcomeYou.charAt(0).toUpperCase() + outcomeYou.slice(1);
+  // Lowercase version for mid-sentence use
+  const outcomeLC = outcomeYou.charAt(0).toLowerCase() + outcomeYou.slice(1);
+
+  // Build a short audience descriptor — trim at the first relative clause or comma
+  // e.g. "Busy men aged 30-45 who have gained weight" → "Busy men aged 30-45"
+  const audienceShort = targetAudience
+    .split(/\s+(who|which|that|with|and)\s+|,/i)[0]
+    .trim();
+
   const platforms = trafficSources.join(", ");
 
   return {
     offerSummary: {
-      challengeConcept: `The ${challenge} by ${businessName} is a structured ${duration}-day programme run by ${coachName}, designed specifically for ${targetAudience}. It gives participants a clear, step-by-step path to ${desiredOutcome} — without the overwhelm of figuring it out alone.`,
-      targetAudienceSummary: `This challenge is for ${targetAudience}. They're tired of ${biggestStruggle} and are ready for a guided approach that actually fits their life.`,
-      offerPositioning: `Unlike generic online programmes, this challenge is built around the real struggles of ${targetAudience}. It's specific, supported, and led by ${coachName} — someone who understands their world. The price point (${price}) and ${duration}-day structure make it an easy "yes" with a clear outcome.`,
-      corePromise: `In ${duration} days, you'll ${desiredOutcome} — with ${coachName} guiding every step.`,
+      challengeConcept: `${businessName} runs a structured ${duration}-day programme — the ${challengeTitle} — led by ${coachName}. It's built specifically for ${targetAudience}, giving participants a clear daily structure to ${outcomeYou} without the guesswork of doing it alone.`,
+      targetAudienceSummary: `This is for ${targetAudience}. They're dealing with ${firstStruggle} and want a straightforward plan that fits around a busy life. Not another programme that requires starting over from scratch — one that meets them where they are.`,
+      offerPositioning: `Most people struggling with ${firstStruggle} have already tried doing it on their own. This challenge is different because it comes with a structure, ${coachName}'s direct support, and a group of people in the same situation. At ${price}, it removes the price barrier that stops people from getting proper coaching.`,
+      corePromise: `In ${duration} days, you'll ${outcomeYou} — with a daily plan, accountability from ${coachName}, and a group behind you.`,
     },
 
     landingPage: {
       headlineOptions: [
-        `The ${duration}-Day ${challengeType} Challenge That Actually Works For ${targetAudience.split(" ").slice(0, 4).join(" ")}`,
-        `Finally — A ${challengeType} Challenge Designed Around Your Life`,
-        `${desiredOutcome} in ${duration} Days — Without the Guesswork`,
+        `${outcomeCap} in ${duration} Days — a programme built for ${audienceShort}`,
+        `Tired of Starting Over? The ${challengeTitle} gives you a plan that actually sticks`,
+        `${duration} Days. A Clear Plan. ${coachName} in Your Corner.`,
       ],
-      subheadline: `Join ${coachName} and a group of like-minded people for ${duration} days of simple, structured action. No fluff. No confusion. Just results.`,
+      subheadline: `The ${challengeTitle} with ${coachName} gives ${audienceShort} a structured, supported ${duration} days to ${outcomeYou}. No overwhelm. No guesswork. Just consistent progress.`,
       bulletPoints: [
-        `${inclusions.split(",")[0]?.trim() ?? "Full daily guidance"} — so you always know what to do next`,
-        `Beat ${biggestStruggle.split(".")[0].split(",")[0].trim()} for good`,
-        `${desiredOutcome}`,
-        `Community support so you don't have to do it alone`,
-        bonuses ? `BONUS: ${bonuses.split(",")[0]?.trim()}` : `Direct access to ${coachName} throughout the challenge`,
-        `Proven system built for ${targetAudience}`,
+        `${firstInclusion} — so you always know exactly what to do each day`,
+        `Weekly check-ins with ${coachName} — you're not doing this alone`,
+        `${outcomeCap} — the one result this programme is built around`,
+        `Fits around a full schedule — most days take under 30 minutes`,
+        firstBonus ? `BONUS: ${firstBonus} — included from day one` : `Private group access — accountability from people going through it with you`,
+        `Built for ${audienceShort} specifically — not a generic plan`,
       ],
       ctaText: ctaButton,
       sectionIdeas: [
-        `Hero: Big bold headline + subheadline + CTA button`,
-        `The Problem: Call out ${biggestStruggle} — make them feel seen`,
-        `What's Inside: List of inclusions with icons or checkmarks`,
-        `Meet ${coachName}: Short bio + photo, builds trust`,
-        `Results: Testimonials / before-after if available`,
-        `FAQ: Address the top 3 objections head-on`,
-        `Final CTA: Urgency block + ${ctaButton} button`,
+        `Hero block: Lead with the strongest headline. Sub-headline sets up the offer. Single CTA button — "${ctaButton}". Keep it clean.`,
+        `The Problem: Name ${firstStruggle} directly. Short paragraphs. Make them feel seen before you pitch anything.`,
+        `What's Included: List each inclusion with a brief "so you can..." reason. Icons help. Keep the layout scannable.`,
+        `Meet ${coachName}: One paragraph, one photo. Why they do this, who they've helped. Human, not corporate.`,
+        `Results: Use testimonials and before/after if available. Real names, real outcomes. Numbers where possible.`,
+        `FAQ: Address "${firstObjection}" and 2–3 other real objections from your audience. Honest, specific answers.`,
+        `Final CTA block: Restate the core promise, add urgency (cohort size, start date), single "${ctaButton}" button.`,
       ],
       faqItems: [
         {
-          question: `Is this suitable for complete beginners?`,
-          answer: `Yes — this challenge is built for people at all starting points. ${coachName} has designed it to meet you exactly where you are.`,
+          question: `I've tried things like this before and stopped — what makes this different?`,
+          answer: `Most programmes fail because there's no structure and no one checking in. This challenge gives you a daily plan and ${coachName} is actively involved throughout — you're not left to figure it out on your own.`,
         },
         {
           question: `How much time does it take each day?`,
-          answer: `Most days require 20–40 minutes. It's built to fit around real life, not take it over.`,
+          answer: `Most days require 20–30 minutes. The programme is designed around a busy schedule — not an idealised one.`,
         },
         {
-          question: objections.split(".")[0].split(",")[0].trim().replace(/^I/, "What if I"),
-          answer: `That's exactly why this challenge exists. ${coachName} has helped hundreds of people in your situation get results — the programme is designed specifically around those barriers.`,
+          question: `${firstObjection.charAt(0).toUpperCase() + firstObjection.slice(1)} — is this still for me?`,
+          answer: `Yes — and you're not alone in feeling that. ${coachName} has worked with plenty of people in exactly that situation. The challenge is built to work around real constraints, not ignore them.`,
         },
         {
           question: `What happens after the ${duration} days?`,
-          answer: `You'll have built real habits, seen real results, and have a clear path forward. ${coachName} will share what's available to continue your progress.`,
+          answer: `You'll have a working routine, visible results, and a clear sense of what works for your body and schedule. ${coachName} will share options for continuing if you want to keep going.`,
         },
       ],
       urgencyIdeas: [
-        `Spots are limited — only [X] places available in this round`,
-        `Challenge starts [DATE] — registration closes 48 hours before`,
-        `Early bird bonus: Sign up by [DATE] and get [BONUS] free`,
+        `Cohort size: limit each intake to [X] people so ${coachName} can give proper attention. State the exact number available.`,
+        `Start date: registrations close [DATE]. Build a countdown on the page in the final 48 hours.`,
+        `Cost of waiting: staying stuck with ${firstStruggle} for another month costs more than ${price}. Name the real price of inaction.`,
       ],
     },
 
     optInForm: {
-      recommendedFields: ["First name", "Email address", ...(ctaType === "booking" ? ["Phone number"] : [])],
-      formIntroText: `Enter your details below to ${isFree ? "join for free" : "secure your spot"} in the ${challenge}.`,
+      recommendedFields: [
+        "First name",
+        "Email address",
+        ...(ctaType === "booking" ? ["Phone number (for call booking)"] : []),
+      ],
+      formIntroText: `Enter your details below to ${isFree ? "join for free" : "secure your spot"} in the ${challengeTitle}. ${coachName} will be in touch within 24 hours.`,
       ctaButtonText: ctaButton,
     },
 
     thankYouPage: {
-      confirmationMessage: `You're in! Welcome to the ${challenge}, ${"{"}first_name{"}"}. ${coachName} is genuinely excited to work with you over the next ${duration} days.`,
+      confirmationMessage: `You're in, {first_name}. Welcome to the ${challengeTitle} — ${coachName} is genuinely glad you're here. You've made the right call.`,
       nextSteps: [
-        `Check your inbox — a confirmation email is on its way from ${businessName}`,
+        `Check your inbox — a confirmation email from ${businessName} is on its way with everything you need`,
         ctaType === "booking"
-          ? `Book your kickstart call using the link below — it takes 2 minutes`
-          : `Join the private group using the link in your email`,
-        `Add the challenge start date to your calendar so you're ready`,
+          ? `Book your kickstart call using the link below — pick a time that works and it's done in 2 minutes`
+          : `Join the private group using the link in your email — introduce yourself when you're in`,
+        `Save the challenge start date to your calendar now, while you're thinking about it`,
       ],
       bookingEncouragement:
         ctaType === "booking"
-          ? `Don't skip this step — your kickstart call with ${coachName} is where you'll map out exactly how the challenge fits into your life. Takes 20 minutes and makes the whole thing stick.`
-          : `The private community is where the magic happens. Introduce yourself and say hi — ${coachName} will be in there every day.`,
+          ? `Don't skip the call. Your kickstart session with ${coachName} is where you'll map out the ${duration} days around your actual schedule — it's 20 minutes that makes the whole programme land differently.`
+          : `The private group is where the progress happens. People share daily check-ins, ${coachName} posts regularly, and it's a lot harder to fall off when others are watching. Get in there.`,
     },
 
     bookingPage: {
-      shortIntro: `You're one step away from your ${challenge} kickstart call with ${coachName}. This is a short, focused call — no hard sell, just a chance to make sure the challenge is right for you and map out your ${duration} days.`,
+      shortIntro: `Good decision. This is a quick call with ${coachName} — 20 minutes, no hard sell. You'll leave with a clear picture of how the ${challengeTitle} fits your life before it starts.`,
       whyBook: [
-        `Get ${coachName}'s eyes on your specific situation before the challenge begins`,
-        `Leave with a clear plan tailored to your life and schedule`,
-        `Get any last questions answered so you start with total confidence`,
+        `${coachName} will map out the ${duration} days around your actual schedule and situation`,
+        `You can ask any questions that are stopping you from committing fully`,
+        `You'll start day one with a plan, not just a login`,
       ],
-      expectationSetting: `The call is 20 minutes via Zoom. ${coachName} will ask a few questions, walk you through what to expect, and make sure you're set up for success. There's no pressure — if it's not the right fit, that's fine too.`,
+      expectationSetting: `The call is 20 minutes on Zoom. ${coachName} will ask a few questions about where you're at, walk you through the programme structure, and make sure you're set up to get the most out of it. No preparation needed — just show up.`,
     },
 
     smsSequence: {
-      confirmation: `Hey ${"{"}name{"}"}, you're confirmed for the ${challenge}! Check your email for everything you need. Excited to have you 🙌 — ${coachName}`,
-      reminder: `Quick reminder ${"{"}name{"}"} — your ${challengeType} challenge starts tomorrow! Log in and check today's prep. See you in there — ${coachName}`,
-      followUp: `Hey ${"{"}name{"}"}! Day 1 done — how did it go? Reply and let me know. I read every message. — ${coachName}`,
-      noShow: `Hey ${"{"}name{"}"}, missed you at your call! Life happens — no worries. Reply YES and I'll send you a new booking link. — ${coachName}`,
-      reEngagement: `${"{"}name{"}"}, just checking in — you joined the ${challenge} a little while back. Still interested? Reply and I'll get you back on track. — ${coachName}`,
+      // All under 160 chars
+      confirmation: `Hey {name}, you're confirmed for the ${challengeTitle}! Check your email — everything you need is in there. Looking forward to it — ${coachName}`.slice(0, 160),
+      reminder: `{name} — the ${challengeTitle} kicks off tomorrow. ${ctaType === "booking" ? "Your call is booked" : "You're all set"}. See you in there — ${coachName}`.slice(0, 160),
+      followUp: `Hey {name}, day 1 done — how did it go? Reply and let me know. I read every reply. — ${coachName}`.slice(0, 160),
+      noShow: `Hey {name}, missed you at your call. No worries — reply YES and I'll send a new booking link. — ${coachName}`.slice(0, 160),
+      reEngagement: `{name} — you signed up a while back and I wanted to check in. Still interested? Just reply and I'll help you get started. — ${coachName}`.slice(0, 160),
     },
 
     emailSequence: {
       welcome: {
-        subject: `You're in — here's everything you need for the ${challenge}`,
-        body: `Hi ${"{"}first_name{"}"},\n\nWelcome to the ${challenge}! I'm ${coachName} and I'll be with you every step of the way over the next ${duration} days.\n\nHere's what happens next:\n\n${ctaType === "booking" ? "→ Book your kickstart call (link below) — this is important, don't skip it\n" : "→ Join the private community (link below)\n"}→ Save the challenge start date in your calendar\n→ Read the welcome guide in your inbox\n\nI started ${businessName} because I know how overwhelming ${biggestStruggle} can feel. This challenge is built to fix that — one day at a time.\n\nI'll be in touch before we begin.\n\n${coachName}\n${businessName}`,
+        subject: `You're in — here's what happens next`,
+        body: `Hi {first_name},\n\nWelcome to the ${challengeTitle}. I'm ${coachName} and I'll be with you throughout the next ${duration} days.\n\nHere's what to do right now:\n\n${ctaType === "booking" ? "→ Book your kickstart call using the link below — don't skip this\n" : "→ Join the private group using the link below\n"}→ Save the start date to your calendar\n→ Read the welcome email coming right after this one\n\nI built ${businessName} because I know how frustrating ${firstStruggle} is — especially when you've already tried to fix it. This programme is designed around that reality.\n\nI'll be in touch soon.\n\n${coachName}`,
       },
       reminder: {
-        subject: `${"{"}first_name{"}"} — we start tomorrow. Here's your quick checklist`,
-        body: `Hi ${"{"}first_name{"}"},\n\nTomorrow is day one of the ${challenge} and I'm excited for you.\n\nQuick checklist before we begin:\n\n✓ You've joined the community / confirmed your call\n✓ You've cleared 20–40 minutes in tomorrow's schedule\n✓ You know your starting point (take a photo / note a measurement if relevant)\n\nRemember why you signed up. ${desiredOutcome} — that's what we're working toward. In ${duration} days you'll look back and be glad you started.\n\nSee you tomorrow.\n\n${coachName}`,
+        subject: `We start tomorrow — quick checklist for you`,
+        body: `Hi {first_name},\n\nDay one of the ${challengeTitle} is tomorrow. Here's all you need to do before then:\n\n✓ ${ctaType === "booking" ? "Your kickstart call is confirmed" : "You've joined the group"}\n✓ You've got 20–30 minutes free in tomorrow's schedule\n✓ You know why you signed up\n\nYou signed up to ${outcomeLC}. In ${duration} days, that's where we're heading.\n\nSee you tomorrow.\n\n${coachName}`,
       },
       objectionHandling: {
-        subject: `"I'm not sure I have time for this" — let's talk`,
-        body: `Hi ${"{"}first_name{"}"},\n\nIf you're having second thoughts — I get it.\n\n"${objections.split(".")[0].split(",")[0].trim()}" is something I hear all the time from people who go on to get incredible results.\n\nHere's the truth: you don't need perfect conditions. You need a system that works around your life. That's exactly what the ${challenge} is.\n\nMost participants spend 20–30 minutes a day. That's it.\n\nIf you're in, great — I'll see you in there. If you've got questions, just reply to this email. I read them all.\n\n${coachName}`,
+        subject: `"${firstObjection}" — I hear this a lot`,
+        body: `Hi {first_name},\n\nIf that's been on your mind, I'm glad you're still here.\n\n"${firstObjection}" is the most common thing I hear before someone joins — and almost always, it's the people who said that who end up getting the best results. Because they're the ones who actually needed a system, not just motivation.\n\nThe ${challengeTitle} is built to work around real life. Not the version of your life where everything goes perfectly — the actual one.\n\nIf you've got a specific question, just reply to this. I'll get back to you.\n\n${coachName}`,
       },
       lastChance: {
-        subject: `Last chance — ${challenge} closes ${"{"}closing_date{"}"}`,
-        body: `Hi ${"{"}first_name{"}"},\n\nJust a heads up — we're closing registration for this round of the ${challenge} at the end of ${"{"}closing_date{"}"}.\n\nAfter that, doors shut until the next intake.\n\nIf you've been on the fence: ${desiredOutcome} doesn't happen by accident. It happens because someone decided today was the day.\n\n${isFree ? "It's free to join." : `The investment is ${price}.`} The cost of staying stuck is much higher.\n\n→ ${ctaButton}: [LINK]\n\nSee you inside.\n${coachName}`,
+        subject: `Closing soon — last chance to join this round`,
+        body: `Hi {first_name},\n\nRegistration for the ${challengeTitle} closes at the end of {closing_date}. After that, the next intake won't open for a while.\n\nIf you've been sitting on it: ${outcomeCap} isn't going to happen by waiting for the right moment. The right moment is usually just a decision.\n\n${isFree ? "It's free to join." : `The investment is ${price}.`} The cost of another month of ${firstStruggle} is higher.\n\n→ ${ctaButton}: [LINK]\n\n${coachName}`,
       },
       reEngagement: {
-        subject: `Still thinking about it, ${"{"}first_name{"}"}?`,
-        body: `Hi ${"{"}first_name{"}"},\n\nYou signed up to hear about the ${challenge} a little while back but haven't joined yet.\n\nNo pressure — just wanted to check in.\n\nIf life got in the way, I understand completely. But if you're still thinking about ${desiredOutcome}, the door isn't fully closed.\n\nReply to this email and I'll see what I can do.\n\n${coachName}\n${businessName}`,
+        subject: `Still interested, {first_name}?`,
+        body: `Hi {first_name},\n\nYou signed up to hear about the ${challengeTitle} a while back — I just wanted to check in.\n\nNo pressure at all. If life got in the way, I understand completely. But if you're still thinking about ${outcomeLC}, I'd love to help.\n\nReply to this email and let me know where you're at. I'll take it from there.\n\n${coachName}`,
       },
     },
 
     adCopy: {
       hooks: [
-        `Are you a ${targetAudience.split(" ").slice(0, 4).join(" ")} tired of ${biggestStruggle.split(".")[0].split(",")[0].toLowerCase().trim()}?`,
-        `${desiredOutcome.charAt(0).toUpperCase() + desiredOutcome.slice(1)} in ${duration} days — here's how`,
-        `I'm running a free ${duration}-day ${challengeType} challenge and I want you in it`,
+        isFree
+          ? `I'm running a free ${challengeLabel} for ${audienceShort} — here's what's included`
+          : `${challengeTitle} for ${audienceShort} — ${price} and it starts soon`,
+        `Still dealing with ${firstStruggle}? Here's what's actually worked for people in the same spot`,
+        `${outcomeCap} — in ${duration} days. Here's how ${coachName} is making that happen`,
       ],
       primaryTexts: [
-        `If you're struggling with ${biggestStruggle.split(".")[0].split(",")[0].toLowerCase().trim()}, you're not alone — and it's not your fault.\n\nI'm ${coachName} and I've helped ${targetAudience} ${desiredOutcome} without [sacrifice].\n\nMy ${challenge} is starting soon and I'm looking for [X] people to join us.\n\n${isFree ? "It's completely free." : `Investment: ${price}.`} Includes: ${inclusions.split(",").slice(0, 3).join(", ")}.\n\n→ Click below to ${ctaLabel}.`,
-        `${duration} days. One goal: ${desiredOutcome}.\n\nNo fluff. No overwhelm. Just a clear plan that fits around your life.\n\nThe ${challenge} with ${coachName} is open now${isFree ? " and it's free" : ""}.\n\nHere's what's included: ${inclusions.split(",").slice(0, 2).join(", ")} and more.\n\n→ Tap to ${ctaLabel}.`,
+        // V1: context + inclusions + CTA
+        `If ${firstStruggle} is something you've been dealing with for a while, you're not alone — and it doesn't mean you're doing it wrong.\n\nI'm ${coachName} from ${businessName}. I run the ${challengeTitle} for ${audienceShort}, and I've seen what happens when people finally have a proper structure around them.\n\nThe programme includes ${inclusions.split(",").slice(0, 3).map((s) => s.trim()).join(", ")}${firstBonus ? `, plus a ${firstBonus}` : ""}.\n\n${isFree ? "It's free to join." : `Investment: ${price}.`}\n\n→ Click below to ${ctaLabel}.`,
+        // V2: social proof or storytelling
         testimonials
-          ? `"${testimonials.split("\n")[0]?.replace(/^["']/, "").replace(/["']$/, "") ?? testimonials.slice(0, 100)}"\n\nResults like this happen inside the ${challenge}.\n\n${coachName} is opening doors again for a new group. Limited spots.\n\n→ ${ctaLabel.charAt(0).toUpperCase() + ctaLabel.slice(1)} and secure your place.`
-          : `What would change if you woke up in ${duration} days having finally cracked ${challengeType}?\n\nThat's exactly what the ${challenge} is designed to do — for ${targetAudience}.\n\nRun by ${coachName} at ${businessName}. Starts soon.\n\n→ ${ctaButton}`,
+          ? `"${testimonials.split("\n")[0]?.replace(/^["']|["']$/g, "") ?? testimonials.slice(0, 120)}"\n\nThat's what's possible in ${duration} days.\n\n${coachName} is opening the ${challengeTitle} again for a new group of ${audienceShort}. Spots are limited to keep the programme personal.\n\n→ ${ctaLabel.charAt(0).toUpperCase() + ctaLabel.slice(1)} and get your place.`
+          : `${duration} days. One clear goal: ${outcomeYou}.\n\nNo complicated plans. No guesswork. Just a structured programme with ${coachName} in your corner the whole way.\n\nIncludes: ${inclusions.split(",").slice(0, 2).map((s) => s.trim()).join(" and ")}.\n\n→ ${ctaLabel.charAt(0).toUpperCase() + ctaLabel.slice(1)} and get started.`,
+        // V3: short and direct
+        `${outcomeCap} in ${duration} days.\n\n${coachName} runs this for ${audienceShort} — ${isFree ? "free to join" : price}. Includes ${firstInclusion.toLowerCase()} and more.\n\n→ ${ctaButton}`,
       ],
       headlines: [
-        `Join the ${duration}-Day ${challengeType} Challenge`,
-        `${desiredOutcome.charAt(0).toUpperCase() + desiredOutcome.slice(1)} — in ${duration} Days`,
-        `Free Challenge with ${coachName}`,
+        `${challengeTitle} — ${isFree ? "Free" : price}`,
+        `${outcomeCap} in ${duration} Days`,
+        `${ctaButton} — ${businessName}`,
       ],
       descriptions: [
-        `For ${targetAudience}. ${duration} days. Real results. ${isFree ? "Free to join." : price + "."}`,
-        `${coachName} from ${businessName} — guided ${duration}-day programme. Starts soon.`,
-        `Limited spots. Join ${duration}-day challenge and ${desiredOutcome.toLowerCase()}.`,
+        `For ${audienceShort}. ${duration} days. Structured. Supported. ${isFree ? "Free to join." : price + "."}`,
+        `${coachName} at ${businessName} — ${duration}-day programme with daily structure and check-ins.`,
+        `${duration}-day challenge with ${coachName}. Real plan. Real accountability.`,
       ],
     },
 
     creativePrompts: {
       staticImageIdeas: [
-        `Before/after style graphic with text overlay: "${desiredOutcome.charAt(0).toUpperCase() + desiredOutcome.slice(1)} in ${duration} Days" — clean, white background, brand colours`,
-        `Photo of ${coachName} in a coaching setting (gym, studio, or outdoors) with text: "Join the ${duration}-Day ${challengeType} Challenge — starts [DATE]"`,
-        `Bold typographic ad: large font reading "${duration} Days to ${challengeType}" with a CTA button graphic and the ${businessName} logo`,
+        `Clean graphic on dark or white background. Large text: "${outcomeCap} in ${duration} Days." Smaller text below: "The ${challengeTitle} with ${coachName} — ${isFree ? "Free" : price}." Logo bottom right. No stock photos.`,
+        `Photo of ${coachName} in a real coaching setting — gym floor, outdoor session, or working with a client. Text overlay: "${challengeTitle} — ${businessName}." Feels local and personal.`,
+        `Text-only ad on brand colour background. Three lines: "Tired of ${firstStruggle}?" / "${duration} days. A real plan." / "${ctaButton}." Simple and fast to produce.`,
       ],
       talkingHeadPrompts: [
-        `"Hey — if you're a ${targetAudience.split(" ").slice(0, 5).join(" ")}, I want to talk to you. I'm ${coachName} from ${businessName}, and I'm running a free ${duration}-day challenge that's going to help you [result]. Here's what's included..." [hold up fingers as you list]. End with: "Link in bio to join."`,
-        `Open with: "I used to struggle with [relate to ${biggestStruggle}] too — until I figured this out." Walk through the challenge structure. Close with: "This is the thing I wish I'd had when I was starting. And now you can have it — click the link below."`,
-        `Testimonial-style: "Let me show you what happened to [client name/type] after just ${Math.floor(duration / 2)} days inside this challenge..." Share result. Then invite viewers to join before the next round closes.`,
+        `Film in a gym or outdoors, natural light. Opening line (word for word): "If you're a ${audienceShort.replace(/^busy /i, "").replace(/^(men|women|people)/i, (m) => m)} dealing with ${firstStruggle} — this is for you." Then: explain who you are (1 sentence), what the challenge includes (list 3 things), what someone gets at the end. Close with: "Link below to ${ctaLabel}." Target: 45–60 seconds.`,
+        `Address the "${firstObjection}" objection directly. Opening: "I know what you're thinking — ${firstObjection.toLowerCase()}. I hear that before almost every single cohort." Then: reframe it honestly in 2–3 sentences. Close: "If that's you, click the link. Let's talk." Target: 30–45 seconds.`,
+        `Short format — 15–20 seconds max. Opening: "Quick one — the ${challengeTitle} is open again." One sentence on who it's for. One sentence on what they get. Close: "${ctaButton} — link below." No filler.`,
       ],
       beforeAfterConcepts: [
-        `Before: ${biggestStruggle.split(".")[0].split(",")[0].trim()} / After: ${desiredOutcome}. Use client results or a staged relatable concept. Keep it tasteful and outcome-focused, not body-shaming.`,
-        `Before: overwhelmed, starting and stopping, no structure / After: confident, consistent, hitting goals. Lifestyle-focused — show the feeling, not just the physical result.`,
+        `Before: ${firstStruggle} — no structure, constantly restarting, low energy. After: a consistent routine, ${outcomeLC}, feeling in control. Show through a split graphic or two short video clips. Focus on the feeling, not just the physical change.`,
+        `Before: the chaotic morning / evening with no plan. After: the same person with a clear routine and more energy. Lifestyle framing — avoids body-image issues while still showing a real transformation.`,
       ],
       ugcStylePrompts: [
-        `Film on phone, casual setting. "Okay I have to be honest — I was sceptical about joining this ${duration}-day challenge. But [specific thing that surprised them]. If you're a ${targetAudience.split(" ").slice(0, 4).join(" ")}, this might actually be the thing." End with link.`,
-        `Day-in-the-life format: show what a day in the challenge looks like. Keep it short (30–45 seconds). Real, unfiltered, relatable. End with: "Join the next round — link in bio."`,
+        `Briefing a past client to film on their phone at home. Opening line: "Okay I wasn't sure about this challenge at first, but..." Then: one specific thing that surprised them, one result they can name, why they'd recommend it. Close: "If you're on the fence, just go for it." 30–45 seconds. Unscripted feeling — one take if possible.`,
+        `Day-in-the-life format. Film: waking up, doing the daily workout (even just 30 seconds), eating something from the nutrition guide, quick end-of-day comment on how it went. 45–60 seconds total. Real setting, real person. Ends with: "Join the next round — link in bio."`,
       ],
     },
 
     campaignNaming: {
-      campaignName: `${businessName.replace(/\s+/g, "_").toLowerCase()}_${challengeType.replace(/\s+/g, "_").toLowerCase()}_challenge`,
-      adSetNamingConvention: `[platform]_[audience_type]_[age_range]_[placement] — e.g. fb_lookalike_3040_feed`,
-      adNamingConvention: `[creative_type]_[hook_number]_[date] — e.g. video_hook1_jan25`,
-      utmSource: platforms.split(",")[0]?.trim().toLowerCase().replace(/\s+/g, "_") ?? "facebook",
-      utmMedium: trafficSources.some((s) => ["facebook", "instagram", "google"].includes(s)) ? "paid_social" : "organic",
-      utmCampaign: `${challengeType.replace(/\s+/g, "-").toLowerCase()}-challenge-${duration}day`,
+      campaignName: `${businessName.toLowerCase().replace(/\s+/g, "_")}_${challengeType.toLowerCase().replace(/\s+/g, "_")}_${new Date().getFullYear()}`,
+      adSetNamingConvention: `[platform]_[audience_type]_[age_range]_[placement] — e.g. fb_cold_interest_3045_feed`,
+      adNamingConvention: `[creative_type]_[hook_variant]_[date] — e.g. video_hook1_${String(new Date().getMonth() + 1).padStart(2, "0")}${String(new Date().getFullYear()).slice(2)}`,
+      utmSource: (platforms.split(",")[0]?.trim().toLowerCase().replace(/\s+/g, "_")) ?? "facebook",
+      utmMedium: trafficSources.some((s) => ["facebook", "instagram", "google"].includes(s.toLowerCase()))
+        ? "paid_social"
+        : "organic",
+      utmCampaign: `${challengeType.toLowerCase().replace(/\s+/g, "_")}_${duration}day_${new Date().getFullYear()}`,
       utmContent: `hook1_v1`,
     },
   };
