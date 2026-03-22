@@ -2,7 +2,7 @@
 const nextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000"],
+      allowedOrigins: ["*.replit.dev", "*.repl.co", "localhost:5000"],
     },
   },
 };
