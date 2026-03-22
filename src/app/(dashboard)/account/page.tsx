@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User, CreditCard } from "lucide-react";
+import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-card";
 
 export const metadata = {
   title: "Account Settings | Challenge Funnel in a Box",
@@ -15,6 +16,32 @@ export default async function AccountPage() {
 
   const displayName =
     user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Coach";
+
+  type HLSettings = { hl_api_key: string | null; hl_location_id: string | null } | null;
+  let hlSettings: HLSettings = null;
+  let hlTableReady = true;
+
+  if (user) {
+    const { data, error } = await supabase
+      .from("user_settings")
+      .select("hl_api_key, hl_location_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      const errCode = (error as { code?: string }).code ?? "";
+      if (errCode === "PGRST205" || error.message?.includes("user_settings")) {
+        hlTableReady = false;
+      }
+    } else {
+      hlSettings = data as HLSettings;
+    }
+  }
+
+  const isHLConnected = Boolean(hlSettings?.hl_api_key && hlSettings?.hl_location_id);
+  const maskedKey = hlSettings?.hl_api_key
+    ? `••••••••${hlSettings.hl_api_key.slice(-4)}`
+    : null;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -72,6 +99,14 @@ export default async function AccountPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* HighLevel Integration */}
+      <HighLevelSettingsCard
+        isConnected={isHLConnected}
+        maskedKey={maskedKey}
+        locationId={hlSettings?.hl_location_id ?? null}
+        tableReady={hlTableReady}
+      />
     </div>
   );
 }

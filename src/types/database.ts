@@ -94,6 +94,27 @@ export interface Database {
           completed_at?: string | null;
         };
       };
+      user_settings: {
+        Row: {
+          user_id: string;
+          hl_api_key: string | null;
+          hl_location_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          hl_api_key?: string | null;
+          hl_location_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          hl_api_key?: string | null;
+          hl_location_id?: string | null;
+          updated_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

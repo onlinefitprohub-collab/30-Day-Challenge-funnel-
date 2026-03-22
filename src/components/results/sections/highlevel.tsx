@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { Copy, Check, ExternalLink, Zap, Loader2, CheckCircle2, AlertCircle, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { GeneratedFunnelAssets } from "@/types/generation";
+import type { HLImportResult } from "@/lib/highlevel/import";
 
 function HLCopyButton({ value, label }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -86,11 +88,26 @@ function HLGroup({
   );
 }
 
+type ImportState = "idle" | "importing" | "success" | "error";
+
+const PROGRESS_STEPS = [
+  "Connecting to HighLevel…",
+  "Creating email templates…",
+  "Creating email templates… (2/5)",
+  "Creating email templates… (3/5)",
+  "Creating email templates… (4/5)",
+  "Creating email templates… (5/5)",
+  "Creating funnel…",
+  "Wrapping up…",
+];
+
 interface Props {
   data: GeneratedFunnelAssets;
+  projectId: string;
+  hlConnected: boolean;
 }
 
-export function HighLevelSection({ data }: Props) {
+export function HighLevelSection({ data, projectId, hlConnected }: Props) {
   const lp = data.landingPage;
   const form = data.optInForm;
   const ty = data.thankYouPage;
@@ -99,11 +116,212 @@ export function HighLevelSection({ data }: Props) {
   const ads = data.adCopy;
   const campaign = data.campaignNaming;
 
+  const [importState, setImportState] = useState<ImportState>("idle");
+  const [progressIdx, setProgressIdx] = useState(0);
+  const [importResult, setImportResult] = useState<HLImportResult | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function startProgressCycle() {
+    setProgressIdx(0);
+    progressIntervalRef.current = setInterval(() => {
+      setProgressIdx((i) => (i + 1) % PROGRESS_STEPS.length);
+    }, 1100);
+  }
+
+  function stopProgressCycle() {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    return () => stopProgressCycle();
+  }, []);
+
+  async function handleImport() {
+    setImportState("importing");
+    setImportError(null);
+    setImportResult(null);
+    startProgressCycle();
+
+    try {
+      const res = await fetch("/api/highlevel/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      });
+
+      stopProgressCycle();
+      const json = (await res.json()) as HLImportResult & { error?: string };
+
+      if (!res.ok) {
+        setImportError(json.error ?? "Import failed. Please try again.");
+        setImportState("error");
+        return;
+      }
+
+      setImportResult(json);
+
+      if (json.emailTemplates.length > 0 || json.funnelId) {
+        setImportState("success");
+        toast({
+          title: "Imported to HighLevel!",
+          description: `${json.emailTemplates.length} email template${json.emailTemplates.length !== 1 ? "s" : ""} created.`,
+        });
+      } else if (json.errors.length > 0) {
+        setImportError(json.errors[0]);
+        setImportState("error");
+      } else {
+        setImportError("Nothing was imported. Check your HighLevel credentials.");
+        setImportState("error");
+      }
+    } catch (err) {
+      stopProgressCycle();
+      setImportError(err instanceof Error ? err.message : "Network error. Please try again.");
+      setImportState("error");
+    }
+  }
+
   const emailKeys = ["welcome", "reminder", "objectionHandling", "lastChance", "reEngagement"] as const;
   const emailLabels = ["Welcome", "Reminder", "Objection Handling", "Last Chance", "Re-engagement"];
 
   return (
     <div className="space-y-5">
+
+      {/* One-click import banner */}
+      <div className="rounded-xl border border-[#1a56db]/30 bg-gradient-to-br from-[#f0f4ff] to-[#e8f0fe] p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1a56db] text-white">
+            <Zap className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-[#1a56db]">One-click HighLevel Import</p>
+            <p className="mt-0.5 text-sm text-gray-600">
+              Push all 5 email templates directly into your HighLevel account. Connect your credentials in{" "}
+              <Link href="/account" className="underline underline-offset-2 hover:text-[#1a56db]">
+                Account Settings
+              </Link>{" "}
+              first.
+            </p>
+
+            <div className="mt-4">
+              {/* Not connected */}
+              {!hlConnected && importState === "idle" && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/account"
+                    className="flex items-center gap-1.5 rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:bg-[#1245b5] transition-colors"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    Connect HighLevel
+                  </Link>
+                  <span className="text-xs text-gray-500">Then return here to import</span>
+                </div>
+              )}
+
+              {/* Connected — idle */}
+              {hlConnected && importState === "idle" && (
+                <button
+                  onClick={handleImport}
+                  className="flex items-center gap-2 rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:bg-[#1245b5] transition-colors"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  Import to HighLevel
+                </button>
+              )}
+
+              {/* Importing */}
+              {importState === "importing" && (
+                <div className="flex items-center gap-2 text-sm font-medium text-[#1a56db]">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {PROGRESS_STEPS[progressIdx]}
+                </div>
+              )}
+
+              {/* Success */}
+              {importState === "success" && importResult && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Import complete!
+                  </div>
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-1.5">
+                    {importResult.emailTemplates.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-green-800 mb-1">
+                          {importResult.emailTemplates.length} email template{importResult.emailTemplates.length !== 1 ? "s" : ""} created:
+                        </p>
+                        <ul className="space-y-0.5">
+                          {importResult.emailTemplates.map((t) => (
+                            <li key={t.id} className="flex items-center gap-1.5 text-xs text-green-700">
+                              <Check className="h-3 w-3 text-green-600" />
+                              {t.name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {importResult.funnelId && importResult.funnelUrl && (
+                      <a
+                        href={importResult.funnelUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs font-medium text-[#1a56db] hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Open your funnel in HighLevel
+                      </a>
+                    )}
+                    {importResult.errors.length > 0 && (
+                      <div className="pt-1">
+                        <p className="text-xs text-amber-700 font-medium">Some items had issues:</p>
+                        {importResult.errors.map((e, i) => (
+                          <p key={i} className="text-xs text-amber-600">{e}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setImportState("idle"); setImportResult(null); }}
+                    className="text-xs text-[#1a56db] underline underline-offset-2 hover:text-[#1245b5]"
+                  >
+                    Import again
+                  </button>
+                </div>
+              )}
+
+              {/* Error */}
+              {importState === "error" && (
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+                    <p className="text-sm text-red-700">{importError}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleImport}
+                      className="text-xs font-medium text-[#1a56db] underline underline-offset-2 hover:text-[#1245b5]"
+                    >
+                      Try again
+                    </button>
+                    <span className="text-xs text-gray-400">·</span>
+                    <Link
+                      href="/account"
+                      className="text-xs font-medium text-gray-500 underline underline-offset-2 hover:text-gray-700"
+                    >
+                      Check credentials
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Paste guide header */}
       <div className="rounded-xl border border-[#1a56db]/20 bg-[#f0f4ff] p-4">
         <p className="text-sm font-semibold text-[#1a56db]">HighLevel Paste Guide</p>
         <p className="mt-1 text-sm text-[#374151]">

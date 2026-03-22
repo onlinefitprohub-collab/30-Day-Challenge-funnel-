@@ -15,6 +15,10 @@ export default async function ResultsPage({
   const { id } = await params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data: projectData } = await supabase
     .from("projects")
     .select("*")
@@ -41,5 +45,25 @@ export default async function ResultsPage({
 
   const isMock = Boolean((output.outputs as Record<string, unknown>)._isMock);
 
-  return <ResultsShell project={project} outputs={output.outputs} isMock={isMock} />;
+  let hlConnected = false;
+  if (user) {
+    const { data: settingsData, error: settingsError } = await supabase
+      .from("user_settings")
+      .select("hl_api_key, hl_location_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!settingsError) {
+      const s = settingsData as { hl_api_key?: string | null; hl_location_id?: string | null } | null;
+      hlConnected = Boolean(s?.hl_api_key && s?.hl_location_id);
+    }
+  }
+
+  return (
+    <ResultsShell
+      project={project}
+      outputs={output.outputs}
+      isMock={isMock}
+      hlConnected={hlConnected}
+    />
+  );
 }

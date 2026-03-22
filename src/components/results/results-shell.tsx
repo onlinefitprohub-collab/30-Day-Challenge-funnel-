@@ -43,9 +43,10 @@ interface ResultsShellProps {
   project: ProjectRow;
   outputs: Record<string, unknown>;
   isMock: boolean;
+  hlConnected: boolean;
 }
 
-export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
+export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsShellProps) {
   const [activeTab, setActiveTab] = useState<TabId>("highlevel");
   const [copiedAll, setCopiedAll]  = useState(false);
 
@@ -61,7 +62,7 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
   }
 
   const sections: Record<TabId, React.ReactNode> = {
-    highlevel:       <HighLevelSection       data={assets} />,
+    highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,

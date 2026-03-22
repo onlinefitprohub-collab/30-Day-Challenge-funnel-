@@ -32,3 +32,11 @@ export interface GenerationRunRow {
   created_at: string;
   completed_at: string | null;
 }
+
+export interface UserSettingsRow {
+  user_id: string;
+  hl_api_key: string | null;
+  hl_location_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
