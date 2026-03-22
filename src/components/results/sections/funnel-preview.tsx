@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   Globe, ChevronRight, Star, Check, Calendar, ArrowRight,
-  Copy, ExternalLink, LayoutTemplate,
 } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -13,10 +12,10 @@ interface Props {
 }
 
 const PAGES = [
-  { id: "landing",   label: "Landing Page", slug: "landing",   color: "#f97316" },
-  { id: "optin",     label: "Opt-in Form",  slug: "optin",     color: "#7c3aed" },
-  { id: "thankyou",  label: "Thank You",    slug: "thank-you", color: "#059669" },
-  { id: "booking",   label: "Booking Page", slug: "booking",   color: "#b45309" },
+  { id: "landing",  label: "Landing Page", color: "#f97316" },
+  { id: "optin",    label: "Opt-in Form",  color: "#7c3aed" },
+  { id: "thankyou", label: "Thank You",    color: "#059669" },
+  { id: "booking",  label: "Booking Page", color: "#b45309" },
 ] as const;
 
 type PageId = (typeof PAGES)[number]["id"];
@@ -314,51 +313,18 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
   );
 }
 
-/* ── Live Page URL Row ── */
-function LivePageRow({
-  label, slug, color, projectId, copiedSlug, onCopy,
-}: {
-  label: string; slug: string; color: string; projectId: string;
-  copiedSlug: string | null; onCopy: (slug: string, url: string) => void;
-}) {
-  const url = `${window.location.origin}/funnel/${projectId}/${slug}`;
-  const isCopied = copiedSlug === slug;
-
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
-      <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-      <span className="text-sm font-semibold text-gray-700 w-28 shrink-0">{label}</span>
-      <span className="flex-1 text-xs text-gray-400 font-mono truncate">/funnel/{projectId.slice(0, 8)}…/{slug}</span>
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          onClick={() => onCopy(slug, url)}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-            isCopied
-              ? "border-green-300 bg-green-50 text-green-600"
-              : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 hover:bg-gray-100"
-          }`}
-        >
-          {isCopied ? <><Check className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy URL</>}
-        </button>
-        <a
-          href={`/funnel/${projectId}/${slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-        >
-          Open <ExternalLink className="h-3 w-3" />
-        </a>
-      </div>
-    </div>
-  );
-}
-
 /* ── Main export ── */
-export function FunnelPreviewSection({ data, projectId }: Props) {
+export function FunnelPreviewSection({ data }: Props) {
   const [activePage, setActivePage] = useState<PageId>("landing");
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   const activeMeta = PAGES.find((p) => p.id === activePage)!;
+
+  const pageUrls: Record<PageId, string> = {
+    landing:  "yourfunnel.com/challenge",
+    optin:    "yourfunnel.com/optin",
+    thankyou: "yourfunnel.com/thank-you",
+    booking:  "yourfunnel.com/book",
+  };
 
   const pageContent: Record<PageId, React.ReactNode> = {
     landing:  <LandingPagePreview  data={data} />,
@@ -367,79 +333,38 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
     booking:  <BookingPagePreview  data={data} />,
   };
 
-  function handleCopy(slug: string, url: string) {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedSlug(slug);
-      setTimeout(() => setCopiedSlug(null), 2000);
-    });
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-base font-bold text-gray-900">Funnel Pages</h2>
+        <h2 className="text-base font-bold text-gray-900">Funnel Page Previews</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          Each page is live at a public URL. Preview below, then import the links into HighLevel.
+          See exactly what each page will look like. Copy the HTML from the HighLevel tab to import into your account.
         </p>
       </div>
 
-      {/* Live URLs panel */}
-      {projectId ? (
-        <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <LayoutTemplate className="h-4 w-4 text-indigo-600 shrink-0" />
-            <p className="text-sm font-bold text-indigo-900">Live Page URLs</p>
-          </div>
-          <div className="space-y-2">
-            {PAGES.map((page) => (
-              <LivePageRow
-                key={page.id}
-                label={page.label}
-                slug={page.slug}
-                color={page.color}
-                projectId={projectId}
-                copiedSlug={copiedSlug}
-                onCopy={handleCopy}
-              />
-            ))}
-          </div>
-
-          {/* HL import guide */}
-          <div className="rounded-xl border border-indigo-200 bg-white p-4">
-            <p className="text-xs font-bold text-indigo-800 mb-2">How to import into HighLevel</p>
-            <ol className="space-y-1.5 text-xs text-indigo-700">
-              <li className="flex gap-2"><span className="font-black shrink-0">1.</span><span>In HighLevel, go to <strong>Funnels</strong> and open (or create) your challenge funnel.</span></li>
-              <li className="flex gap-2"><span className="font-black shrink-0">2.</span><span>For each step, click <strong>Edit Step</strong> → choose <strong>External URL</strong> or <strong>Custom Page</strong>.</span></li>
-              <li className="flex gap-2"><span className="font-black shrink-0">3.</span><span>Paste the corresponding page URL from above (Landing → Opt-in → Thank You → Booking).</span></li>
-              <li className="flex gap-2"><span className="font-black shrink-0">4.</span><span>Save — your funnel steps now point to these fully designed, hosted pages.</span></li>
-            </ol>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-center text-sm text-gray-500">
-          Live page URLs will appear here once your project is saved.
-        </div>
-      )}
-
-      {/* Page selector tabs */}
+      {/* Page colour-coded indicator */}
       <div className="flex flex-wrap gap-2">
         {PAGES.map((page) => (
           <button
             key={page.id}
             onClick={() => setActivePage(page.id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all border ${
+            className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-all border ${
               activePage === page.id
                 ? "bg-[#0f172a] text-white border-[#0f172a] shadow-sm"
                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
             }`}
           >
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: activePage === page.id ? "#fff" : page.color }}
+            />
             {page.label}
           </button>
         ))}
       </div>
 
       {/* Browser frame preview */}
-      <BrowserFrame url={`yourapp.com/funnel/.../` + activeMeta.slug}>
+      <BrowserFrame url={pageUrls[activeMeta.id]}>
         {pageContent[activePage]}
       </BrowserFrame>
     </div>

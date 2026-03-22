@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Copy, Check, ExternalLink, Zap, Loader2, CheckCircle2, AlertCircle, Settings } from "lucide-react";
+import { Copy, Check, ExternalLink, Zap, Loader2, CheckCircle2, AlertCircle, Settings, Code2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import type { HLImportResult } from "@/lib/highlevel/import";
+import { generateAllPageHtml } from "@/lib/highlevel/page-html";
 
 function HLCopyButton({ value, label }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -84,6 +85,113 @@ function HLGroup({
         </a>
       </div>
       <div className="p-5 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+/* ── Page HTML Export Panel ── */
+const HTML_PAGES = [
+  { key: "landing" as const,  label: "Landing Page" },
+  { key: "optin"   as const,  label: "Opt-in Form" },
+  { key: "thankYou" as const, label: "Thank You" },
+  { key: "booking"  as const, label: "Booking Page" },
+];
+
+function PageHtmlExportPanel({ pageHtml }: { pageHtml: Record<string, string> }) {
+  const [activeKey, setActiveKey] = useState<string>("landing");
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const currentHtml = pageHtml[activeKey] ?? "";
+
+  function handleCopy() {
+    navigator.clipboard.writeText(currentHtml).then(() => {
+      setCopied(true);
+      toast({ title: "HTML copied!", description: "Paste it into HighLevel's Custom HTML element." });
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 text-white">
+            <Code2 className="h-4 w-4" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-gray-900 text-sm">Page HTML Export</p>
+            <p className="text-xs text-gray-500">Download or copy page HTML to paste into HighLevel&apos;s page builder</p>
+          </div>
+        </div>
+        {expanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-gray-100">
+          {/* Info box */}
+          <div className="mx-5 mt-4 mb-3 flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+            <AlertCircle className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-800">
+              <p className="font-semibold mb-0.5">How to use: paste into HighLevel&apos;s page builder</p>
+              <ol className="space-y-0.5 list-decimal list-inside text-blue-700">
+                <li>In HighLevel, open a funnel step → Edit Page</li>
+                <li>Add a <strong>Custom HTML</strong> element to the page</li>
+                <li>Paste the copied HTML from below into the HTML box</li>
+                <li>Save — your designed page is now live in HL</li>
+              </ol>
+            </div>
+          </div>
+
+          {/* Page tabs */}
+          <div className="flex gap-1.5 px-5 mb-3">
+            {HTML_PAGES.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setActiveKey(p.key)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors border ${
+                  activeKey === p.key
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Code block */}
+          <div className="mx-5 mb-5">
+            <div className="relative rounded-xl border border-gray-200 bg-gray-950 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-800">
+                <span className="text-xs text-gray-400 font-mono">
+                  {HTML_PAGES.find((p) => p.key === activeKey)?.label}.html
+                </span>
+                <button
+                  onClick={handleCopy}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    copied
+                      ? "bg-green-700 text-green-100"
+                      : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+                  }`}
+                >
+                  {copied ? <><Check className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy HTML</>}
+                </button>
+              </div>
+              <pre className="overflow-auto max-h-64 p-4 text-xs text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
+                {currentHtml.slice(0, 2000)}{currentHtml.length > 2000 ? "\n… (copy to see full HTML)" : ""}
+              </pre>
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+              {currentHtml.length.toLocaleString()} characters · Full-page HTML with inline styles, ready to paste
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -193,6 +301,8 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
 
   const emailKeys = ["welcome", "reminder", "objectionHandling", "lastChance", "reEngagement"] as const;
   const emailLabels = ["Welcome", "Reminder", "Objection Handling", "Last Chance", "Re-engagement"];
+
+  const pageHtml = generateAllPageHtml(data);
 
   return (
     <div className="space-y-5">
@@ -362,6 +472,9 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Page HTML Export */}
+      <PageHtmlExportPanel pageHtml={pageHtml} />
 
       {/* Paste guide header */}
       <div className="rounded-xl border border-[#1a56db]/20 bg-[#f0f4ff] p-4">

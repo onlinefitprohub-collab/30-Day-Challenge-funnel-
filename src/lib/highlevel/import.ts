@@ -1,5 +1,11 @@
 import { hlFetch } from "./client";
 import type { GeneratedFunnelAssets } from "@/types/generation";
+import {
+  generateLandingPageHtml,
+  generateOptInPageHtml,
+  generateThankYouPageHtml,
+  generateBookingPageHtml,
+} from "./page-html";
 
 export interface HLEmailTemplate {
   id: string;
@@ -96,11 +102,24 @@ async function tryCreateFunnelStep(
   locationId: string,
   apiKey: string,
   name: string,
-  url: string
+  pageType: string,
+  htmlBody?: string
 ): Promise<HLFunnelStep | null> {
-  const payload = { locationId, funnelId, name, url };
+  const payload: Record<string, unknown> = {
+    locationId,
+    funnelId,
+    name,
+    type: pageType,
+    ...(htmlBody ? { body: htmlBody, html: htmlBody } : {}),
+  };
 
-  for (const path of [`/funnels/${funnelId}/pages`, "/funnel-pages"]) {
+  const paths = [
+    `/funnels/${funnelId}/steps`,
+    `/funnels/${funnelId}/pages`,
+    `/funnel-pages`,
+  ];
+
+  for (const path of paths) {
     try {
       const res = await hlFetch(path, apiKey, {
         method: "POST",
@@ -188,15 +207,37 @@ export async function importToHighLevel(
     );
   }
 
-  // Step 3: Attempt funnel step creation — opt-in + thank-you (best-effort)
+  // Step 3: Attempt funnel step creation with page HTML (best-effort)
   if (funnelId) {
     const steps: HLFunnelStep[] = [];
 
-    const optInStep = await tryCreateFunnelStep(funnelId, locationId, apiKey, "Opt-in Page", "opt-in");
+    const landingStep = await tryCreateFunnelStep(
+      funnelId, locationId, apiKey,
+      "Landing Page", "landing",
+      generateLandingPageHtml(assets)
+    );
+    if (landingStep) steps.push(landingStep);
+
+    const optInStep = await tryCreateFunnelStep(
+      funnelId, locationId, apiKey,
+      "Opt-in Page", "optin",
+      generateOptInPageHtml(assets)
+    );
     if (optInStep) steps.push(optInStep);
 
-    const thankYouStep = await tryCreateFunnelStep(funnelId, locationId, apiKey, "Thank You Page", "thank-you");
+    const thankYouStep = await tryCreateFunnelStep(
+      funnelId, locationId, apiKey,
+      "Thank You Page", "thank-you",
+      generateThankYouPageHtml(assets)
+    );
     if (thankYouStep) steps.push(thankYouStep);
+
+    const bookingStep = await tryCreateFunnelStep(
+      funnelId, locationId, apiKey,
+      "Booking Page", "booking",
+      generateBookingPageHtml(assets)
+    );
+    if (bookingStep) steps.push(bookingStep);
 
     if (steps.length > 0) result.funnelSteps = steps;
   }
