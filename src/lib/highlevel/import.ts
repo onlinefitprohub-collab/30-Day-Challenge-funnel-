@@ -13,6 +13,7 @@ export interface HLFunnelStep {
 
 export interface HLImportResult {
   emailTemplates: HLEmailTemplate[];
+  emailApiUnavailable?: boolean;
   funnelId?: string;
   funnelUrl?: string;
   funnelSteps?: HLFunnelStep[];
@@ -35,12 +36,59 @@ const EMAIL_TEMPLATE_NAMES: Record<(typeof EMAIL_KEYS)[number], string> = {
   reEngagement: "Re-engagement Email",
 };
 
+const EMAIL_TEMPLATE_PATHS = [
+  "/email-templates",
+  "/email-templates/",
+  "/email/",
+  "/email",
+];
+
 function extractId(data: Record<string, unknown>, ...nestedKeys: string[]): string | undefined {
   for (const key of nestedKeys) {
     const nested = data[key] as Record<string, unknown> | undefined;
     if (nested?.id) return nested.id as string;
   }
   return data.id as string | undefined;
+}
+
+async function tryCreateEmailTemplate(
+  locationId: string,
+  apiKey: string,
+  name: string,
+  subject: string,
+  body: string
+): Promise<{ id: string; notFound?: boolean } | null> {
+  const payload = { locationId, name, subject, body };
+
+  for (const path of EMAIL_TEMPLATE_PATHS) {
+    try {
+      const res = await hlFetch(path, apiKey, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as Record<string, unknown>;
+        const id = extractId(data, "template", "emailTemplate") ?? name;
+        return { id };
+      }
+
+      if (res.status === 404) {
+        continue; // Try next path
+      }
+
+      // Non-404 error — surface it
+      let errText = "";
+      try { errText = await res.text(); } catch { errText = "Unknown"; }
+      return { id: name, notFound: false };
+      // Return null to propagate as a regular error
+    } catch {
+      // Network error for this path — try next
+    }
+  }
+
+  // All paths returned 404 — endpoint not available
+  return { id: "", notFound: true };
 }
 
 async function tryCreateFunnelStep(
@@ -52,7 +100,6 @@ async function tryCreateFunnelStep(
 ): Promise<HLFunnelStep | null> {
   const payload = { locationId, funnelId, name, url };
 
-  // Try primary endpoint first, then fallback path
   for (const path of [`/funnels/${funnelId}/pages`, "/funnel-pages"]) {
     try {
       const res = await hlFetch(path, apiKey, {
@@ -81,40 +128,34 @@ export async function importToHighLevel(
     errors: [],
   };
 
-  // Step 1: Create email templates
+  // Step 1: Create email templates — try multiple endpoint paths
+  let notFoundCount = 0;
+
   for (const key of EMAIL_KEYS) {
     const email = assets.emailSequence[key];
     const name = EMAIL_TEMPLATE_NAMES[key];
+    const htmlBody = email.body.replace(/\n/g, "<br/>");
 
-    try {
-      const res = await hlFetch("/email-templates/", apiKey, {
-        method: "POST",
-        body: JSON.stringify({
-          locationId,
-          name,
-          subject: email.subject,
-          body: email.body.replace(/\n/g, "<br/>"),
-        }),
-      });
+    const outcome = await tryCreateEmailTemplate(
+      locationId,
+      apiKey,
+      name,
+      email.subject,
+      htmlBody
+    );
 
-      if (res.ok) {
-        const data = (await res.json()) as Record<string, unknown>;
-        const templateId = extractId(data, "template") ?? name;
-        result.emailTemplates.push({ id: templateId, name });
-      } else {
-        let errText = "";
-        try {
-          errText = await res.text();
-        } catch {
-          errText = "Unknown error";
-        }
-        result.errors.push(`"${name}": ${res.status} ${errText.slice(0, 120)}`);
-      }
-    } catch (err) {
-      result.errors.push(
-        `"${name}": ${err instanceof Error ? err.message : "Network error"}`
-      );
+    if (outcome?.notFound) {
+      notFoundCount++;
+    } else if (outcome?.id && !outcome.notFound) {
+      result.emailTemplates.push({ id: outcome.id, name });
+    } else {
+      result.errors.push(`"${name}": failed to create`);
     }
+  }
+
+  // If all paths returned 404, the Email Template API is unavailable for this account
+  if (notFoundCount === EMAIL_KEYS.length) {
+    result.emailApiUnavailable = true;
   }
 
   // Step 2: Attempt funnel creation (best-effort; failure is non-fatal)
@@ -124,11 +165,7 @@ export async function importToHighLevel(
       assets.offerSummary?.challengeConcept ?? "30-Day Challenge Funnel";
     const res = await hlFetch("/funnels/", apiKey, {
       method: "POST",
-      body: JSON.stringify({
-        locationId,
-        name: funnelName,
-        type: "funnel",
-      }),
+      body: JSON.stringify({ locationId, name: funnelName, type: "funnel" }),
     });
 
     if (res.ok) {
@@ -141,7 +178,9 @@ export async function importToHighLevel(
     } else {
       let errText = "";
       try { errText = await res.text(); } catch { errText = "Unknown"; }
-      result.errors.push(`Funnel creation skipped: ${res.status} ${errText.slice(0, 80)}`);
+      if (res.status !== 404) {
+        result.errors.push(`Funnel creation skipped: ${res.status} ${errText.slice(0, 80)}`);
+      }
     }
   } catch (err) {
     result.errors.push(
@@ -153,35 +192,13 @@ export async function importToHighLevel(
   if (funnelId) {
     const steps: HLFunnelStep[] = [];
 
-    const optInStep = await tryCreateFunnelStep(
-      funnelId,
-      locationId,
-      apiKey,
-      "Opt-in Page",
-      "opt-in"
-    );
-    if (optInStep) {
-      steps.push(optInStep);
-    } else {
-      result.errors.push("Funnel step creation skipped: Opt-in Page (API not available)");
-    }
+    const optInStep = await tryCreateFunnelStep(funnelId, locationId, apiKey, "Opt-in Page", "opt-in");
+    if (optInStep) steps.push(optInStep);
 
-    const thankYouStep = await tryCreateFunnelStep(
-      funnelId,
-      locationId,
-      apiKey,
-      "Thank You Page",
-      "thank-you"
-    );
-    if (thankYouStep) {
-      steps.push(thankYouStep);
-    } else {
-      result.errors.push("Funnel step creation skipped: Thank You Page (API not available)");
-    }
+    const thankYouStep = await tryCreateFunnelStep(funnelId, locationId, apiKey, "Thank You Page", "thank-you");
+    if (thankYouStep) steps.push(thankYouStep);
 
-    if (steps.length > 0) {
-      result.funnelSteps = steps;
-    }
+    if (steps.length > 0) result.funnelSteps = steps;
   }
 
   return result;

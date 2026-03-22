@@ -164,7 +164,14 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
 
       setImportResult(json);
 
-      if (json.emailTemplates.length > 0 || json.funnelId) {
+      if (json.emailApiUnavailable) {
+        // Email Template API not accessible for this HL plan/account type
+        setImportState("success");
+        toast({
+          title: "HighLevel connected",
+          description: "Email Template API not available for your plan — use the paste guide below.",
+        });
+      } else if (json.emailTemplates.length > 0 || json.funnelId) {
         setImportState("success");
         toast({
           title: "Imported to HighLevel!",
@@ -243,10 +250,24 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
               {/* Success */}
               {importState === "success" && importResult && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    Import complete!
-                  </div>
+                  {importResult.emailApiUnavailable ? (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                      <AlertCircle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+                      <div className="text-sm text-amber-800">
+                        <p className="font-semibold">Email Template API not available for your plan</p>
+                        <p className="mt-0.5 text-xs text-amber-700">
+                          HighLevel restricts programmatic email template creation to certain plans.
+                          Use the paste guide below to copy each email into HighLevel manually — all content is ready to go.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      Import complete!
+                    </div>
+                  )}
+                  {!importResult.emailApiUnavailable && (
                   <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
                     {importResult.emailTemplates.length > 0 && (
                       <div>
@@ -303,6 +324,7 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
                       </div>
                     )}
                   </div>
+                  )}
                   <button
                     onClick={() => { setImportState("idle"); setImportResult(null); }}
                     className="text-xs text-[#1a56db] underline underline-offset-2 hover:text-[#1245b5]"
