@@ -18,6 +18,7 @@ src/
     (auth)/         # Login, signup pages
     (dashboard)/    # Protected dashboard/project pages
     api/generate/   # POST endpoint for AI funnel generation
+    api/auth/login/ # POST route handler for Supabase login (sets cookies reliably)
     page.tsx        # Public landing page
     layout.tsx      # Root layout
   components/ui/    # Radix-based UI primitives

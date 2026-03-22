@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
-  ImageIcon, BarChart3, FlaskConical,
+  ImageIcon, BarChart3, FlaskConical, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -21,8 +21,10 @@ import { EmailSection }           from "./sections/email";
 import { AdCopySection }          from "./sections/ad-copy";
 import { CreativePromptsSection } from "./sections/creative-prompts";
 import { CampaignNamingSection }  from "./sections/campaign-naming";
+import { HighLevelSection }       from "./sections/highlevel";
 
 const tabs = [
+  { id: "highlevel",       label: "HighLevel",      icon: Layers,        highlight: true },
   { id: "offerSummary",    label: "Offer Summary",  icon: Target },
   { id: "landingPage",     label: "Landing Page",   icon: FileText },
   { id: "optInForm",       label: "Opt-in Form",    icon: FormInput },
@@ -44,7 +46,7 @@ interface ResultsShellProps {
 }
 
 export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("offerSummary");
+  const [activeTab, setActiveTab] = useState<TabId>("highlevel");
   const [copiedAll, setCopiedAll]  = useState(false);
 
   // Strip internal _isMock flag from the copy-all output
@@ -59,6 +61,7 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
   }
 
   const sections: Record<TabId, React.ReactNode> = {
+    highlevel:       <HighLevelSection       data={assets} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,
@@ -114,20 +117,28 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
       {/* Tab bar — scrollable on mobile */}
       <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 w-max min-w-full sm:min-w-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <tab.icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:block">{tab.label}</span>
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const isHL = "highlight" in tab && tab.highlight;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                  isActive && isHL
+                    ? "bg-[#1a56db] text-white shadow-sm"
+                    : isActive
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : isHL
+                    ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <tab.icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:block">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
