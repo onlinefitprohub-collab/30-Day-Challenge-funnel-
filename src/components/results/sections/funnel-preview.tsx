@@ -1,351 +1,492 @@
 "use client";
 
-import { ArrowRight, ArrowDown, Globe, Mail, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { Globe, ChevronRight, Star, Check, Calendar, ArrowRight } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
 interface Props {
   data: GeneratedFunnelAssets;
 }
 
-function BrowserChrome({ url }: { url: string }) {
+const PAGES = [
+  { id: "landing",  label: "Landing Page",  url: "yoursite.com/challenge" },
+  { id: "optin",    label: "Opt-in Form",    url: "yoursite.com/optin" },
+  { id: "thankyou", label: "Thank You",      url: "yoursite.com/thank-you" },
+  { id: "booking",  label: "Booking Page",  url: "yoursite.com/book" },
+] as const;
+
+type PageId = (typeof PAGES)[number]["id"];
+
+/* ── Browser chrome wrapper ── */
+function BrowserFrame({ url, children }: { url: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 rounded-t-lg">
-      <div className="flex gap-1">
-        <div className="h-2 w-2 rounded-full bg-red-400" />
-        <div className="h-2 w-2 rounded-full bg-yellow-400" />
-        <div className="h-2 w-2 rounded-full bg-green-400" />
+    <div className="rounded-xl border border-gray-200 shadow-lg overflow-hidden bg-white">
+      {/* Chrome bar */}
+      <div className="flex items-center gap-3 border-b border-gray-200 bg-[#f5f5f5] px-4 py-2.5">
+        <div className="flex gap-1.5 shrink-0">
+          <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+          <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
+          <div className="h-3 w-3 rounded-full bg-[#28c840]" />
+        </div>
+        <div className="flex flex-1 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1">
+          <Globe className="h-3 w-3 text-gray-400 shrink-0" />
+          <span className="text-xs text-gray-500 truncate">{url}</span>
+        </div>
       </div>
-      <div className="flex flex-1 items-center gap-1 rounded bg-white border border-gray-200 px-2 py-0.5">
-        <Globe className="h-2.5 w-2.5 text-gray-400 shrink-0" />
-        <span className="text-[10px] text-gray-400 truncate">{url}</span>
-      </div>
+      {/* Page content — scrollable */}
+      <div className="overflow-y-auto max-h-[600px] text-left">{children}</div>
     </div>
   );
 }
 
-function PageCard({
-  step,
-  label,
-  accent,
-  url,
-  children,
-}: {
-  step: number;
-  label: string;
-  accent: string;
-  url: string;
-  children: React.ReactNode;
-}) {
+/* ── Reusable sub-elements ── */
+function NavBar({ cta, accentBg }: { cta: string; accentBg: string }) {
   return (
-    <div className="flex flex-col min-w-[200px] max-w-[220px] shrink-0">
-      <div className="mb-2 flex items-center gap-2">
-        <span
-          className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0"
-          style={{ backgroundColor: accent }}
-        >
-          {step}
-        </span>
-        <span className="text-xs font-semibold text-gray-700">{label}</span>
+    <div className="flex items-center justify-between px-8 py-4 bg-[#0f172a]">
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 rounded-lg bg-orange-500 flex items-center justify-center">
+          <span className="text-white text-xs font-black">CF</span>
+        </div>
+        <span className="text-white text-sm font-semibold">Challenge Funnel</span>
       </div>
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex-1">
-        <BrowserChrome url={url} />
-        <div className="p-3 space-y-2 min-h-[140px]">{children}</div>
+      <button
+        className="rounded-full px-4 py-1.5 text-xs font-bold text-white"
+        style={{ backgroundColor: accentBg }}
+      >
+        {cta}
+      </button>
+    </div>
+  );
+}
+
+function SocialProofBar({ concept }: { concept: string }) {
+  return (
+    <div className="flex items-center justify-center gap-6 bg-[#1e293b] py-2.5 px-8 flex-wrap">
+      <div className="flex items-center gap-1.5">
+        <div className="flex">
+          {[...Array(5)].map((_, i) => (
+            <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+          ))}
+        </div>
+        <span className="text-[11px] text-gray-300">500+ coaches launched</span>
       </div>
+      <span className="text-gray-600 text-xs hidden sm:block">•</span>
+      <span className="text-[11px] text-gray-300">🔥 {concept}</span>
     </div>
   );
 }
 
-function Connector() {
+function CtaBtn({ text, color, textColor = "white", size = "md" }: { text: string; color: string; textColor?: string; size?: "sm" | "md" | "lg" }) {
+  const sizes = { sm: "px-4 py-2 text-xs", md: "px-6 py-3 text-sm", lg: "px-8 py-4 text-base" };
   return (
-    <div className="flex shrink-0 items-center self-center mt-7">
-      <div className="h-px w-6 bg-gray-300" />
-      <ArrowRight className="h-3.5 w-3.5 text-gray-400 -ml-0.5" />
-    </div>
-  );
-}
-
-function MobileConnector() {
-  return (
-    <div className="flex flex-col items-center my-1">
-      <div className="w-px h-4 bg-gray-300" />
-      <ArrowDown className="h-3.5 w-3.5 text-gray-400 -mt-0.5" />
-    </div>
-  );
-}
-
-function Tag({ color, children }: { color: string; children: React.ReactNode }) {
-  return (
-    <span
-      className="inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
-      style={{ backgroundColor: `${color}20`, color }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function CtaButton({ text, color }: { text: string; color: string }) {
-  return (
-    <div
-      className="rounded text-center text-[10px] font-bold text-white px-2 py-1.5 mt-1"
-      style={{ backgroundColor: color }}
+    <button
+      className={`rounded-full font-bold tracking-wide flex items-center gap-2 ${sizes[size]}`}
+      style={{ backgroundColor: color, color: textColor }}
     >
       {text}
-    </div>
+      <ArrowRight className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
-function EmailCard({
-  index,
-  label,
-  subject,
-  preview,
-  dayLabel,
-}: {
-  index: number;
-  label: string;
-  subject: string;
-  preview: string;
-  dayLabel: string;
-}) {
-  const colors = ["#1a56db", "#7e3af2", "#057a55", "#b45309", "#be185d"];
-  const color = colors[index % colors.length];
-
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex flex-col items-center">
-        <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold"
-          style={{ backgroundColor: color }}
-        >
-          {index + 1}
-        </div>
-        {index < 4 && <div className="w-px flex-1 bg-gray-200 mt-1" style={{ minHeight: 20 }} />}
-      </div>
-      <div className="flex-1 pb-4">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-semibold text-gray-800">{label}</span>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">{dayLabel}</span>
-        </div>
-        <p className="text-xs font-medium text-gray-700 mb-0.5">📧 {subject}</p>
-        <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-2">{preview}</p>
-      </div>
-    </div>
-  );
-}
-
-function SmsCard({
-  index,
-  label,
-  message,
-  dayLabel,
-}: {
-  index: number;
-  label: string;
-  message: string;
-  dayLabel: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex flex-col items-center">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-[10px] font-bold">
-          {index + 1}
-        </div>
-        {index < 4 && <div className="w-px flex-1 bg-gray-200 mt-1" style={{ minHeight: 16 }} />}
-      </div>
-      <div className="flex-1 pb-3">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-semibold text-gray-800">{label}</span>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">{dayLabel}</span>
-        </div>
-        <div className="rounded-xl rounded-tl-none bg-green-50 border border-green-100 px-2.5 py-1.5">
-          <p className="text-[11px] text-gray-700 leading-relaxed line-clamp-3">{message}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const ACCENT_COLORS = {
-  landing: "#1a56db",
-  optin: "#7e3af2",
-  thankyou: "#057a55",
-  booking: "#b45309",
-};
-
-export function FunnelPreviewSection({ data }: Props) {
+/* ── Landing Page Preview ── */
+function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
   const lp = data.landingPage;
-  const form = data.optInForm;
-  const ty = data.thankYouPage;
-  const bk = data.bookingPage;
-  const emails = data.emailSequence;
-  const sms = data.smsSequence;
   const concept = data.offerSummary.challengeConcept || "30-Day Challenge";
 
-  const emailItems = [
-    { label: "Welcome", subject: emails.welcome.subject, preview: emails.welcome.body, dayLabel: "Day 1" },
-    { label: "Reminder", subject: emails.reminder.subject, preview: emails.reminder.body, dayLabel: "Day 3" },
-    { label: "Objection Handling", subject: emails.objectionHandling.subject, preview: emails.objectionHandling.body, dayLabel: "Day 5" },
-    { label: "Last Chance", subject: emails.lastChance.subject, preview: emails.lastChance.body, dayLabel: "Day 7" },
-    { label: "Re-engagement", subject: emails.reEngagement.subject, preview: emails.reEngagement.body, dayLabel: "Day 14" },
-  ];
-
-  const smsItems = [
-    { label: "Confirmation", message: sms.confirmation, dayLabel: "Instant" },
-    { label: "Reminder", message: sms.reminder, dayLabel: "Day 1" },
-    { label: "Follow-up", message: sms.followUp, dayLabel: "Day 3" },
-    { label: "No-show", message: sms.noShow, dayLabel: "Day 5" },
-    { label: "Re-engagement", message: sms.reEngagement, dayLabel: "Day 14" },
-  ];
-
   return (
-    <div className="space-y-8">
+    <div className="font-sans">
+      <NavBar cta={lp.ctaText} accentBg="#f97316" />
+      <SocialProofBar concept={concept} />
 
-      {/* Section header */}
-      <div>
-        <h2 className="text-base font-bold text-gray-900">Funnel Overview</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Visual map of your complete {concept} funnel — pages, emails, and SMS.
+      {/* Hero */}
+      <div
+        className="px-8 py-16 text-center"
+        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%)" }}
+      >
+        <span className="inline-block rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-1 text-xs font-semibold text-orange-400 mb-5">
+          🔥 Limited Spots Available — Act Now
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-4 max-w-2xl mx-auto">
+          {lp.headlineOptions[0]}
+        </h1>
+        <p className="text-base text-slate-300 max-w-xl mx-auto mb-8 leading-relaxed">
+          {lp.subheadline}
         </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+          <CtaBtn text={lp.ctaText} color="#f97316" size="lg" />
+          <span className="text-xs text-slate-400">No credit card required</span>
+        </div>
+        {lp.urgencyIdeas[0] && (
+          <p className="text-xs text-red-400 font-medium">{lp.urgencyIdeas[0]}</p>
+        )}
       </div>
 
-      {/* Funnel flow — desktop: horizontal row, mobile: vertical stack */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-4">Funnel Pages</p>
+      {/* Benefits */}
+      <div className="bg-white px-8 py-10">
+        <p className="text-xs font-bold uppercase tracking-widest text-orange-500 mb-2 text-center">
+          What You&apos;ll Get
+        </p>
+        <h2 className="text-xl font-black text-gray-900 text-center mb-7">
+          Everything you need to succeed
+        </h2>
+        <div className="grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
+          {lp.bulletPoints.slice(0, 6).map((point, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500 mt-0.5">
+                <Check className="h-3 w-3 text-white" />
+              </div>
+              <span className="text-sm text-gray-700 leading-snug">{point}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        {/* Desktop horizontal */}
-        <div className="hidden sm:flex items-start gap-0">
-          {/* Landing Page */}
-          <PageCard step={1} label="Landing Page" accent={ACCENT_COLORS.landing} url="yoursite.com/challenge">
-            <Tag color={ACCENT_COLORS.landing}>Headline</Tag>
-            <p className="text-[11px] font-semibold text-gray-800 leading-snug line-clamp-3 mt-1">
-              {lp.headlineOptions[0]}
-            </p>
-            <p className="text-[10px] text-gray-500 line-clamp-2">{lp.subheadline}</p>
-            <CtaButton text={lp.ctaText} color={ACCENT_COLORS.landing} />
-          </PageCard>
+      {/* Section ideas strip */}
+      {lp.sectionIdeas.length > 0 && (
+        <div className="bg-[#0f172a] px-8 py-8 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Also Included</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {lp.sectionIdeas.slice(0, 4).map((idea, i) => (
+              <span key={i} className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300 border border-white/10">
+                {idea}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
-          <Connector />
+      {/* FAQ */}
+      {lp.faqItems.length > 0 && (
+        <div className="bg-slate-50 px-8 py-10">
+          <h2 className="text-xl font-black text-gray-900 text-center mb-6">
+            Frequently Asked Questions
+          </h2>
+          <div className="max-w-xl mx-auto space-y-3">
+            {lp.faqItems.slice(0, 3).map((faq, i) => (
+              <div key={i} className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-sm font-bold text-gray-900 mb-1">{faq.question}</p>
+                <p className="text-xs text-gray-600 leading-relaxed">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-          {/* Opt-in Form */}
-          <PageCard step={2} label="Opt-in Form" accent={ACCENT_COLORS.optin} url="yoursite.com/optin">
-            <Tag color={ACCENT_COLORS.optin}>Form</Tag>
-            <p className="text-[11px] text-gray-700 leading-snug mt-1 line-clamp-2">{form.formIntroText}</p>
-            <div className="mt-1 space-y-1">
-              {form.recommendedFields.slice(0, 3).map((f, i) => (
-                <div key={i} className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] text-gray-400">
-                  {f}
+      {/* Final CTA */}
+      <div className="bg-gradient-to-br from-orange-500 to-orange-600 px-8 py-12 text-center">
+        <h2 className="text-2xl font-black text-white mb-3">Ready to transform your coaching?</h2>
+        <p className="text-sm text-orange-100 mb-6">{lp.urgencyIdeas[1] ?? "Spots are filling up fast."}</p>
+        <div className="flex justify-center">
+          <CtaBtn text={lp.ctaText} color="white" textColor="#f97316" size="lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Opt-in Form Preview ── */
+function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
+  const form = data.optInForm;
+  const lp = data.landingPage;
+  const concept = data.offerSummary.challengeConcept || "30-Day Challenge";
+
+  return (
+    <div className="font-sans">
+      <NavBar cta="Join Now" accentBg="#7c3aed" />
+
+      {/* Hero + Form */}
+      <div
+        className="px-6 py-12"
+        style={{ background: "linear-gradient(160deg, #1e1b4b 0%, #312e81 100%)" }}
+      >
+        <div className="max-w-md mx-auto text-center mb-8">
+          <span className="inline-block rounded-full bg-purple-500/20 border border-purple-400/30 px-3 py-1 text-xs font-semibold text-purple-300 mb-4">
+            Step 1 of 2 — Claim Your Spot
+          </span>
+          <h1 className="text-2xl font-black text-white mb-3 leading-tight">
+            Join the {concept} for Free
+          </h1>
+          <p className="text-sm text-purple-200">{form.formIntroText}</p>
+        </div>
+
+        {/* Form card */}
+        <div className="max-w-sm mx-auto bg-white rounded-2xl shadow-2xl p-6">
+          <p className="text-sm font-bold text-gray-900 mb-4 text-center">Enter your details below</p>
+          <div className="space-y-3">
+            {form.recommendedFields.slice(0, 4).map((field, i) => (
+              <div key={i}>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{field}</label>
+                <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-400">
+                  Enter your {field.toLowerCase()}…
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="mt-5 w-full rounded-xl bg-purple-600 py-3 text-sm font-black text-white tracking-wide flex items-center justify-center gap-2">
+            {form.ctaButtonText} <ArrowRight className="h-4 w-4" />
+          </button>
+          <div className="mt-3 flex items-center justify-center gap-1.5">
+            <svg className="h-3 w-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            <p className="text-[10px] text-gray-400">Your information is 100% secure &amp; never shared.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust strip */}
+      <div className="bg-[#0f0e1f] px-8 py-5 flex flex-wrap items-center justify-center gap-6">
+        {["500+ coaches joined", "100% free challenge", "Cancel anytime"].map((item, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-green-400 shrink-0" />
+            <span className="text-xs text-gray-300">{item}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Social proof */}
+      <div className="bg-slate-50 px-8 py-10">
+        <h3 className="text-base font-black text-gray-900 text-center mb-5">What coaches are saying</h3>
+        <div className="grid sm:grid-cols-3 gap-3 max-w-xl mx-auto">
+          {[
+            { name: "Sarah K.", quote: "Generated my entire funnel in under 5 minutes!", stars: 5 },
+            { name: "Mike T.", quote: "Finally have a professional funnel without the agency cost.", stars: 5 },
+            { name: "Lisa M.", quote: "My opt-in rate went from 12% to 38% overnight.", stars: 5 },
+          ].map((t, i) => (
+            <div key={i} className="rounded-xl bg-white border border-gray-200 p-3">
+              <div className="flex mb-1">
+                {[...Array(t.stars)].map((_, j) => (
+                  <Star key={j} className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-600 italic mb-2">&quot;{t.quote}&quot;</p>
+              <p className="text-[10px] font-bold text-gray-800">— {t.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Thank You Page Preview ── */
+function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
+  const ty = data.thankYouPage;
+  const concept = data.offerSummary.challengeConcept || "30-Day Challenge";
+
+  return (
+    <div className="font-sans">
+      <NavBar cta="Book Your Call" accentBg="#059669" />
+
+      {/* Hero confirmation */}
+      <div className="text-center px-8 py-14 bg-gradient-to-br from-emerald-950 via-[#0f2a1e] to-[#0f172a]">
+        <div className="flex justify-center mb-5">
+          <div className="relative">
+            <div className="h-20 w-20 rounded-full bg-green-500/20 border-4 border-green-500 flex items-center justify-center">
+              <Check className="h-10 w-10 text-green-400" />
+            </div>
+            <div className="absolute -top-1 -right-1 text-2xl">🎉</div>
+          </div>
+        </div>
+        <span className="inline-block rounded-full bg-green-500/20 border border-green-500/40 px-4 py-1 text-xs font-bold text-green-400 mb-4">
+          You&apos;re In! Welcome to the {concept}
+        </span>
+        <h1 className="text-3xl font-black text-white mb-4 leading-tight max-w-lg mx-auto">
+          {ty.confirmationMessage}
+        </h1>
+        <p className="text-sm text-emerald-300 max-w-md mx-auto">{ty.bookingEncouragement}</p>
+      </div>
+
+      {/* Next steps */}
+      <div className="bg-white px-8 py-10">
+        <div className="max-w-lg mx-auto">
+          <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-2 text-center">What Happens Next</p>
+          <h2 className="text-xl font-black text-gray-900 text-center mb-7">Here&apos;s your next steps</h2>
+          <div className="space-y-4">
+            {ty.nextSteps.map((step, i) => (
+              <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500 text-white font-black text-sm">
+                  {i + 1}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Booking CTA */}
+      <div className="bg-gradient-to-br from-green-600 to-emerald-700 px-8 py-12 text-center">
+        <div className="flex justify-center mb-4">
+          <Calendar className="h-8 w-8 text-white/80" />
+        </div>
+        <h2 className="text-xl font-black text-white mb-2">
+          One more step — book your kick-off call
+        </h2>
+        <p className="text-sm text-green-100 mb-6">{ty.bookingEncouragement}</p>
+        <div className="flex justify-center">
+          <CtaBtn text="Book My Free Call Now" color="white" textColor="#059669" size="lg" />
+        </div>
+        <p className="text-xs text-green-200 mt-3">Calls are 30 minutes • No obligation</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Booking Page Preview ── */
+function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
+  const bk = data.bookingPage;
+  const concept = data.offerSummary.challengeConcept || "30-Day Challenge";
+
+  const dummyDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const dummyDates = ["14", "15", "16", "17", "18"];
+  const dummyTimes = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM"];
+
+  return (
+    <div className="font-sans">
+      <NavBar cta="Schedule Now" accentBg="#b45309" />
+
+      {/* Header */}
+      <div
+        className="px-8 py-10 text-center"
+        style={{ background: "linear-gradient(160deg, #1c0a00 0%, #431407 100%)" }}
+      >
+        <span className="inline-block rounded-full bg-orange-500/20 border border-orange-500/30 px-4 py-1 text-xs font-semibold text-orange-300 mb-4">
+          Almost there — pick a time that works for you
+        </span>
+        <h1 className="text-2xl font-black text-white mb-3 max-w-lg mx-auto leading-tight">
+          Book Your Free {concept} Strategy Call
+        </h1>
+        <p className="text-sm text-amber-200 max-w-md mx-auto">{bk.shortIntro}</p>
+      </div>
+
+      {/* Two-column: why book + calendar */}
+      <div className="bg-slate-50 px-6 py-10">
+        <div className="max-w-2xl mx-auto grid sm:grid-cols-2 gap-6">
+
+          {/* Why book */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-3">Why Book a Call</p>
+            <div className="space-y-3">
+              {bk.whyBook.map((reason, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 mt-0.5">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                  <p className="text-sm text-gray-700 leading-snug">{reason}</p>
                 </div>
               ))}
             </div>
-            <CtaButton text={form.ctaButtonText} color={ACCENT_COLORS.optin} />
-          </PageCard>
-
-          <Connector />
-
-          {/* Thank You */}
-          <PageCard step={3} label="Thank You Page" accent={ACCENT_COLORS.thankyou} url="yoursite.com/thank-you">
-            <Tag color={ACCENT_COLORS.thankyou}>Confirmation</Tag>
-            <p className="text-[11px] font-semibold text-gray-800 leading-snug mt-1 line-clamp-2">
-              {ty.confirmationMessage}
-            </p>
-            {ty.nextSteps.slice(0, 2).map((s, i) => (
-              <div key={i} className="flex items-start gap-1 mt-1">
-                <span className="text-green-500 text-[10px] mt-px">✓</span>
-                <p className="text-[10px] text-gray-600 line-clamp-1">{s}</p>
-              </div>
-            ))}
-            <CtaButton text="Book Your Call" color={ACCENT_COLORS.thankyou} />
-          </PageCard>
-
-          <Connector />
-
-          {/* Booking */}
-          <PageCard step={4} label="Booking Page" accent={ACCENT_COLORS.booking} url="yoursite.com/book">
-            <Tag color={ACCENT_COLORS.booking}>Schedule</Tag>
-            <p className="text-[11px] text-gray-700 leading-snug mt-1 line-clamp-3">{bk.shortIntro}</p>
-            {bk.whyBook.slice(0, 2).map((w, i) => (
-              <div key={i} className="flex items-start gap-1 mt-1">
-                <span className="text-amber-500 text-[10px] mt-px">★</span>
-                <p className="text-[10px] text-gray-600 line-clamp-1">{w}</p>
-              </div>
-            ))}
-            <CtaButton text="Pick a Time" color={ACCENT_COLORS.booking} />
-          </PageCard>
-        </div>
-
-        {/* Mobile vertical */}
-        <div className="flex sm:hidden flex-col items-center">
-          <PageCard step={1} label="Landing Page" accent={ACCENT_COLORS.landing} url="yoursite.com/challenge">
-            <Tag color={ACCENT_COLORS.landing}>Headline</Tag>
-            <p className="text-[11px] font-semibold text-gray-800 leading-snug line-clamp-3 mt-1">
-              {lp.headlineOptions[0]}
-            </p>
-            <CtaButton text={lp.ctaText} color={ACCENT_COLORS.landing} />
-          </PageCard>
-          <MobileConnector />
-          <PageCard step={2} label="Opt-in Form" accent={ACCENT_COLORS.optin} url="yoursite.com/optin">
-            <Tag color={ACCENT_COLORS.optin}>Form</Tag>
-            <p className="text-[11px] text-gray-700 leading-snug mt-1 line-clamp-2">{form.formIntroText}</p>
-            <CtaButton text={form.ctaButtonText} color={ACCENT_COLORS.optin} />
-          </PageCard>
-          <MobileConnector />
-          <PageCard step={3} label="Thank You Page" accent={ACCENT_COLORS.thankyou} url="yoursite.com/thank-you">
-            <Tag color={ACCENT_COLORS.thankyou}>Confirmation</Tag>
-            <p className="text-[11px] font-semibold text-gray-800 leading-snug mt-1 line-clamp-2">
-              {ty.confirmationMessage}
-            </p>
-            <CtaButton text="Book Your Call" color={ACCENT_COLORS.thankyou} />
-          </PageCard>
-          <MobileConnector />
-          <PageCard step={4} label="Booking Page" accent={ACCENT_COLORS.booking} url="yoursite.com/book">
-            <Tag color={ACCENT_COLORS.booking}>Schedule</Tag>
-            <p className="text-[11px] text-gray-700 leading-snug mt-1 line-clamp-3">{bk.shortIntro}</p>
-            <CtaButton text="Pick a Time" color={ACCENT_COLORS.booking} />
-          </PageCard>
-        </div>
-      </div>
-
-      {/* Follow-up sequences */}
-      <div className="grid gap-5 sm:grid-cols-2">
-
-        {/* Email sequence */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1a56db]/10">
-              <Mail className="h-3.5 w-3.5 text-[#1a56db]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Email Sequence</p>
-              <p className="text-[11px] text-gray-500">5-email nurture flow</p>
+            <div className="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-3">
+              <p className="text-xs text-amber-800 leading-relaxed">{bk.expectationSetting}</p>
             </div>
           </div>
-          <div>
-            {emailItems.map((e, i) => (
-              <EmailCard key={i} index={i} {...e} />
-            ))}
-          </div>
-        </div>
 
-        {/* SMS sequence */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-50">
-              <MessageSquare className="h-3.5 w-3.5 text-green-600" />
+          {/* Calendar mockup */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <button className="text-gray-400 text-sm">‹</button>
+              <span className="text-sm font-bold text-gray-800">March 2026</span>
+              <button className="text-gray-400 text-sm">›</button>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">SMS Sequence</p>
-              <p className="text-[11px] text-gray-500">5-message text flow</p>
+            <div className="grid grid-cols-5 gap-1 mb-3">
+              {dummyDays.map((d) => (
+                <div key={d} className="text-center text-[10px] font-bold text-gray-400">{d}</div>
+              ))}
+              {dummyDates.map((dt, i) => (
+                <button
+                  key={dt}
+                  className={`text-center text-xs rounded-lg py-1.5 font-medium transition-colors ${
+                    i === 2
+                      ? "bg-amber-500 text-white font-bold"
+                      : "bg-gray-50 text-gray-700 hover:bg-amber-50"
+                  }`}
+                >
+                  {dt}
+                </button>
+              ))}
             </div>
-          </div>
-          <div>
-            {smsItems.map((s, i) => (
-              <SmsCard key={i} index={i} {...s} />
-            ))}
+            <p className="text-[11px] font-semibold text-gray-600 mb-2">Available times (EST):</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {dummyTimes.map((t, i) => (
+                <button
+                  key={t}
+                  className={`text-[11px] rounded-lg border py-1.5 font-medium ${
+                    i === 1
+                      ? "bg-amber-500 text-white border-amber-500"
+                      : "border-gray-200 text-gray-600 hover:border-amber-400"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <button className="mt-4 w-full rounded-xl bg-amber-500 py-2.5 text-xs font-black text-white flex items-center justify-center gap-1.5">
+              Confirm My Spot <ChevronRight className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Reassurance footer */}
+      <div className="bg-[#0f172a] px-8 py-6 flex flex-wrap items-center justify-center gap-6">
+        {["Free 30-min call", "No sales pressure", "100% confidential"].map((item, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+            <span className="text-xs text-gray-300">{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Main export ── */
+export function FunnelPreviewSection({ data }: Props) {
+  const [activePage, setActivePage] = useState<PageId>("landing");
+
+  const activePageData = PAGES.find((p) => p.id === activePage)!;
+
+  const pageContent: Record<PageId, React.ReactNode> = {
+    landing:  <LandingPagePreview data={data} />,
+    optin:    <OptInFormPreview data={data} />,
+    thankyou: <ThankYouPreview data={data} />,
+    booking:  <BookingPagePreview data={data} />,
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-base font-bold text-gray-900">Funnel Page Previews</h2>
+        <p className="text-sm text-gray-500 mt-0.5">
+          See what each page will look like once your content is imported into HighLevel.
+        </p>
+      </div>
+
+      {/* Page selector */}
+      <div className="flex flex-wrap gap-2">
+        {PAGES.map((page) => (
+          <button
+            key={page.id}
+            onClick={() => setActivePage(page.id)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all border ${
+              activePage === page.id
+                ? "bg-[#0f172a] text-white border-[#0f172a] shadow-sm"
+                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+            }`}
+          >
+            {page.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Browser preview */}
+      <BrowserFrame url={activePageData.url}>
+        {pageContent[activePage]}
+      </BrowserFrame>
     </div>
   );
 }
