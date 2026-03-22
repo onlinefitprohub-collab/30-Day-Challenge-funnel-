@@ -1,0 +1,31 @@
+import { SignupForm } from "@/components/auth/signup-form";
+import Link from "next/link";
+
+export const metadata = {
+  title: "Sign up | Challenge Funnel in a Box",
+};
+
+export default function SignupPage() {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Generate your funnel free
+        </h1>
+        <p className="mt-2 text-gray-500">
+          Create an account and launch your first challenge in minutes
+        </p>
+      </div>
+      <SignupForm />
+      <p className="mt-6 text-center text-sm text-gray-500">
+        Already have an account?{" "}
+        <Link
+          href="/login"
+          className="font-semibold text-brand-600 hover:text-brand-700"
+        >
+          Log in
+        </Link>
+      </p>
+    </div>
+  );
+}
