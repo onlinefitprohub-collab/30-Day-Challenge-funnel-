@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import type { ProjectRow } from "@/types/project";
@@ -11,8 +11,16 @@ const statusConfig: Record<ProjectRow["status"], { label: string; variant: "draf
   error: { label: "Error", variant: "error" },
 };
 
+function ctaLabel(status: ProjectRow["status"]) {
+  if (status === "complete") return { text: "View results", icon: ArrowRight };
+  if (status === "error") return { text: "Retry", icon: RefreshCw };
+  return { text: "Continue", icon: ArrowRight };
+}
+
 export function ProjectCard({ project }: { project: ProjectRow }) {
   const status = statusConfig[project.status] ?? statusConfig.draft;
+  const cta = ctaLabel(project.status);
+  const Icon = cta.icon;
 
   return (
     <Link
@@ -41,8 +49,8 @@ export function ProjectCard({ project }: { project: ProjectRow }) {
           Created {formatDate(project.created_at)}
         </span>
         <span className="flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 transition-opacity group-hover:opacity-100">
-          {project.status === "complete" ? "View results" : "Continue"}
-          <ArrowRight className="h-3 w-3" />
+          {cta.text}
+          <Icon className="h-3 w-3" />
         </span>
       </div>
     </Link>

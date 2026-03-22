@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Zap, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, Zap, CheckCircle2, AlertCircle, RefreshCw, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -16,6 +16,8 @@ const STEPS_COPY = [
   "Finalising your funnel…",
 ];
 
+const MAX_POLLS = 40; // 40 × 3s = ~2 minutes
+
 interface GeneratingViewProps {
   projectId: string;
   projectName: string;
@@ -24,7 +26,7 @@ interface GeneratingViewProps {
 export function GeneratingView({ projectId, projectName }: GeneratingViewProps) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
-  const [status, setStatus] = useState<"generating" | "complete" | "error">("generating");
+  const [status, setStatus] = useState<"generating" | "complete" | "error" | "timeout">("generating");
   const [pollCount, setPollCount] = useState(0);
 
   // Cycle through copy steps for UX
@@ -39,6 +41,12 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
   // Poll project status every 3 seconds
   useEffect(() => {
     if (status !== "generating") return;
+
+    // Stop polling after MAX_POLLS
+    if (pollCount >= MAX_POLLS) {
+      setStatus("timeout");
+      return;
+    }
 
     const poll = async () => {
       const supabase = createClient();
@@ -94,6 +102,37 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
     );
   }
 
+  if (status === "timeout") {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 mb-4">
+          <Clock className="h-8 w-8 text-amber-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Taking longer than expected</h2>
+        <p className="mt-2 max-w-sm text-gray-500">
+          Generation is still running in the background. Check if your results are ready, or go back and try again.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Button
+            variant="gradient"
+            onClick={() => router.push(`/projects/${projectId}/results`)}
+          >
+            Check results
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard")}
+          >
+            Back to dashboard
+          </Button>
+        </div>
+        <p className="mt-6 text-xs text-gray-400">
+          If results aren&apos;t ready yet, wait a moment and check again.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       {/* Animated icon */}
@@ -127,7 +166,7 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
       </div>
 
       <p className="mt-8 text-xs text-gray-400">
-        This takes about 30 seconds. Don't close this tab.
+        This takes about 30 seconds. Don&apos;t close this tab.
       </p>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, Bell } from "lucide-react";
+import { User, CreditCard } from "lucide-react";
 
 export const metadata = {
   title: "Account Settings | Challenge Funnel in a Box",
@@ -70,22 +70,6 @@ export default async function AccountPage() {
               Unlimited projects, priority generation, and team access will be available in the next release.
             </p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Notifications placeholder */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-gray-500" />
-            <CardTitle className="text-base">Notifications</CardTitle>
-          </div>
-          <CardDescription>Email notification preferences</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500">
-            Notification settings will be available soon.
-          </p>
         </CardContent>
       </Card>
     </div>

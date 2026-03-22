@@ -40,27 +40,28 @@ export function DashboardNav({ user }: { user: User }) {
           </span>
         </Link>
 
-        {/* Nav links */}
-        <nav className="hidden items-center gap-1 md:flex">
+        {/* Nav links — icons always visible, labels hidden on mobile */}
+        <nav className="flex items-center gap-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors sm:px-3",
                 pathname === item.href
                   ? "bg-brand-50 text-brand-700"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               )}
+              title={item.label}
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
+              <item.icon className="h-4 w-4 shrink-0" />
+              <span className="hidden md:block">{item.label}</span>
             </Link>
           ))}
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/projects/new">
             <Button size="sm" variant="gradient">
               <Plus className="h-4 w-4" />
@@ -68,7 +69,7 @@ export function DashboardNav({ user }: { user: User }) {
             </Button>
           </Link>
 
-          <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+          <div className="flex items-center gap-2 border-l border-gray-200 pl-2 sm:pl-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
               {displayName.charAt(0).toUpperCase()}
             </div>
