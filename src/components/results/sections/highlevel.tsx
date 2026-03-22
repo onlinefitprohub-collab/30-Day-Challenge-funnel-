@@ -247,36 +247,56 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     Import complete!
                   </div>
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-1.5">
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
                     {importResult.emailTemplates.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-green-800 mb-1">
+                        <p className="text-xs font-semibold text-green-800 mb-1.5">
                           {importResult.emailTemplates.length} email template{importResult.emailTemplates.length !== 1 ? "s" : ""} created:
                         </p>
-                        <ul className="space-y-0.5">
+                        <ul className="space-y-1">
                           {importResult.emailTemplates.map((t) => (
-                            <li key={t.id} className="flex items-center gap-1.5 text-xs text-green-700">
-                              <Check className="h-3 w-3 text-green-600" />
-                              {t.name}
+                            <li key={t.id} className="flex items-start gap-1.5 text-xs">
+                              <Check className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />
+                              <span className="text-green-800 font-medium">{t.name}</span>
+                              <span className="text-green-600 font-mono ml-auto shrink-0">ID: {t.id}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
-                    {importResult.funnelId && importResult.funnelUrl && (
-                      <a
-                        href={importResult.funnelUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs font-medium text-[#1a56db] hover:underline"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Open your funnel in HighLevel
-                      </a>
+                    {importResult.funnelId && (
+                      <div className="pt-1 border-t border-green-200">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-semibold text-green-800">Funnel created</span>
+                          <span className="text-green-600 font-mono">ID: {importResult.funnelId}</span>
+                        </div>
+                        {importResult.funnelSteps && importResult.funnelSteps.length > 0 && (
+                          <ul className="space-y-0.5 mb-1">
+                            {importResult.funnelSteps.map((s) => (
+                              <li key={s.id} className="flex items-center gap-1.5 text-xs text-green-700">
+                                <Check className="h-3 w-3 text-green-600 shrink-0" />
+                                <span>{s.name}</span>
+                                <span className="text-green-600 font-mono ml-auto">ID: {s.id}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {importResult.funnelUrl && (
+                          <a
+                            href={importResult.funnelUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs font-medium text-[#1a56db] hover:underline"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Open funnel in HighLevel
+                          </a>
+                        )}
+                      </div>
                     )}
                     {importResult.errors.length > 0 && (
-                      <div className="pt-1">
-                        <p className="text-xs text-amber-700 font-medium">Some items had issues:</p>
+                      <div className="pt-1 border-t border-green-200">
+                        <p className="text-xs text-amber-700 font-medium mb-1">Partial issues:</p>
                         {importResult.errors.map((e, i) => (
                           <p key={i} className="text-xs text-amber-600">{e}</p>
                         ))}
