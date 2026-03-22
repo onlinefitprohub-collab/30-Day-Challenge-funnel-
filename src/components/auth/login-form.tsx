@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
+import { loginAction } from "@/app/(auth)/actions";
 import { toast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -32,28 +32,16 @@ export function LoginForm() {
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (error) {
+      const result = await loginAction(data.email, data.password);
+      if (result?.error) {
         toast({
           title: "Login failed",
-          description: error.message,
+          description: result.error,
           variant: "destructive",
         });
-        return;
       }
-
-      window.location.href = "/dashboard";
     } catch {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      // redirect() throws internally in Next.js — this is expected on success
     } finally {
       setIsLoading(false);
     }
