@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
 export async function loginAction(email: string, password: string) {
   const supabase = await createClient();
@@ -11,5 +10,5 @@ export async function loginAction(email: string, password: string) {
     return { error: error.message };
   }
 
-  redirect("/dashboard");
+  return { success: true };
 }

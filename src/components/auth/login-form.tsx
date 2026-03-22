@@ -33,16 +33,24 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       const result = await loginAction(data.email, data.password);
-      if (result?.error) {
+      if (result.error) {
         toast({
           title: "Login failed",
           description: result.error,
           variant: "destructive",
         });
+        setIsLoading(false);
+        return;
       }
-    } catch {
-      // redirect() throws internally in Next.js — this is expected on success
-    } finally {
+      // Session cookies are now set by the server action response.
+      // Use a full-page navigation so the browser sends the cookies with the request.
+      window.location.href = "/dashboard";
+    } catch (err) {
+      toast({
+        title: "Something went wrong",
+        description: "Please try again.",
+        variant: "destructive",
+      });
       setIsLoading(false);
     }
   }
