@@ -37,6 +37,7 @@
   ],
   "host_permissions": [
     "https://app.gohighlevel.com/*",
+    "https://backend.leadconnectorhq.com/*",
     "https://*.replit.dev/*",
     "https://*.replit.app/*",
     "https://*.replit.com/*"

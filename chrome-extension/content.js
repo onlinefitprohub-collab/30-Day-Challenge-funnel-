@@ -1,16 +1,17 @@
-// content.js — Challenge Funnel: inject native HL elements into GHL page builder
-// Runs in the content-script world; communicates with bridge.js via postMessage.
+// content.js — Challenge Funnel: inject native HL elements into GHL page builder.
+// Runs in the content-script (extension) world.
+// Communicates with bridge.js (main world) via window.postMessage.
 
 (function () {
   "use strict";
 
   const HOST_ID = "cf-funnel-host";
 
-  // Detected GHL context from bridge.js
-  let hlContext = { pageId: null, funnelId: null, locationId: null };
+  // Detected GHL context from bridge.js / URL parsing
+  let hlContext = { pageId: null, locationId: null };
   let injecting = false;
 
-  /* ─── Inject bridge.js into main world ──────────────────────────────────── */
+  /* ─── Inject bridge.js into main world ────────────────────────────────── */
   function injectBridge() {
     if (document.getElementById("cf-bridge-script")) return;
     const s = document.createElement("script");
@@ -19,30 +20,30 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
-  /* ─── Listen for bridge.js messages ─────────────────────────────────────── */
+  /* ─── Listen for bridge.js → CONTEXT_DETECTED ─────────────────────────── */
   window.addEventListener("message", (evt) => {
     if (!evt.data || evt.data.source !== "cf-bridge") return;
-    if (evt.data.type !== "CONTEXT_DETECTED") return;
-    const { pageId, funnelId, locationId } = evt.data.payload || {};
-    if (pageId)     hlContext.pageId     = pageId;
-    if (funnelId)   hlContext.funnelId   = funnelId;
-    if (locationId) hlContext.locationId = locationId;
-    updatePanel();
+    if (evt.data.type === "CONTEXT_DETECTED") {
+      const { pageId, locationId } = evt.data.payload || {};
+      if (pageId)     hlContext.pageId     = pageId;
+      if (locationId) hlContext.locationId = locationId;
+      updatePanel();
+    }
   });
 
-  /* ─── Also extract from URL directly ────────────────────────────────────── */
+  /* ─── URL extraction (runs in extension world too) ────────────────────── */
+  // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
   function extractFromUrl(url) {
     try {
-      const u = new URL(url);
-      const locMatch    = u.pathname.match(/\/location\/([A-Za-z0-9]+)/i);
-      const builderMatch = u.pathname.match(/\/funnels\/builder\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)/i);
-      if (locMatch?.[1])      hlContext.locationId = locMatch[1];
-      if (builderMatch?.[2])  hlContext.funnelId   = builderMatch[1];
-      if (builderMatch?.[2])  hlContext.pageId      = builderMatch[2];
+      const m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
+      if (m) {
+        hlContext.locationId = m[1];
+        hlContext.pageId     = m[2];
+      }
     } catch {}
   }
 
-  /* ─── CSS ────────────────────────────────────────────────────────────────── */
+  /* ─── CSS ──────────────────────────────────────────────────────────────── */
   const CSS = `
     :host { all: initial; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -77,14 +78,12 @@
 
     .body { padding: 13px 14px; }
 
-    /* No project state */
     .no-project {
       font-size: 11px; color: #92400e; background: #fff7ed;
       border: 1px solid #fed7aa; border-radius: 8px; padding: 9px 11px;
       line-height: 1.55;
     }
 
-    /* Ready state */
     .ready-page {
       font-size: 11px; color: #1e40af; background: #eff6ff;
       border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 11px;
@@ -92,14 +91,12 @@
     }
     .ready-page strong { font-weight: 700; }
 
-    /* No context warning */
     .no-context {
       font-size: 11px; color: #92400e; background: #fff7ed;
       border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 11px;
       line-height: 1.55; margin-bottom: 10px;
     }
 
-    /* Inject button */
     .inject-btn {
       width: 100%; background: #f97316; color: #fff; border: none; border-radius: 9px;
       padding: 10px 14px; font-size: 13px; font-weight: 800; cursor: pointer;
@@ -113,7 +110,6 @@
 
     .inject-icon { font-size: 14px; }
 
-    /* Status */
     .status {
       margin-top: 9px; border-radius: 8px; padding: 8px 10px;
       font-size: 10px; line-height: 1.55; display: none;
@@ -122,7 +118,6 @@
     .status.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
     .status.warn { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; display: block; }
 
-    /* FAB */
     #fab {
       position: fixed; bottom: 24px; right: 24px; z-index: 2147483647;
       width: 44px; height: 44px; border-radius: 50%;
@@ -136,7 +131,7 @@
     .hidden { display: none !important; }
   `;
 
-  /* ─── Build / update panel ───────────────────────────────────────────────── */
+  /* ─── Build panel ──────────────────────────────────────────────────────── */
   let shadow = null;
 
   function buildPanel() {
@@ -159,7 +154,7 @@
           <button class="close" id="close-btn">−</button>
         </div>
         <div class="body" id="body-content">
-          <div class="no-project" id="no-project">
+          <div class="no-project">
             Open your Challenge Funnel results page, click the extension icon, and select a page to load — then come back here.
           </div>
         </div>
@@ -186,6 +181,7 @@
     booking:  "Booking Page",
   };
 
+  /* ─── Update panel state ───────────────────────────────────────────────── */
   function updatePanel() {
     if (!shadow) return;
 
@@ -201,6 +197,7 @@
 
       const pageLabel = PAGE_LABELS[ready.page] || ready.page;
       const hasCtx    = !!(hlContext.pageId && hlContext.locationId);
+      const hasData   = !!ready.pageData;
 
       let html = `
         <div class="ready-page">
@@ -211,13 +208,21 @@
       if (!hasCtx) {
         html += `
           <div class="no-context">
-            HighLevel page ID not detected yet — try navigating to the builder page first, or open the page in the builder and wait a moment.
+            HighLevel page builder not detected yet — make sure you are on a page builder URL (/page-builder/…).
+          </div>
+        `;
+      } else if (!hasData) {
+        html += `
+          <div class="no-context">
+            Page data not cached — re-open the extension popup and click <strong>Load</strong> on this page again.
           </div>
         `;
       }
 
+      const canInject = hasCtx && hasData;
+
       html += `
-        <button class="inject-btn" id="inject-btn" ${!hasCtx ? "disabled" : ""}>
+        <button class="inject-btn" id="inject-btn" ${!canInject ? "disabled" : ""}>
           <span class="inject-icon">⬇</span>
           Paste into Page Builder
         </button>
@@ -226,73 +231,75 @@
 
       body.innerHTML = html;
 
-      // Update subtitle
       const sub = shadow.getElementById("head-sub");
       if (sub) sub.textContent = ready.challengeConcept || "Challenge Funnel in a Box";
 
       const injectBtn = shadow.getElementById("inject-btn");
-      if (injectBtn && hasCtx) {
+      if (injectBtn && canInject) {
         injectBtn.addEventListener("click", () => doInject(ready, injectBtn));
       }
     });
   }
 
-  /* ─── Perform the inject API call ───────────────────────────────────────── */
+  /* ─── Request bridge.js to perform the injection ──────────────────────── */
+  function requestBridgeInject(pageBuilderId, pageData) {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        window.removeEventListener("message", handler);
+        reject(new Error("Injection timed out — the page builder may not be fully loaded yet."));
+      }, 30000);
+
+      function handler(evt) {
+        if (!evt.data || evt.data.source !== "cf-bridge" || evt.data.type !== "INJECT_RESULT") return;
+        clearTimeout(timeout);
+        window.removeEventListener("message", handler);
+        resolve(evt.data.payload || { success: false, error: "No payload returned" });
+      }
+
+      window.addEventListener("message", handler);
+      window.postMessage({
+        source:  "cf-content",
+        type:    "CF_DO_INJECT",
+        payload: { pageBuilderId, pageData },
+      }, "*");
+    });
+  }
+
+  /* ─── Perform injection ───────────────────────────────────────────────── */
   async function doInject(ready, btn) {
     if (injecting) return;
     injecting = true;
 
-    btn.disabled    = true;
-    btn.textContent = "Injecting…";
+    btn.disabled = true;
+    btn.innerHTML = '<span class="inject-icon">⏳</span> Injecting…';
     clearStatus();
 
     try {
-      // Get HL API key from storage
-      const hlApiKey = await new Promise((resolve) => {
-        chrome.storage.sync.get(["cfHlApiKey"], (s) => resolve(s.cfHlApiKey || null));
-      });
-
-      if (!hlApiKey) {
-        showStatus("err", "No HighLevel API key saved. Click the extension icon → enter your HL Private Integration key → Save.");
-        btn.innerHTML = '<span class="inject-icon">✗</span> No API Key';
+      if (!ready.pageData) {
+        showStatus("err", "Page data not cached — re-open the extension popup and click Load again.");
+        btn.innerHTML = '<span class="inject-icon">✗</span> No page data';
         btn.classList.add("err");
         return;
       }
 
       if (!hlContext.pageId || !hlContext.locationId) {
-        showStatus("err", "Could not detect the HighLevel page ID. Navigate to the builder page first.");
+        showStatus("err", "Page builder not detected — make sure you are on the builder URL.");
         btn.innerHTML = '<span class="inject-icon">✗</span> No page detected';
         btn.classList.add("err");
         return;
       }
 
-      const payload = {
-        projectId:    ready.projectId,
-        projectToken: ready.projectToken,
-        page:         ready.page,
-        hlApiKey,
-        locationId:   hlContext.locationId,
-        pageId:       hlContext.pageId,
-        funnelId:     hlContext.funnelId || undefined,
-      };
+      const result = await requestBridgeInject(hlContext.pageId, ready.pageData);
 
-      const res = await fetch(`${ready.appUrl}/api/highlevel/inject`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-      });
-
-      const json = await res.json().catch(() => ({}));
-
-      if (res.ok && json.success) {
+      if (result.success) {
         btn.innerHTML = '<span class="inject-icon">✓</span> Injected!';
         btn.classList.add("ok");
-        showStatus("info", "Page injected! Refresh the HighLevel builder to see your content.");
+        showStatus("info", "Done! The builder is reloading with your content — it may take a few seconds.");
       } else {
-        const errMsg = json.error || `HTTP ${res.status}`;
+        const msg = result.error || "Unknown error";
         btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
         btn.classList.add("err");
-        showStatus("err", `Injection failed: ${errMsg}`);
+        showStatus("err", `Injection failed: ${msg}`);
       }
     } catch (e) {
       btn.innerHTML = '<span class="inject-icon">✗</span> Error';
@@ -304,8 +311,9 @@
         if (!shadow) return;
         btn.innerHTML = '<span class="inject-icon">⬇</span> Paste into Page Builder';
         btn.classList.remove("ok", "err");
-        btn.disabled  = false;
-      }, 5000);
+        btn.disabled = false;
+        updatePanel();
+      }, 6000);
     }
   }
 
@@ -319,7 +327,7 @@
     if (el) { el.textContent = ""; el.className = "status"; }
   }
 
-  /* ─── Mount ──────────────────────────────────────────────────────────────── */
+  /* ─── Mount ────────────────────────────────────────────────────────────── */
   function mount() {
     if (document.getElementById(HOST_ID)) return;
     injectBridge();
@@ -333,7 +341,7 @@
     mount();
   }
 
-  // Re-check URL on SPA navigation
+  // Re-check on SPA navigation
   const _origPushState = history.pushState;
   history.pushState = function (...args) {
     const result = _origPushState.apply(this, args);

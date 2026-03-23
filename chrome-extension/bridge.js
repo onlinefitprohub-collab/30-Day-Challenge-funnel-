@@ -1,101 +1,160 @@
-// bridge.js — Injected into the HighLevel page (MAIN world) to intercept network
-// and detect the current page/funnel IDs being edited.
-// Communicates back to the content script via window.postMessage.
+// bridge.js — Injected into the HighLevel page (MAIN world).
+// Detects the page-builder context from the URL / window globals,
+// and executes the actual GHL injection using the page's own
+// authenticated HTTP service (revexBackendService) — no API key needed.
+// Communicates with content.js (extension world) via window.postMessage.
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
   window.__cf_bridge_active = true;
 
-  // Patterns that reveal a funnel page ID in the URL
-  const PAGE_ID_PATTERNS = [
-    /\/funnels\/funnel\/page\/([a-zA-Z0-9]+)/i,
-    /\/funnels\/[^/]+\/pages\/([a-zA-Z0-9]+)/i,
-    /\/page-builder\/([a-zA-Z0-9]+)/i,
-    /\/pages\/([a-zA-Z0-9]+)/i,
-    /pageId=([a-zA-Z0-9]+)/i,
-  ];
+  const GHL_API = "https://backend.leadconnectorhq.com";
 
-  const FUNNEL_ID_PATTERNS = [
-    /\/funnels\/([a-zA-Z0-9]+)(?:\/|$)/i,
-    /funnelId=([a-zA-Z0-9]+)/i,
-  ];
-
-  const LOCATION_ID_PATTERNS = [
-    /\/location\/([a-zA-Z0-9]+)/i,
-    /locationId=([a-zA-Z0-9]+)/i,
-  ];
-
-  function extract(url, patterns) {
-    for (const p of patterns) {
-      const m = url.match(p);
-      if (m && m[1]) return m[1];
-    }
+  /* ─── URL parsing ─────────────────────────────────────────────────────── */
+  // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
+  function parseBuilderUrl(url) {
+    try {
+      const m = url.match(/\/location\/([^/]+)\/page-builder\/([^/]+)/i);
+      if (m) return { locationId: m[1], pageBuilderId: m[2] };
+    } catch {}
     return null;
   }
 
-  function emit(pageId, funnelId, locationId, source) {
+  function getLocationId() {
+    // Prefer URL, fall back to GHL's own window.attribution global
+    const parsed = parseBuilderUrl(window.location.href);
+    if (parsed?.locationId) return parsed.locationId;
+    return window?.attribution?.locationId || null;
+  }
+
+  /* ─── Emit context to content.js ─────────────────────────────────────── */
+  function emit(pageBuilderId, locationId, source) {
     window.postMessage({
-      source: "cf-bridge",
-      type: "CONTEXT_DETECTED",
-      payload: { pageId, funnelId, locationId, source },
+      source:  "cf-bridge",
+      type:    "CONTEXT_DETECTED",
+      payload: { pageId: pageBuilderId, locationId, source },
     }, "*");
   }
 
-  // Also try from the current URL immediately
   function checkUrl(url) {
-    const pageId    = extract(url, PAGE_ID_PATTERNS);
-    const funnelId  = extract(url, FUNNEL_ID_PATTERNS);
-    const locationId = extract(url, LOCATION_ID_PATTERNS);
-    if (pageId || locationId) {
-      emit(pageId, funnelId, locationId, "url");
+    const parsed = parseBuilderUrl(url);
+    if (parsed) {
+      emit(parsed.pageBuilderId, parsed.locationId, "url");
+      return;
     }
+    // Not a page-builder URL — try window.attribution as last resort
+    const locId = window?.attribution?.locationId;
+    if (locId) emit(null, locId, "attribution");
   }
 
+  // Run immediately on load
   checkUrl(window.location.href);
 
-  // Intercept fetch
+  /* ─── Intercept fetch/XHR to catch late context clues ─────────────────── */
+  // GHL loads page data via its own axios calls; we watch for any response
+  // that reveals the pageBuilderId so content.js can show the inject button.
+  const PAGE_BUILDER_RE = /\/page-builder\/([^/?]+)/i;
+  const LOCATION_RE     = /\/location\/([^/?]+)/i;
+
   const _origFetch = window.fetch;
-  window.fetch = async function(...args) {
+  window.fetch = async function (...args) {
     const url = typeof args[0] === "string" ? args[0]
-              : args[0] instanceof URL ? args[0].toString()
-              : args[0] instanceof Request ? args[0].url : "";
+              : args[0] instanceof URL      ? args[0].toString()
+              : args[0] instanceof Request  ? args[0].url : "";
 
     const response = await _origFetch.apply(this, args);
 
-    // Check if this is a funnel page call
-    const pageId    = extract(url, PAGE_ID_PATTERNS);
-    const funnelId  = extract(url, FUNNEL_ID_PATTERNS);
-    const locationId = extract(url, LOCATION_ID_PATTERNS);
-
-    if (pageId || (funnelId && locationId)) {
-      emit(pageId, funnelId, locationId, "fetch");
+    const pbMatch  = url.match(PAGE_BUILDER_RE);
+    const locMatch = url.match(LOCATION_RE);
+    if (pbMatch?.[1] || locMatch?.[1]) {
+      emit(pbMatch?.[1] || null, locMatch?.[1] || getLocationId(), "fetch");
     }
 
     return response;
   };
 
-  // Intercept XHR
   const _origOpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-    const urlStr = String(url);
-    const pageId    = extract(urlStr, PAGE_ID_PATTERNS);
-    const funnelId  = extract(urlStr, FUNNEL_ID_PATTERNS);
-    const locationId = extract(urlStr, LOCATION_ID_PATTERNS);
-    if (pageId || (funnelId && locationId)) {
-      emit(pageId, funnelId, locationId, "xhr");
+  XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+    const urlStr   = String(url);
+    const pbMatch  = urlStr.match(PAGE_BUILDER_RE);
+    const locMatch = urlStr.match(LOCATION_RE);
+    if (pbMatch?.[1] || locMatch?.[1]) {
+      emit(pbMatch?.[1] || null, locMatch?.[1] || getLocationId(), "xhr");
     }
     return _origOpen.apply(this, [method, url, ...rest]);
   };
 
-  // Watch for SPA URL changes
+  // Watch SPA navigation
   const _origPushState = history.pushState;
-  history.pushState = function(...args) {
+  history.pushState = function (...args) {
     const result = _origPushState.apply(this, args);
     setTimeout(() => checkUrl(window.location.href), 50);
     return result;
   };
-
   window.addEventListener("popstate", () => {
     setTimeout(() => checkUrl(window.location.href), 50);
   });
+
+  /* ─── GHL HTTP client helper ──────────────────────────────────────────── */
+  // GHL's Vue app exposes its own authenticated axios instance.
+  // Using it means no API key — the session is already there.
+  function getRevex() {
+    try {
+      return document.querySelector("#app")
+        ?.__vue_app__?.config.globalProperties?.revexBackendService ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function ghlPut(path, body) {
+    const revex = getRevex();
+    if (revex) {
+      const res = await revex.put(`${GHL_API}${path}`, body);
+      if (res?.status >= 200 && res?.status < 300) return { ok: true };
+      throw new Error(`GHL API: HTTP ${res?.status}`);
+    }
+    // Fallback: raw fetch (session cookies sent automatically because same-origin domain)
+    const res = await fetch(`${GHL_API}${path}`, {
+      method:      "PUT",
+      credentials: "include",
+      headers:     { "Content-Type": "application/json" },
+      body:        JSON.stringify(body),
+    });
+    if (res.ok) return { ok: true };
+    const text = await res.text().catch(() => "");
+    throw new Error(`GHL API: HTTP ${res.status}${text ? " — " + text.slice(0, 120) : ""}`);
+  }
+
+  /* ─── Handle CF_DO_INJECT from content.js ─────────────────────────────── */
+  window.addEventListener("message", async (evt) => {
+    if (!evt.data || evt.data.source !== "cf-content" || evt.data.type !== "CF_DO_INJECT") return;
+
+    const { pageBuilderId, pageData } = evt.data.payload || {};
+
+    function reply(success, error) {
+      window.postMessage({
+        source:  "cf-bridge",
+        type:    "INJECT_RESULT",
+        payload: { success, error: error || null },
+      }, "*");
+    }
+
+    if (!pageBuilderId || !pageData) {
+      return reply(false, "Missing pageBuilderId or pageData");
+    }
+
+    try {
+      await ghlPut(`/funnels/page/${pageBuilderId}`, pageData);
+
+      // Reload the builder iframe so the new content is visible
+      const iframe = document.querySelector('[name="funnel-builder"]');
+      if (iframe) iframe.src = iframe.src;
+
+      reply(true);
+    } catch (e) {
+      reply(false, e.message);
+    }
+  });
+
 })();

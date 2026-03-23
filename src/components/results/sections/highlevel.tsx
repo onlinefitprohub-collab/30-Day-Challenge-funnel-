@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ExternalLink, Puzzle, Key } from "lucide-react";
+import { Copy, Check, ExternalLink, Puzzle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -111,59 +111,36 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
             },
             {
               n: "2",
-              title: "Add your HL API key in the extension",
-              detail: <span className="flex items-center gap-1"><Key className="h-3 w-3 text-gray-400" /> Click the extension icon → paste your <strong>HighLevel Private Integration key</strong> → click Save.</span>,
+              title: "Load a page from the extension popup",
+              body: "Click the extension icon while on this results page. It auto-detects your project. Click Load next to the page you want (Landing, Opt-In, Thank You, or Booking).",
             },
             {
               n: "3",
-              title: "Load a page from the extension popup",
-              body: "Click the extension icon on this page. It auto-detects your project. Click Load next to the page you want (Landing, Opt-In, Thank You, or Booking).",
-            },
-            {
-              n: "4",
               title: "Open that page in the GHL page builder",
               body: "In HighLevel, go to Sites → Funnels → open your funnel → click Edit on the matching funnel step.",
             },
             {
-              n: "5",
+              n: "4",
               title: "Click \"Paste into Page Builder\"",
-              body: "The extension's orange panel appears in the bottom-right corner of the builder. Click Paste into Page Builder — native sections, columns, headings, and buttons are injected instantly.",
+              body: "The extension's orange panel appears in the bottom-right corner of the builder. Click Paste into Page Builder — native sections, columns, headings, and buttons are injected instantly using your existing HighLevel session.",
             },
             {
-              n: "6",
-              title: "Refresh the builder to see your content",
-              body: "After the success message, refresh the page builder. Your funnel page content appears as fully editable native HighLevel elements.",
+              n: "5",
+              title: "The builder reloads with your content",
+              body: "After the success message the builder refreshes automatically. Your funnel page content appears as fully editable native HighLevel elements.",
             },
-          ].map(({ n, title, body, detail }) => (
+          ].map(({ n, title, body }) => (
             <div key={n} className="flex items-start gap-3">
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1a56db] text-[10px] font-bold text-white mt-0.5">{n}</span>
               <div>
                 <p className="text-sm font-semibold text-gray-800">{title}</p>
                 {body && <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{body}</p>}
-                {detail && <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{detail}</p>}
               </div>
             </div>
           ))}
           <div className="mt-1 rounded-lg border border-green-100 bg-green-50 px-3 py-2.5 text-xs text-green-800">
             <strong>Repeat for each page.</strong> Load → open builder → Paste. Each funnel step gets its own content injected separately.
           </div>
-        </div>
-      </div>
-
-      {/* Where to find your HL API key */}
-      <div className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3.5">
-        <Key className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-        <div className="text-sm text-amber-800">
-          <strong>Finding your HL API key:</strong>{" "}
-          In HighLevel, go to{" "}
-          <a
-            href="https://app.gohighlevel.com/settings/integrations"
-            target="_blank" rel="noopener noreferrer"
-            className="font-semibold underline underline-offset-2 hover:text-amber-600 inline-flex items-center gap-0.5"
-          >
-            Settings → Integrations <ExternalLink className="h-3 w-3" />
-          </a>
-          {" → "}Private Integrations → create or copy your key. Paste it into the extension popup.
         </div>
       </div>
 

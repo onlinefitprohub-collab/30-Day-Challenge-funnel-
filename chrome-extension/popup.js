@@ -1,4 +1,4 @@
-// popup.js — Challenge Funnel Extension: load project → inject native HL elements
+// popup.js — Challenge Funnel Extension: load project → cache page data → inject
 
 const PAGES = ["landing", "optin", "thankyou", "booking"];
 const PAGE_LABELS = {
@@ -9,44 +9,8 @@ const PAGE_LABELS = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await initApiKey();
   await init();
 });
-
-/* ── HL API Key ─────────────────────────────────────────────────────────── */
-
-async function initApiKey() {
-  const stored = await getStoredApiKey();
-  const input  = document.getElementById("api-key-input");
-  const badge  = document.getElementById("api-key-badge");
-  const saveBtn = document.getElementById("api-key-save");
-
-  if (stored) {
-    input.value = stored;
-    badge.style.display = "flex";
-  }
-
-  saveBtn.addEventListener("click", async () => {
-    const key = input.value.trim();
-    if (!key) return;
-    await saveApiKey(key);
-    badge.style.display = "flex";
-    saveBtn.textContent = "✓";
-    setTimeout(() => { saveBtn.textContent = "Save"; }, 1500);
-  });
-}
-
-function getStoredApiKey() {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(["cfHlApiKey"], (s) => resolve(s.cfHlApiKey || null));
-  });
-}
-
-function saveApiKey(key) {
-  return new Promise((resolve) => {
-    chrome.storage.sync.set({ cfHlApiKey: key }, resolve);
-  });
-}
 
 /* ── Project / Init ─────────────────────────────────────────────────────── */
 
@@ -113,15 +77,14 @@ function getReady() {
 }
 
 async function autoSave(appUrl, projectId) {
-  // Fetch inject-token (includes project name + HMAC token) — requires user session cookies
+  // Fetch inject-token (project name) — requires user session cookies on our app
   const tokenUrl = `${appUrl}/api/highlevel/inject-token?projectId=${encodeURIComponent(projectId)}`;
   const tokenRes = await fetch(tokenUrl, { credentials: "include" });
-  if (!tokenRes.ok) throw new Error("Could not fetch project token — are you logged in to the app?");
+  if (!tokenRes.ok) throw new Error("Could not fetch project info — are you logged in to the app?");
   const tokenData = await tokenRes.json();
 
   const project = {
     projectId,
-    projectToken: tokenData.token,
     appUrl,
     challengeConcept: tokenData.projectName || "Challenge Funnel",
     savedAt: Date.now(),
@@ -135,31 +98,31 @@ async function autoSave(appUrl, projectId) {
 /* ── UI states ───────────────────────────────────────────────────────────── */
 
 function showEmpty() {
-  document.getElementById("empty-state").style.display     = "";
-  document.getElementById("saving-state").style.display    = "none";
+  document.getElementById("empty-state").style.display      = "";
+  document.getElementById("saving-state").style.display     = "none";
   document.getElementById("save-error-state").style.display = "none";
-  document.getElementById("library-state").style.display   = "none";
+  document.getElementById("library-state").style.display    = "none";
 }
 
 function showSaving() {
-  document.getElementById("empty-state").style.display     = "none";
-  document.getElementById("saving-state").style.display    = "";
+  document.getElementById("empty-state").style.display      = "none";
+  document.getElementById("saving-state").style.display     = "";
   document.getElementById("save-error-state").style.display = "none";
-  document.getElementById("library-state").style.display   = "none";
+  document.getElementById("library-state").style.display    = "none";
 }
 
 function showSaveError() {
-  document.getElementById("empty-state").style.display     = "none";
-  document.getElementById("saving-state").style.display    = "none";
+  document.getElementById("empty-state").style.display      = "none";
+  document.getElementById("saving-state").style.display     = "none";
   document.getElementById("save-error-state").style.display = "";
-  document.getElementById("library-state").style.display   = "none";
+  document.getElementById("library-state").style.display    = "none";
 }
 
 function showLibrary(cached, justSaved, ready) {
-  document.getElementById("empty-state").style.display     = "none";
-  document.getElementById("saving-state").style.display    = "none";
+  document.getElementById("empty-state").style.display      = "none";
+  document.getElementById("saving-state").style.display     = "none";
   document.getElementById("save-error-state").style.display = "none";
-  document.getElementById("library-state").style.display   = "";
+  document.getElementById("library-state").style.display    = "";
 
   document.getElementById("project-name").textContent = cached.challengeConcept || "Challenge Funnel";
 
@@ -169,10 +132,8 @@ function showLibrary(cached, justSaved, ready) {
     setTimeout(() => banner.classList.remove("show"), 5000);
   }
 
-  // Show loaded badge if a page is ready
   refreshLoadedBadge(ready);
 
-  // Change / clear button
   document.getElementById("change-btn").addEventListener("click", async () => {
     await new Promise((resolve) => chrome.storage.local.remove(["cfProject", "cfReady"], resolve));
     document.getElementById("library-state").style.display = "none";
@@ -197,12 +158,10 @@ function showLibrary(cached, justSaved, ready) {
     }
   });
 
-  // Load buttons
   document.querySelectorAll(".load-btn").forEach((btn) => {
     btn.addEventListener("click", () => loadPage(btn.dataset.page, btn, cached));
   });
 
-  // Highlight already-loaded page if any
   if (ready) highlightCard(ready.page);
 }
 
@@ -233,26 +192,48 @@ function highlightCard(page) {
   });
 }
 
-async function loadPage(page, _btn, cached) {
-  const ready = {
-    projectId:        cached.projectId,
-    projectToken:     cached.projectToken,
-    appUrl:           cached.appUrl,
-    challengeConcept: cached.challengeConcept,
-    page,
-    loadedAt: Date.now(),
-  };
+async function loadPage(page, btn, cached) {
+  const origText = btn.textContent;
+  btn.disabled   = true;
+  btn.textContent = "Loading…";
 
-  await new Promise((resolve) => {
-    chrome.storage.local.set({ cfReady: ready }, resolve);
-  });
+  try {
+    // Pre-fetch the native GHL element JSON from our app (requires session cookie on our app)
+    const pdUrl = `${cached.appUrl}/api/highlevel/page-data?projectId=${encodeURIComponent(cached.projectId)}&page=${encodeURIComponent(page)}`;
+    const pdRes = await fetch(pdUrl, { credentials: "include" });
+    if (!pdRes.ok) throw new Error(`HTTP ${pdRes.status} — are you logged in to the app?`);
+    const pdJson = await pdRes.json();
 
-  highlightCard(page);
-  refreshLoadedBadge(ready);
+    if (!pdJson.pageData) throw new Error("No page data returned from the app");
 
-  showNote("info",
-    `${PAGE_LABELS[page]} is loaded!\n\nNow open that page in the HighLevel builder — the extension will show a "Paste into Page Builder" button.`
-  );
+    const ready = {
+      projectId:        cached.projectId,
+      appUrl:           cached.appUrl,
+      challengeConcept: cached.challengeConcept,
+      page,
+      pageData:         pdJson.pageData,
+      loadedAt:         Date.now(),
+    };
+
+    await new Promise((resolve) => {
+      chrome.storage.local.set({ cfReady: ready }, resolve);
+    });
+
+    highlightCard(page);
+    refreshLoadedBadge(ready);
+
+    showNote("info",
+      `${PAGE_LABELS[page]} is loaded!\n\nNow open that page in the HighLevel builder — the extension panel will show a "Paste into Page Builder" button.`
+    );
+  } catch (e) {
+    showNote("err", `Could not load page data: ${e.message}`);
+    btn.textContent = origText;
+  } finally {
+    btn.disabled = false;
+    // Re-apply highlight in case it changed
+    const ready = await getReady();
+    if (ready) highlightCard(ready.page);
+  }
 }
 
 function showNote(type, msg) {
