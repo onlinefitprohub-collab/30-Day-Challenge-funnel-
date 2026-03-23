@@ -14,11 +14,6 @@ import {
   type GhlPageData,
 } from "./ghl-pagedata";
 
-export interface HLEmailTemplate {
-  id: string;
-  name: string;
-}
-
 export interface HLFunnelStep {
   id: string;
   name: string;
@@ -27,37 +22,12 @@ export interface HLFunnelStep {
 }
 
 export interface HLImportResult {
-  emailTemplates: HLEmailTemplate[];
-  emailApiUnavailable?: boolean;
   funnelId?: string;
   funnelUrl?: string;
   funnelSteps?: HLFunnelStep[];
   nativePages?: { stepName: string; written: boolean }[];
   errors: string[];
 }
-
-const EMAIL_KEYS = [
-  "welcome",
-  "reminder",
-  "objectionHandling",
-  "lastChance",
-  "reEngagement",
-] as const;
-
-const EMAIL_TEMPLATE_NAMES: Record<(typeof EMAIL_KEYS)[number], string> = {
-  welcome:           "Welcome Email",
-  reminder:          "Reminder Email",
-  objectionHandling: "Objection Handling Email",
-  lastChance:        "Last Chance Email",
-  reEngagement:      "Re-engagement Email",
-};
-
-const EMAIL_TEMPLATE_PATHS = [
-  "/email-templates",
-  "/email-templates/",
-  "/email/",
-  "/email",
-];
 
 function extractId(data: Record<string, unknown>, ...nestedKeys: string[]): string | undefined {
   for (const key of nestedKeys) {
@@ -78,39 +48,6 @@ function extractPageId(data: Record<string, unknown>): string | undefined {
     if (sp?.id) return sp.id as string;
   }
   return undefined;
-}
-
-async function tryCreateEmailTemplate(
-  locationId: string,
-  apiKey: string,
-  name: string,
-  subject: string,
-  body: string,
-): Promise<{ id: string; notFound?: boolean } | null> {
-  const payload = { locationId, name, subject, body };
-
-  for (const path of EMAIL_TEMPLATE_PATHS) {
-    try {
-      const res = await hlFetch(path, apiKey, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const data = (await res.json()) as Record<string, unknown>;
-        const id = extractId(data, "template", "emailTemplate") ?? name;
-        return { id };
-      }
-
-      if (res.status === 404) continue;
-
-      return { id: name, notFound: false };
-    } catch {
-      // Network error — try next path
-    }
-  }
-
-  return { id: "", notFound: true };
 }
 
 async function tryCreateFunnelStep(
@@ -210,34 +147,10 @@ export async function importToHighLevel(
   assets: GeneratedFunnelAssets,
 ): Promise<HLImportResult> {
   const result: HLImportResult = {
-    emailTemplates: [],
     errors: [],
   };
 
-  // ── Step 1: Email templates ───────────────────────────────────────────────
-  let notFoundCount = 0;
-
-  for (const key of EMAIL_KEYS) {
-    const email   = assets.emailSequence[key];
-    const name    = EMAIL_TEMPLATE_NAMES[key];
-    const htmlBody = email.body.replace(/\n/g, "<br/>");
-
-    const outcome = await tryCreateEmailTemplate(locationId, apiKey, name, email.subject, htmlBody);
-
-    if (outcome?.notFound) {
-      notFoundCount++;
-    } else if (outcome?.id && !outcome.notFound) {
-      result.emailTemplates.push({ id: outcome.id, name });
-    } else {
-      result.errors.push(`"${name}": failed to create`);
-    }
-  }
-
-  if (notFoundCount === EMAIL_KEYS.length) {
-    result.emailApiUnavailable = true;
-  }
-
-  // ── Step 2: Funnel creation ───────────────────────────────────────────────
+  // ── Step 1: Funnel creation ───────────────────────────────────────────────
   let funnelId: string | undefined;
   try {
     const funnelName = assets.offerSummary?.challengeConcept ?? "30-Day Challenge Funnel";
@@ -266,7 +179,7 @@ export async function importToHighLevel(
     );
   }
 
-  // ── Step 3: Funnel steps + native pageData ────────────────────────────────
+  // ── Step 2: Funnel steps + native pageData ────────────────────────────────
   if (funnelId) {
     const steps: HLFunnelStep[] = [];
     const nativePages: { stepName: string; written: boolean }[] = [];

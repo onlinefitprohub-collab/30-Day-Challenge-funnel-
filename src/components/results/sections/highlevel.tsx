@@ -123,7 +123,7 @@ function GhlDownloadPanel({ data }: { data: GeneratedFunnelAssets }) {
               <Download className="h-3.5 w-3.5" />
               Download GHL Funnel JSON
             </button>
-            <span className="text-xs text-gray-400">4 pages · 5 emails · ad copy</span>
+            <span className="text-xs text-gray-400">4 funnel pages · full HTML bodies</span>
           </div>
         </div>
       </div>
@@ -135,12 +135,12 @@ type ImportState = "idle" | "importing" | "success" | "error";
 
 const PROGRESS_STEPS = [
   "Connecting to HighLevel…",
-  "Creating email templates…",
-  "Creating email templates… (2/5)",
-  "Creating email templates… (3/5)",
-  "Creating email templates… (4/5)",
-  "Creating email templates… (5/5)",
   "Creating funnel…",
+  "Building landing page…",
+  "Building opt-in page…",
+  "Building thank-you page…",
+  "Building booking page…",
+  "Writing native page elements…",
   "Wrapping up…",
 ];
 
@@ -207,18 +207,14 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
 
       setImportResult(json);
 
-      if (json.emailApiUnavailable) {
-        // Email Template API not accessible for this HL plan/account type
+      if (json.funnelId) {
         setImportState("success");
-        toast({
-          title: "HighLevel connected",
-          description: "Email Template API not available for your plan — use the paste guide below.",
-        });
-      } else if (json.emailTemplates.length > 0 || json.funnelId) {
-        setImportState("success");
+        const nativeCount = json.nativePages?.filter((p) => p.written).length ?? 0;
         toast({
           title: "Imported to HighLevel!",
-          description: `${json.emailTemplates.length} email template${json.emailTemplates.length !== 1 ? "s" : ""} created.`,
+          description: nativeCount > 0
+            ? `Funnel created with ${nativeCount} native page${nativeCount !== 1 ? "s" : ""}.`
+            : "Funnel created in HighLevel.",
         });
       } else if (json.errors.length > 0) {
         setImportError(json.errors[0]);
@@ -247,9 +243,9 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
             <Zap className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[#1a56db]">One-click HighLevel Import</p>
+            <p className="font-semibold text-[#1a56db]">Push to HighLevel — Native Pages</p>
             <p className="mt-0.5 text-sm text-gray-600">
-              Push all 5 email templates and 4 native funnel pages directly into your HighLevel account. Connect your credentials in{" "}
+              Create your funnel and push all 4 pages as native editable elements directly into your HighLevel account. Connect your credentials in{" "}
               <Link href="/account" className="underline underline-offset-2 hover:text-[#1a56db]">
                 Account Settings
               </Link>{" "}
@@ -293,49 +289,19 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
               {/* Success */}
               {importState === "success" && importResult && (
                 <div className="space-y-3">
-                  {importResult.emailApiUnavailable ? (
-                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-                      <AlertCircle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
-                      <div className="text-sm text-amber-800">
-                        <p className="font-semibold">Email Template API not available for your plan</p>
-                        <p className="mt-0.5 text-xs text-amber-700">
-                          HighLevel restricts programmatic email template creation to certain plans.
-                          Use the paste guide below to copy each email into HighLevel manually — all content is ready to go.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      Import complete!
-                    </div>
-                  )}
-                  {!importResult.emailApiUnavailable && (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Import complete!
+                  </div>
                   <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
-                    {importResult.emailTemplates.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-green-800 mb-1.5">
-                          {importResult.emailTemplates.length} email template{importResult.emailTemplates.length !== 1 ? "s" : ""} created:
-                        </p>
-                        <ul className="space-y-1">
-                          {importResult.emailTemplates.map((t) => (
-                            <li key={t.id} className="flex items-start gap-1.5 text-xs">
-                              <Check className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />
-                              <span className="text-green-800 font-medium">{t.name}</span>
-                              <span className="text-green-600 font-mono ml-auto shrink-0">ID: {t.id}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                     {importResult.funnelId && (
-                      <div className="pt-1 border-t border-green-200">
-                        <div className="flex items-center justify-between text-xs mb-1">
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1.5">
                           <span className="font-semibold text-green-800">Funnel created</span>
                           <span className="text-green-600 font-mono">ID: {importResult.funnelId}</span>
                         </div>
                         {importResult.funnelSteps && importResult.funnelSteps.length > 0 && (
-                          <ul className="space-y-0.5 mb-1">
+                          <ul className="space-y-0.5 mb-1.5">
                             {importResult.funnelSteps.map((s) => (
                               <li key={s.id} className="flex items-center gap-1.5 text-xs text-green-700">
                                 <Check className="h-3 w-3 text-green-600 shrink-0" />
@@ -345,14 +311,13 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
                                     native elements
                                   </span>
                                 )}
-                                <span className="text-green-600 font-mono ml-auto">ID: {s.id}</span>
                               </li>
                             ))}
                           </ul>
                         )}
                         {importResult.nativePages && importResult.nativePages.some((p) => !p.written) && (
                           <p className="text-xs text-amber-600 mt-1">
-                            ⚠ Some native page elements couldn&apos;t be written — use the JSON download below as a fallback.
+                            ⚠ Some native page elements couldn&apos;t be written — download the JSON below as a fallback.
                           </p>
                         )}
                         {importResult.funnelUrl && (
@@ -369,7 +334,7 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
                       </div>
                     )}
                     {importResult.errors.length > 0 && (
-                      <div className="pt-1 border-t border-green-200">
+                      <div className={importResult.funnelId ? "pt-1 border-t border-green-200" : ""}>
                         <p className="text-xs text-amber-700 font-medium mb-1">Partial issues:</p>
                         {importResult.errors.map((e, i) => (
                           <p key={i} className="text-xs text-amber-600">{e}</p>
@@ -377,7 +342,6 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
                       </div>
                     )}
                   </div>
-                  )}
                   <button
                     onClick={() => { setImportState("idle"); setImportResult(null); }}
                     className="text-xs text-[#1a56db] underline underline-offset-2 hover:text-[#1245b5]"
