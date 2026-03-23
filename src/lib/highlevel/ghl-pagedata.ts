@@ -1,5 +1,26 @@
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
+// ── Colour Scheme ──────────────────────────────────────────────────────────
+
+interface SchemeColors {
+  primary: string;
+  dark: string;
+  mid: string;
+  accent: string;
+}
+
+const COLOUR_SCHEMES: Record<string, SchemeColors> = {
+  "navy-orange":  { primary: "#f97316", dark: "#0f172a", mid: "#1e293b", accent: "#ea580c" },
+  "rose-pink":    { primary: "#ec4899", dark: "#1a0010", mid: "#2d0420", accent: "#be185d" },
+  "teal-forest":  { primary: "#14b8a6", dark: "#0a1f1e", mid: "#0f2f2e", accent: "#0d9488" },
+  "purple-lilac": { primary: "#a855f7", dark: "#1a0a2e", mid: "#2d1069", accent: "#9333ea" },
+  "sky-blue":     { primary: "#38bdf8", dark: "#0f1b2d", mid: "#1e3a5f", accent: "#0ea5e9" },
+};
+
+function getScheme(key?: string): SchemeColors {
+  return COLOUR_SCHEMES[key ?? "navy-orange"] ?? COLOUR_SCHEMES["navy-orange"];
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────
 
 type SV = { value: string | number; unit?: string };
@@ -235,6 +256,7 @@ function sec(b: Builder, n: GhlNode): void   { b.sections.push(n); }
 
 export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
+  const s       = getScheme(data.colourScheme);
   const lp      = data.landingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
@@ -242,7 +264,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   {
     const badge = el(b, makeParagraph(
       `🔥 Limited Spots — ${concept}`,
-      { color: ss("#fb923c"), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
+      { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     ));
     const h1 = el(b, makeHeadline(
       lp.headlineOptions[0] ?? `Join the Free ${concept}`,
@@ -257,7 +279,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const cta = el(b, makeButton(
       `${lp.ctaText} →`, "next-step", "",
-      { backgroundColor: ss("#f97316"), boxShadow: ss("0 12px 32px rgba(249,115,22,0.45)") },
+      { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}66`) },
     ));
     const elIds = [badge, h1, sub, cta];
     if (lp.urgencyIdeas[0]) {
@@ -269,7 +291,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     const c = co(b, makeCol(elIds, 100, { align: "center", padH: 32 }));
     const r = ro(b, makeRow([c], 860, 0));
     sec(b, makeSection([r], {
-      bg: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%)",
+      bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`,
       ptD: 108, pbD: 108, ptM: 64, pbM: 64,
     }));
   }
@@ -282,7 +304,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const sep = el(b, makeParagraph(
       "·",
-      { color: ss("#334155"), fontSize: sv(20), textAlign: ss("center") },
+      { color: ss("rgba(255,255,255,0.2)"), fontSize: sv(20), textAlign: ss("center") },
     ));
     const promise = el(b, makeParagraph(
       `✓  ${data.offerSummary.corePromise}`,
@@ -290,7 +312,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const sep2 = el(b, makeParagraph(
       "·",
-      { color: ss("#334155"), fontSize: sv(20), textAlign: ss("center") },
+      { color: ss("rgba(255,255,255,0.2)"), fontSize: sv(20), textAlign: ss("center") },
     ));
     const noCard = el(b, makeParagraph(
       "✓  No credit card required",
@@ -303,7 +325,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     const c5 = co(b, makeCol([noCard],  33, { align: "center" }));
     const r  = ro(b, makeRow([c1, c2, c3, c4, c5], 1200, 24));
     sec(b, makeSection([r], {
-      bgColor: "#1e293b", ptD: 20, pbD: 20, ptM: 16, pbM: 16,
+      bgColor: s.mid, ptD: 20, pbD: 20, ptM: 16, pbM: 16,
     }));
   }
 
@@ -311,7 +333,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   {
     const eyebrow = el(b, makeParagraph(
       "What You'll Get",
-      { color: ss("#f97316"), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
+      { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
     ));
     const h2 = el(b, makeHeadline(
       "Everything you need to succeed in 30 days",
@@ -330,7 +352,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
       const colWidth   = Math.floor(100 / rowBullets.length);
       const colIds = rowBullets.map((b_text) => {
         const icon = el(b, makeParagraph("✓", {
-          color: ss("#22c55e"), fontSize: sv(20), fontWeight: ss("900"), paddingBottom: sv(6),
+          color: ss(s.primary), fontSize: sv(20), fontWeight: ss("900"), paddingBottom: sv(6),
         }));
         const txt = el(b, makeParagraph(b_text, {
           color: ss("#374151"), fontSize: sv(15), lineHeight: ss("1.6"),
@@ -382,12 +404,12 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const cta = el(b, makeButton(
       `${lp.ctaText} →`, "next-step", "",
-      { backgroundColor: ss("#ffffff"), color: ss("#f97316"), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") },
+      { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") },
     ));
     const c = co(b, makeCol([h2, urgency, cta], 100, { align: "center", padH: 32 }));
     const r = ro(b, makeRow([c], 640));
     sec(b, makeSection([r], {
-      bg: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+      bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`,
       ptD: 88, pbD: 88,
     }));
   }
@@ -399,12 +421,13 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
 export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
+  const s       = getScheme(data.colourScheme);
   const form    = data.optInForm;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
   const badge = el(b, makeParagraph(
     "Step 1 of 2 — Claim Your Free Spot",
-    { color: ss("#c4b5fd"), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
+    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
   ));
   const h1 = el(b, makeHeadline(
     `Join the ${concept} — Free`,
@@ -414,18 +437,18 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
   ));
   const intro = el(b, makeParagraph(
     form.formIntroText,
-    { color: ss("#c4b5fd"), fontSize: sv(16), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(460), marginLeft: ss("auto"), marginRight: ss("auto"), paddingBottom: sv(32) },
+    { color: ss("rgba(255,255,255,0.75)"), fontSize: sv(16), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(460), marginLeft: ss("auto"), marginRight: ss("auto"), paddingBottom: sv(32) },
   ));
   const formEl = el(b, makeForm());
   const trust = el(b, makeParagraph(
     "🔒  Secure · No credit card · Cancel anytime",
-    { color: ss("rgba(196,181,253,0.7)"), fontSize: sv(12), textAlign: ss("center"), paddingTop: sv(16) },
+    { color: ss("rgba(255,255,255,0.5)"), fontSize: sv(12), textAlign: ss("center"), paddingTop: sv(16) },
   ));
 
   const c = co(b, makeCol([badge, h1, intro, formEl, trust], 100, { align: "center", padH: 32 }));
   const r = ro(b, makeRow([c], 480));
   sec(b, makeSection([r], {
-    bg: "linear-gradient(160deg, #1e1b4b 0%, #312e81 60%, #1e1b4b 100%)",
+    bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 60%, ${s.dark} 100%)`,
     ptD: 88, pbD: 88, ptM: 56, pbM: 56,
   }));
 
@@ -436,6 +459,7 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
 
 export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
+  const s       = getScheme(data.colourScheme);
   const ty      = data.thankYouPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
@@ -443,7 +467,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
   {
     const badge = el(b, makeParagraph(
       `🎉  You're in — Welcome to the ${concept}`,
-      { color: ss("#4ade80"), fontSize: sv(13), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
+      { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     ));
     const h1 = el(b, makeHeadline(
       ty.confirmationMessage,
@@ -453,12 +477,12 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     ));
     const sub = el(b, makeParagraph(
       ty.bookingEncouragement,
-      { color: ss("#86efac"), fontSize: sv(17), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(540), marginLeft: ss("auto"), marginRight: ss("auto") },
+      { color: ss("rgba(255,255,255,0.75)"), fontSize: sv(17), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(540), marginLeft: ss("auto"), marginRight: ss("auto") },
     ));
     const c = co(b, makeCol([badge, h1, sub], 100, { align: "center", padH: 32 }));
     const r = ro(b, makeRow([c], 880));
     sec(b, makeSection([r], {
-      bg: "linear-gradient(160deg, #052e16 0%, #14532d 60%, #052e16 100%)",
+      bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 60%, ${s.dark} 100%)`,
       ptD: 100, pbD: 100, ptM: 64, pbM: 64,
     }));
   }
@@ -467,7 +491,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
   {
     const eyebrow = el(b, makeParagraph(
       "What Happens Next",
-      { color: ss("#22c55e"), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
+      { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
     ));
     const h2 = el(b, makeHeadline(
       "Here's your next steps",
@@ -480,7 +504,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
         color: ss("#374151"), fontSize: sv(15), lineHeight: ss("1.65"),
         paddingTop: sv(16), paddingBottom: sv(16),
         paddingLeft: sv(20), paddingRight: sv(20),
-        backgroundColor: ss("#f0fdf4"),
+        backgroundColor: ss("#f8fafc"),
         borderRadius: sv(12),
         marginBottom: sv(10),
       })),
@@ -504,12 +528,12 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     ));
     const cta = el(b, makeButton(
       "Book My Free Call →", "next-step", "",
-      { backgroundColor: ss("#ffffff"), color: ss("#16a34a"), boxShadow: ss("0 8px 24px rgba(0,0,0,0.15)") },
+      { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.15)") },
     ));
     const c = co(b, makeCol([h2, sub, cta], 100, { align: "center", padH: 32 }));
     const r = ro(b, makeRow([c], 640));
     sec(b, makeSection([r], {
-      bg: "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
+      bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`,
       ptD: 80, pbD: 80,
     }));
   }
@@ -521,6 +545,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 
 export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
+  const s       = getScheme(data.colourScheme);
   const bk      = data.bookingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
@@ -528,7 +553,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   {
     const badge = el(b, makeParagraph(
       "Almost there — pick a time that works for you",
-      { color: ss("#fb923c"), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
+      { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     ));
     const h1 = el(b, makeHeadline(
       `Book Your Free ${concept} Strategy Call`,
@@ -538,12 +563,12 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const sub = el(b, makeParagraph(
       bk.shortIntro,
-      { color: ss("#fcd34d"), fontSize: sv(16), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(520), marginLeft: ss("auto"), marginRight: ss("auto"), opacity: ss("0.9") },
+      { color: ss("rgba(255,255,255,0.75)"), fontSize: sv(16), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(520), marginLeft: ss("auto"), marginRight: ss("auto") },
     ));
     const c = co(b, makeCol([badge, h1, sub], 100, { align: "center", padH: 32 }));
     const r = ro(b, makeRow([c], 800));
     sec(b, makeSection([r], {
-      bg: "linear-gradient(160deg, #1c0a00 0%, #431407 60%, #1c0a00 100%)",
+      bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 60%, ${s.dark} 100%)`,
       ptD: 88, pbD: 88, ptM: 56, pbM: 56,
     }));
   }
@@ -552,7 +577,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   {
     const whyLabel = el(b, makeParagraph(
       "Why Book a Call",
-      { color: ss("#d97706"), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(16) },
+      { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(16) },
     ));
     const whyItems = bk.whyBook.map((reason) =>
       el(b, makeParagraph(`✓  ${reason}`, {
@@ -561,11 +586,11 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const expectLabel = el(b, makeParagraph(
       "What to expect on the call",
-      { color: ss("#92400e"), fontSize: sv(13), fontWeight: ss("700"), paddingTop: sv(20), paddingBottom: sv(6) },
+      { color: ss(s.accent), fontSize: sv(13), fontWeight: ss("700"), paddingTop: sv(20), paddingBottom: sv(6) },
     ));
     const expectText = el(b, makeParagraph(
       bk.expectationSetting,
-      { color: ss("#b45309"), fontSize: sv(13), lineHeight: ss("1.6") },
+      { color: ss("#374151"), fontSize: sv(13), lineHeight: ss("1.6") },
     ));
     const trustItems = ["Free 30-minute call", "No sales pressure", "100% confidential"].map((t) =>
       el(b, makeParagraph(`✓  ${t}`, {
@@ -594,7 +619,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const confirmBtn = el(b, makeButton(
       "Confirm My Spot →", "next-step", "",
-      { backgroundColor: ss("#d97706"), marginTop: ss("20px") },
+      { backgroundColor: ss(s.primary), marginTop: ss("20px") },
     ));
     const calMicro = el(b, makeParagraph(
       "You'll receive a confirmation email immediately after booking.",
@@ -617,7 +642,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     const cols = items.map((id) => co(b, makeCol([id], 33, { align: "center" })));
     const r = ro(b, makeRow(cols, 720, 24));
     sec(b, makeSection([r], {
-      bgColor: "#0f172a", ptD: 24, pbD: 24, ptM: 20, pbM: 20,
+      bgColor: s.dark, ptD: 24, pbD: 24, ptM: 20, pbM: 20,
     }));
   }
 

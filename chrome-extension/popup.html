@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CF Funnel — Inject</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #f97316;
+      --dark:   #0f172a;
+      --mid:    #1e293b;
+      --light:  #f8fafc;
+      --border: #e2e8f0;
+      --text:   #0f172a;
+      --muted:  #64748b;
+      --green:  #22c55e;
+      --red:    #ef4444;
+    }
+
+    body {
+      width: 380px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo {
+      width: 32px; height: 32px;
+      background: var(--orange);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: #fff;
+    }
+    .header-title { color: #fff; font-weight: 700; font-size: 15px; }
+    .header-sub   { color: rgba(255,255,255,0.55); font-size: 11px; margin-top: 1px; }
+    .settings-btn {
+      background: rgba(255,255,255,0.1);
+      border: none; border-radius: 6px;
+      padding: 6px 10px; cursor: pointer; color: rgba(255,255,255,0.8);
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .settings-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Nav ─────────────────────────────────── */
+    .nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-btn {
+      flex: 1; padding: 10px; background: none; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-btn.active {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+
+    /* ── Panels ──────────────────────────────── */
+    .panel { padding: 16px 20px; display: none; }
+    .panel.active { display: block; }
+
+    /* ── Context card ────────────────────────── */
+    .context-card {
+      background: var(--light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .context-row {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; margin-bottom: 4px;
+    }
+    .context-row:last-child { margin-bottom: 0; }
+    .context-label { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
+    .context-value { color: var(--text); font-family: monospace; font-size: 11px; word-break: break-all; max-width: 210px; text-align: right; }
+    .context-value.ok   { color: #16a34a; }
+    .context-value.warn { color: #d97706; }
+    .context-value.bad  { color: var(--red); }
+
+    /* ── Page injection grid ─────────────────── */
+    .pages-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px;
+    }
+    .page-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--light); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+    }
+    .page-info { flex: 1; }
+    .page-name { font-weight: 700; font-size: 13px; color: var(--text); }
+    .page-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .inject-btn {
+      background: var(--orange); color: #fff;
+      border: none; border-radius: 6px;
+      padding: 7px 14px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      min-width: 72px; text-align: center;
+    }
+    .inject-btn:hover:not(:disabled) { background: #ea580c; transform: translateY(-1px); }
+    .inject-btn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+    .inject-btn.success { background: var(--green); }
+    .inject-btn.error   { background: var(--red); }
+
+    /* ── Page ID input ───────────────────────── */
+    .page-id-row {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+    }
+    .page-id-label { font-size: 11px; font-weight: 700; color: #92400e; margin-bottom: 6px; }
+    .page-id-note  { font-size: 10px; color: #b45309; margin-top: 4px; line-height: 1.4; }
+    .inp {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 12px; font-family: monospace; background: #fff;
+      outline: none;
+    }
+    .inp:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(249,115,22,0.12); }
+
+    /* ── Status ──────────────────────────────── */
+    .status-box {
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 12px; line-height: 1.5; margin-top: 12px;
+      display: none;
+    }
+    .status-box.info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; display: block; }
+    .status-box.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; display: block; }
+    .status-box.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; display: block; }
+
+    /* ── Settings panel ──────────────────────── */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .field small  { display: block; font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+    .save-btn {
+      width: 100%; background: var(--orange); color: #fff;
+      border: none; border-radius: 8px; padding: 11px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .save-btn:hover { background: #ea580c; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    .not-on-hl {
+      text-align: center; padding: 32px 20px; color: var(--muted);
+    }
+    .not-on-hl .icon { font-size: 36px; margin-bottom: 12px; }
+    .not-on-hl h3 { font-size: 15px; color: var(--text); margin-bottom: 6px; }
+    .not-on-hl p  { font-size: 12px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">CF</div>
+    <div>
+      <div class="header-title">Challenge Funnel</div>
+      <div class="header-sub">HighLevel Page Injector</div>
+    </div>
+  </div>
+  <button class="settings-btn" id="settingsTabBtn">⚙ Settings</button>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" data-tab="inject">Inject Pages</button>
+  <button class="nav-btn"        data-tab="settings">Settings</button>
+</div>
+
+<!-- INJECT TAB -->
+<div class="panel active" id="tab-inject">
+  <!-- Shown when not on HL -->
+  <div id="not-on-hl" class="not-on-hl" style="display:none;">
+    <div class="icon">🔌</div>
+    <h3>Open HighLevel first</h3>
+    <p>Navigate to your funnel's page builder in HighLevel, then click this extension to inject your funnel pages.</p>
+  </div>
+
+  <!-- Shown when on HL -->
+  <div id="on-hl" style="display:none;">
+    <!-- Context card -->
+    <div class="context-card">
+      <div class="context-row">
+        <span class="context-label">Location ID</span>
+        <span class="context-value" id="ctx-location">detecting…</span>
+      </div>
+      <div class="context-row">
+        <span class="context-label">Page ID</span>
+        <span class="context-value" id="ctx-pageid">enter below</span>
+      </div>
+      <div class="context-row">
+        <span class="context-label">Project</span>
+        <span class="context-value" id="ctx-project">not set</span>
+      </div>
+    </div>
+
+    <!-- Manual Page ID input -->
+    <div class="page-id-row" id="pageid-input-row">
+      <div class="page-id-label">Enter the HL Page ID to target</div>
+      <input class="inp" id="manual-page-id" type="text" placeholder="e.g. abc123xyz" />
+      <div class="page-id-note">Find this in your HL Funnel → Steps list. Open a step and copy the ID from the URL or step settings.</div>
+    </div>
+
+    <!-- Page buttons -->
+    <div class="pages-label">Select a page to inject</div>
+
+    <div class="page-row">
+      <div class="page-info">
+        <div class="page-name">🏠  Landing Page</div>
+        <div class="page-desc">Hero, benefits, FAQ, final CTA</div>
+      </div>
+      <button class="inject-btn" data-page="landing">Inject</button>
+    </div>
+
+    <div class="page-row">
+      <div class="page-info">
+        <div class="page-name">📋  Opt-In Page</div>
+        <div class="page-desc">Form to capture lead details</div>
+      </div>
+      <button class="inject-btn" data-page="optin">Inject</button>
+    </div>
+
+    <div class="page-row">
+      <div class="page-info">
+        <div class="page-name">🎉  Thank You Page</div>
+        <div class="page-desc">Confirmation + next steps</div>
+      </div>
+      <button class="inject-btn" data-page="thankyou">Inject</button>
+    </div>
+
+    <div class="page-row">
+      <div class="page-info">
+        <div class="page-name">📅  Booking Page</div>
+        <div class="page-desc">Calendar placeholder + trust</div>
+      </div>
+      <button class="inject-btn" data-page="booking">Inject</button>
+    </div>
+
+    <div class="status-box" id="inject-status"></div>
+  </div>
+
+  <!-- Setup required -->
+  <div id="setup-required" style="display:none;">
+    <div class="not-on-hl">
+      <div class="icon">🔧</div>
+      <h3>Setup required</h3>
+      <p>Open the <strong>Settings</strong> tab and enter your App URL, Project ID, and HighLevel API Key to get started.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div class="panel" id="tab-settings">
+  <div class="field">
+    <label for="s-app-url">App URL</label>
+    <input class="inp" id="s-app-url" type="url" placeholder="https://your-replit-app.replit.dev" />
+    <small>The URL of your Challenge Funnel in a Box app.</small>
+  </div>
+
+  <div class="field">
+    <label for="s-project-id">Project ID</label>
+    <input class="inp" id="s-project-id" type="text" placeholder="Copy from your results page URL" />
+    <small>From your results page URL: <em>…/results/<strong>YOUR-PROJECT-ID</strong></em></small>
+  </div>
+
+  <div class="field">
+    <label for="s-hl-api-key">HighLevel API Key</label>
+    <input class="inp" id="s-hl-api-key" type="password" placeholder="Your GHL API key" />
+    <small>Settings → Integrations → API Key in your HighLevel sub-account.</small>
+  </div>
+
+  <button class="save-btn" id="save-settings">Save Settings</button>
+  <div class="status-box" id="settings-status" style="margin-top:10px;"></div>
+
+  <hr class="divider" />
+
+  <div style="font-size:11px; color:var(--muted); line-height:1.7;">
+    <strong>How to use:</strong><br>
+    1. Generate your funnel at your app URL.<br>
+    2. Copy the Project ID from the results page URL.<br>
+    3. Open your HighLevel funnel page builder.<br>
+    4. Paste the target Page ID (from HL's step editor).<br>
+    5. Click "Inject" on the page you want to build.
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

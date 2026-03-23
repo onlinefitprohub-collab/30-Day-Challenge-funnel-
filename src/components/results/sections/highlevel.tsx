@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Copy, Check, ExternalLink, Zap, Loader2, CheckCircle2, AlertCircle, Settings, Download } from "lucide-react";
+import { Copy, Check, ExternalLink, Zap, Loader2, CheckCircle2, AlertCircle, Settings, Download, Puzzle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import type { HLImportResult } from "@/lib/highlevel/import";
@@ -85,6 +85,74 @@ function HLGroup({
         </a>
       </div>
       <div className="p-5 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+/* ── Chrome Extension CTA (TOP method) ── */
+function ExtensionCTAPanel() {
+  function handleDownload() {
+    const a = document.createElement("a");
+    a.href = "/api/highlevel/extension-download";
+    a.download = "challenge-funnel-extension.zip";
+    a.click();
+    toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the README inside for instructions." });
+  }
+
+  return (
+    <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-5">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500 text-white">
+          <Puzzle className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-orange-900 text-sm">Chrome Extension — One-Click HL Injector</p>
+            <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">NEW</span>
+          </div>
+          <p className="mt-0.5 text-xs text-orange-700 leading-relaxed">
+            Install our Chrome extension and inject your funnel pages directly into HighLevel&apos;s page builder as
+            native sections, rows, columns, and buttons — no copy-pasting, no code blocks.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-4">
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors shadow-sm"
+        >
+          <Download className="h-4 w-4" />
+          Download Extension (.zip)
+        </button>
+        <a
+          href="https://app.gohighlevel.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-white px-4 py-2.5 text-sm font-medium text-orange-700 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+        >
+          Open HighLevel <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-orange-800">How it works:</p>
+        {[
+          { step: "1", text: "Download the zip and unpack it, then load it in Chrome (chrome://extensions → Developer mode → Load unpacked)" },
+          { step: "2", text: "Open the extension → Settings → paste your App URL, Project ID (from this page's URL), and HL API Key" },
+          { step: "3", text: "Open your HighLevel funnel page builder, paste the Page ID, and click Inject" },
+          { step: "4", text: "HighLevel refreshes with your page fully built from native drag-and-drop elements in your chosen colour scheme" },
+        ].map(({ step, text }) => (
+          <div key={step} className="flex items-start gap-2.5">
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black mt-0.5">{step}</div>
+            <p className="text-xs text-orange-800 leading-relaxed">{text}</p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-[11px] text-orange-600 border-t border-orange-200 pt-3">
+        Manifest V3 · Works on app.gohighlevel.com · Colour scheme applied automatically · README included
+      </p>
     </div>
   );
 }
@@ -254,6 +322,9 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
 
   return (
     <div className="space-y-5">
+
+      {/* Chrome Extension — top card */}
+      <ExtensionCTAPanel />
 
       {/* PRIMARY: JSON Download */}
       <GhlDownloadPanel data={data} />
