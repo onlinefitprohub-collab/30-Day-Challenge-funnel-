@@ -29,11 +29,11 @@ export function ProjectCard({ project }: { project: ProjectRow }) {
           ? `/projects/${project.id}/results`
           : `/projects/${project.id}`
       }
-      className="group block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-brand-200 hover:shadow-md"
+      className="group block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-orange-300 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-gray-900 group-hover:text-brand-700">
+          <h3 className="truncate font-semibold text-gray-900 group-hover:text-orange-600">
             {project.name}
           </h3>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-400">
@@ -48,7 +48,7 @@ export function ProjectCard({ project }: { project: ProjectRow }) {
         <span className="text-xs text-gray-400">
           Created {formatDate(project.created_at)}
         </span>
-        <span className="flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 transition-opacity group-hover:opacity-100">
+        <span className="flex items-center gap-1 text-xs font-medium text-orange-500 opacity-0 transition-opacity group-hover:opacity-100">
           {cta.text}
           <Icon className="h-3 w-3" />
         </span>

@@ -13,9 +13,9 @@ interface Props {
 
 const PAGES = [
   { id: "landing",  label: "Landing Page", color: "#f97316" },
-  { id: "optin",    label: "Opt-in Form",  color: "#7c3aed" },
-  { id: "thankyou", label: "Thank You",    color: "#059669" },
-  { id: "booking",  label: "Booking Page", color: "#b45309" },
+  { id: "optin",    label: "Opt-in Form",  color: "#f97316" },
+  { id: "thankyou", label: "Thank You",    color: "#f97316" },
+  { id: "booking",  label: "Booking Page", color: "#f97316" },
 ] as const;
 
 type PageId = (typeof PAGES)[number]["id"];
@@ -292,36 +292,36 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta="Join Free" accentBg="#7c3aed" />
+      <NavBar cta="Join Free" accentBg="#f97316" />
 
       {/* ── Progress indicator ── */}
-      <div className="bg-[#1e1b4b] px-6 py-2.5">
+      <div className="bg-[#1e293b] px-6 py-2.5">
         <div className="max-w-sm mx-auto flex items-center gap-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-white text-[10px] font-black shrink-0">1</div>
-          <div className="flex-1 h-1 rounded-full bg-purple-500" />
-          <div className="flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/40 text-purple-400 text-[10px] font-black shrink-0">2</div>
-          <span className="text-xs text-purple-300 ml-1">Step 1 of 2 — Claim your spot</span>
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black shrink-0">1</div>
+          <div className="flex-1 h-1 rounded-full bg-orange-500" />
+          <div className="flex h-5 w-5 items-center justify-center rounded-full border border-orange-400/40 text-orange-400 text-[10px] font-black shrink-0">2</div>
+          <span className="text-xs text-orange-300 ml-1">Step 1 of 2 — Claim your spot</span>
         </div>
       </div>
 
       {/* ── Hero + form ── */}
       <div
         className="px-6 py-12"
-        style={{ background: "linear-gradient(160deg, #1e1b4b 0%, #312e81 60%, #1e1b4b 100%)" }}
+        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)" }}
       >
         <div className="max-w-md mx-auto text-center mb-7">
-          <span className="inline-block rounded-full border border-purple-400/30 bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-300 mb-4">
+          <span className="inline-block rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1 text-xs font-semibold text-orange-300 mb-4">
             Free access · Starts immediately
           </span>
           <h1 className="text-2xl font-black text-white leading-tight mb-3">
             Join the {os.challengeConcept}
           </h1>
-          <p className="text-sm text-purple-200 leading-relaxed">{form.formIntroText}</p>
+          <p className="text-sm text-orange-200 leading-relaxed">{form.formIntroText}</p>
         </div>
 
         {/* Form card */}
         <div className="max-w-sm mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-purple-600 px-6 py-3 text-center">
+          <div className="bg-orange-500 px-6 py-3 text-center">
             <p className="text-sm font-bold text-white">Enter your details to get started</p>
           </div>
           <div className="p-5 space-y-3.5">
@@ -333,7 +333,7 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
                 </div>
               </div>
             ))}
-            <button className="w-full rounded-xl bg-purple-600 py-3 text-sm font-black text-white flex items-center justify-center gap-2 mt-1 hover:bg-purple-700 transition-colors">
+            <button className="w-full rounded-xl bg-orange-500 py-3 text-sm font-black text-white flex items-center justify-center gap-2 mt-1 hover:bg-orange-600 transition-colors">
               {form.ctaButtonText} <ArrowRight className="h-4 w-4" />
             </button>
             <div className="flex items-center justify-center gap-1.5 pt-1">
@@ -345,12 +345,12 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
       </div>
 
       {/* ── Trust strip ── */}
-      <div className="bg-[#0d0b2b] px-6 py-4">
+      <div className="bg-[#0f172a] px-6 py-4">
         <div className="max-w-lg mx-auto flex flex-wrap items-center justify-center gap-5">
           {[
-            { icon: <Check className="h-3.5 w-3.5 text-green-400" />, label: "100% free to join" },
-            { icon: <Shield className="h-3.5 w-3.5 text-green-400" />, label: "No credit card needed" },
-            { icon: <Clock className="h-3.5 w-3.5 text-green-400" />, label: "Takes under 60 seconds" },
+            { icon: <Check className="h-3.5 w-3.5 text-orange-400" />, label: "100% free to join" },
+            { icon: <Shield className="h-3.5 w-3.5 text-orange-400" />, label: "No credit card needed" },
+            { icon: <Clock className="h-3.5 w-3.5 text-orange-400" />, label: "Takes under 60 seconds" },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {item.icon}
@@ -363,13 +363,13 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
       {/* ── What they're getting ── */}
       <div className="bg-slate-50 px-6 py-10">
         <div className="max-w-md mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest text-purple-600 mb-5 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-orange-600 mb-5 text-center">
             Here&apos;s what you&apos;re getting
           </p>
           <div className="space-y-3">
             {lp.bulletPoints.slice(0, 5).map((point, i) => (
               <div key={i} className="flex items-start gap-3 rounded-xl bg-white border border-slate-200 p-3.5 shadow-sm">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-600 font-black text-[10px] mt-0.5">{i + 1}</div>
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 font-black text-[10px] mt-0.5">{i + 1}</div>
                 <span className="text-sm text-gray-700 leading-snug">{point}</span>
               </div>
             ))}
@@ -390,28 +390,28 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta="Book Your Call" accentBg="#059669" />
+      <NavBar cta="Book Your Call" accentBg="#f97316" />
 
       {/* ── Celebration hero ── */}
       <div
         className="px-8 py-14 text-center"
-        style={{ background: "linear-gradient(160deg, #052e16 0%, #14532d 55%, #052e16 100%)" }}
+        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%)" }}
       >
         <div className="flex justify-center mb-5">
           <div className="relative">
-            <div className="h-16 w-16 rounded-full bg-green-500/20 border-[3px] border-green-500 flex items-center justify-center">
-              <Check className="h-8 w-8 text-green-400" />
+            <div className="h-16 w-16 rounded-full bg-orange-500/20 border-[3px] border-orange-500 flex items-center justify-center">
+              <Check className="h-8 w-8 text-orange-400" />
             </div>
             <span className="absolute -top-1 -right-2 text-xl">🎉</span>
           </div>
         </div>
-        <span className="inline-block rounded-full border border-green-500/40 bg-green-500/15 px-4 py-1 text-xs font-bold text-green-400 mb-4">
+        <span className="inline-block rounded-full border border-orange-500/40 bg-orange-500/15 px-4 py-1 text-xs font-bold text-orange-400 mb-4">
           You&apos;re officially in — Welcome to the {os.challengeConcept}
         </span>
         <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-4 max-w-lg mx-auto">
           {ty.confirmationMessage}
         </h1>
-        <p className="text-sm text-emerald-300 max-w-md mx-auto leading-relaxed">
+        <p className="text-sm text-orange-200 max-w-md mx-auto leading-relaxed">
           {ty.bookingEncouragement}
         </p>
       </div>
@@ -420,13 +420,13 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
       <div className="bg-white px-8 py-12">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">
-            <Eyebrow text="What Happens Next" color="#059669" />
+            <Eyebrow text="What Happens Next" color="#f97316" />
             <h2 className="text-2xl font-black text-gray-900">Here&apos;s your next steps</h2>
           </div>
           <div className="space-y-3.5">
             {ty.nextSteps.map((step, i) => (
-              <div key={i} className="flex items-start gap-4 rounded-xl bg-green-50 border border-green-100 p-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500 text-white font-black text-sm">
+              <div key={i} className="flex items-start gap-4 rounded-xl bg-orange-50 border border-orange-100 p-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white font-black text-sm">
                   {i + 1}
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
@@ -440,9 +440,9 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
       <div className="bg-slate-50 px-8 py-8 border-y border-slate-200">
         <div className="max-w-lg mx-auto flex flex-wrap items-center justify-center gap-6">
           {[
-            { icon: <Users className="h-4 w-4 text-green-500" />, label: "You&apos;re in good company" },
-            { icon: <Calendar className="h-4 w-4 text-green-500" />, label: "Challenge starts this week" },
-            { icon: <Star className="h-4 w-4 text-amber-400 fill-amber-400" />, label: os.corePromise },
+            { icon: <Users className="h-4 w-4 text-orange-500" />, label: "You&apos;re in good company" },
+            { icon: <Calendar className="h-4 w-4 text-orange-500" />, label: "Challenge starts this week" },
+            { icon: <Star className="h-4 w-4 text-orange-400 fill-orange-400" />, label: os.corePromise },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2">
               {item.icon}
@@ -455,21 +455,21 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
       {/* ── Booking CTA ── */}
       <div
         className="px-8 py-14 text-center"
-        style={{ background: "linear-gradient(135deg, #16a34a 0%, #059669 100%)" }}
+        style={{ background: "linear-gradient(135deg, #ea580c 0%, #f97316 100%)" }}
       >
         <div className="max-w-lg mx-auto">
           <div className="flex justify-center mb-4">
             <Calendar className="h-8 w-8 text-white/70" />
           </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-green-100 mb-3">One more step</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-orange-100 mb-3">One more step</p>
           <h2 className="text-2xl font-black text-white mb-3 leading-tight">
             Book your free kick-off call to get the most from this challenge
           </h2>
-          <p className="text-sm text-green-100 mb-7 leading-relaxed max-w-md mx-auto">
+          <p className="text-sm text-orange-100 mb-7 leading-relaxed max-w-md mx-auto">
             {ty.bookingEncouragement}
           </p>
-          <CtaButton text="Book My Free Call Now" bg="white" fg="#16a34a" size="lg" />
-          <p className="text-xs text-green-200 mt-3">30 minutes · No obligation · You can reschedule anytime</p>
+          <CtaButton text="Book My Free Call Now" bg="white" fg="#ea580c" size="lg" />
+          <p className="text-xs text-orange-200 mt-3">30 minutes · No obligation · You can reschedule anytime</p>
         </div>
       </div>
     </div>
@@ -489,17 +489,17 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta="Schedule Now" accentBg="#b45309" />
+      <NavBar cta="Schedule Now" accentBg="#f97316" />
 
       {/* ── Hero ── */}
-      <div className="px-8 py-10 text-center" style={{ background: "linear-gradient(160deg, #1c0a00 0%, #431407 60%, #1c0a00 100%)" }}>
+      <div className="px-8 py-10 text-center" style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)" }}>
         <span className="inline-block rounded-full border border-orange-500/30 bg-orange-500/15 px-4 py-1 text-xs font-semibold text-orange-300 mb-4">
           Last step — almost there
         </span>
         <h1 className="text-2xl font-black text-white leading-tight mb-3 max-w-lg mx-auto">
           Book Your Free {os.challengeConcept} Strategy Call
         </h1>
-        <p className="text-sm text-amber-200 max-w-md mx-auto leading-relaxed">{bk.shortIntro}</p>
+        <p className="text-sm text-orange-200 max-w-md mx-auto leading-relaxed">{bk.shortIntro}</p>
       </div>
 
       {/* ── Main content: benefits + calendar ── */}
@@ -508,18 +508,18 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 
           {/* Left: why book */}
           <div>
-            <Eyebrow text="On This Call" color="#b45309" />
+            <Eyebrow text="On This Call" color="#f97316" />
             <h3 className="text-lg font-black text-gray-900 mb-4 leading-tight">
               Here&apos;s what we&apos;ll cover together
             </h3>
             <div className="space-y-3 mb-5">
               {bk.whyBook.map((reason, i) => (
-                <CheckItem key={i} text={reason} color="#d97706" textColor="#374151" />
+                <CheckItem key={i} text={reason} color="#f97316" textColor="#374151" />
               ))}
             </div>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs font-bold text-amber-800 mb-1.5">What to expect</p>
-              <p className="text-xs text-amber-700 leading-relaxed">{bk.expectationSetting}</p>
+            <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+              <p className="text-xs font-bold text-orange-900 mb-1.5">What to expect</p>
+              <p className="text-xs text-orange-800 leading-relaxed">{bk.expectationSetting}</p>
             </div>
             <div className="mt-4 space-y-1.5">
               {[
@@ -551,8 +551,8 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
                   key={dt}
                   className={`text-center text-xs rounded-lg py-1.5 font-medium transition-colors ${
                     i === 2
-                      ? "bg-amber-500 text-white font-bold shadow-sm"
-                      : "bg-gray-50 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
+                      ? "bg-orange-500 text-white font-bold shadow-sm"
+                      : "bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-700"
                   }`}
                 >
                   {dt}
@@ -566,15 +566,15 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
                   key={t}
                   className={`text-[11px] rounded-lg border py-1.5 font-medium transition-colors ${
                     i === 1
-                      ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                      : "border-gray-200 text-gray-600 hover:border-amber-400 hover:text-amber-700 hover:bg-amber-50"
+                      ? "bg-orange-500 text-white border-orange-500 shadow-sm"
+                      : "border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-700 hover:bg-orange-50"
                   }`}
                 >
                   {t}
                 </button>
               ))}
             </div>
-            <button className="mt-4 w-full rounded-xl bg-amber-500 py-2.5 text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-md hover:bg-amber-600 transition-colors">
+            <button className="mt-4 w-full rounded-xl bg-orange-500 py-2.5 text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-md hover:bg-orange-600 transition-colors">
               Confirm My Spot <ChevronRight className="h-3.5 w-3.5" />
             </button>
             <p className="text-[10px] text-gray-400 text-center mt-2">
@@ -590,9 +590,9 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center mb-3">Why coaches book a call first</p>
           <div className="flex flex-wrap items-center justify-center gap-5">
             {[
-              { icon: <Check className="h-3.5 w-3.5 text-amber-400 shrink-0" />, label: "Get a custom challenge plan" },
-              { icon: <Shield className="h-3.5 w-3.5 text-amber-400 shrink-0" />, label: "No obligation whatsoever" },
-              { icon: <Clock className="h-3.5 w-3.5 text-amber-400 shrink-0" />, label: "Results in 30 days or less" },
+              { icon: <Check className="h-3.5 w-3.5 text-orange-400 shrink-0" />, label: "Get a custom challenge plan" },
+              { icon: <Shield className="h-3.5 w-3.5 text-orange-400 shrink-0" />, label: "No obligation whatsoever" },
+              { icon: <Clock className="h-3.5 w-3.5 text-orange-400 shrink-0" />, label: "Results in 30 days or less" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 {item.icon}

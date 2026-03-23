@@ -22,7 +22,7 @@ export function buildCoachContext(inputs: WizardInputs): string {
   const {
     businessName, coachName, location, deliveryMode,
     targetAudience, demographicDetails,
-    challengeType, mainGoal, duration, price, ctaType,
+    challengeName, challengeType, mainGoal, duration, price, ctaType,
     inclusions, bonuses,
     biggestStruggle, desiredOutcome, objections,
     toneOfVoice, phrasesToInclude, phrasesToAvoid,
@@ -43,6 +43,7 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `Delivery: ${DELIVERY_LABEL[deliveryMode] ?? deliveryMode}`,
     ``,
     `=== THE CHALLENGE OFFER ===`,
+    ...(challengeName ? [`Challenge name: ${challengeName}`] : []),
     `Challenge type: ${challengeType}`,
     `Duration: ${duration} days`,
     `Main goal: ${mainGoal}`,

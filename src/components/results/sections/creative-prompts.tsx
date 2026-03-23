@@ -1,13 +1,16 @@
+import { ImageOff } from "lucide-react";
 import { ResultSection, CopyableItem } from "../result-section";
 import type { CreativePrompts, GeneratedAdImage } from "@/types/generation";
 
 interface CreativePromptsSectionProps {
   data: CreativePrompts;
   generatedAdImages?: GeneratedAdImage[];
+  isMock?: boolean;
 }
 
-export function CreativePromptsSection({ data, generatedAdImages }: CreativePromptsSectionProps) {
+export function CreativePromptsSection({ data, generatedAdImages, isMock }: CreativePromptsSectionProps) {
   const hasImages = generatedAdImages && generatedAdImages.length > 0;
+  const imagesFailed = !isMock && Array.isArray(generatedAdImages) && generatedAdImages.length === 0;
 
   return (
     <div className="space-y-4">
@@ -15,6 +18,22 @@ export function CreativePromptsSection({ data, generatedAdImages }: CreativeProm
         Use these prompts to brief a designer, create your own content, or direct a videographer.
         All concepts are Facebook ad policy compliant.
       </p>
+
+      {imagesFailed && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div className="flex items-start gap-3">
+            <ImageOff className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
+            <div>
+              <p className="text-sm font-semibold text-gray-700">AI image generation unavailable</p>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                DALL-E 3 image generation requires active OpenAI billing credits. Your account has reached its billing limit. 
+                Top up your OpenAI account balance to enable auto-generated 1024×1024 Facebook ad images on the next generation.
+                In the meantime, use the creative briefs below to brief a designer or create your own.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {hasImages && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">

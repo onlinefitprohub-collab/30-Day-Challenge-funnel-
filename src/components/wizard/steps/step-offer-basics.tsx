@@ -37,6 +37,7 @@ export function StepOfferBasics({
   } = useForm<OfferBasics>({
     resolver: zodResolver(offerBasicsSchema),
     defaultValues: {
+      challengeName: defaultValues.challengeName ?? "",
       challengeType: defaultValues.challengeType ?? "",
       mainGoal: defaultValues.mainGoal ?? "",
       duration: defaultValues.duration ?? 30,
@@ -55,6 +56,19 @@ export function StepOfferBasics({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="challengeName">Challenge name</Label>
+        <Input
+          id="challengeName"
+          placeholder="e.g. 30-Day Fat Loss Kickstart, 6-Week Body Reset, Summer Shred Challenge"
+          {...register("challengeName")}
+        />
+        <p className="text-xs text-gray-400">This becomes the title of your funnel — make it specific and benefit-led.</p>
+        {errors.challengeName && (
+          <p className="text-sm text-red-500">{errors.challengeName.message}</p>
+        )}
+      </div>
+
       <div className="space-y-1.5">
         <Label htmlFor="challengeType">What type of challenge is this?</Label>
         <Input

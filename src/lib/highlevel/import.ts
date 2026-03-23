@@ -154,10 +154,19 @@ export async function importToHighLevel(
   let funnelId: string | undefined;
   try {
     const funnelName = assets.offerSummary?.challengeConcept ?? "30-Day Challenge Funnel";
-    const res = await hlFetch("/funnels/", apiKey, {
-      method: "POST",
-      body: JSON.stringify({ locationId, name: funnelName, type: "funnel" }),
-    });
+    const funnelEndpoints = ["/funnels", "/funnels/"];
+    let funnelRes: Response | null = null;
+    for (const endpoint of funnelEndpoints) {
+      const r = await hlFetch(endpoint, apiKey, {
+        method: "POST",
+        body: JSON.stringify({ locationId, name: funnelName, type: "funnel" }),
+      });
+      if (r.ok || (r.status !== 404 && r.status !== 405)) {
+        funnelRes = r;
+        break;
+      }
+    }
+    const res = funnelRes!;
 
     if (res.ok) {
       const data = (await res.json()) as Record<string, unknown>;
@@ -169,8 +178,12 @@ export async function importToHighLevel(
     } else {
       let errText = "";
       try { errText = await res.text(); } catch { errText = "Unknown"; }
-      if (res.status !== 404) {
-        result.errors.push(`Funnel creation skipped: ${res.status} ${errText.slice(0, 80)}`);
+      if (res.status === 401 && errText.includes("IAM Service")) {
+        result.errors.push(
+          `Funnel creation failed: your API key doesn't have Funnels scope. In HighLevel go to Settings → Integrations → Private Integration → Edit Scopes and enable "Funnels".`
+        );
+      } else if (res.status !== 404) {
+        result.errors.push(`Funnel creation skipped: ${res.status} ${errText.slice(0, 120)}`);
       }
     }
   } catch (err) {

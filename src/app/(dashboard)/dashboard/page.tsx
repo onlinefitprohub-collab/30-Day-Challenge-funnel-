@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Zap } from "lucide-react";
+import { Plus, Zap, TrendingUp, Layers, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/project-card";
@@ -27,70 +27,65 @@ export default async function DashboardPage() {
   const displayName =
     user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Coach";
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back, {displayName} 👋
-          </h1>
-          <p className="mt-1 text-gray-500">
-            {typedProjects.length > 0
-              ? `You have ${typedProjects.length} funnel project${typedProjects.length === 1 ? "" : "s"}.`
-              : "Ready to build your first challenge funnel?"}
-          </p>
-        </div>
-        <Link href="/projects/new">
-          <Button variant="gradient" size="lg">
-            <Plus className="h-4 w-4" />
-            New funnel project
-          </Button>
-        </Link>
-      </div>
+  const completeCount = typedProjects.filter((p) => p.status === "complete").length;
+  const inProgressCount = typedProjects.filter((p) => p.status === "draft").length;
 
-      {/* Stats bar */}
-      {typedProjects.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {[
-            {
-              label: "Total projects",
-              value: typedProjects.length,
-              color: "text-gray-900",
-            },
-            {
-              label: "Complete",
-              value: typedProjects.filter((p) => p.status === "complete").length,
-              color: "text-green-600",
-            },
-            {
-              label: "In progress",
-              value: typedProjects.filter((p) => p.status === "draft").length,
-              color: "text-amber-600",
-            },
-            {
-              label: "Generating",
-              value: typedProjects.filter((p) => p.status === "generating").length,
-              color: "text-blue-600",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-xl border border-gray-200 bg-white p-4"
-            >
-              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className="mt-0.5 text-sm text-gray-500">{stat.label}</p>
-            </div>
-          ))}
+  return (
+    <div className="space-y-6">
+      {/* Hero header */}
+      <div className="rounded-2xl bg-[#0f172a] px-6 py-6 sm:px-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              Welcome back, {displayName}
+            </h1>
+            <p className="mt-1 text-slate-400">
+              {typedProjects.length > 0
+                ? `${typedProjects.length} funnel project${typedProjects.length === 1 ? "" : "s"} — ${completeCount} complete`
+                : "Ready to build your first challenge funnel?"}
+            </p>
+          </div>
+          <Link href="/projects/new">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold border-0 shadow-sm" size="lg">
+              <Plus className="h-4 w-4" />
+              New funnel project
+            </Button>
+          </Link>
         </div>
-      )}
+
+        {typedProjects.length > 0 && (
+          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-5">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">{typedProjects.length}</p>
+              <p className="mt-0.5 flex items-center justify-center gap-1 text-xs text-slate-400">
+                <Layers className="h-3 w-3" />
+                Total
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-400">{completeCount}</p>
+              <p className="mt-0.5 flex items-center justify-center gap-1 text-xs text-slate-400">
+                <TrendingUp className="h-3 w-3" />
+                Complete
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-slate-300">{inProgressCount}</p>
+              <p className="mt-0.5 flex items-center justify-center gap-1 text-xs text-slate-400">
+                <Clock className="h-3 w-3" />
+                In progress
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Projects */}
       {typedProjects.length === 0 ? (
         <EmptyState />
       ) : (
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Your projects
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -101,16 +96,16 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Quick tip for new users */}
+      {/* Pro tip */}
       {typedProjects.length === 0 && (
-        <div className="rounded-xl border border-brand-100 bg-brand-50 p-6">
+        <div className="rounded-xl border border-orange-100 bg-orange-50 p-5">
           <div className="flex gap-3">
-            <Zap className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
+            <Zap className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
             <div>
-              <h3 className="font-semibold text-brand-900">
+              <h3 className="font-semibold text-orange-900">
                 Pro tip: be specific in the wizard
               </h3>
-              <p className="mt-1 text-sm text-brand-700">
+              <p className="mt-1 text-sm text-orange-700">
                 The more detail you give about your audience and offer, the more
                 targeted and persuasive your generated copy will be.
               </p>
