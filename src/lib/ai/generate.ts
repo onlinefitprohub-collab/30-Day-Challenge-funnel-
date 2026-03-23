@@ -106,7 +106,7 @@ async function callCopyGroup<T>(
       `[generate] Claude failed for ${groupName} (${result.error}) — falling back to GPT-4o`,
     );
   } else {
-    console.info(
+    console.warn(
       `[generate] ANTHROPIC_API_KEY not set — using GPT-4o for ${groupName}`,
     );
   }

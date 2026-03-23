@@ -26,9 +26,8 @@ export async function callClaudeGroup<T>(
   groupName: string,
   maxTokens: number,
 ): Promise<GroupResult<T>> {
-  const anthropic = getAnthropicClient();
-
   try {
+    const anthropic = getAnthropicClient();
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
       max_tokens: maxTokens,
