@@ -250,6 +250,7 @@
       }, 30000);
 
       function handler(evt) {
+        if (evt.source !== window) return;
         if (!evt.data || evt.data.source !== "cf-bridge" || evt.data.type !== "INJECT_RESULT") return;
         clearTimeout(timeout);
         window.removeEventListener("message", handler);

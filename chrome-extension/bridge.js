@@ -14,7 +14,7 @@
   // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
   function parseBuilderUrl(url) {
     try {
-      const m = url.match(/\/location\/([^/]+)\/page-builder\/([^/]+)/i);
+      const m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
       if (m) return { locationId: m[1], pageBuilderId: m[2] };
     } catch {}
     return null;
@@ -144,6 +144,7 @@
 
   /* ─── Handle CF_DO_INJECT from content.js ─────────────────────────────── */
   window.addEventListener("message", async (evt) => {
+    if (evt.source !== window) return;
     if (!evt.data || evt.data.source !== "cf-content" || evt.data.type !== "CF_DO_INJECT") return;
 
     const { pageBuilderId, pageData } = evt.data.payload || {};
