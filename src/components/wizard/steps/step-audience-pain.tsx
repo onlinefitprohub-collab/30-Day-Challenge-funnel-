@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { audiencePainSchema, type AudiencePain, type WizardInputs } from "@/types/wizard";
@@ -21,7 +20,6 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
       biggestStruggle: defaultValues.biggestStruggle ?? "",
       desiredOutcome: defaultValues.desiredOutcome ?? "",
       objections: defaultValues.objections ?? "",
-      demographicDetails: defaultValues.demographicDetails ?? "",
     },
   });
 
@@ -33,16 +31,16 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-1.5">
         <Label htmlFor="biggestStruggle">
-          What&apos;s the biggest struggle your audience faces right now?
+          What&apos;s the biggest struggle your ideal client faces?
         </Label>
         <Textarea
           id="biggestStruggle"
-          placeholder="e.g. They start and stop constantly, feel overwhelmed by conflicting advice, lose motivation after 2 weeks, don't have time to cook healthy meals"
+          placeholder="e.g. They start and stop, feel overwhelmed, lose motivation, can't find time — include who they are (e.g. busy mums, men over 40, postpartum women)"
           rows={3}
           {...register("biggestStruggle")}
         />
         <p className="text-xs text-gray-400">
-          Think about what keeps them up at night
+          Describe them and what keeps them up at night
         </p>
         {errors.biggestStruggle && (
           <p className="text-sm text-red-500">{errors.biggestStruggle.message}</p>
@@ -77,18 +75,6 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
         {errors.objections && (
           <p className="text-sm text-red-500">{errors.objections.message}</p>
         )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="demographicDetails">
-          Any specific demographic details?{" "}
-          <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Input
-          id="demographicDetails"
-          placeholder="e.g. Women 35-55, postpartum, shift workers, over 50s, men who sit at a desk all day"
-          {...register("demographicDetails")}
-        />
       </div>
 
       <div className="flex justify-between pt-2">

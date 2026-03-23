@@ -75,6 +75,7 @@ export async function POST(request: Request) {
       outputs: {
         ...assets,
         generatedAdImages,
+        colourScheme: validatedInputs.colourScheme ?? "navy-orange",
         _isMock: isMockMode,
       } as Record<string, unknown>,
     });

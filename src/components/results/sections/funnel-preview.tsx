@@ -6,16 +6,35 @@ import {
 } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
+interface SchemeColors {
+  primary: string;
+  dark: string;
+  mid: string;
+  accent: string;
+}
+
+const COLOUR_SCHEMES: Record<string, SchemeColors> = {
+  "navy-orange":  { primary: "#f97316", dark: "#0f172a", mid: "#1e293b", accent: "#ea580c" },
+  "rose-pink":    { primary: "#ec4899", dark: "#1a0010", mid: "#2d0420", accent: "#be185d" },
+  "teal-forest":  { primary: "#14b8a6", dark: "#0a1f1e", mid: "#0f2f2e", accent: "#0d9488" },
+  "purple-lilac": { primary: "#a855f7", dark: "#1a0a2e", mid: "#2d1069", accent: "#9333ea" },
+  "sky-blue":     { primary: "#38bdf8", dark: "#0f1b2d", mid: "#1e3a5f", accent: "#0ea5e9" },
+};
+
+function getScheme(key?: string): SchemeColors {
+  return COLOUR_SCHEMES[key ?? "navy-orange"] ?? COLOUR_SCHEMES["navy-orange"];
+}
+
 interface Props {
   data: GeneratedFunnelAssets;
   projectId?: string;
 }
 
 const PAGES = [
-  { id: "landing",  label: "Landing Page", color: "#f97316" },
-  { id: "optin",    label: "Opt-in Form",  color: "#f97316" },
-  { id: "thankyou", label: "Thank You",    color: "#f97316" },
-  { id: "booking",  label: "Booking Page", color: "#f97316" },
+  { id: "landing",  label: "Landing Page" },
+  { id: "optin",    label: "Opt-in Form" },
+  { id: "thankyou", label: "Thank You" },
+  { id: "booking",  label: "Booking Page" },
 ] as const;
 
 type PageId = (typeof PAGES)[number]["id"];
@@ -45,18 +64,18 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  Reusable design primitives                                                 */
 /* ─────────────────────────────────────────────────────────────────────────── */
-function NavBar({ cta, accentBg, logo }: { cta: string; accentBg: string; logo?: string }) {
+function NavBar({ cta, scheme, logo }: { cta: string; scheme: SchemeColors; logo?: string }) {
   return (
-    <div className="flex items-center justify-between px-6 py-3.5 bg-[#0f172a] border-b border-white/5 sticky top-0 z-10">
+    <div className="flex items-center justify-between px-6 py-3.5 border-b border-white/5 sticky top-0 z-10" style={{ backgroundColor: scheme.dark }}>
       <div className="flex items-center gap-2.5">
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-sm">
+        <div className="h-7 w-7 rounded-lg flex items-center justify-center shadow-sm" style={{ background: `linear-gradient(135deg, ${scheme.primary}cc, ${scheme.primary})` }}>
           <span className="text-white text-[10px] font-black">{(logo ?? "CF").slice(0, 2).toUpperCase()}</span>
         </div>
         <span className="text-white text-sm font-semibold tracking-tight">{logo ?? "Challenge Funnel"}</span>
       </div>
       <button
         className="rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90"
-        style={{ backgroundColor: accentBg }}
+        style={{ backgroundColor: scheme.primary }}
       >
         {cta}
       </button>
@@ -123,16 +142,16 @@ function StarRow({ count = 5, label }: { count?: number; label: string }) {
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  LANDING PAGE                                                               */
 /* ─────────────────────────────────────────────────────────────────────────── */
-function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
+function LandingPagePreview({ data, scheme }: { data: GeneratedFunnelAssets; scheme: SchemeColors }) {
   const lp = data.landingPage;
   const os = data.offerSummary;
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta={lp.ctaText} accentBg="#f97316" />
+      <NavBar cta={lp.ctaText} scheme={scheme} />
 
       {/* ── Trust bar ── */}
-      <div className="bg-[#1e293b] px-6 py-2.5">
+      <div className="px-6 py-2.5" style={{ backgroundColor: scheme.mid }}>
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
           <StarRow count={5} label="Rated 5 stars by coaches" />
           <span className="text-slate-600 text-xs hidden sm:block">|</span>
@@ -145,9 +164,9 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
       {/* ── Hero ── */}
       <div
         className="px-8 py-16 text-center"
-        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%)" }}
+        style={{ background: `linear-gradient(160deg, ${scheme.dark} 0%, ${scheme.mid} 55%, ${scheme.dark} 100%)` }}
       >
-        <span className="inline-block rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-1 text-xs font-semibold text-orange-400 mb-5">
+        <span className="inline-block rounded-full px-4 py-1 text-xs font-semibold mb-5" style={{ border: `1px solid ${scheme.primary}66`, backgroundColor: `${scheme.primary}1a`, color: scheme.primary }}>
           🔥 {lp.urgencyIdeas[0] ?? "Limited spots — challenge starts soon"}
         </span>
         <h1 className="text-3xl sm:text-4xl font-black text-white leading-[1.08] mb-4 max-w-2xl mx-auto">
@@ -157,10 +176,9 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
           {lp.subheadline}
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
-          <CtaButton text={lp.ctaText} bg="#f97316" size="lg" />
+          <CtaButton text={lp.ctaText} bg={scheme.primary} size="lg" />
           <span className="text-xs text-slate-400">No credit card · Takes 60 seconds</span>
         </div>
-        {/* Sub-headline variant as a proof point */}
         <div className="max-w-md mx-auto mt-6 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-xs text-slate-300 leading-relaxed">
           {os.offerPositioning}
         </div>
@@ -170,17 +188,17 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
       <div className="bg-white px-8 py-12">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <Eyebrow text="Is This For You?" color="#f97316" />
+            <Eyebrow text="Is This For You?" color={scheme.primary} />
             <h2 className="text-2xl font-black text-gray-900 leading-tight">
               {lp.headlineOptions[1] ?? "Built specifically for coaches like you"}
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
-              <p className="text-sm font-bold text-orange-700 mb-3">This is for you if you…</p>
+            <div className="rounded-2xl p-5" style={{ backgroundColor: `${scheme.primary}12`, border: `1px solid ${scheme.primary}30` }}>
+              <p className="text-sm font-bold mb-3" style={{ color: scheme.accent }}>This is for you if you…</p>
               <div className="space-y-2.5">
                 {os.targetAudienceSummary.split(/[.;]/).filter(s => s.trim().length > 10).slice(0, 4).map((line, i) => (
-                  <CheckItem key={i} text={line.trim()} color="#f97316" textColor="#6b3500" />
+                  <CheckItem key={i} text={line.trim()} color={scheme.primary} textColor="#374151" />
                 ))}
               </div>
             </div>
@@ -200,7 +218,7 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
       <div className="px-8 py-12" style={{ backgroundColor: "#f8fafc" }}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <Eyebrow text="What You'll Get" color="#f97316" />
+            <Eyebrow text="What You'll Get" color={scheme.primary} />
             <h2 className="text-2xl font-black text-gray-900 leading-tight">
               {lp.headlineOptions[2] ?? "Everything you need inside the challenge"}
             </h2>
@@ -208,7 +226,7 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
           <div className="grid sm:grid-cols-2 gap-3">
             {lp.bulletPoints.slice(0, 6).map((point, i) => (
               <div key={i} className="flex items-start gap-3 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 font-black text-xs mt-0.5">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-black text-white text-xs mt-0.5" style={{ backgroundColor: scheme.primary }}>
                   {i + 1}
                 </div>
                 <span className="text-sm text-gray-700 leading-snug">{point}</span>
@@ -220,19 +238,18 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 
       {/* ── How it works (sectionIdeas as steps) ── */}
       {lp.sectionIdeas.length >= 2 && (
-        <div className="bg-[#0f172a] px-8 py-12">
+        <div className="px-8 py-12" style={{ backgroundColor: scheme.dark }}>
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <Eyebrow text="How It Works" color="#fb923c" />
+              <Eyebrow text="How It Works" color={scheme.primary} />
               <h2 className="text-2xl font-black text-white leading-tight">Simple. Structured. Effective.</h2>
             </div>
             <div className="grid sm:grid-cols-3 gap-4">
               {lp.sectionIdeas.slice(0, 3).map((idea, i) => {
-                // sectionIdeas are detailed briefs — extract just the first clause
                 const short = (idea.split("—")[0] ?? idea).trim().slice(0, 72);
                 return (
                   <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-white font-black text-base mx-auto mb-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full text-white font-black text-base mx-auto mb-3" style={{ backgroundColor: scheme.primary }}>
                       {i + 1}
                     </div>
                     <p className="text-sm text-slate-200 leading-snug">{short}</p>
@@ -249,7 +266,7 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
         <div className="bg-white px-8 py-12">
           <div className="max-w-xl mx-auto">
             <div className="text-center mb-8">
-              <Eyebrow text="Common Questions" color="#f97316" />
+              <Eyebrow text="Common Questions" color={scheme.primary} />
               <h2 className="text-2xl font-black text-gray-900">Frequently asked questions</h2>
             </div>
             <div className="space-y-3">
@@ -265,16 +282,16 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
       )}
 
       {/* ── Final CTA ── */}
-      <div className="px-8 py-14 text-center" style={{ background: "linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%)" }}>
+      <div className="px-8 py-14 text-center" style={{ background: `linear-gradient(135deg, ${scheme.accent} 0%, ${scheme.primary} 50%, ${scheme.primary}cc 100%)` }}>
         <div className="max-w-lg mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest text-orange-100 mb-3">Ready to join?</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-3">Ready to join?</p>
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 leading-tight">
             {lp.urgencyIdeas[1] ?? "Claim your free spot before it fills up."}
           </h2>
-          <p className="text-sm text-orange-100 mb-7 leading-relaxed">{os.corePromise}</p>
+          <p className="text-sm text-white/80 mb-7 leading-relaxed">{os.corePromise}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <CtaButton text={lp.ctaText} bg="white" fg="#ea580c" size="lg" />
-            <span className="text-xs text-orange-200">Free to join · No commitment required</span>
+            <CtaButton text={lp.ctaText} bg="white" fg={scheme.accent} size="lg" />
+            <span className="text-xs text-white/60">Free to join · No commitment required</span>
           </div>
         </div>
       </div>
@@ -285,43 +302,40 @@ function LandingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  OPT-IN PAGE                                                                */
 /* ─────────────────────────────────────────────────────────────────────────── */
-function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
+function OptInFormPreview({ data, scheme }: { data: GeneratedFunnelAssets; scheme: SchemeColors }) {
   const form = data.optInForm;
   const lp   = data.landingPage;
   const os   = data.offerSummary;
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta="Join Free" accentBg="#f97316" />
+      <NavBar cta="Join Free" scheme={scheme} />
 
       {/* ── Progress indicator ── */}
-      <div className="bg-[#1e293b] px-6 py-2.5">
+      <div className="px-6 py-2.5" style={{ backgroundColor: scheme.mid }}>
         <div className="max-w-sm mx-auto flex items-center gap-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black shrink-0">1</div>
-          <div className="flex-1 h-1 rounded-full bg-orange-500" />
-          <div className="flex h-5 w-5 items-center justify-center rounded-full border border-orange-400/40 text-orange-400 text-[10px] font-black shrink-0">2</div>
-          <span className="text-xs text-orange-300 ml-1">Step 1 of 2 — Claim your spot</span>
+          <div className="flex h-5 w-5 items-center justify-center rounded-full text-white text-[10px] font-black shrink-0" style={{ backgroundColor: scheme.primary }}>1</div>
+          <div className="flex-1 h-1 rounded-full" style={{ backgroundColor: scheme.primary }} />
+          <div className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black shrink-0" style={{ border: `1px solid ${scheme.primary}66`, color: scheme.primary }}>2</div>
+          <span className="text-xs ml-1" style={{ color: scheme.primary }}>Step 1 of 2 — Claim your spot</span>
         </div>
       </div>
 
       {/* ── Hero + form ── */}
-      <div
-        className="px-6 py-12"
-        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)" }}
-      >
+      <div className="px-6 py-12" style={{ background: `linear-gradient(160deg, ${scheme.dark} 0%, ${scheme.mid} 60%, ${scheme.dark} 100%)` }}>
         <div className="max-w-md mx-auto text-center mb-7">
-          <span className="inline-block rounded-full border border-orange-400/30 bg-orange-500/15 px-3 py-1 text-xs font-semibold text-orange-300 mb-4">
+          <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold mb-4" style={{ border: `1px solid ${scheme.primary}4d`, backgroundColor: `${scheme.primary}26`, color: scheme.primary }}>
             Free access · Starts immediately
           </span>
           <h1 className="text-2xl font-black text-white leading-tight mb-3">
             Join the {os.challengeConcept}
           </h1>
-          <p className="text-sm text-orange-200 leading-relaxed">{form.formIntroText}</p>
+          <p className="text-sm leading-relaxed" style={{ color: `${scheme.primary}cc` }}>{form.formIntroText}</p>
         </div>
 
         {/* Form card */}
         <div className="max-w-sm mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-orange-500 px-6 py-3 text-center">
+          <div className="px-6 py-3 text-center" style={{ backgroundColor: scheme.primary }}>
             <p className="text-sm font-bold text-white">Enter your details to get started</p>
           </div>
           <div className="p-5 space-y-3.5">
@@ -333,7 +347,7 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
                 </div>
               </div>
             ))}
-            <button className="w-full rounded-xl bg-orange-500 py-3 text-sm font-black text-white flex items-center justify-center gap-2 mt-1 hover:bg-orange-600 transition-colors">
+            <button className="w-full rounded-xl py-3 text-sm font-black text-white flex items-center justify-center gap-2 mt-1 transition-opacity hover:opacity-90" style={{ backgroundColor: scheme.primary }}>
               {form.ctaButtonText} <ArrowRight className="h-4 w-4" />
             </button>
             <div className="flex items-center justify-center gap-1.5 pt-1">
@@ -345,15 +359,15 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
       </div>
 
       {/* ── Trust strip ── */}
-      <div className="bg-[#0f172a] px-6 py-4">
+      <div className="px-6 py-4" style={{ backgroundColor: scheme.dark }}>
         <div className="max-w-lg mx-auto flex flex-wrap items-center justify-center gap-5">
           {[
-            { icon: <Check className="h-3.5 w-3.5 text-orange-400" />, label: "100% free to join" },
-            { icon: <Shield className="h-3.5 w-3.5 text-orange-400" />, label: "No credit card needed" },
-            { icon: <Clock className="h-3.5 w-3.5 text-orange-400" />, label: "Takes under 60 seconds" },
+            { label: "100% free to join" },
+            { label: "No credit card needed" },
+            { label: "Takes under 60 seconds" },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-1.5">
-              {item.icon}
+              <Check className="h-3.5 w-3.5 shrink-0" style={{ color: scheme.primary }} />
               <span className="text-xs text-gray-300">{item.label}</span>
             </div>
           ))}
@@ -363,13 +377,13 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
       {/* ── What they're getting ── */}
       <div className="bg-slate-50 px-6 py-10">
         <div className="max-w-md mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest text-orange-600 mb-5 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest mb-5 text-center" style={{ color: scheme.accent }}>
             Here&apos;s what you&apos;re getting
           </p>
           <div className="space-y-3">
             {lp.bulletPoints.slice(0, 5).map((point, i) => (
               <div key={i} className="flex items-start gap-3 rounded-xl bg-white border border-slate-200 p-3.5 shadow-sm">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 font-black text-[10px] mt-0.5">{i + 1}</div>
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-black text-white text-[10px] mt-0.5" style={{ backgroundColor: scheme.primary }}>{i + 1}</div>
                 <span className="text-sm text-gray-700 leading-snug">{point}</span>
               </div>
             ))}
@@ -384,34 +398,31 @@ function OptInFormPreview({ data }: { data: GeneratedFunnelAssets }) {
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  THANK YOU PAGE                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
-function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
+function ThankYouPreview({ data, scheme }: { data: GeneratedFunnelAssets; scheme: SchemeColors }) {
   const ty = data.thankYouPage;
   const os = data.offerSummary;
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta="Book Your Call" accentBg="#f97316" />
+      <NavBar cta="Book Your Call" scheme={scheme} />
 
       {/* ── Celebration hero ── */}
-      <div
-        className="px-8 py-14 text-center"
-        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%)" }}
-      >
+      <div className="px-8 py-14 text-center" style={{ background: `linear-gradient(160deg, ${scheme.dark} 0%, ${scheme.mid} 55%, ${scheme.dark} 100%)` }}>
         <div className="flex justify-center mb-5">
           <div className="relative">
-            <div className="h-16 w-16 rounded-full bg-orange-500/20 border-[3px] border-orange-500 flex items-center justify-center">
-              <Check className="h-8 w-8 text-orange-400" />
+            <div className="h-16 w-16 rounded-full flex items-center justify-center border-[3px]" style={{ backgroundColor: `${scheme.primary}33`, borderColor: scheme.primary }}>
+              <Check className="h-8 w-8" style={{ color: scheme.primary }} />
             </div>
             <span className="absolute -top-1 -right-2 text-xl">🎉</span>
           </div>
         </div>
-        <span className="inline-block rounded-full border border-orange-500/40 bg-orange-500/15 px-4 py-1 text-xs font-bold text-orange-400 mb-4">
+        <span className="inline-block rounded-full px-4 py-1 text-xs font-bold mb-4" style={{ border: `1px solid ${scheme.primary}66`, backgroundColor: `${scheme.primary}26`, color: scheme.primary }}>
           You&apos;re officially in — Welcome to the {os.challengeConcept}
         </span>
         <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-4 max-w-lg mx-auto">
           {ty.confirmationMessage}
         </h1>
-        <p className="text-sm text-orange-200 max-w-md mx-auto leading-relaxed">
+        <p className="text-sm max-w-md mx-auto leading-relaxed" style={{ color: `${scheme.primary}cc` }}>
           {ty.bookingEncouragement}
         </p>
       </div>
@@ -420,13 +431,13 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
       <div className="bg-white px-8 py-12">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">
-            <Eyebrow text="What Happens Next" color="#f97316" />
+            <Eyebrow text="What Happens Next" color={scheme.primary} />
             <h2 className="text-2xl font-black text-gray-900">Here&apos;s your next steps</h2>
           </div>
           <div className="space-y-3.5">
             {ty.nextSteps.map((step, i) => (
-              <div key={i} className="flex items-start gap-4 rounded-xl bg-orange-50 border border-orange-100 p-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white font-black text-sm">
+              <div key={i} className="flex items-start gap-4 rounded-xl p-4" style={{ backgroundColor: `${scheme.primary}12`, border: `1px solid ${scheme.primary}30` }}>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white font-black text-sm" style={{ backgroundColor: scheme.primary }}>
                   {i + 1}
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
@@ -440,36 +451,33 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
       <div className="bg-slate-50 px-8 py-8 border-y border-slate-200">
         <div className="max-w-lg mx-auto flex flex-wrap items-center justify-center gap-6">
           {[
-            { icon: <Users className="h-4 w-4 text-orange-500" />, label: "You&apos;re in good company" },
-            { icon: <Calendar className="h-4 w-4 text-orange-500" />, label: "Challenge starts this week" },
-            { icon: <Star className="h-4 w-4 text-orange-400 fill-orange-400" />, label: os.corePromise },
+            { label: "You're in good company" },
+            { label: "Challenge starts this week" },
+            { label: os.corePromise },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2">
-              {item.icon}
-              <span className="text-xs text-gray-600" dangerouslySetInnerHTML={{ __html: item.label }} />
+              <Star className="h-4 w-4 shrink-0" style={{ color: scheme.primary, fill: scheme.primary }} />
+              <span className="text-xs text-gray-600">{item.label}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* ── Booking CTA ── */}
-      <div
-        className="px-8 py-14 text-center"
-        style={{ background: "linear-gradient(135deg, #ea580c 0%, #f97316 100%)" }}
-      >
+      <div className="px-8 py-14 text-center" style={{ background: `linear-gradient(135deg, ${scheme.accent} 0%, ${scheme.primary} 100%)` }}>
         <div className="max-w-lg mx-auto">
           <div className="flex justify-center mb-4">
             <Calendar className="h-8 w-8 text-white/70" />
           </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-orange-100 mb-3">One more step</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-3">One more step</p>
           <h2 className="text-2xl font-black text-white mb-3 leading-tight">
             Book your free kick-off call to get the most from this challenge
           </h2>
-          <p className="text-sm text-orange-100 mb-7 leading-relaxed max-w-md mx-auto">
+          <p className="text-sm text-white/80 mb-7 leading-relaxed max-w-md mx-auto">
             {ty.bookingEncouragement}
           </p>
-          <CtaButton text="Book My Free Call Now" bg="white" fg="#ea580c" size="lg" />
-          <p className="text-xs text-orange-200 mt-3">30 minutes · No obligation · You can reschedule anytime</p>
+          <CtaButton text="Book My Free Call Now" bg="white" fg={scheme.accent} size="lg" />
+          <p className="text-xs text-white/60 mt-3">30 minutes · No obligation · You can reschedule anytime</p>
         </div>
       </div>
     </div>
@@ -479,7 +487,7 @@ function ThankYouPreview({ data }: { data: GeneratedFunnelAssets }) {
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  BOOKING PAGE                                                               */
 /* ─────────────────────────────────────────────────────────────────────────── */
-function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
+function BookingPagePreview({ data, scheme }: { data: GeneratedFunnelAssets; scheme: SchemeColors }) {
   const bk = data.bookingPage;
   const os = data.offerSummary;
 
@@ -489,17 +497,17 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 
   return (
     <div className="font-sans antialiased">
-      <NavBar cta="Schedule Now" accentBg="#f97316" />
+      <NavBar cta="Schedule Now" scheme={scheme} />
 
       {/* ── Hero ── */}
-      <div className="px-8 py-10 text-center" style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)" }}>
-        <span className="inline-block rounded-full border border-orange-500/30 bg-orange-500/15 px-4 py-1 text-xs font-semibold text-orange-300 mb-4">
+      <div className="px-8 py-10 text-center" style={{ background: `linear-gradient(160deg, ${scheme.dark} 0%, ${scheme.mid} 60%, ${scheme.dark} 100%)` }}>
+        <span className="inline-block rounded-full px-4 py-1 text-xs font-semibold mb-4" style={{ border: `1px solid ${scheme.primary}4d`, backgroundColor: `${scheme.primary}26`, color: scheme.primary }}>
           Last step — almost there
         </span>
         <h1 className="text-2xl font-black text-white leading-tight mb-3 max-w-lg mx-auto">
           Book Your Free {os.challengeConcept} Strategy Call
         </h1>
-        <p className="text-sm text-orange-200 max-w-md mx-auto leading-relaxed">{bk.shortIntro}</p>
+        <p className="text-sm max-w-md mx-auto leading-relaxed" style={{ color: `${scheme.primary}cc` }}>{bk.shortIntro}</p>
       </div>
 
       {/* ── Main content: benefits + calendar ── */}
@@ -508,18 +516,18 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 
           {/* Left: why book */}
           <div>
-            <Eyebrow text="On This Call" color="#f97316" />
+            <Eyebrow text="On This Call" color={scheme.primary} />
             <h3 className="text-lg font-black text-gray-900 mb-4 leading-tight">
               Here&apos;s what we&apos;ll cover together
             </h3>
             <div className="space-y-3 mb-5">
               {bk.whyBook.map((reason, i) => (
-                <CheckItem key={i} text={reason} color="#f97316" textColor="#374151" />
+                <CheckItem key={i} text={reason} color={scheme.primary} textColor="#374151" />
               ))}
             </div>
-            <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
-              <p className="text-xs font-bold text-orange-900 mb-1.5">What to expect</p>
-              <p className="text-xs text-orange-800 leading-relaxed">{bk.expectationSetting}</p>
+            <div className="rounded-xl p-4" style={{ border: `1px solid ${scheme.primary}33`, backgroundColor: `${scheme.primary}0d` }}>
+              <p className="text-xs font-bold mb-1.5" style={{ color: scheme.accent }}>What to expect</p>
+              <p className="text-xs leading-relaxed text-gray-700">{bk.expectationSetting}</p>
             </div>
             <div className="mt-4 space-y-1.5">
               {[
@@ -549,11 +557,10 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
               {dates.map((dt, i) => (
                 <button
                   key={dt}
-                  className={`text-center text-xs rounded-lg py-1.5 font-medium transition-colors ${
-                    i === 2
-                      ? "bg-orange-500 text-white font-bold shadow-sm"
-                      : "bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-700"
-                  }`}
+                  className="text-center text-xs rounded-lg py-1.5 font-medium transition-opacity hover:opacity-80"
+                  style={i === 2
+                    ? { backgroundColor: scheme.primary, color: "#fff" }
+                    : { backgroundColor: "#f8fafc", color: "#374151" }}
                 >
                   {dt}
                 </button>
@@ -564,17 +571,16 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
               {times.map((t, i) => (
                 <button
                   key={t}
-                  className={`text-[11px] rounded-lg border py-1.5 font-medium transition-colors ${
-                    i === 1
-                      ? "bg-orange-500 text-white border-orange-500 shadow-sm"
-                      : "border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-700 hover:bg-orange-50"
-                  }`}
+                  className="text-[11px] rounded-lg border py-1.5 font-medium transition-opacity hover:opacity-80"
+                  style={i === 1
+                    ? { backgroundColor: scheme.primary, color: "#fff", borderColor: scheme.primary }
+                    : { borderColor: "#e5e7eb", color: "#4b5563" }}
                 >
                   {t}
                 </button>
               ))}
             </div>
-            <button className="mt-4 w-full rounded-xl bg-orange-500 py-2.5 text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-md hover:bg-orange-600 transition-colors">
+            <button className="mt-4 w-full rounded-xl py-2.5 text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-md transition-opacity hover:opacity-90" style={{ backgroundColor: scheme.primary }}>
               Confirm My Spot <ChevronRight className="h-3.5 w-3.5" />
             </button>
             <p className="text-[10px] text-gray-400 text-center mt-2">
@@ -585,18 +591,14 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
       </div>
 
       {/* ── Footer trust strip ── */}
-      <div className="bg-[#0f172a] px-6 py-5">
+      <div className="px-6 py-5" style={{ backgroundColor: scheme.dark }}>
         <div className="max-w-lg mx-auto">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center mb-3">Why coaches book a call first</p>
           <div className="flex flex-wrap items-center justify-center gap-5">
-            {[
-              { icon: <Check className="h-3.5 w-3.5 text-orange-400 shrink-0" />, label: "Get a custom challenge plan" },
-              { icon: <Shield className="h-3.5 w-3.5 text-orange-400 shrink-0" />, label: "No obligation whatsoever" },
-              { icon: <Clock className="h-3.5 w-3.5 text-orange-400 shrink-0" />, label: "Results in 30 days or less" },
-            ].map((item, i) => (
+            {["Get a custom challenge plan", "No obligation whatsoever", "Results in 30 days or less"].map((label, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                {item.icon}
-                <span className="text-xs text-gray-300">{item.label}</span>
+                <Check className="h-3.5 w-3.5 shrink-0" style={{ color: scheme.primary }} />
+                <span className="text-xs text-gray-300">{label}</span>
               </div>
             ))}
           </div>
@@ -612,6 +614,7 @@ function BookingPagePreview({ data }: { data: GeneratedFunnelAssets }) {
 export function FunnelPreviewSection({ data }: Props) {
   const [activePage, setActivePage] = useState<PageId>("landing");
 
+  const scheme = getScheme(data.colourScheme);
   const activeMeta = PAGES.find((p) => p.id === activePage)!;
 
   const pageUrls: Record<PageId, string> = {
@@ -622,10 +625,10 @@ export function FunnelPreviewSection({ data }: Props) {
   };
 
   const pageContent: Record<PageId, React.ReactNode> = {
-    landing:  <LandingPagePreview  data={data} />,
-    optin:    <OptInFormPreview    data={data} />,
-    thankyou: <ThankYouPreview     data={data} />,
-    booking:  <BookingPagePreview  data={data} />,
+    landing:  <LandingPagePreview  data={data} scheme={scheme} />,
+    optin:    <OptInFormPreview    data={data} scheme={scheme} />,
+    thankyou: <ThankYouPreview     data={data} scheme={scheme} />,
+    booking:  <BookingPagePreview  data={data} scheme={scheme} />,
   };
 
   return (
@@ -645,13 +648,14 @@ export function FunnelPreviewSection({ data }: Props) {
             onClick={() => setActivePage(page.id)}
             className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-all border ${
               activePage === page.id
-                ? "bg-[#0f172a] text-white border-[#0f172a] shadow-sm"
+                ? "text-white border-transparent shadow-sm"
                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
             }`}
+            style={activePage === page.id ? { backgroundColor: scheme.dark } : {}}
           >
             <span
               className="h-2 w-2 rounded-full shrink-0"
-              style={{ backgroundColor: activePage === page.id ? "#fff" : page.color }}
+              style={{ backgroundColor: activePage === page.id ? "#fff" : scheme.primary }}
             />
             {page.label}
           </button>

@@ -91,6 +91,7 @@ export interface GeneratedFunnelAssets {
   creativePrompts: CreativePrompts;
   campaignNaming: CampaignNaming;
   generatedAdImages?: GeneratedAdImage[];
+  colourScheme?: string;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

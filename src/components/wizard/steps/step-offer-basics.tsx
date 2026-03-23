@@ -70,19 +70,7 @@ export function StepOfferBasics({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="challengeType">What type of challenge is this?</Label>
-        <Input
-          id="challengeType"
-          placeholder="e.g. Fat Loss, Gut Health Reset, Build Your First 5K, Muscle Tone"
-          {...register("challengeType")}
-        />
-        {errors.challengeType && (
-          <p className="text-sm text-red-500">{errors.challengeType.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="mainGoal">What&apos;s the main goal of the challenge?</Label>
+        <Label htmlFor="mainGoal">What&apos;s the main result your clients get?</Label>
         <Textarea
           id="mainGoal"
           placeholder="e.g. Help women lose 10-15lbs and build a consistent workout habit without giving up carbs or spending hours in the gym"

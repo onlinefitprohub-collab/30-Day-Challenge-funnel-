@@ -55,46 +55,20 @@ export function StepSocialProof({
         </div>
       </div>
 
-      {/* Testimonials */}
+      {/* Testimonials + results */}
       <div className="space-y-1.5">
         <Label htmlFor="testimonials">
-          Client testimonials or quotes <span className="text-gray-400">(optional)</span>
+          Client results, quotes, or wins <span className="text-gray-400">(optional)</span>
         </Label>
         <Textarea
           id="testimonials"
-          placeholder={`e.g.\n"Lost 12lbs and finally feel like myself again" — Emma T., 38\n"Down 2 dress sizes in 6 weeks, and I didn't give up pasta" — Maria P., 44`}
-          rows={4}
+          placeholder={`Add anything you have — quotes, stats, client stories:\n\n"Lost 12lbs and finally feel like myself again" — Emma T., 38\n\n95 clients completed the last challenge, average loss 9lbs, 4.9 stars\n\nClaire, 42, a nurse and mum of three, was working night shifts… After 30 days she had lost 8lbs and sleeping better.`}
+          rows={5}
           {...register("testimonials")}
         />
         <p className="text-xs text-gray-400">
-          Copy and paste real quotes here. Include first name and age if possible for authenticity.
+          Include quotes, stats, short client stories — whatever you have. Real results dramatically improve conversions.
         </p>
-      </div>
-
-      {/* Case study */}
-      <div className="space-y-1.5">
-        <Label htmlFor="caseStudySnippets">
-          Client story or case study <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Textarea
-          id="caseStudySnippets"
-          placeholder="e.g. Claire, 42, a nurse and mum of three, was working night shifts and felt she had no time for herself. After 30 days she had lost 8lbs, started sleeping better, and said it was the first time she'd stuck to anything in years."
-          rows={3}
-          {...register("caseStudySnippets")}
-        />
-      </div>
-
-      {/* Results highlights */}
-      <div className="space-y-1.5">
-        <Label htmlFor="resultsHighlights">
-          Quick wins or stats to highlight <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Textarea
-          id="resultsHighlights"
-          placeholder="e.g. 95 clients completed the last challenge, average weight loss 9lbs, 4.9-star rating, 87% said they'd recommend it to a friend"
-          rows={2}
-          {...register("resultsHighlights")}
-        />
       </div>
 
       {/* Before/after */}

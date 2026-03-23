@@ -4,7 +4,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trafficInputsSchema, type TrafficInputs, type WizardInputs } from "@/types/wizard";
 import { cn } from "@/lib/utils";
@@ -27,7 +26,6 @@ const budgetOptions = [
 
 export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) {
   const {
-    register,
     handleSubmit,
     control,
     watch,
@@ -36,10 +34,8 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
   } = useForm<TrafficInputs>({
     resolver: zodResolver(trafficInputsSchema),
     defaultValues: {
-      trafficSources:      defaultValues.trafficSources ?? [],
-      primaryPlatform:     defaultValues.primaryPlatform,
-      utmNamingPreference: defaultValues.utmNamingPreference ?? "",
-      adBudgetRange:       defaultValues.adBudgetRange ?? "",
+      trafficSources: defaultValues.trafficSources ?? [],
+      adBudgetRange:  defaultValues.adBudgetRange ?? "",
     },
   });
 
@@ -133,21 +129,6 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
             </button>
           ))}
         </div>
-      </div>
-
-      {/* UTM naming */}
-      <div className="space-y-1.5">
-        <Label htmlFor="utmNamingPreference">
-          Campaign naming preference <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Input
-          id="utmNamingPreference"
-          placeholder="e.g. fitlife_30daychallenge — leave blank and we'll suggest one"
-          {...register("utmNamingPreference")}
-        />
-        <p className="text-xs text-gray-400">
-          This is used to build your UTM tracking links and ad naming conventions.
-        </p>
       </div>
 
       <div className="flex justify-between pt-2">

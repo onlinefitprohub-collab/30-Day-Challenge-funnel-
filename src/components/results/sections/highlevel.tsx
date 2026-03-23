@@ -89,7 +89,7 @@ function HLGroup({
   );
 }
 
-/* ── GHL JSON Download Panel ── */
+/* ── GHL JSON Download Panel (PRIMARY import method) ── */
 function GhlDownloadPanel({ data }: { data: GeneratedFunnelAssets }) {
   function handleDownload() {
     const importJson = generateGhlImportJson(data);
@@ -100,33 +100,52 @@ function GhlDownloadPanel({ data }: { data: GeneratedFunnelAssets }) {
     a.download = `${importJson.name.replace(/\s+/g, "-").toLowerCase()}-ghl-funnel.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Downloaded!", description: "Import the JSON file in HighLevel → Funnels → Import." });
+    toast({ title: "Funnel downloaded!", description: "Follow the steps below to import it into HighLevel." });
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white">
+    <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white">
           <Download className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm">Download Funnel JSON</p>
-          <p className="mt-0.5 text-xs text-gray-500">
-            Backup option — download the funnel as a GHL-compatible JSON file and import it manually
-            via <span className="font-medium text-gray-700">Funnels &amp; Websites → Funnels → Import Funnel</span>.
-          </p>
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              onClick={handleDownload}
-              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download GHL Funnel JSON
-            </button>
-            <span className="text-xs text-gray-400">4 funnel pages · full HTML bodies</span>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-green-900 text-sm">Download &amp; Import — No API key needed</p>
+            <span className="rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-bold text-white">RECOMMENDED</span>
           </div>
+          <p className="mt-0.5 text-xs text-green-700">
+            Download your complete funnel as a HighLevel-compatible file and import all 4 pages in under a minute.
+          </p>
         </div>
       </div>
+
+      <button
+        onClick={handleDownload}
+        className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors shadow-sm mb-5"
+      >
+        <Download className="h-4 w-4" />
+        Download Funnel JSON
+      </button>
+
+      <div className="space-y-2.5">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-green-800">How to import in HighLevel:</p>
+        {[
+          { step: "1", text: 'Open HighLevel → Funnels & Websites → Funnels' },
+          { step: "2", text: 'Click the three-dot menu (⋯) in the top right → Import Funnel' },
+          { step: "3", text: 'Select the JSON file you just downloaded' },
+          { step: "4", text: 'All 4 pages (Landing, Opt-in, Thank You, Booking) will appear — edit and publish' },
+        ].map(({ step, text }) => (
+          <div key={step} className="flex items-start gap-2.5">
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-[10px] font-black mt-0.5">{step}</div>
+            <p className="text-xs text-green-800 leading-relaxed">{text}</p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-[11px] text-green-600 border-t border-green-200 pt-3">
+        4 funnel pages included · Full HTML content bodies · Works with any HighLevel plan
+      </p>
     </div>
   );
 }
@@ -236,20 +255,26 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
   return (
     <div className="space-y-5">
 
-      {/* One-click import banner */}
+      {/* PRIMARY: JSON Download */}
+      <GhlDownloadPanel data={data} />
+
+      {/* Advanced: API push — secondary card */}
       <div className="rounded-xl border border-[#1a56db]/30 bg-gradient-to-br from-[#f0f4ff] to-[#e8f0fe] p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1a56db] text-white">
             <Zap className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[#1a56db]">Push to HighLevel — Native Pages</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-[#1a56db]">API Push — Direct to HighLevel</p>
+              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600">ADVANCED</span>
+            </div>
             <p className="mt-0.5 text-sm text-gray-600">
-              Create your funnel and push all 4 pages as native editable elements directly into your HighLevel account. Connect your credentials in{" "}
+              Requires a HighLevel private integration key with <strong>Funnels create/edit</strong> scopes. Connect in{" "}
               <Link href="/account" className="underline underline-offset-2 hover:text-[#1a56db]">
                 Account Settings
               </Link>{" "}
-              first.
+              — or use the Download method above which works without any API key.
             </p>
 
             <div className="mt-4">
@@ -379,9 +404,6 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
           </div>
         </div>
       </div>
-
-      {/* GHL Funnel JSON Download */}
-      <GhlDownloadPanel data={data} />
 
       {/* Paste guide header */}
       <div className="rounded-xl border border-[#1a56db]/20 bg-[#f0f4ff] p-4">

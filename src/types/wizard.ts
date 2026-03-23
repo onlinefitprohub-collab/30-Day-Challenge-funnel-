@@ -14,7 +14,7 @@ export const businessBasicsSchema = z.object({
 // Step 2: Offer Basics
 export const offerBasicsSchema = z.object({
   challengeName: z.string().min(2, "Challenge name is required"),
-  challengeType: z.string().min(2, "Challenge type is required"),
+  challengeType: z.string().optional(),
   mainGoal: z.string().min(10, "Please describe the main goal"),
   duration: z.number().min(7).max(90).default(30),
   price: z.string().min(1, "Price or offer type is required"),
@@ -31,6 +31,7 @@ export const audiencePainSchema = z.object({
   desiredOutcome: z.string().min(10, "Please describe the desired outcome"),
   objections: z.string().min(10, "Please describe common objections"),
   demographicDetails: z.string().optional(),
+  // legacy field kept optional for backward compat
 });
 
 // Step 4: Brand Voice
@@ -38,6 +39,7 @@ export const brandVoiceSchema = z.object({
   toneOfVoice: z.enum(["friendly", "bold", "premium", "simple", "motivational"], {
     required_error: "Please select a tone",
   }),
+  colourScheme: z.enum(["navy-orange", "rose-pink", "teal-forest", "purple-lilac", "sky-blue"]).default("navy-orange"),
   phrasesToInclude: z.string().optional(),
   phrasesToAvoid: z.string().optional(),
 });
@@ -50,6 +52,7 @@ export const trafficInputsSchema = z.object({
   primaryPlatform: z.enum(["facebook", "instagram", "google", "local", "organic"]).optional(),
   utmNamingPreference: z.string().optional(),
   adBudgetRange: z.string().optional(),
+  // primaryPlatform and utmNamingPreference kept optional for backward compat
 });
 
 // Step 6: Social Proof
@@ -58,6 +61,7 @@ export const socialProofSchema = z.object({
   caseStudySnippets: z.string().optional(),
   resultsHighlights: z.string().optional(),
   hasBeforeAfter: z.boolean().default(false),
+  // caseStudySnippets and resultsHighlights kept optional for backward compat
 });
 
 // Combined wizard inputs — all steps merged
