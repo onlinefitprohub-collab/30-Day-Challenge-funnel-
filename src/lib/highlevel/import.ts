@@ -157,22 +157,21 @@ async function tryCreateFunnelStep(
 async function tryPostPageData(
   pageId: string,
   funnelId: string,
+  locationId: string,
   apiKey: string,
   pageData: GhlPageData,
 ): Promise<boolean> {
-  const payload = { pageData };
+  const payload = { pageData, locationId, pageId, isPublished: false, write: false };
 
-  const paths = [
+  // PUT is the primary method per GHL pageData API spec
+  const putPaths = [
     `/funnels/funnel/page/${pageId}`,
     `/funnels/${funnelId}/pages/${pageId}`,
-    `/funnels/${funnelId}/steps/${pageId}/pageData`,
-    `/funnel-pages/${pageId}`,
   ];
-
-  for (const path of paths) {
+  for (const path of putPaths) {
     try {
       const res = await hlFetch(path, apiKey, {
-        method: "POST",
+        method: "PUT",
         body: JSON.stringify(payload),
       });
       if (res.ok) return true;
@@ -182,15 +181,17 @@ async function tryPostPageData(
     }
   }
 
-  // Also try PUT variants
-  const putPaths = [
+  // POST fallback for accounts using a different endpoint shape
+  const postPaths = [
     `/funnels/funnel/page/${pageId}`,
     `/funnels/${funnelId}/pages/${pageId}`,
+    `/funnels/${funnelId}/steps/${pageId}/pageData`,
+    `/funnel-pages/${pageId}`,
   ];
-  for (const path of putPaths) {
+  for (const path of postPaths) {
     try {
       const res = await hlFetch(path, apiKey, {
-        method: "PUT",
+        method: "POST",
         body: JSON.stringify(payload),
       });
       if (res.ok) return true;
@@ -316,7 +317,7 @@ export async function importToHighLevel(
       // Attempt native pageData write if we got a pageId back
       if (step.pageId) {
         const pageData = def.pageDataFn(assets);
-        const written  = await tryPostPageData(step.pageId, funnelId!, apiKey, pageData);
+        const written  = await tryPostPageData(step.pageId, funnelId!, locationId, apiKey, pageData);
         nativePages.push({ stepName: def.name, written });
         if (written) step.nativePage = true;
       } else {
