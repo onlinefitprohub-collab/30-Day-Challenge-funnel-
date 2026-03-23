@@ -47,8 +47,8 @@ function parseResultsUrl(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    // Match: /dashboard/projects/{id}/results
-    const m = u.pathname.match(/\/dashboard\/projects\/([^/]+)\/results/);
+    // Match: /projects/{id} or /projects/{id}/results (Next.js route groups omit the wrapper folder)
+    const m = u.pathname.match(/\/projects\/([^/]+)/);
     if (!m) return null;
     return {
       appUrl: u.origin,
