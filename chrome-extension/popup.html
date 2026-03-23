@@ -285,6 +285,15 @@
   </div>
 
   <div class="field">
+    <label for="s-project-token">Extension Token</label>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input class="inp" id="s-project-token" type="text" placeholder="Click Fetch Token or paste from results page" style="flex:1;" />
+      <button id="fetch-token-btn" style="white-space:nowrap;padding:7px 10px;background:#f97316;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Fetch Token</button>
+    </div>
+    <small>Server-signed token that proves you own this project. Click "Fetch Token" while logged into your app — or copy it from the Results page → HighLevel → Chrome Extension card.</small>
+  </div>
+
+  <div class="field">
     <label for="s-hl-api-key">HighLevel API Key</label>
     <input class="inp" id="s-hl-api-key" type="password" placeholder="Your GHL API key" />
     <small>Settings → Integrations → API Key in your HighLevel sub-account.</small>

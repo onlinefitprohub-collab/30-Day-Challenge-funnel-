@@ -90,13 +90,35 @@ function HLGroup({
 }
 
 /* ── Chrome Extension CTA (TOP method) ── */
-function ExtensionCTAPanel() {
+function ExtensionCTAPanel({ projectId }: { projectId: string }) {
+  const [token, setToken]           = useState<string | null>(null);
+  const [tokenLoading, setTokLoad]  = useState(false);
+  const [tokenCopied, setTokCopied] = useState(false);
+
+  useEffect(() => {
+    if (!projectId) return;
+    setTokLoad(true);
+    fetch(`/api/highlevel/inject-token?projectId=${projectId}`)
+      .then((r) => r.json())
+      .then((j) => { if (j.token) setToken(j.token); })
+      .catch(() => {})
+      .finally(() => setTokLoad(false));
+  }, [projectId]);
+
   function handleDownload() {
     const a = document.createElement("a");
     a.href = "/api/highlevel/extension-download";
     a.download = "challenge-funnel-extension.zip";
     a.click();
     toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the README inside for instructions." });
+  }
+
+  async function copyToken() {
+    if (!token) return;
+    await navigator.clipboard.writeText(token);
+    setTokCopied(true);
+    toast({ title: "Token copied!", description: "Paste it into the extension Settings → Extension Token field." });
+    setTimeout(() => setTokCopied(false), 2000);
   }
 
   return (
@@ -135,13 +157,39 @@ function ExtensionCTAPanel() {
         </a>
       </div>
 
+      {/* Extension Token */}
+      <div className="rounded-lg border border-orange-200 bg-white p-3 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs font-bold text-orange-800">Your Extension Token</p>
+          {token && (
+            <button
+              onClick={copyToken}
+              className="flex items-center gap-1 rounded border border-orange-200 px-2 py-0.5 text-[10px] font-medium text-orange-700 hover:bg-orange-50 transition-colors"
+            >
+              {tokenCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+              {tokenCopied ? "Copied!" : "Copy"}
+            </button>
+          )}
+        </div>
+        {tokenLoading && <p className="text-xs text-orange-400 italic">Loading…</p>}
+        {!tokenLoading && token && (
+          <p className="font-mono text-xs text-orange-900 break-all">{token}</p>
+        )}
+        {!tokenLoading && !token && (
+          <p className="text-xs text-orange-500 italic">Log in to see your token.</p>
+        )}
+        <p className="mt-1.5 text-[10px] text-orange-500">
+          Paste this into the extension Settings → Extension Token field. It proves you generated this project.
+        </p>
+      </div>
+
       <div className="space-y-1.5">
         <p className="text-[11px] font-bold uppercase tracking-widest text-orange-800">How it works:</p>
         {[
-          { step: "1", text: "Download the zip and unpack it, then load it in Chrome (chrome://extensions → Developer mode → Load unpacked)" },
-          { step: "2", text: "Open the extension → Settings → paste your App URL, Project ID (from this page's URL), and HL API Key" },
-          { step: "3", text: "Open your HighLevel funnel page builder, paste the Page ID, and click Inject" },
-          { step: "4", text: "HighLevel refreshes with your page fully built from native drag-and-drop elements in your chosen colour scheme" },
+          { step: "1", text: "Download the zip and load it in Chrome (chrome://extensions → Developer mode → Load unpacked)" },
+          { step: "2", text: "Open the extension → Settings → paste your App URL, Project ID (from this URL), Extension Token above, and HL API Key" },
+          { step: "3", text: "Open your HighLevel funnel page builder — a floating CF panel appears automatically. Enter the Page ID and click Inject." },
+          { step: "4", text: "Your page is built from native HL sections, rows, columns, and buttons in your chosen colour scheme." },
         ].map(({ step, text }) => (
           <div key={step} className="flex items-start gap-2.5">
             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black mt-0.5">{step}</div>
@@ -151,7 +199,7 @@ function ExtensionCTAPanel() {
       </div>
 
       <p className="mt-3 text-[11px] text-orange-600 border-t border-orange-200 pt-3">
-        Manifest V3 · Works on app.gohighlevel.com · Colour scheme applied automatically · README included
+        Manifest V3 · Floating in-page panel on app.gohighlevel.com · Colour scheme applied automatically
       </p>
     </div>
   );
@@ -324,7 +372,7 @@ export function HighLevelSection({ data, projectId, hlConnected }: Props) {
     <div className="space-y-5">
 
       {/* Chrome Extension — top card */}
-      <ExtensionCTAPanel />
+      <ExtensionCTAPanel projectId={projectId} />
 
       {/* PRIMARY: JSON Download */}
       <GhlDownloadPanel data={data} />

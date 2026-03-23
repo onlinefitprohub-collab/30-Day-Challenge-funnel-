@@ -1,13 +1,11 @@
 // popup.js — Challenge Funnel Extension Popup Logic
 
-const PAGES = ["landing", "optin", "thankyou", "booking"];
-
-// ── State ───────────────────────────────────────────────────────────────────
-let settings = { appUrl: "", projectId: "", hlApiKey: "" };
+// ── State ─────────────────────────────────────────────────────────────────────
+let settings = { appUrl: "", projectId: "", projectToken: "", hlApiKey: "" };
 let hlContext = { locationId: null, pageId: null, funnelId: null, onHl: false };
-let injecting  = {};
+let injecting = {};
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSettings();
   await detectContext();
@@ -16,14 +14,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadSettings() {
-  const stored = await chrome.storage.sync.get(["appUrl", "projectId", "hlApiKey"]);
-  settings.appUrl   = stored.appUrl   || "";
-  settings.projectId= stored.projectId|| "";
-  settings.hlApiKey = stored.hlApiKey || "";
+  const stored = await chrome.storage.sync.get(["appUrl", "projectId", "projectToken", "hlApiKey"]);
+  settings.appUrl       = stored.appUrl       || "";
+  settings.projectId    = stored.projectId    || "";
+  settings.projectToken = stored.projectToken || "";
+  settings.hlApiKey     = stored.hlApiKey     || "";
 
-  document.getElementById("s-app-url").value   = settings.appUrl;
-  document.getElementById("s-project-id").value= settings.projectId;
-  document.getElementById("s-hl-api-key").value = settings.hlApiKey;
+  document.getElementById("s-app-url").value      = settings.appUrl;
+  document.getElementById("s-project-id").value   = settings.projectId;
+  document.getElementById("s-project-token").value= settings.projectToken;
+  document.getElementById("s-hl-api-key").value   = settings.hlApiKey;
 }
 
 async function detectContext() {
@@ -35,15 +35,11 @@ async function detectContext() {
     hlContext.onHl = url.includes("app.gohighlevel.com");
 
     if (hlContext.onHl) {
-      const locationMatch = url.match(/\/location\/([a-zA-Z0-9]+)/);
-      const funnelMatch   = url.match(/\/funnels\/([a-zA-Z0-9]+)/);
-      const pageMatch     = url.match(/\/(?:page-builder|pages)\/([a-zA-Z0-9]+)/);
+      hlContext.locationId = (url.match(/\/location\/([a-zA-Z0-9]+)/) || [])[1] || null;
+      hlContext.funnelId   = (url.match(/\/funnels\/([a-zA-Z0-9]+)/)  || [])[1] || null;
+      hlContext.pageId     = (url.match(/\/(?:page-builder|pages)\/([a-zA-Z0-9]+)/) || [])[1] || null;
 
-      hlContext.locationId = locationMatch ? locationMatch[1] : null;
-      hlContext.funnelId   = funnelMatch   ? funnelMatch[1]  : null;
-      hlContext.pageId     = pageMatch      ? pageMatch[1]    : null;
-
-      // Also try to read from storage (set by content.js)
+      // Also read from storage (content.js may have detected more)
       const stored = await chrome.storage.local.get(["hlContext"]);
       if (stored.hlContext) {
         hlContext.locationId = hlContext.locationId || stored.hlContext.locationId;
@@ -57,10 +53,10 @@ async function detectContext() {
 }
 
 function isSetupComplete() {
-  return settings.appUrl && settings.projectId && settings.hlApiKey;
+  return settings.appUrl && settings.projectId && settings.projectToken && settings.hlApiKey;
 }
 
-// ── Render Inject Tab ────────────────────────────────────────────────────────
+// ── Render Inject Tab ─────────────────────────────────────────────────────────
 function renderInjectTab() {
   const notOnHl       = document.getElementById("not-on-hl");
   const onHlDiv       = document.getElementById("on-hl");
@@ -90,32 +86,28 @@ function renderInjectTab() {
   const projEl = document.getElementById("ctx-project");
 
   if (hlContext.locationId) {
-    locEl.textContent  = hlContext.locationId;
-    locEl.className    = "context-value ok";
+    locEl.textContent = hlContext.locationId;
+    locEl.className   = "context-value ok";
   } else {
-    locEl.textContent  = "not detected";
-    locEl.className    = "context-value bad";
+    locEl.textContent = "not detected";
+    locEl.className   = "context-value bad";
   }
 
-  pageEl.textContent = hlContext.pageId
-    ? hlContext.pageId
-    : "enter below ↓";
+  pageEl.textContent = hlContext.pageId ? hlContext.pageId : "enter below ↓";
   pageEl.className   = hlContext.pageId ? "context-value ok" : "context-value warn";
 
   projEl.textContent = settings.projectId
     ? settings.projectId.slice(0, 22) + "…"
     : "not set";
-  projEl.className   = settings.projectId ? "context-value ok" : "context-value bad";
+  projEl.className = settings.projectId ? "context-value ok" : "context-value bad";
 
-  // Pre-fill page id if detected
   if (hlContext.pageId) {
     document.getElementById("manual-page-id").value = hlContext.pageId;
   }
 }
 
-// ── Events ───────────────────────────────────────────────────────────────────
+// ── Events ────────────────────────────────────────────────────────────────────
 function bindEvents() {
-  // Tab switching
   document.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
@@ -125,34 +117,66 @@ function bindEvents() {
     });
   });
 
-  // Settings shortcut
   document.getElementById("settingsTabBtn").addEventListener("click", () => {
     document.querySelectorAll(".nav-btn")[1].click();
   });
 
-  // Save settings
   document.getElementById("save-settings").addEventListener("click", saveSettings);
+  document.getElementById("fetch-token-btn").addEventListener("click", fetchToken);
 
-  // Inject buttons
   document.querySelectorAll(".inject-btn").forEach((btn) => {
     btn.addEventListener("click", () => inject(btn.dataset.page, btn));
   });
 }
 
 async function saveSettings() {
-  const appUrl    = document.getElementById("s-app-url").value.trim().replace(/\/$/, "");
-  const projectId = document.getElementById("s-project-id").value.trim();
-  const hlApiKey  = document.getElementById("s-hl-api-key").value.trim();
+  const appUrl       = document.getElementById("s-app-url").value.trim().replace(/\/$/, "");
+  const projectId    = document.getElementById("s-project-id").value.trim();
+  const projectToken = document.getElementById("s-project-token").value.trim();
+  const hlApiKey     = document.getElementById("s-hl-api-key").value.trim();
 
-  if (!appUrl || !projectId || !hlApiKey) {
-    showStatus("settings-status", "error", "Please fill in all three fields.");
+  if (!appUrl || !projectId || !projectToken || !hlApiKey) {
+    showStatus("settings-status", "error", "Please fill in all fields (App URL, Project ID, Extension Token, HL API Key).");
     return;
   }
 
-  await chrome.storage.sync.set({ appUrl, projectId, hlApiKey });
-  settings = { appUrl, projectId, hlApiKey };
-  showStatus("settings-status", "success", "Settings saved! Go to Inject Pages.");
+  await chrome.storage.sync.set({ appUrl, projectId, projectToken, hlApiKey });
+  settings = { appUrl, projectId, projectToken, hlApiKey };
+  showStatus("settings-status", "success", "Settings saved! Switch to Inject Pages tab.");
   renderInjectTab();
+}
+
+async function fetchToken() {
+  const appUrl    = document.getElementById("s-app-url").value.trim().replace(/\/$/, "");
+  const projectId = document.getElementById("s-project-id").value.trim();
+
+  if (!appUrl || !projectId) {
+    showStatus("settings-status", "error", "Enter App URL and Project ID first, then click Fetch Token.");
+    return;
+  }
+
+  const btn = document.getElementById("fetch-token-btn");
+  btn.textContent = "Fetching…";
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${appUrl}/api/highlevel/inject-token?projectId=${projectId}`, {
+      credentials: "include",
+    });
+    const json = await res.json();
+
+    if (json.token) {
+      document.getElementById("s-project-token").value = json.token;
+      showStatus("settings-status", "success", `Token fetched for "${json.projectName}". Click Save Settings to store it.`);
+    } else {
+      showStatus("settings-status", "error", json.error || "Could not fetch token. Make sure you're logged into the app.");
+    }
+  } catch (e) {
+    showStatus("settings-status", "error", `Fetch error: ${e.message}. Check App URL and ensure you're logged in.`);
+  }
+
+  btn.textContent = "Fetch Token";
+  btn.disabled = false;
 }
 
 async function inject(page, btn) {
@@ -165,33 +189,30 @@ async function inject(page, btn) {
     showStatus("inject-status", "error", "Enter a Page ID above — find it in your HL funnel step settings.");
     return;
   }
-
   if (!hlContext.locationId) {
     showStatus("inject-status", "error", "Location ID not detected. Make sure you're on an app.gohighlevel.com page.");
     return;
   }
 
   injecting[page] = true;
-  btn.textContent  = "…";
-  btn.disabled     = true;
-  showStatus("inject-status", "info", `Injecting ${pageLabel(page)} into HL (Page ID: ${pageId})…`);
+  btn.textContent = "…";
+  btn.disabled    = true;
+  showStatus("inject-status", "info", `Injecting ${pageLabel(page)}…`);
 
   try {
-    const body = {
-      projectId:  settings.projectId,
-      page,
-      hlApiKey:   settings.hlApiKey,
-      locationId: hlContext.locationId,
-      pageId,
-      funnelId:   hlContext.funnelId || undefined,
-    };
-
     const res  = await fetch(`${settings.appUrl}/api/highlevel/inject`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(body),
+      body:    JSON.stringify({
+        projectId:    settings.projectId,
+        projectToken: settings.projectToken,
+        page,
+        hlApiKey:     settings.hlApiKey,
+        locationId:   hlContext.locationId,
+        pageId,
+        funnelId:     hlContext.funnelId || undefined,
+      }),
     });
-
     const json = await res.json();
 
     if (json.success) {
@@ -206,14 +227,13 @@ async function inject(page, btn) {
   } catch (e) {
     btn.textContent = "✗ Error";
     btn.classList.add("error");
-    showStatus("inject-status", "error", `Network error: ${e.message}. Check your App URL in Settings.`);
+    showStatus("inject-status", "error", `Network error: ${e.message}. Check App URL in Settings.`);
   }
 
   injecting[page] = false;
-  // Reset button after 3s
   setTimeout(() => {
     btn.textContent = "Inject";
-    btn.disabled     = false;
+    btn.disabled    = false;
     btn.classList.remove("success", "error");
   }, 3500);
 }
@@ -223,8 +243,7 @@ function pageLabel(page) {
 }
 
 function showStatus(id, type, msg) {
-  const el = document.getElementById(id);
-  el.className    = `status-box ${type}`;
-  el.textContent  = msg;
-  el.style.display = "";
+  const el       = document.getElementById(id);
+  el.className   = `status-box ${type}`;
+  el.textContent = msg;
 }

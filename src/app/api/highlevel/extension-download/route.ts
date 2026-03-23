@@ -7,16 +7,15 @@ export const dynamic = "force-dynamic";
 
 const EXT_DIR = path.join(process.cwd(), "chrome-extension");
 
-async function addFilesFromDir(zip: JSZip, dir: string, prefix = "") {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    const zipPath  = prefix ? `${prefix}/${entry.name}` : entry.name;
+function addDir(zip: JSZip, dir: string, prefix: string) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full    = path.join(dir, entry.name);
+    const zipPath = `${prefix}/${entry.name}`;
     if (entry.isDirectory()) {
-      await addFilesFromDir(zip, fullPath, zipPath);
+      addDir(zip, full, zipPath);
     } else {
-      const buf = fs.readFileSync(fullPath);
-      zip.file(zipPath, buf);
+      zip.file(zipPath, fs.readFileSync(full));
     }
   }
 }
@@ -27,14 +26,12 @@ export async function GET() {
   }
 
   const zip = new JSZip();
-  const folder = zip.folder("challenge-funnel-extension")!;
-  await addFilesFromDir(folder as unknown as JSZip, EXT_DIR);
+  addDir(zip, EXT_DIR, "challenge-funnel-extension");
 
-  const buf  = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
-  const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-  const blob = new Blob([arrayBuffer], { type: "application/zip" });
+  const buf          = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  const arrayBuffer  = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
 
-  return new Response(blob, {
+  return new Response(arrayBuffer, {
     status: 200,
     headers: {
       "Content-Type":        "application/zip",

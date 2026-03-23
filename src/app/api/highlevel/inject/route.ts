@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { hlFetch } from "@/lib/highlevel/client";
+import { deriveProjectToken } from "@/lib/highlevel/inject-token";
 import {
   buildLandingPageData,
   buildOptInPageData,
@@ -12,12 +13,13 @@ import type { GeneratedFunnelAssets } from "@/types/generation";
 export const dynamic = "force-dynamic";
 
 interface InjectBody {
-  projectId: string;
-  page:       string;
-  hlApiKey:   string;
-  locationId: string;
-  pageId:     string;
-  funnelId?:  string;
+  projectId:     string;
+  projectToken:  string;
+  page:          string;
+  hlApiKey:      string;
+  locationId:    string;
+  pageId:        string;
+  funnelId?:     string;
 }
 
 function serviceClient() {
@@ -35,15 +37,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { projectId, page, hlApiKey, locationId, pageId, funnelId } = body;
+  const { projectId, projectToken, page, hlApiKey, locationId, pageId, funnelId } = body;
 
-  if (!projectId || !page || !hlApiKey || !locationId || !pageId) {
+  if (!projectId || !projectToken || !page || !hlApiKey || !locationId || !pageId) {
     return NextResponse.json(
-      { success: false, error: "Missing required fields: projectId, page, hlApiKey, locationId, pageId" },
+      { success: false, error: "Missing required fields: projectId, projectToken, page, hlApiKey, locationId, pageId" },
       { status: 400 },
     );
   }
 
+  // ── Token validation (ownership proof) ────────────────────────────────────
+  let expectedToken: string;
+  try {
+    expectedToken = deriveProjectToken(projectId);
+  } catch {
+    return NextResponse.json({ success: false, error: "Server configuration error" }, { status: 500 });
+  }
+
+  if (projectToken !== expectedToken) {
+    return NextResponse.json(
+      { success: false, error: "Invalid project token. Get your token from the Results page → HighLevel tab → Chrome Extension card." },
+      { status: 403 },
+    );
+  }
+
+  // ── Fetch project outputs using service role (token already validated) ─────
   const validPages = ["landing", "optin", "thankyou", "booking"];
   if (!validPages.includes(page)) {
     return NextResponse.json({ success: false, error: "Invalid page value" }, { status: 400 });
