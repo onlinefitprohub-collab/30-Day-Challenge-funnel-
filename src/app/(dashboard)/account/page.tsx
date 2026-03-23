@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard } from "lucide-react";
+import { User, CreditCard, Puzzle, Download } from "lucide-react";
 import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-card";
 
 export const metadata = {
@@ -97,6 +97,35 @@ export default async function AccountPage() {
               Unlimited projects, priority generation, and team access will be available in the next release.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Chrome Extension */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Puzzle className="h-4 w-4 text-[#1a56db]" />
+            <CardTitle className="text-base">Chrome Extension</CardTitle>
+          </div>
+          <CardDescription>
+            Inject your funnel pages into the GHL page builder as native editable elements — no API key required.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ol className="space-y-1.5 text-sm text-gray-600">
+            <li className="flex gap-2"><span className="font-semibold text-gray-400">1.</span> Download and unzip the extension below</li>
+            <li className="flex gap-2"><span className="font-semibold text-gray-400">2.</span> In Chrome go to <span className="font-mono text-xs bg-gray-100 px-1 rounded">chrome://extensions</span> and enable Developer mode</li>
+            <li className="flex gap-2"><span className="font-semibold text-gray-400">3.</span> Click <strong>Load unpacked</strong> and select the unzipped folder</li>
+            <li className="flex gap-2"><span className="font-semibold text-gray-400">4.</span> Click the extension icon on any results page to load a funnel page, then open the GHL builder and click <strong>Paste into Page Builder</strong></li>
+          </ol>
+          <a
+            href="/api/highlevel/extension-download"
+            download="challenge-funnel-extension.zip"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1245b5] transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Download Chrome Extension
+          </a>
         </CardContent>
       </Card>
 

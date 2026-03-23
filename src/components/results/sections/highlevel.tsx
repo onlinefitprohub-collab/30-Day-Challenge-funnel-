@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ExternalLink, Puzzle } from "lucide-react";
+import { Copy, Check, ExternalLink, Puzzle, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -107,7 +107,17 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
             {
               n: "1",
               title: "Install the Chrome extension",
-              body: "Download the extension from your account settings and install it in Chrome (Developer mode → Load unpacked).",
+              body: "Install it in Chrome: open chrome://extensions, enable Developer mode, click Load unpacked, and select the unzipped folder.",
+              extra: (
+                <a
+                  href="/api/highlevel/extension-download"
+                  download="challenge-funnel-extension.zip"
+                  className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-[#1a56db] px-2.5 py-1 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white transition-colors"
+                >
+                  <Download className="h-3 w-3" />
+                  Download extension (.zip)
+                </a>
+              ),
             },
             {
               n: "2",
@@ -129,12 +139,13 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
               title: "The builder reloads with your content",
               body: "After the success message the builder refreshes automatically. Your funnel page content appears as fully editable native HighLevel elements.",
             },
-          ].map(({ n, title, body }) => (
+          ].map(({ n, title, body, extra }) => (
             <div key={n} className="flex items-start gap-3">
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1a56db] text-[10px] font-bold text-white mt-0.5">{n}</span>
               <div>
                 <p className="text-sm font-semibold text-gray-800">{title}</p>
                 {body && <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{body}</p>}
+                {extra}
               </div>
             </div>
           ))}
