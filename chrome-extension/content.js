@@ -16,11 +16,11 @@
     if (evt.source !== window) return;
     if (!evt.data || evt.data.source !== "cf-app" || evt.data.type !== "CF_SAVE_PAGE") return;
 
-    const { projectId, page, pageData, challengeConcept, appUrl } = evt.data.payload || {};
-    if (!projectId || !page || !pageData) return;
+    const { requestId, projectId, page, pageData, challengeConcept, appUrl } = evt.data.payload || {};
+    if (!page || !pageData) return;
 
     const ready = {
-      projectId,
+      projectId: projectId || "",
       appUrl: appUrl || window.location.origin,
       challengeConcept: challengeConcept || "Challenge Funnel",
       page,
@@ -30,7 +30,7 @@
 
     chrome.storage.local.set({ cfReady: ready }, () => {
       window.postMessage(
-        { source: "cf-ext", type: "CF_SAVE_ACK", payload: { page, success: true } },
+        { source: "cf-ext", type: "CF_SAVE_ACK", payload: { requestId, page, success: true } },
         "*"
       );
     });

@@ -651,6 +651,8 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
       const json = await res.json() as { pageData: unknown; colourScheme?: string };
       if (!json.pageData) throw new Error("No page data returned from server");
 
+      const requestId = Math.random().toString(36).slice(2);
+
       const ackPromise = new Promise<boolean>((resolve) => {
         const timer = setTimeout(() => {
           window.removeEventListener("message", handler);
@@ -658,6 +660,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         }, 3000);
         function handler(evt: MessageEvent) {
           if (!evt.data || evt.data.source !== "cf-ext" || evt.data.type !== "CF_SAVE_ACK") return;
+          if (evt.data.payload?.requestId !== requestId) return;
           clearTimeout(timer);
           window.removeEventListener("message", handler);
           resolve(true);
@@ -669,6 +672,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         source: "cf-app",
         type: "CF_SAVE_PAGE",
         payload: {
+          requestId,
           projectId: projectId ?? "",
           page: activePage,
           pageData: json.pageData,
