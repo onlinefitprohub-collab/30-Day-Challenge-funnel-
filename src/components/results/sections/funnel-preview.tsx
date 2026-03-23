@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Globe, ChevronRight, Star, Check, Calendar, ArrowRight, Shield, Clock, Users,
-  Copy, ExternalLink, Loader2, X,
+  ExternalLink, Loader2, X,
 } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
