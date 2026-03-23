@@ -11,17 +11,23 @@ export const metadata = {
 };
 
 const HOW_IT_WORKS = [
-  { icon: Wand2,    step: "1", title: "Fill in the wizard",     body: "Tell us about your niche, audience and challenge — about 3 minutes." },
-  { icon: Download, step: "2", title: "Get your full funnel",   body: "4 pages, emails, SMS, and ad copy — all generated and ready to use." },
-  { icon: Rocket,   step: "3", title: "Import into HighLevel",  body: "Download the JSON or clone pages directly with one click." },
+  { icon: Wand2,    step: "1", title: "Fill in the wizard",    body: "Tell us about your niche, audience and challenge — about 3 minutes." },
+  { icon: Download, step: "2", title: "Get your full funnel",  body: "4 pages, emails, SMS, and ad copy — all generated and ready to use." },
+  { icon: Rocket,   step: "3", title: "Import into HighLevel", body: "Download the JSON or clone pages directly with one click." },
 ];
+
+function deriveSubtitle(inputs: Record<string, unknown>): string {
+  const challenge = typeof inputs.challengeName === "string" ? inputs.challengeName.trim() : "";
+  const audience  = typeof inputs.targetAudience === "string" ? inputs.targetAudience.trim() : "";
+  if (challenge) return challenge;
+  if (audience)  return audience;
+  return "Challenge funnel project";
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: projects } = await supabase
     .from("projects")
@@ -29,12 +35,27 @@ export default async function DashboardPage() {
     .order("updated_at", { ascending: false });
 
   const typedProjects = (projects ?? []) as ProjectRow[];
+  const hasProjects   = typedProjects.length > 0;
+
+  const subtitleMap: Record<string, string> = {};
+  if (hasProjects) {
+    const projectIds = typedProjects.map((p) => p.id);
+    const { data: inputs } = await supabase
+      .from("project_inputs")
+      .select("project_id, inputs")
+      .in("project_id", projectIds);
+
+    for (const row of inputs ?? []) {
+      subtitleMap[row.project_id] = deriveSubtitle(
+        (row.inputs ?? {}) as Record<string, unknown>
+      );
+    }
+  }
 
   const displayName =
     user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Coach";
 
-  const completeCount   = typedProjects.filter((p) => p.status === "complete").length;
-  const hasProjects     = typedProjects.length > 0;
+  const completeCount = typedProjects.filter((p) => p.status === "complete").length;
 
   return (
     <div className="space-y-6">
@@ -72,12 +93,16 @@ export default async function DashboardPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {typedProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  subtitle={subtitleMap[project.id]}
+                />
               ))}
             </div>
           </div>
 
-          {/* How it works — always visible once the user has projects */}
+          {/* How it works strip */}
           <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
             <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-400">How it works</p>
             <div className="grid gap-4 sm:grid-cols-3">

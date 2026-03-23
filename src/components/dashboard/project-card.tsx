@@ -20,7 +20,12 @@ function ctaFor(status: ProjectRow["status"]) {
   return { text: "Continue",   icon: ArrowRight };
 }
 
-export function ProjectCard({ project }: { project: ProjectRow }) {
+interface Props {
+  project: ProjectRow;
+  subtitle?: string;
+}
+
+export function ProjectCard({ project, subtitle }: Props) {
   const cfg  = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.draft;
   const cta  = ctaFor(project.status);
   const CtaIcon = cta.icon;
@@ -38,9 +43,14 @@ export function ProjectCard({ project }: { project: ProjectRow }) {
     >
       {/* Top row: name + status badge */}
       <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 flex-1 truncate font-semibold text-gray-900 group-hover:text-orange-600 leading-snug">
-          {project.name}
-        </h3>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-semibold text-gray-900 group-hover:text-orange-600 leading-snug">
+            {project.name}
+          </h3>
+          {subtitle && (
+            <p className="mt-0.5 truncate text-xs text-gray-400">{subtitle}</p>
+          )}
+        </div>
         <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${cfg.color}`}>
           <StatusIcon className={`h-3 w-3 ${project.status === "generating" ? "animate-spin" : ""}`} />
           {cfg.label}
