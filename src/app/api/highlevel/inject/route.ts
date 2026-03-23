@@ -99,6 +99,7 @@ export async function POST(request: Request) {
   ];
 
   let lastError = "No endpoint succeeded";
+  let lastStatus = 502;
   for (const path of candidates) {
     try {
       const res = await hlFetch(path, hlApiKey, {
@@ -109,11 +110,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, page, pageId });
       }
       const text = await res.text().catch(() => "");
-      lastError = `HL API ${res.status}: ${text.slice(0, 300)}`;
+      lastStatus = res.status >= 400 && res.status < 600 ? res.status : 502;
+      lastError  = `HL API ${res.status}: ${text.slice(0, 300)}`;
     } catch (e) {
-      lastError = e instanceof Error ? e.message : "Network error";
+      lastStatus = 502;
+      lastError  = e instanceof Error ? e.message : "Network error";
     }
   }
 
-  return NextResponse.json({ success: false, error: lastError });
+  return NextResponse.json({ success: false, error: lastError }, { status: lastStatus });
 }
