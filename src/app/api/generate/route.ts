@@ -52,19 +52,19 @@ export async function POST(request: Request) {
     runId = (runData as GenerationRunRow).id;
 
     // Use real AI if API key is present, otherwise mock
-    const isMockMode = !process.env.OPENAI_API_KEY;
+    const isMockMode = !process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY;
     const assets = isMockMode
       ? generateMockAssets(validatedInputs)
       : await generateFunnelAssets(validatedInputs);
 
-    // Generate real ad images (non-blocking — failures just mean no images shown)
+    // Generate real ad images via Imagen 3 (Gemini API) — non-blocking
     let generatedAdImages: typeof assets.generatedAdImages = [];
-    if (!isMockMode && process.env.OPENAI_API_KEY) {
+    if (process.env.GEMINI_API_KEY) {
       try {
         generatedAdImages = await generateAdImages(validatedInputs, projectId);
-        console.log(`[generate] Generated ${generatedAdImages.length} ad images`);
+        console.log(`[generate] Generated ${generatedAdImages.length} ad images via Imagen 3`);
       } catch (imgErr) {
-        console.warn("[generate] Ad image generation failed (non-fatal):", imgErr);
+        console.warn("[generate] Imagen 3 image generation failed (non-fatal):", imgErr);
       }
     }
 

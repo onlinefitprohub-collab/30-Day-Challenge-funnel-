@@ -26,7 +26,7 @@ async function getProjectData(projectId: string): Promise<GeneratedFunnelAssets 
 
   if (error || !data?.outputs) return null;
   const { _isMock: _removed, ...assets } = data.outputs as Record<string, unknown>;
-  return assets as GeneratedFunnelAssets;
+  return assets as unknown as GeneratedFunnelAssets;
 }
 
 

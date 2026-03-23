@@ -27,10 +27,11 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
   const ctaLabel = ctaType === "booking" ? "book a free call" : "sign up now";
   const ctaButton = ctaType === "booking" ? "Book My Free Call" : "Join the Challenge";
 
-  // Build the challenge label without doubling duration if challengeType already starts with a number
-  const challengeLabel = /^\d/.test(challengeType)
-    ? `${challengeType} challenge`
-    : `${duration}-day ${challengeType} challenge`;
+  // Build the challenge label — use challengeName if available, else fall back to challengeType
+  const resolvedType = challengeType ?? inputs.challengeName ?? "fitness";
+  const challengeLabel = /^\d/.test(resolvedType)
+    ? `${resolvedType} challenge`
+    : `${duration}-day ${resolvedType} challenge`;
   const challengeTitle = challengeLabel.charAt(0).toUpperCase() + challengeLabel.slice(1);
 
   // Clean helpers
@@ -233,14 +234,14 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     },
 
     campaignNaming: {
-      campaignName: `${businessName.toLowerCase().replace(/\s+/g, "_")}_${challengeType.toLowerCase().replace(/\s+/g, "_")}_${new Date().getFullYear()}`,
+      campaignName: `${businessName.toLowerCase().replace(/\s+/g, "_")}_${resolvedType.toLowerCase().replace(/\s+/g, "_")}_${new Date().getFullYear()}`,
       adSetNamingConvention: `[platform]_[audience_type]_[age_range]_[placement] — e.g. fb_cold_interest_3045_feed`,
       adNamingConvention: `[creative_type]_[hook_variant]_[date] — e.g. video_hook1_${String(new Date().getMonth() + 1).padStart(2, "0")}${String(new Date().getFullYear()).slice(2)}`,
       utmSource: (platforms.split(",")[0]?.trim().toLowerCase().replace(/\s+/g, "_")) ?? "facebook",
       utmMedium: trafficSources.some((s) => ["facebook", "instagram", "google"].includes(s.toLowerCase()))
         ? "paid_social"
         : "organic",
-      utmCampaign: `${challengeType.toLowerCase().replace(/\s+/g, "_")}_${duration}day_${new Date().getFullYear()}`,
+      utmCampaign: `${resolvedType.toLowerCase().replace(/\s+/g, "_")}_${duration}day_${new Date().getFullYear()}`,
       utmContent: `hook1_v1`,
     },
   };
