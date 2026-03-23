@@ -6,6 +6,13 @@ import {
   generateThankYouPageHtml,
   generateBookingPageHtml,
 } from "./page-html";
+import {
+  buildLandingPageData,
+  buildOptInPageData,
+  buildThankYouPageData,
+  buildBookingPageData,
+  type GhlPageData,
+} from "./ghl-pagedata";
 
 export interface HLEmailTemplate {
   id: string;
@@ -15,6 +22,8 @@ export interface HLEmailTemplate {
 export interface HLFunnelStep {
   id: string;
   name: string;
+  pageId?: string;
+  nativePage?: boolean;
 }
 
 export interface HLImportResult {
@@ -23,6 +32,7 @@ export interface HLImportResult {
   funnelId?: string;
   funnelUrl?: string;
   funnelSteps?: HLFunnelStep[];
+  nativePages?: { stepName: string; written: boolean }[];
   errors: string[];
 }
 
@@ -35,11 +45,11 @@ const EMAIL_KEYS = [
 ] as const;
 
 const EMAIL_TEMPLATE_NAMES: Record<(typeof EMAIL_KEYS)[number], string> = {
-  welcome: "Welcome Email",
-  reminder: "Reminder Email",
+  welcome:           "Welcome Email",
+  reminder:          "Reminder Email",
   objectionHandling: "Objection Handling Email",
-  lastChance: "Last Chance Email",
-  reEngagement: "Re-engagement Email",
+  lastChance:        "Last Chance Email",
+  reEngagement:      "Re-engagement Email",
 };
 
 const EMAIL_TEMPLATE_PATHS = [
@@ -57,12 +67,25 @@ function extractId(data: Record<string, unknown>, ...nestedKeys: string[]): stri
   return data.id as string | undefined;
 }
 
+function extractPageId(data: Record<string, unknown>): string | undefined {
+  if (data.pageId) return data.pageId as string;
+  const page = data.page as Record<string, unknown> | undefined;
+  if (page?.id) return page.id as string;
+  const step = data.step as Record<string, unknown> | undefined;
+  if (step?.pageId) return step.pageId as string;
+  if (step?.page) {
+    const sp = step.page as Record<string, unknown>;
+    if (sp?.id) return sp.id as string;
+  }
+  return undefined;
+}
+
 async function tryCreateEmailTemplate(
   locationId: string,
   apiKey: string,
   name: string,
   subject: string,
-  body: string
+  body: string,
 ): Promise<{ id: string; notFound?: boolean } | null> {
   const payload = { locationId, name, subject, body };
 
@@ -79,21 +102,14 @@ async function tryCreateEmailTemplate(
         return { id };
       }
 
-      if (res.status === 404) {
-        continue; // Try next path
-      }
+      if (res.status === 404) continue;
 
-      // Non-404 error — surface it
-      let errText = "";
-      try { errText = await res.text(); } catch { errText = "Unknown"; }
       return { id: name, notFound: false };
-      // Return null to propagate as a regular error
     } catch {
-      // Network error for this path — try next
+      // Network error — try next path
     }
   }
 
-  // All paths returned 404 — endpoint not available
   return { id: "", notFound: true };
 }
 
@@ -103,7 +119,7 @@ async function tryCreateFunnelStep(
   apiKey: string,
   name: string,
   pageType: string,
-  htmlBody?: string
+  htmlBody?: string,
 ): Promise<HLFunnelStep | null> {
   const payload: Record<string, unknown> = {
     locationId,
@@ -127,8 +143,9 @@ async function tryCreateFunnelStep(
       });
       if (res.ok) {
         const data = (await res.json()) as Record<string, unknown>;
-        const id = extractId(data, "page", "funnelPage", "step") ?? `${name}-id`;
-        return { id, name };
+        const id     = extractId(data, "page", "funnelPage", "step") ?? `${name}-id`;
+        const pageId = extractPageId(data);
+        return { id, name, ...(pageId ? { pageId } : {}) };
       }
     } catch {
       // Try next path
@@ -137,31 +154,74 @@ async function tryCreateFunnelStep(
   return null;
 }
 
+async function tryPostPageData(
+  pageId: string,
+  funnelId: string,
+  apiKey: string,
+  pageData: GhlPageData,
+): Promise<boolean> {
+  const payload = { pageData };
+
+  const paths = [
+    `/funnels/funnel/page/${pageId}`,
+    `/funnels/${funnelId}/pages/${pageId}`,
+    `/funnels/${funnelId}/steps/${pageId}/pageData`,
+    `/funnel-pages/${pageId}`,
+  ];
+
+  for (const path of paths) {
+    try {
+      const res = await hlFetch(path, apiKey, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return true;
+      if (res.status === 404) continue;
+    } catch {
+      // Try next path
+    }
+  }
+
+  // Also try PUT variants
+  const putPaths = [
+    `/funnels/funnel/page/${pageId}`,
+    `/funnels/${funnelId}/pages/${pageId}`,
+  ];
+  for (const path of putPaths) {
+    try {
+      const res = await hlFetch(path, apiKey, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return true;
+      if (res.status === 404) continue;
+    } catch {
+      // Try next path
+    }
+  }
+
+  return false;
+}
+
 export async function importToHighLevel(
   locationId: string,
   apiKey: string,
-  assets: GeneratedFunnelAssets
+  assets: GeneratedFunnelAssets,
 ): Promise<HLImportResult> {
   const result: HLImportResult = {
     emailTemplates: [],
     errors: [],
   };
 
-  // Step 1: Create email templates — try multiple endpoint paths
+  // ── Step 1: Email templates ───────────────────────────────────────────────
   let notFoundCount = 0;
 
   for (const key of EMAIL_KEYS) {
-    const email = assets.emailSequence[key];
-    const name = EMAIL_TEMPLATE_NAMES[key];
+    const email   = assets.emailSequence[key];
+    const name    = EMAIL_TEMPLATE_NAMES[key];
     const htmlBody = email.body.replace(/\n/g, "<br/>");
 
-    const outcome = await tryCreateEmailTemplate(
-      locationId,
-      apiKey,
-      name,
-      email.subject,
-      htmlBody
-    );
+    const outcome = await tryCreateEmailTemplate(locationId, apiKey, name, email.subject, htmlBody);
 
     if (outcome?.notFound) {
       notFoundCount++;
@@ -172,16 +232,14 @@ export async function importToHighLevel(
     }
   }
 
-  // If all paths returned 404, the Email Template API is unavailable for this account
   if (notFoundCount === EMAIL_KEYS.length) {
     result.emailApiUnavailable = true;
   }
 
-  // Step 2: Attempt funnel creation (best-effort; failure is non-fatal)
+  // ── Step 2: Funnel creation ───────────────────────────────────────────────
   let funnelId: string | undefined;
   try {
-    const funnelName =
-      assets.offerSummary?.challengeConcept ?? "30-Day Challenge Funnel";
+    const funnelName = assets.offerSummary?.challengeConcept ?? "30-Day Challenge Funnel";
     const res = await hlFetch("/funnels/", apiKey, {
       method: "POST",
       body: JSON.stringify({ locationId, name: funnelName, type: "funnel" }),
@@ -191,7 +249,7 @@ export async function importToHighLevel(
       const data = (await res.json()) as Record<string, unknown>;
       funnelId = extractId(data, "funnel");
       if (funnelId) {
-        result.funnelId = funnelId;
+        result.funnelId  = funnelId;
         result.funnelUrl = `https://app.gohighlevel.com/v2/location/${locationId}/funnels/${funnelId}`;
       }
     } else {
@@ -203,43 +261,72 @@ export async function importToHighLevel(
     }
   } catch (err) {
     result.errors.push(
-      `Funnel creation skipped: ${err instanceof Error ? err.message : "Network error"}`
+      `Funnel creation skipped: ${err instanceof Error ? err.message : "Network error"}`,
     );
   }
 
-  // Step 3: Attempt funnel step creation with page HTML (best-effort)
+  // ── Step 3: Funnel steps + native pageData ────────────────────────────────
   if (funnelId) {
     const steps: HLFunnelStep[] = [];
+    const nativePages: { stepName: string; written: boolean }[] = [];
 
-    const landingStep = await tryCreateFunnelStep(
-      funnelId, locationId, apiKey,
-      "Landing Page", "landing",
-      generateLandingPageHtml(assets)
-    );
-    if (landingStep) steps.push(landingStep);
+    const stepDefs: {
+      name: string;
+      type: string;
+      htmlFn: (a: GeneratedFunnelAssets) => string;
+      pageDataFn: (a: GeneratedFunnelAssets) => GhlPageData;
+    }[] = [
+      {
+        name:        "Landing Page",
+        type:        "landing",
+        htmlFn:      generateLandingPageHtml,
+        pageDataFn:  buildLandingPageData,
+      },
+      {
+        name:        "Opt-In Page",
+        type:        "optin",
+        htmlFn:      generateOptInPageHtml,
+        pageDataFn:  buildOptInPageData,
+      },
+      {
+        name:        "Thank You Page",
+        type:        "thank-you",
+        htmlFn:      generateThankYouPageHtml,
+        pageDataFn:  buildThankYouPageData,
+      },
+      {
+        name:        "Booking Page",
+        type:        "booking",
+        htmlFn:      generateBookingPageHtml,
+        pageDataFn:  buildBookingPageData,
+      },
+    ];
 
-    const optInStep = await tryCreateFunnelStep(
-      funnelId, locationId, apiKey,
-      "Opt-in Page", "optin",
-      generateOptInPageHtml(assets)
-    );
-    if (optInStep) steps.push(optInStep);
+    for (const def of stepDefs) {
+      const step = await tryCreateFunnelStep(
+        funnelId!, locationId, apiKey,
+        def.name, def.type,
+        def.htmlFn(assets),
+      );
 
-    const thankYouStep = await tryCreateFunnelStep(
-      funnelId, locationId, apiKey,
-      "Thank You Page", "thank-you",
-      generateThankYouPageHtml(assets)
-    );
-    if (thankYouStep) steps.push(thankYouStep);
+      if (!step) continue;
 
-    const bookingStep = await tryCreateFunnelStep(
-      funnelId, locationId, apiKey,
-      "Booking Page", "booking",
-      generateBookingPageHtml(assets)
-    );
-    if (bookingStep) steps.push(bookingStep);
+      steps.push(step);
+
+      // Attempt native pageData write if we got a pageId back
+      if (step.pageId) {
+        const pageData = def.pageDataFn(assets);
+        const written  = await tryPostPageData(step.pageId, funnelId!, apiKey, pageData);
+        nativePages.push({ stepName: def.name, written });
+        if (written) step.nativePage = true;
+      } else {
+        // No pageId in response — still record it (native write skipped)
+        nativePages.push({ stepName: def.name, written: false });
+      }
+    }
 
     if (steps.length > 0) result.funnelSteps = steps;
+    if (nativePages.length > 0) result.nativePages = nativePages;
   }
 
   return result;

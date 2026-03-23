@@ -1,0 +1,57 @@
+Context: GoHighLevel funnel structure and import format
+
+GoHighLevel (GHL) funnels are built around this hierarchy:
+
+Funnel → Steps → Page body (HTML)
+
+Each funnel step has:
+
+name — display name (e.g. "Opt-In Page")
+stepType — one of: opt-in, sales, order, upsell, downsell, thank-you
+sequence — integer, starting at 0, defines the order
+url / path — the slug (e.g. /offer, /checkout)
+body — the full page HTML string that GHL's builder will render
+Page body HTML rules:
+
+GHL's builder stores pages as raw HTML with inline styles — no external CSS frameworks
+Sections are <div> wrappers with a specific data attribute: data-section-id
+The builder uses its own element wrapper classes prefixed with elgg- or hl-
+Buttons that trigger funnel navigation use data-action="next-step" or data-action="go-to-url"
+Opt-in forms use GHL's native form embed — <div class="hl-form" data-form-id="..."></div> — or a generic HTML form pointing to GHL's form submission endpoint
+Images should be absolute URLs (GHL hosts them on its CDN after import; during generation use placeholder URLs)
+Fonts load from Google Fonts via a <link> in the <head> of each page body
+The import format:
+GHL accepts funnel imports as a .json file with this top-level shape:
+
+{
+  "name": "Funnel Name",
+  "domain": "",
+  "steps": [
+    {
+      "id": "unique-step-id",
+      "name": "Opt-In",
+      "stepType": "opt-in",
+      "sequence": 0,
+      "url": "/optin",
+      "body": "<html>...</html>"
+    }
+  ]
+}
+The domain field is left blank on export — GHL assigns it after import.
+Each step body is the complete HTML document for that page (including <head> with meta tags and font links).
+
+How users import:
+In GHL → Funnels & Websites → Funnels → click the ⋮ menu → "Import Funnel" → upload the .json file. GHL parses the steps, creates the funnel, and opens it in the builder. After import the user publishes to their domain.
+
+Design constraints to follow:
+
+All styles must be inline — GHL's builder does not load external stylesheets
+Mobile responsiveness is handled via @media queries inside a <style> block in the <head> of each page body
+Standard section width is 1200px centered with margin: 0 auto
+CTA buttons should be minimum 54px tall, full-width on mobile
+Use max-width: 680px for body copy columns
+GHL renders the page body inside an iframe — avoid document.body JS assumptions
+Producing the output:
+Generate the JSON file with one step per funnel page. Validate that each step has a non-empty body, a unique id (UUID or slug-based), and a sequence starting at 0. Offer the user a download button that triggers application/json file download named [funnel-name]-ghl-import.json.
+
+The one thing worth flagging: the exact field names in the GHL import JSON (stepType values, the body field name) are what we've observed through reverse-engineering, but GHL doesn't publish a formal spec. If an import fails, the first thing to check is whether stepType values match exactly what GHL expects — capturing a real export from a GHL account and diffing it against your output will close any remaining gaps instantly.
