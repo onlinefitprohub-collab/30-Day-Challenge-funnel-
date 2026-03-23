@@ -107,14 +107,30 @@
     }
   }
 
+  async function ghlGet(path) {
+    const revex = getRevex();
+    if (revex) {
+      const res = await revex.get(`${GHL_API}${path}`);
+      if (res?.status >= 200 && res?.status < 300 && res?.data) return res.data;
+      throw new Error(`GHL GET: HTTP ${res?.status}`);
+    }
+    const res = await fetch(`${GHL_API}${path}`, {
+      method:      "GET",
+      credentials: "include",
+      headers:     { "Content-Type": "application/json" },
+    });
+    if (res.ok) return res.json();
+    const text = await res.text().catch(() => "");
+    throw new Error(`GHL GET: HTTP ${res.status}${text ? " — " + text.slice(0, 120) : ""}`);
+  }
+
   async function ghlPut(path, body) {
     const revex = getRevex();
     if (revex) {
       const res = await revex.put(`${GHL_API}${path}`, body);
       if (res?.status >= 200 && res?.status < 300) return { ok: true };
-      throw new Error(`GHL API: HTTP ${res?.status}`);
+      throw new Error(`GHL PUT: HTTP ${res?.status}`);
     }
-    // Fallback: raw fetch (session cookies sent automatically because same-origin domain)
     const res = await fetch(`${GHL_API}${path}`, {
       method:      "PUT",
       credentials: "include",
@@ -123,7 +139,7 @@
     });
     if (res.ok) return { ok: true };
     const text = await res.text().catch(() => "");
-    throw new Error(`GHL API: HTTP ${res.status}${text ? " — " + text.slice(0, 120) : ""}`);
+    throw new Error(`GHL PUT: HTTP ${res.status}${text ? " — " + text.slice(0, 120) : ""}`);
   }
 
   /* ─── Handle CF_DO_INJECT from content.js ─────────────────────────────── */
@@ -145,9 +161,27 @@
     }
 
     try {
-      await ghlPut(`/funnels/page/${pageBuilderId}`, pageData);
+      // Step 1: GET current page context (funnelId, stepId, existing shape)
+      // so we can confirm the endpoint works and include context if GHL needs it.
+      let pageContext = null;
+      try {
+        pageContext = await ghlGet(`/funnels/page/${pageBuilderId}`);
+      } catch (getErr) {
+        // Non-fatal: if GET fails (e.g. different GHL version), log and continue.
+        // We still attempt the PUT with the pageData we have.
+        console.warn("[CF] GET page context failed:", getErr.message);
+      }
 
-      // Reload the builder iframe so the new content is visible
+      // Step 2: Build the PUT payload — include context fields GHL expects
+      // alongside our generated content structure.
+      const putPayload = pageContext
+        ? { ...pageContext, ...pageData }
+        : pageData;
+
+      // Step 3: PUT the updated page content
+      await ghlPut(`/funnels/page/${pageBuilderId}`, putPayload);
+
+      // Step 4: Reload the builder iframe so the new content is visible
       const iframe = document.querySelector('[name="funnel-builder"]');
       if (iframe) iframe.src = iframe.src;
 
