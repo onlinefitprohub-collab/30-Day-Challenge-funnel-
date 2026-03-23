@@ -96,7 +96,7 @@ export default async function DashboardPage() {
                 <ProjectCard
                   key={project.id}
                   project={project}
-                  subtitle={subtitleMap[project.id]}
+                  subtitle={subtitleMap[project.id] ?? "Challenge funnel project"}
                 />
               ))}
             </div>
