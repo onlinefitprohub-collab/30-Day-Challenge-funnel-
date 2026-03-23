@@ -1,0 +1,30 @@
+Here's exactly what to share, grouped by what each part does:
+
+The page bridge — how the extension talks to GHL's builder:
+
+src/content/bridge/page-bridge-runtime.ts — injected into the GHL page, bridges the extension to the builder's internals
+src/content/bridge/inject-page-bridge.ts — handles injecting the bridge at the right moment
+src/content/bootstrap.ts — detects which page context you're on and wires everything up
+Capturing native GHL element data:
+
+src/core/native/capture-save-payload.ts — intercepts the exact payload GHL sends when saving a page (what you just captured in the Network tab)
+src/core/native/capture-load-payload.ts — captures what GHL loads when opening a page
+src/core/native/observe-network.ts — the network interception layer that watches for GHL's API calls
+src/core/native/normalize-native-source.ts — normalises captured data into a clean internal format
+src/core/native/remap-ids.ts — generates fresh unique IDs when cloning so elements don't conflict
+Inserting elements into the GHL builder:
+
+src/content/builder-runtime-probe.ts — finds GHL's internal Redux store so elements can be written to it
+src/content/builder-insert-api.ts — the actual insert API that pushes elements into the live builder
+src/adapters/new-builder/ — the full folder — handles the current GHL builder (payload building, state injection, schema mapping, capture and import)
+src/adapters/legacy-builder/ — same but for the older GHL builder version
+The schema and types everything else depends on:
+
+src/core/schema/nodes.ts — element type definitions
+src/core/schema/clone-package.ts — the internal format that holds a cloned page
+src/core/mapping/style-normalizer.ts — converts styles to/from GHL's {value, unit} format
+src/core/mapping/native-to-package.ts — maps GHL native format to the internal package format
+The paste workbench (the UI where you paste cloned content into GHL):
+
+src/paste/paste.tsx — the full paste workbench UI
+Those two adapter folders (new-builder/ and legacy-builder/) plus the bridge files and native capture files are the real heart of it. Everything else is supporting infrastructure. Those are the files that contain the hard-won knowledge of GHL's internal element format.

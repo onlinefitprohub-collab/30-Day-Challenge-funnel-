@@ -1,0 +1,1 @@
+{"version":3,"file":"state-injector.js","sourceRoot":"","sources":["../../../src/adapters/new-builder/state-injector.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,mBAAmB,CAAC;AAE3C,+DAA+D;AAC/D,MAAM,UAAU,qBAAqB,CAAC,QAAiB;IACrD,MAAM,CAAC,IAAI,CAAC,mBAAmB,EAAE,6BAA6B,CAAC,CAAC;IAChE,OAAO,KAAK,CAAC;AACf,CAAC"}

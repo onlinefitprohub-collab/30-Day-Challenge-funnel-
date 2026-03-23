@@ -90,48 +90,29 @@ function HLGroup({
 }
 
 /* ── Chrome Extension CTA ── */
-function ExtensionCTAPanel({ projectId }: { projectId: string }) {
-  const [pidCopied, setPidCopied] = useState(false);
-  const [appCopied, setAppCopied] = useState(false);
-
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-
+function ExtensionCTAPanel({ projectId: _projectId }: { projectId: string }) {
   function handleDownload() {
     const a = document.createElement("a");
     a.href = "/api/highlevel/extension-download";
     a.download = "challenge-funnel-extension.zip";
     a.click();
-    toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the README inside for instructions." });
-  }
-
-  async function copyProjectId() {
-    await navigator.clipboard.writeText(projectId);
-    setPidCopied(true);
-    toast({ title: "Project ID copied!", description: "Paste it into the extension Settings → Project ID field." });
-    setTimeout(() => setPidCopied(false), 2000);
-  }
-
-  async function copyAppUrl() {
-    await navigator.clipboard.writeText(appUrl);
-    setAppCopied(true);
-    toast({ title: "App URL copied!", description: "Paste it into the extension Settings → App URL field." });
-    setTimeout(() => setAppCopied(false), 2000);
+    toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the steps below." });
   }
 
   return (
-    <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-5">
+    <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
       <div className="flex items-start gap-3 mb-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500 text-white">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white">
           <Puzzle className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-orange-900 text-sm">Chrome Extension — Page Library</p>
-            <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">NEW</span>
+            <p className="font-semibold text-indigo-900 text-sm">Chrome Extension — Native HL Injection</p>
+            <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">ZERO CONFIG</span>
           </div>
-          <p className="mt-0.5 text-xs text-orange-700 leading-relaxed">
-            Install the extension, copy your page HTML with one click, then paste it into an HTML Code element in
-            your HighLevel funnel builder. No API keys or tokens needed.
+          <p className="mt-0.5 text-xs text-indigo-700 leading-relaxed">
+            Install the extension and click the icon on <strong>this page</strong> — it auto-detects your project.
+            Then open HL and inject native sections, rows, and buttons in one click.
           </p>
         </div>
       </div>
@@ -139,7 +120,7 @@ function ExtensionCTAPanel({ projectId }: { projectId: string }) {
       <div className="flex flex-wrap gap-3 mb-4">
         <button
           onClick={handleDownload}
-          className="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors shadow-sm"
+          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <Download className="h-4 w-4" />
           Download Extension (.zip)
@@ -148,62 +129,28 @@ function ExtensionCTAPanel({ projectId }: { projectId: string }) {
           href="https://app.gohighlevel.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-white px-4 py-2.5 text-sm font-medium text-orange-700 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
         >
           Open HighLevel <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </div>
 
-      {/* Settings values to copy */}
-      <div className="space-y-2 mb-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-orange-700">Copy into extension settings:</p>
-
-        <div className="rounded-lg border border-orange-200 bg-white px-3 py-2 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider">App URL</p>
-            <p className="font-mono text-xs text-orange-900 truncate">{appUrl}</p>
-          </div>
-          <button
-            onClick={copyAppUrl}
-            className="flex shrink-0 items-center gap-1 rounded border border-orange-200 px-2 py-1 text-[10px] font-medium text-orange-700 hover:bg-orange-50 transition-colors"
-          >
-            {appCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-            {appCopied ? "Copied!" : "Copy"}
-          </button>
-        </div>
-
-        <div className="rounded-lg border border-orange-200 bg-white px-3 py-2 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider">Project ID</p>
-            <p className="font-mono text-xs text-orange-900 truncate">{projectId}</p>
-          </div>
-          <button
-            onClick={copyProjectId}
-            className="flex shrink-0 items-center gap-1 rounded border border-orange-200 px-2 py-1 text-[10px] font-medium text-orange-700 hover:bg-orange-50 transition-colors"
-          >
-            {pidCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-            {pidCopied ? "Copied!" : "Copy"}
-          </button>
-        </div>
-      </div>
-
       <div className="space-y-1.5">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-orange-800">How it works:</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-indigo-800">How it works (3 steps):</p>
         {[
-          { step: "1", text: "Download the zip, go to chrome://extensions → Developer mode → Load unpacked" },
-          { step: "2", text: "Open the extension → Settings → paste App URL and Project ID from above. That's all." },
-          { step: "3", text: "Open the Library tab, click Copy next to any page type — HTML is in your clipboard" },
-          { step: "4", text: "In HighLevel builder: drag an HTML Code element, click it, and paste with Ctrl+V / ⌘V" },
+          { step: "1", text: "Download the zip → chrome://extensions → Developer mode → Load unpacked" },
+          { step: "2", text: "Click the extension icon on this Results page → \"Save to Library\". That's it — no settings to fill in." },
+          { step: "3", text: "Open HighLevel → Funnels → step editor. A floating panel appears. Enter your HL API key once, then click Inject next to any page type — native elements are added instantly." },
         ].map(({ step, text }) => (
           <div key={step} className="flex items-start gap-2.5">
-            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black mt-0.5">{step}</div>
-            <p className="text-xs text-orange-800 leading-relaxed">{text}</p>
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] font-black mt-0.5">{step}</div>
+            <p className="text-xs text-indigo-800 leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 text-[11px] text-orange-600 border-t border-orange-200 pt-3">
-        Manifest V3 · No API keys or tokens required · Works from any page
+      <p className="mt-3 text-[11px] text-indigo-500 border-t border-indigo-200 pt-3">
+        Manifest V3 · Auto-detects project · One-time HL API key · Injects native HL elements
       </p>
     </div>
   );

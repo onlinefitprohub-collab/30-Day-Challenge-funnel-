@@ -2,240 +2,227 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CF Funnel — Page Library</title>
+  <title>CF Funnel</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --orange: #f97316;
-      --dark:   #0f172a;
-      --mid:    #1e293b;
-      --border: #e2e8f0;
-      --muted:  #64748b;
-      --green:  #22c55e;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      width: 340px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: #111827;
       background: #fff;
-      color: var(--dark);
-      font-size: 14px;
     }
 
-    /* ── Header ── */
-    .header {
-      background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
-      padding: 14px 18px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .logo {
-      width: 32px; height: 32px; background: var(--orange); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 13px; color: #fff;
-    }
-    .title { color: #fff; font-weight: 700; font-size: 14px; }
-    .sub   { color: rgba(255,255,255,0.55); font-size: 11px; }
-    .settings-btn {
-      background: rgba(255,255,255,0.12); border: none; border-radius: 6px;
-      padding: 5px 10px; cursor: pointer; color: rgba(255,255,255,0.8);
-      font-size: 12px; font-weight: 600;
-    }
-    .settings-btn:hover { background: rgba(255,255,255,0.22); }
-
-    /* ── Nav ── */
-    .nav { display: flex; border-bottom: 1px solid var(--border); }
-    .nav-btn {
-      flex: 1; padding: 9px 0; background: none; border: none;
-      font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted);
-      border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
-    }
-    .nav-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
-
-    /* ── Panels ── */
-    .panel { padding: 14px 18px; display: none; }
-    .panel.active { display: block; }
-
-    /* ── Setup banner ── */
-    .setup-banner {
-      background: #fff7ed; border: 1px solid #fed7aa;
-      border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
-      font-size: 11px; color: #9a3412; line-height: 1.5;
-    }
-    .setup-banner strong { display: block; font-size: 12px; margin-bottom: 2px; }
-
-    /* ── Page cards ── */
-    .page-grid { display: grid; gap: 8px; }
-    .page-card {
-      border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+    /* Header */
+    .hdr {
+      background: linear-gradient(135deg, #3b5bdb, #7950f2);
+      padding: 13px 16px;
       display: flex; align-items: center; gap: 10px;
-      background: #f8fafc;
     }
-    .page-icon { font-size: 22px; flex-shrink: 0; }
-    .page-info { flex: 1; min-width: 0; }
-    .page-name { font-size: 13px; font-weight: 700; color: var(--dark); }
-    .page-desc { font-size: 10px; color: var(--muted); margin-top: 1px; }
-    .copy-btn {
-      background: var(--orange); color: #fff; border: none; border-radius: 7px;
-      padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
-      white-space: nowrap; transition: background 0.15s;
-      flex-shrink: 0;
+    .hdr-icon {
+      width: 30px; height: 30px; border-radius: 7px;
+      background: rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
     }
-    .copy-btn:hover:not(:disabled) { background: #ea580c; }
-    .copy-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
-    .copy-btn.done   { background: var(--green); }
-    .copy-btn.error  { background: #ef4444; }
+    .hdr-text .title { color: #fff; font-size: 13px; font-weight: 700; }
+    .hdr-text .sub   { color: rgba(255,255,255,.6); font-size: 10px; margin-top: 1px; }
 
-    /* ── Paste instructions ── */
-    .paste-note {
-      border-radius: 8px; padding: 10px 12px; margin-top: 12px;
-      font-size: 11px; line-height: 1.6; display: none;
-    }
-    .paste-note.show { display: block; }
-    .paste-note.info {
-      background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
-    }
-    .paste-note.err  {
-      background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
-    }
+    /* Body */
+    .body { padding: 14px 15px; }
 
-    /* ── Settings form ── */
-    .field { margin-bottom: 14px; }
+    /* Banner variants */
+    .banner {
+      border-radius: 9px; padding: 11px 12px; font-size: 12px; line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .banner-blue  { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .banner-green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .banner-amber { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .banner-red   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .banner strong { display: block; font-weight: 700; margin-bottom: 2px; font-size: 12.5px; }
+
+    /* Project card */
+    .proj-card {
+      border: 1px solid #e5e7eb; border-radius: 9px; padding: 10px 12px;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 9px;
+    }
+    .proj-dot {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, #3b5bdb, #7950f2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .proj-name { font-weight: 700; font-size: 12.5px; color: #1e3a8a; }
+    .proj-meta { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+
+    /* Context row */
+    .ctx-row {
+      display: flex; gap: 5px; margin-bottom: 10px;
+    }
+    .ctx-pill {
+      flex: 1; padding: 5px 7px; border-radius: 7px; font-size: 10px;
+      font-weight: 600; text-align: center;
+    }
+    .ctx-ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .ctx-off { background: #f9fafb; border: 1px solid #e5e7eb; color: #9ca3af; }
+
+    /* Inject grid */
+    .inj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+    .inj-btn {
+      padding: 8px 6px; background: #f0f4ff; border: 1px solid #c7d7ff;
+      border-radius: 8px; cursor: pointer; color: #3b5bdb;
+      font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3;
+      font-family: inherit; transition: background .12s;
+    }
+    .inj-btn:hover:not(:disabled) { background: #dce4ff; }
+    .inj-btn:disabled { background: #f5f5f5; border-color: #e5e7eb; color: #d1d5db; cursor: not-allowed; }
+    .inj-btn.ok  { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+    .inj-btn.err { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+
+    /* API key */
+    .field { margin-bottom: 10px; }
     .field label {
-      display: block; font-size: 11px; font-weight: 700;
-      color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em;
-      margin-bottom: 5px;
+      display: block; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em; color: #6b7280; margin-bottom: 4px;
     }
+    .field-row { display: flex; gap: 5px; }
     .inp {
-      width: 100%; padding: 8px 10px; border: 1px solid var(--border);
-      border-radius: 7px; font-size: 12px; outline: none; color: var(--dark);
+      flex: 1; padding: 7px 9px; border: 1px solid #d1d5db; border-radius: 7px;
+      font-size: 11px; color: #111827; outline: none; font-family: monospace;
     }
-    .inp:focus { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
-    .inp-note { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+    .inp:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+    .inp-btn {
+      padding: 7px 11px; border-radius: 7px; border: none; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: inherit;
+      background: #6366f1; color: #fff; white-space: nowrap; transition: background .12s;
+    }
+    .inp-btn:hover { background: #4f46e5; }
+    .inp-btn.saved { background: #22c55e; }
+
+    /* Save project button */
     .save-btn {
-      width: 100%; padding: 11px; background: var(--orange); color: #fff;
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: background 0.15s;
+      width: 100%; padding: 10px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit;
+      background: linear-gradient(135deg, #3b5bdb, #7950f2); color: #fff;
+      transition: opacity .12s;
     }
-    .save-btn:hover { background: #ea580c; }
-    .settings-status {
-      margin-top: 10px; border-radius: 7px; padding: 8px 10px;
-      font-size: 11px; display: none;
-    }
-    .settings-status.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
-    .settings-status.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+    .save-btn:hover { opacity: .9; }
+    .save-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-    .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-
-    .hint-box {
-      background: #f8fafc; border-radius: 8px; padding: 10px 12px;
-      font-size: 11px; color: var(--muted); line-height: 1.6;
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 5px; }
+    .step  { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: #4b5563; line-height: 1.4; }
+    .step-n {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #e0e7ff; color: #3b5bdb;
+      font-size: 9px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
     }
-    .hint-box strong { color: var(--dark); }
+
+    /* Utility */
+    .mt8 { margin-top: 8px; }
+    .divider { border: none; border-top: 1px solid #f3f4f6; margin: 10px 0; }
+    .hidden { display: none !important; }
+    .spin { display: inline-block; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <div class="header">
-    <div class="brand">
-      <div class="logo">CF</div>
+<div class="hdr">
+  <div class="hdr-icon">🏋️</div>
+  <div class="hdr-text">
+    <div class="title">Challenge Funnel</div>
+    <div class="sub">HighLevel Injector</div>
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- ── CONTEXT: Results page ── -->
+  <div id="ctx-results" class="hidden">
+    <div class="banner banner-blue" id="res-banner">
+      <strong>📦 Project detected</strong>
+      Click below to save this funnel to the extension library. Then go to HighLevel to inject.
+    </div>
+
+    <div class="proj-card" id="res-proj-card" style="display:none;">
+      <div class="proj-dot">🏋️</div>
       <div>
-        <div class="title">Challenge Funnel</div>
-        <div class="sub">HighLevel Page Library</div>
+        <div class="proj-name" id="res-proj-name">Loading…</div>
+        <div class="proj-meta" id="res-proj-meta"></div>
       </div>
     </div>
-    <button class="settings-btn" id="settings-quick-btn">⚙ Settings</button>
+
+    <button class="save-btn" id="res-save-btn">💾 Save to Library</button>
+
+    <div class="banner banner-green mt8 hidden" id="res-saved-msg">
+      <strong>✓ Saved!</strong>
+      Now go to your HighLevel funnel builder. The extension panel will appear automatically.
+    </div>
   </div>
 
-  <!-- Nav -->
-  <div class="nav">
-    <button class="nav-btn active" data-tab="library">📚 Library</button>
-    <button class="nav-btn" data-tab="settings">⚙ Settings</button>
-  </div>
+  <!-- ── CONTEXT: HL Builder ── -->
+  <div id="ctx-hl" class="hidden">
 
-  <!-- Library tab -->
-  <div class="panel active" id="tab-library">
-
-    <div class="setup-banner" id="setup-banner" style="display:none;">
-      <strong>⚠ Setup required</strong>
-      Open Settings, enter your App URL and Project ID, then come back here.
-    </div>
-
-    <div class="page-grid">
-      <div class="page-card">
-        <div class="page-icon">🏠</div>
-        <div class="page-info">
-          <div class="page-name">Landing Page</div>
-          <div class="page-desc">Main sales / sign-up page</div>
-        </div>
-        <button class="copy-btn" data-page="landing" id="btn-landing">Copy</button>
-      </div>
-      <div class="page-card">
-        <div class="page-icon">📋</div>
-        <div class="page-info">
-          <div class="page-name">Opt-In Page</div>
-          <div class="page-desc">Email capture form</div>
-        </div>
-        <button class="copy-btn" data-page="optin" id="btn-optin">Copy</button>
-      </div>
-      <div class="page-card">
-        <div class="page-icon">🎉</div>
-        <div class="page-info">
-          <div class="page-name">Thank You Page</div>
-          <div class="page-desc">Post-registration confirmation</div>
-        </div>
-        <button class="copy-btn" data-page="thankyou" id="btn-thankyou">Copy</button>
-      </div>
-      <div class="page-card">
-        <div class="page-icon">📅</div>
-        <div class="page-info">
-          <div class="page-name">Booking Page</div>
-          <div class="page-desc">Discovery call scheduler</div>
-        </div>
-        <button class="copy-btn" data-page="booking" id="btn-booking">Copy</button>
+    <!-- Saved project card -->
+    <div class="proj-card" id="hl-proj-card">
+      <div class="proj-dot">🏋️</div>
+      <div>
+        <div class="proj-name" id="hl-proj-name">Loading…</div>
+        <div class="proj-meta" id="hl-proj-meta"></div>
       </div>
     </div>
 
-    <div class="paste-note" id="paste-note"></div>
-
-  </div>
-
-  <!-- Settings tab -->
-  <div class="panel" id="tab-settings">
-
-    <div class="field">
-      <label for="s-app-url">App URL</label>
-      <input class="inp" id="s-app-url" type="url" placeholder="https://your-app.replit.dev" />
-      <div class="inp-note">The URL of your Challenge Funnel in a Box app.</div>
+    <div id="hl-no-proj" class="banner banner-amber hidden">
+      <strong>No project saved yet</strong>
+      Open your Challenge Funnel app → Results page while this extension is installed — it'll detect the project automatically.
     </div>
 
-    <div class="field">
-      <label for="s-project-id">Project ID</label>
-      <input class="inp" id="s-project-id" type="text" placeholder="Paste from your results page URL" />
-      <div class="inp-note">
-        Find it in your results page URL: <em>…/results/<strong>YOUR-PROJECT-ID</strong></em>
-      </div>
+    <!-- Context pills -->
+    <div class="ctx-row">
+      <div class="ctx-pill ctx-off" id="ctx-loc">📍 Location</div>
+      <div class="ctx-pill ctx-off" id="ctx-page">📄 Page ID</div>
     </div>
 
-    <button class="save-btn" id="save-settings">Save Settings</button>
-    <div class="settings-status" id="settings-status"></div>
+    <!-- Inject buttons -->
+    <div class="inj-grid">
+      <button class="inj-btn" data-page="landing"  disabled>🏠 Landing</button>
+      <button class="inj-btn" data-page="optin"    disabled>📋 Opt-In</button>
+      <button class="inj-btn" data-page="thankyou" disabled>🎉 Thank You</button>
+      <button class="inj-btn" data-page="booking"  disabled>📅 Booking</button>
+    </div>
+
+    <div id="hl-status" class="banner hidden"></div>
 
     <hr class="divider" />
 
-    <div class="hint-box">
-      <strong>How to use:</strong><br/>
-      1. Save your App URL and Project ID above.<br/>
-      2. Go to your HighLevel funnel page builder.<br/>
-      3. Drag an <strong>HTML Code</strong> element onto the page.<br/>
-      4. Come back here, click <strong>Copy</strong> for a page type.<br/>
-      5. Click the HTML Code element → paste with Ctrl+V / ⌘V.
+    <!-- HL API Key -->
+    <div class="field">
+      <label>HighLevel API Key <span style="color:#9ca3af;font-weight:400;text-transform:none;">(one-time setup)</span></label>
+      <div class="field-row">
+        <input class="inp" id="hl-api-key" type="password" placeholder="Bearer token from HL…" />
+        <button class="inp-btn" id="hl-save-key">Save</button>
+      </div>
     </div>
 
   </div>
 
-  <script src="popup.js"></script>
+  <!-- ── CONTEXT: Unknown ── -->
+  <div id="ctx-unknown" class="hidden">
+    <div class="banner banner-blue">
+      <strong>Two steps to get started:</strong>
+    </div>
+    <div class="steps mt8">
+      <div class="step"><div class="step-n">1</div><span>Go to your <strong>Challenge Funnel app</strong> → open a project's Results page. The extension will auto-detect it.</span></div>
+      <div class="step"><div class="step-n">2</div><span>Open <strong>HighLevel → Funnels → page builder</strong>. A floating panel appears — enter your HL API key once and inject.</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="popup.js"></script>
 </body>
 </html>

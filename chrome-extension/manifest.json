@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Challenge Funnel in a Box — HL Injector",
+  "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "1.0.0",
-  "description": "Instantly inject your AI-generated funnel pages into HighLevel's page builder with one click.",
+  "version": "2.0.0",
+  "description": "Open on your results page to save your funnel, then inject native pages into HighLevel's builder with one click.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
@@ -11,7 +11,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "CF Funnel — Inject Page",
+    "default_title": "CF Funnel",
     "default_icon": {
       "16":  "icons/icon16.png",
       "48":  "icons/icon48.png",
@@ -31,11 +31,20 @@
   "permissions": [
     "storage",
     "activeTab",
-    "tabs"
+    "tabs",
+    "scripting",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "https://app.gohighlevel.com/*",
     "https://*.replit.dev/*",
-    "https://*.replit.app/*"
+    "https://*.replit.app/*",
+    "https://*.replit.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["bridge.js"],
+      "matches": ["https://app.gohighlevel.com/*"]
+    }
   ]
 }

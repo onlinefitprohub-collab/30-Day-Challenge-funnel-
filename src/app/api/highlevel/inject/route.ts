@@ -12,6 +12,16 @@ import type { GeneratedFunnelAssets } from "@/types/generation";
 
 export const dynamic = "force-dynamic";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 interface InjectBody {
   projectId:     string;
   projectToken:  string;
@@ -107,7 +117,7 @@ export async function POST(request: Request) {
         body:   JSON.stringify(payload),
       });
       if (res.ok) {
-        return NextResponse.json({ success: true, page, pageId });
+        return NextResponse.json({ success: true, page, pageId }, { headers: CORS_HEADERS });
       }
       const text = await res.text().catch(() => "");
       lastStatus = res.status >= 400 && res.status < 600 ? res.status : 502;
@@ -118,5 +128,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ success: false, error: lastError }, { status: lastStatus });
+  return NextResponse.json({ success: false, error: lastError }, { status: lastStatus, headers: CORS_HEADERS });
 }
