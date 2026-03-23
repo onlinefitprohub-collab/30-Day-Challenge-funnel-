@@ -89,21 +89,12 @@ function HLGroup({
   );
 }
 
-/* ── Chrome Extension CTA (TOP method) ── */
+/* ── Chrome Extension CTA ── */
 function ExtensionCTAPanel({ projectId }: { projectId: string }) {
-  const [token, setToken]           = useState<string | null>(null);
-  const [tokenLoading, setTokLoad]  = useState(false);
-  const [tokenCopied, setTokCopied] = useState(false);
+  const [pidCopied, setPidCopied] = useState(false);
+  const [appCopied, setAppCopied] = useState(false);
 
-  useEffect(() => {
-    if (!projectId) return;
-    setTokLoad(true);
-    fetch(`/api/highlevel/inject-token?projectId=${projectId}`)
-      .then((r) => r.json())
-      .then((j) => { if (j.token) setToken(j.token); })
-      .catch(() => {})
-      .finally(() => setTokLoad(false));
-  }, [projectId]);
+  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   function handleDownload() {
     const a = document.createElement("a");
@@ -113,12 +104,18 @@ function ExtensionCTAPanel({ projectId }: { projectId: string }) {
     toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the README inside for instructions." });
   }
 
-  async function copyToken() {
-    if (!token) return;
-    await navigator.clipboard.writeText(token);
-    setTokCopied(true);
-    toast({ title: "Token copied!", description: "Paste it into the extension Settings → Extension Token field." });
-    setTimeout(() => setTokCopied(false), 2000);
+  async function copyProjectId() {
+    await navigator.clipboard.writeText(projectId);
+    setPidCopied(true);
+    toast({ title: "Project ID copied!", description: "Paste it into the extension Settings → Project ID field." });
+    setTimeout(() => setPidCopied(false), 2000);
+  }
+
+  async function copyAppUrl() {
+    await navigator.clipboard.writeText(appUrl);
+    setAppCopied(true);
+    toast({ title: "App URL copied!", description: "Paste it into the extension Settings → App URL field." });
+    setTimeout(() => setAppCopied(false), 2000);
   }
 
   return (
@@ -129,12 +126,12 @@ function ExtensionCTAPanel({ projectId }: { projectId: string }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-orange-900 text-sm">Chrome Extension — One-Click HL Injector</p>
+            <p className="font-semibold text-orange-900 text-sm">Chrome Extension — Page Library</p>
             <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">NEW</span>
           </div>
           <p className="mt-0.5 text-xs text-orange-700 leading-relaxed">
-            Install our Chrome extension and inject your funnel pages directly into HighLevel&apos;s page builder as
-            native sections, rows, columns, and buttons — no copy-pasting, no code blocks.
+            Install the extension, copy your page HTML with one click, then paste it into an HTML Code element in
+            your HighLevel funnel builder. No API keys or tokens needed.
           </p>
         </div>
       </div>
@@ -157,39 +154,46 @@ function ExtensionCTAPanel({ projectId }: { projectId: string }) {
         </a>
       </div>
 
-      {/* Extension Token */}
-      <div className="rounded-lg border border-orange-200 bg-white p-3 mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-bold text-orange-800">Your Extension Token</p>
-          {token && (
-            <button
-              onClick={copyToken}
-              className="flex items-center gap-1 rounded border border-orange-200 px-2 py-0.5 text-[10px] font-medium text-orange-700 hover:bg-orange-50 transition-colors"
-            >
-              {tokenCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-              {tokenCopied ? "Copied!" : "Copy"}
-            </button>
-          )}
+      {/* Settings values to copy */}
+      <div className="space-y-2 mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-orange-700">Copy into extension settings:</p>
+
+        <div className="rounded-lg border border-orange-200 bg-white px-3 py-2 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider">App URL</p>
+            <p className="font-mono text-xs text-orange-900 truncate">{appUrl}</p>
+          </div>
+          <button
+            onClick={copyAppUrl}
+            className="flex shrink-0 items-center gap-1 rounded border border-orange-200 px-2 py-1 text-[10px] font-medium text-orange-700 hover:bg-orange-50 transition-colors"
+          >
+            {appCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+            {appCopied ? "Copied!" : "Copy"}
+          </button>
         </div>
-        {tokenLoading && <p className="text-xs text-orange-400 italic">Loading…</p>}
-        {!tokenLoading && token && (
-          <p className="font-mono text-xs text-orange-900 break-all">{token}</p>
-        )}
-        {!tokenLoading && !token && (
-          <p className="text-xs text-orange-500 italic">Log in to see your token.</p>
-        )}
-        <p className="mt-1.5 text-[10px] text-orange-500">
-          Paste this into the extension Settings → Extension Token field. It proves you generated this project.
-        </p>
+
+        <div className="rounded-lg border border-orange-200 bg-white px-3 py-2 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider">Project ID</p>
+            <p className="font-mono text-xs text-orange-900 truncate">{projectId}</p>
+          </div>
+          <button
+            onClick={copyProjectId}
+            className="flex shrink-0 items-center gap-1 rounded border border-orange-200 px-2 py-1 text-[10px] font-medium text-orange-700 hover:bg-orange-50 transition-colors"
+          >
+            {pidCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+            {pidCopied ? "Copied!" : "Copy"}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-1.5">
         <p className="text-[11px] font-bold uppercase tracking-widest text-orange-800">How it works:</p>
         {[
-          { step: "1", text: "Download the zip and load it in Chrome (chrome://extensions → Developer mode → Load unpacked)" },
-          { step: "2", text: "Open the extension → Settings → paste your App URL, Project ID (from this URL), Extension Token above, and HL API Key" },
-          { step: "3", text: "Open your HighLevel funnel page builder — a floating CF panel appears automatically. Enter the Page ID and click Inject." },
-          { step: "4", text: "Your page is built from native HL sections, rows, columns, and buttons in your chosen colour scheme." },
+          { step: "1", text: "Download the zip, go to chrome://extensions → Developer mode → Load unpacked" },
+          { step: "2", text: "Open the extension → Settings → paste App URL and Project ID from above. That's all." },
+          { step: "3", text: "Open the Library tab, click Copy next to any page type — HTML is in your clipboard" },
+          { step: "4", text: "In HighLevel builder: drag an HTML Code element, click it, and paste with Ctrl+V / ⌘V" },
         ].map(({ step, text }) => (
           <div key={step} className="flex items-start gap-2.5">
             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black mt-0.5">{step}</div>
@@ -199,7 +203,7 @@ function ExtensionCTAPanel({ projectId }: { projectId: string }) {
       </div>
 
       <p className="mt-3 text-[11px] text-orange-600 border-t border-orange-200 pt-3">
-        Manifest V3 · Floating in-page panel on app.gohighlevel.com · Colour scheme applied automatically
+        Manifest V3 · No API keys or tokens required · Works from any page
       </p>
     </div>
   );

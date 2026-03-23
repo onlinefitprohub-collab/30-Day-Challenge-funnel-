@@ -1,249 +1,146 @@
-// popup.js — Challenge Funnel Extension Popup Logic
+// popup.js — Challenge Funnel Library Extension
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let settings = { appUrl: "", projectId: "", projectToken: "", hlApiKey: "" };
-let hlContext = { locationId: null, pageId: null, funnelId: null, onHl: false };
-let injecting = {};
+let appUrl    = "";
+let projectId = "";
+let copying   = {};
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSettings();
-  await detectContext();
-  renderInjectTab();
-  bindEvents();
+  renderLibrary();
+  bindNav();
+  bindCopyButtons();
+  bindSaveSettings();
+  document.getElementById("settings-quick-btn").addEventListener("click", () => {
+    document.querySelector('[data-tab="settings"]').click();
+  });
 });
 
 async function loadSettings() {
-  const stored = await chrome.storage.sync.get(["appUrl", "projectId", "projectToken", "hlApiKey"]);
-  settings.appUrl       = stored.appUrl       || "";
-  settings.projectId    = stored.projectId    || "";
-  settings.projectToken = stored.projectToken || "";
-  settings.hlApiKey     = stored.hlApiKey     || "";
-
-  document.getElementById("s-app-url").value      = settings.appUrl;
-  document.getElementById("s-project-id").value   = settings.projectId;
-  document.getElementById("s-project-token").value= settings.projectToken;
-  document.getElementById("s-hl-api-key").value   = settings.hlApiKey;
+  const s = await chrome.storage.sync.get(["appUrl", "projectId"]);
+  appUrl    = (s.appUrl    || "").replace(/\/$/, "");
+  projectId = s.projectId || "";
+  document.getElementById("s-app-url").value    = appUrl;
+  document.getElementById("s-project-id").value = projectId;
 }
 
-async function detectContext() {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.url) return;
-
-    const url = tab.url;
-    hlContext.onHl = url.includes("app.gohighlevel.com");
-
-    if (hlContext.onHl) {
-      hlContext.locationId = (url.match(/\/location\/([a-zA-Z0-9]+)/) || [])[1] || null;
-      hlContext.funnelId   = (url.match(/\/funnels\/([a-zA-Z0-9]+)/)  || [])[1] || null;
-      hlContext.pageId     = (url.match(/\/(?:page-builder|pages)\/([a-zA-Z0-9]+)/) || [])[1] || null;
-
-      // Also read from storage (content.js may have detected more)
-      const stored = await chrome.storage.local.get(["hlContext"]);
-      if (stored.hlContext) {
-        hlContext.locationId = hlContext.locationId || stored.hlContext.locationId;
-        hlContext.funnelId   = hlContext.funnelId   || stored.hlContext.funnelId;
-        hlContext.pageId     = hlContext.pageId     || stored.hlContext.pageId;
-      }
-    }
-  } catch (e) {
-    console.error("detectContext error:", e);
-  }
+function isReady() {
+  return appUrl && projectId;
 }
 
-function isSetupComplete() {
-  return settings.appUrl && settings.projectId && settings.projectToken && settings.hlApiKey;
-}
-
-// ── Render Inject Tab ─────────────────────────────────────────────────────────
-function renderInjectTab() {
-  const notOnHl       = document.getElementById("not-on-hl");
-  const onHlDiv       = document.getElementById("on-hl");
-  const setupRequired = document.getElementById("setup-required");
-
-  if (!hlContext.onHl) {
-    notOnHl.style.display       = "";
-    onHlDiv.style.display       = "none";
-    setupRequired.style.display = "none";
-    return;
-  }
-
-  notOnHl.style.display = "none";
-
-  if (!isSetupComplete()) {
-    setupRequired.style.display = "";
-    onHlDiv.style.display       = "none";
-    return;
-  }
-
-  setupRequired.style.display = "none";
-  onHlDiv.style.display       = "";
-
-  // Context card
-  const locEl  = document.getElementById("ctx-location");
-  const pageEl = document.getElementById("ctx-pageid");
-  const projEl = document.getElementById("ctx-project");
-
-  if (hlContext.locationId) {
-    locEl.textContent = hlContext.locationId;
-    locEl.className   = "context-value ok";
+function renderLibrary() {
+  const banner = document.getElementById("setup-banner");
+  const btns   = document.querySelectorAll(".copy-btn");
+  if (!isReady()) {
+    banner.style.display = "";
+    btns.forEach((b) => (b.disabled = true));
   } else {
-    locEl.textContent = "not detected";
-    locEl.className   = "context-value bad";
-  }
-
-  pageEl.textContent = hlContext.pageId ? hlContext.pageId : "enter below ↓";
-  pageEl.className   = hlContext.pageId ? "context-value ok" : "context-value warn";
-
-  projEl.textContent = settings.projectId
-    ? settings.projectId.slice(0, 22) + "…"
-    : "not set";
-  projEl.className = settings.projectId ? "context-value ok" : "context-value bad";
-
-  if (hlContext.pageId) {
-    document.getElementById("manual-page-id").value = hlContext.pageId;
+    banner.style.display = "none";
+    btns.forEach((b) => (b.disabled = false));
   }
 }
 
-// ── Events ────────────────────────────────────────────────────────────────────
-function bindEvents() {
+function bindNav() {
   document.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((p)  => p.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach((b)  => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach((p)    => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
     });
   });
+}
 
-  document.getElementById("settingsTabBtn").addEventListener("click", () => {
-    document.querySelectorAll(".nav-btn")[1].click();
-  });
-
-  document.getElementById("save-settings").addEventListener("click", saveSettings);
-  document.getElementById("fetch-token-btn").addEventListener("click", fetchToken);
-
-  document.querySelectorAll(".inject-btn").forEach((btn) => {
-    btn.addEventListener("click", () => inject(btn.dataset.page, btn));
+function bindCopyButtons() {
+  document.querySelectorAll(".copy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => copyPage(btn.dataset.page, btn));
   });
 }
 
-async function saveSettings() {
-  const appUrl       = document.getElementById("s-app-url").value.trim().replace(/\/$/, "");
-  const projectId    = document.getElementById("s-project-id").value.trim();
-  const projectToken = document.getElementById("s-project-token").value.trim();
-  const hlApiKey     = document.getElementById("s-hl-api-key").value.trim();
-
-  if (!appUrl || !projectId || !projectToken || !hlApiKey) {
-    showStatus("settings-status", "error", "Please fill in all fields (App URL, Project ID, Extension Token, HL API Key).");
-    return;
-  }
-
-  await chrome.storage.sync.set({ appUrl, projectId, projectToken, hlApiKey });
-  settings = { appUrl, projectId, projectToken, hlApiKey };
-  showStatus("settings-status", "success", "Settings saved! Switch to Inject Pages tab.");
-  renderInjectTab();
-}
-
-async function fetchToken() {
-  const appUrl    = document.getElementById("s-app-url").value.trim().replace(/\/$/, "");
-  const projectId = document.getElementById("s-project-id").value.trim();
-
-  if (!appUrl || !projectId) {
-    showStatus("settings-status", "error", "Enter App URL and Project ID first, then click Fetch Token.");
-    return;
-  }
-
-  const btn = document.getElementById("fetch-token-btn");
-  btn.textContent = "Fetching…";
-  btn.disabled = true;
-
-  try {
-    const res  = await fetch(`${appUrl}/api/highlevel/inject-token?projectId=${projectId}`, {
-      credentials: "include",
-    });
-    const json = await res.json();
-
-    if (json.token) {
-      document.getElementById("s-project-token").value = json.token;
-      showStatus("settings-status", "success", `Token fetched for "${json.projectName}". Click Save Settings to store it.`);
-    } else {
-      showStatus("settings-status", "error", json.error || "Could not fetch token. Make sure you're logged into the app.");
-    }
-  } catch (e) {
-    showStatus("settings-status", "error", `Fetch error: ${e.message}. Check App URL and ensure you're logged in.`);
-  }
-
-  btn.textContent = "Fetch Token";
-  btn.disabled = false;
-}
-
-async function inject(page, btn) {
-  if (injecting[page]) return;
-
-  const manualPageId = document.getElementById("manual-page-id").value.trim();
-  const pageId       = manualPageId || hlContext.pageId;
-
-  if (!pageId) {
-    showStatus("inject-status", "error", "Enter a Page ID above — find it in your HL funnel step settings.");
-    return;
-  }
-  if (!hlContext.locationId) {
-    showStatus("inject-status", "error", "Location ID not detected. Make sure you're on an app.gohighlevel.com page.");
-    return;
-  }
-
-  injecting[page] = true;
+async function copyPage(page, btn) {
+  if (copying[page]) return;
+  copying[page] = true;
   btn.textContent = "…";
-  btn.disabled    = true;
-  showStatus("inject-status", "info", `Injecting ${pageLabel(page)}…`);
+  btn.disabled = true;
+  hideNote();
 
   try {
-    const res  = await fetch(`${settings.appUrl}/api/highlevel/inject`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
-        projectId:    settings.projectId,
-        projectToken: settings.projectToken,
-        page,
-        hlApiKey:     settings.hlApiKey,
-        locationId:   hlContext.locationId,
-        pageId,
-        funnelId:     hlContext.funnelId || undefined,
-      }),
-    });
-    const json = await res.json();
+    const url = `${appUrl}/api/highlevel/page-copy?projectId=${encodeURIComponent(projectId)}&page=${page}`;
+    const res = await fetch(url);
 
-    if (json.success) {
-      btn.textContent = "✓ Done";
-      btn.classList.add("success");
-      showStatus("inject-status", "success", `${pageLabel(page)} injected! Refresh the HL page builder to see your page.`);
-    } else {
-      btn.textContent = "✗ Error";
-      btn.classList.add("error");
-      showStatus("inject-status", "error", `Injection failed: ${json.error || "Unknown error"}`);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      showNote("err", `Failed: ${j.error || res.statusText}`);
+      resetBtn(btn, page);
+      return;
     }
+
+    const html = await res.text();
+    await navigator.clipboard.writeText(html);
+
+    btn.textContent = "✓ Copied!";
+    btn.classList.add("done");
+    showNote("info",
+      `${pageLabel(page)} HTML copied to clipboard!\n\nIn HL builder: drag an HTML Code element onto the page, click it, then press Ctrl+V (or ⌘V on Mac) to paste.`
+    );
   } catch (e) {
-    btn.textContent = "✗ Error";
-    btn.classList.add("error");
-    showStatus("inject-status", "error", `Network error: ${e.message}. Check App URL in Settings.`);
+    showNote("err", `Error: ${e.message}. Check your App URL in Settings.`);
+    resetBtn(btn, page);
+    copying[page] = false;
+    return;
   }
 
-  injecting[page] = false;
+  copying[page] = false;
   setTimeout(() => {
-    btn.textContent = "Inject";
-    btn.disabled    = false;
-    btn.classList.remove("success", "error");
-  }, 3500);
+    btn.textContent = "Copy";
+    btn.classList.remove("done");
+  }, 4000);
+}
+
+function resetBtn(btn, _page) {
+  btn.textContent = "Copy";
+  btn.disabled = !isReady();
+  btn.classList.remove("done", "error");
+}
+
+function showNote(type, msg) {
+  const el       = document.getElementById("paste-note");
+  el.textContent = msg;
+  el.className   = `paste-note show ${type}`;
+}
+
+function hideNote() {
+  document.getElementById("paste-note").className = "paste-note";
+}
+
+async function bindSaveSettings() {
+  document.getElementById("save-settings").addEventListener("click", async () => {
+    const url = document.getElementById("s-app-url").value.trim().replace(/\/$/, "");
+    const pid = document.getElementById("s-project-id").value.trim();
+
+    if (!url || !pid) {
+      showSettingsStatus("err", "Please enter both App URL and Project ID.");
+      return;
+    }
+
+    await chrome.storage.sync.set({ appUrl: url, projectId: pid });
+    appUrl    = url;
+    projectId = pid;
+    showSettingsStatus("ok", "Saved! Switch to Library to copy your pages.");
+    renderLibrary();
+  });
+}
+
+function showSettingsStatus(type, msg) {
+  const el       = document.getElementById("settings-status");
+  el.textContent = msg;
+  el.className   = `settings-status ${type}`;
 }
 
 function pageLabel(page) {
-  return { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" }[page] || page;
-}
-
-function showStatus(id, type, msg) {
-  const el       = document.getElementById(id);
-  el.className   = `status-box ${type}`;
-  el.textContent = msg;
+  return {
+    landing:  "Landing Page",
+    optin:    "Opt-In Page",
+    thankyou: "Thank You Page",
+    booking:  "Booking Page",
+  }[page] || page;
 }
