@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CF Funnel — Page Library</title>
+  <title>CF Funnel — HighLevel Builder</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,6 +38,34 @@
     }
     .title { color: #fff; font-weight: 700; font-size: 14px; }
     .sub   { color: rgba(255,255,255,0.55); font-size: 11px; }
+
+    /* ── HL API Key section ── */
+    .api-key-section {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .api-key-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted); margin-bottom: 6px;
+    }
+    .api-key-row { display: flex; gap: 6px; align-items: center; }
+    .api-key-input {
+      flex: 1; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 9px; font-size: 12px; color: var(--dark);
+      outline: none; transition: border-color 0.15s;
+    }
+    .api-key-input:focus { border-color: var(--orange); }
+    .api-key-save {
+      background: var(--dark); color: #fff; border: none; border-radius: 6px;
+      padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; transition: background 0.15s;
+    }
+    .api-key-save:hover { background: var(--mid); }
+    .api-key-set-badge {
+      font-size: 10px; color: var(--green); font-weight: 600;
+      display: flex; align-items: center; gap: 4px; margin-top: 4px;
+    }
 
     /* ── Body ── */
     .body { padding: 14px 18px; }
@@ -85,6 +113,16 @@
     .saved-banner.show { display: block; }
     .saved-banner strong { font-size: 13px; }
 
+    /* ── Loaded badge ── */
+    .loaded-badge {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;
+      font-size: 11px; color: #1d4ed8; line-height: 1.5;
+      display: none;
+    }
+    .loaded-badge.show { display: flex; align-items: center; gap: 8px; }
+    .loaded-badge strong { font-weight: 700; }
+
     /* ── Project header ── */
     .project-header {
       margin-bottom: 12px; display: none;
@@ -104,33 +142,30 @@
       display: flex; align-items: center; gap: 10px;
       background: #f8fafc;
     }
+    .page-card.loaded-page { border-color: #bfdbfe; background: #eff6ff; }
     .page-icon { font-size: 22px; flex-shrink: 0; }
     .page-info { flex: 1; min-width: 0; }
     .page-name { font-size: 13px; font-weight: 700; color: var(--dark); }
     .page-desc { font-size: 10px; color: var(--muted); margin-top: 1px; }
-    .copy-btn {
+    .load-btn {
       background: var(--orange); color: #fff; border: none; border-radius: 7px;
       padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
       white-space: nowrap; transition: background 0.15s;
       flex-shrink: 0;
     }
-    .copy-btn:hover:not(:disabled) { background: #ea580c; }
-    .copy-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
-    .copy-btn.done   { background: var(--green); }
-    .copy-btn.error  { background: #ef4444; }
+    .load-btn:hover:not(:disabled) { background: #ea580c; }
+    .load-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .load-btn.loaded  { background: #1d4ed8; }
 
-    /* ── Paste note ── */
-    .paste-note {
+    /* ── Note ── */
+    .note {
       border-radius: 8px; padding: 10px 12px; margin-top: 12px;
       font-size: 11px; line-height: 1.6; display: none;
     }
-    .paste-note.show { display: block; }
-    .paste-note.info {
-      background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
-    }
-    .paste-note.err  {
-      background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
-    }
+    .note.show { display: block; }
+    .note.info { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .note.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .note.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
   </style>
 </head>
 <body>
@@ -141,8 +176,20 @@
       <div class="logo">CF</div>
       <div>
         <div class="title">Challenge Funnel</div>
-        <div class="sub">HighLevel Page Library</div>
+        <div class="sub">HighLevel Page Injector</div>
       </div>
+    </div>
+  </div>
+
+  <!-- HL API Key -->
+  <div class="api-key-section">
+    <div class="api-key-label">HighLevel API Key <span style="font-weight:400;text-transform:none;letter-spacing:0">(required for injection)</span></div>
+    <div class="api-key-row">
+      <input class="api-key-input" id="api-key-input" type="password" placeholder="Paste your HL Private Integration key…" />
+      <button class="api-key-save" id="api-key-save">Save</button>
+    </div>
+    <div class="api-key-set-badge" id="api-key-badge" style="display:none">
+      ✓ API key saved — ready to inject
     </div>
   </div>
 
@@ -158,12 +205,12 @@
     <!-- Saving in progress -->
     <div id="saving-state" class="saving-banner" style="display:none;">
       <span class="spinner"></span>
-      Saving your funnel pages to local library…
+      Loading your funnel from the app…
     </div>
 
     <!-- Save error -->
     <div id="save-error-state" class="save-error" style="display:none;">
-      <strong>⚠ Could not save pages</strong>
+      <strong>⚠ Could not load funnel</strong>
       Make sure you are on the results page and the app is accessible, then reopen this extension.
     </div>
 
@@ -172,52 +219,58 @@
 
       <!-- Saved confirmation (shown briefly after auto-save) -->
       <div class="saved-banner" id="saved-banner">
-        <strong>✓ Saved to library</strong><br/>
-        Your funnel pages are cached locally and ready to copy.
+        <strong>✓ Funnel loaded</strong><br/>
+        Pick a page below and click <strong>Load</strong>, then open that page in the GHL builder.
+      </div>
+
+      <!-- Currently loaded page badge -->
+      <div class="loaded-badge" id="loaded-badge">
+        <span>🟦</span>
+        <span><strong id="loaded-page-name">Landing Page</strong> is loaded — go to HighLevel builder and click <strong>Paste into Page Builder</strong></span>
       </div>
 
       <!-- Project name + change link -->
       <div class="project-header show" id="project-header">
         <div class="project-name" id="project-name">Challenge Funnel</div>
-        <button class="change-btn" id="change-btn">Clear / Change Project</button>
+        <button class="change-btn" id="change-btn">Clear / Change</button>
       </div>
 
       <div class="page-grid">
-        <div class="page-card">
+        <div class="page-card" id="card-landing">
           <div class="page-icon">🏠</div>
           <div class="page-info">
             <div class="page-name">Landing Page</div>
-            <div class="page-desc">Main sales / sign-up page</div>
+            <div class="page-desc">Main sign-up / sales page</div>
           </div>
-          <button class="copy-btn" data-page="landing" id="btn-landing">Copy</button>
+          <button class="load-btn" data-page="landing" id="btn-landing">Load</button>
         </div>
-        <div class="page-card">
+        <div class="page-card" id="card-optin">
           <div class="page-icon">📋</div>
           <div class="page-info">
             <div class="page-name">Opt-In Page</div>
             <div class="page-desc">Email capture form</div>
           </div>
-          <button class="copy-btn" data-page="optin" id="btn-optin">Copy</button>
+          <button class="load-btn" data-page="optin" id="btn-optin">Load</button>
         </div>
-        <div class="page-card">
+        <div class="page-card" id="card-thankyou">
           <div class="page-icon">🎉</div>
           <div class="page-info">
             <div class="page-name">Thank You Page</div>
             <div class="page-desc">Post-registration confirmation</div>
           </div>
-          <button class="copy-btn" data-page="thankyou" id="btn-thankyou">Copy</button>
+          <button class="load-btn" data-page="thankyou" id="btn-thankyou">Load</button>
         </div>
-        <div class="page-card">
+        <div class="page-card" id="card-booking">
           <div class="page-icon">📅</div>
           <div class="page-info">
             <div class="page-name">Booking Page</div>
             <div class="page-desc">Discovery call scheduler</div>
           </div>
-          <button class="copy-btn" data-page="booking" id="btn-booking">Copy</button>
+          <button class="load-btn" data-page="booking" id="btn-booking">Load</button>
         </div>
       </div>
 
-      <div class="paste-note" id="paste-note"></div>
+      <div class="note" id="note"></div>
 
     </div>
 

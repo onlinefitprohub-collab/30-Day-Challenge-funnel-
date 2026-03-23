@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Copy, Check, ExternalLink, Download, LayoutTemplate } from "lucide-react";
+import { Copy, Check, ExternalLink, Puzzle, Key } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { GeneratedFunnelAssets } from "@/types/generation";
-import { generateGhlImportJson } from "@/lib/highlevel/ghl-export";
 
 function HLCopyButton({ value, label }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -90,81 +88,90 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
   const emailKeys = ["welcome", "reminder", "objectionHandling", "lastChance", "reEngagement"] as const;
   const emailLabels = ["Welcome", "Reminder", "Objection Handling", "Last Chance", "Re-engagement"];
 
-  function handleDownload() {
-    const importJson = generateGhlImportJson(data);
-    const blob = new Blob([JSON.stringify(importJson, null, 2)], { type: "application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `${importJson.name.replace(/\s+/g, "-").toLowerCase()}-ghl-funnel.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Funnel downloaded!", description: "Import it in HighLevel — see the steps below." });
-  }
-
   return (
     <div className="space-y-5">
 
-      {/* Tip: use Funnel Preview to clone pages */}
-      <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3.5">
-        <LayoutTemplate className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
-        <p className="text-sm text-indigo-800">
-          <strong>Want to clone pages directly into HighLevel?</strong>{" "}
-          Switch to the{" "}
-          <button
-            className="font-semibold underline underline-offset-2 hover:text-indigo-600"
-            onClick={() => {
-              const preview = document.querySelector<HTMLButtonElement>('[data-tab="funnelPreview"]');
-              preview?.click();
-            }}
-          >
-            Funnel Preview
-          </button>{" "}
-          tab to inject each page as native HighLevel elements with one click.
-        </p>
-      </div>
-
-      {/* Import card */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white">
-            <Download className="h-4 w-4" />
+      {/* Chrome Extension inject flow — PRIMARY */}
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-5 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1a56db] text-white">
+            <Puzzle className="h-4 w-4" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900">Download &amp; import your funnel</p>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Download the full funnel as a HighLevel-compatible file, then import it in under a minute.
-              No API key required.
-            </p>
-            <button
-              onClick={handleDownload}
-              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Download Funnel JSON
-            </button>
-            <div className="mt-4 space-y-1.5">
-              {[
-                "Open HighLevel → Funnels & Websites → Funnels",
-                "Click ⋯ in the top right → Import Funnel",
-                "Select the JSON file you just downloaded",
-                "All 4 pages appear — edit and publish",
-              ].map((step, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-600 mt-0.5">{i + 1}</span>
-                  <p className="text-sm text-gray-600">{step}</p>
-                </div>
-              ))}
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Inject pages directly into HighLevel builder</p>
+            <p className="text-xs text-gray-400">Uses the Challenge Funnel Chrome extension — takes about 2 minutes to set up</p>
+          </div>
+        </div>
+        <div className="p-5 space-y-3">
+          {[
+            {
+              n: "1",
+              title: "Install the Chrome extension",
+              body: "Download the extension from your account settings and install it in Chrome (Developer mode → Load unpacked).",
+            },
+            {
+              n: "2",
+              title: "Add your HL API key in the extension",
+              detail: <span className="flex items-center gap-1"><Key className="h-3 w-3 text-gray-400" /> Click the extension icon → paste your <strong>HighLevel Private Integration key</strong> → click Save.</span>,
+            },
+            {
+              n: "3",
+              title: "Load a page from the extension popup",
+              body: "Click the extension icon on this page. It auto-detects your project. Click Load next to the page you want (Landing, Opt-In, Thank You, or Booking).",
+            },
+            {
+              n: "4",
+              title: "Open that page in the GHL page builder",
+              body: "In HighLevel, go to Sites → Funnels → open your funnel → click Edit on the matching funnel step.",
+            },
+            {
+              n: "5",
+              title: "Click \"Paste into Page Builder\"",
+              body: "The extension's orange panel appears in the bottom-right corner of the builder. Click Paste into Page Builder — native sections, columns, headings, and buttons are injected instantly.",
+            },
+            {
+              n: "6",
+              title: "Refresh the builder to see your content",
+              body: "After the success message, refresh the page builder. Your funnel page content appears as fully editable native HighLevel elements.",
+            },
+          ].map(({ n, title, body, detail }) => (
+            <div key={n} className="flex items-start gap-3">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1a56db] text-[10px] font-bold text-white mt-0.5">{n}</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">{title}</p>
+                {body && <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{body}</p>}
+                {detail && <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{detail}</p>}
+              </div>
             </div>
+          ))}
+          <div className="mt-1 rounded-lg border border-green-100 bg-green-50 px-3 py-2.5 text-xs text-green-800">
+            <strong>Repeat for each page.</strong> Load → open builder → Paste. Each funnel step gets its own content injected separately.
           </div>
         </div>
       </div>
 
-      {/* Paste guide header */}
+      {/* Where to find your HL API key */}
+      <div className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3.5">
+        <Key className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+        <div className="text-sm text-amber-800">
+          <strong>Finding your HL API key:</strong>{" "}
+          In HighLevel, go to{" "}
+          <a
+            href="https://app.gohighlevel.com/settings/integrations"
+            target="_blank" rel="noopener noreferrer"
+            className="font-semibold underline underline-offset-2 hover:text-amber-600 inline-flex items-center gap-0.5"
+          >
+            Settings → Integrations <ExternalLink className="h-3 w-3" />
+          </a>
+          {" → "}Private Integrations → create or copy your key. Paste it into the extension popup.
+        </div>
+      </div>
+
+      {/* Divider before copy/paste guide */}
       <div className="border-b border-gray-200 pb-1">
-        <p className="text-sm font-semibold text-gray-900">Copy &amp; paste guide</p>
+        <p className="text-sm font-semibold text-gray-900">Manual copy &amp; paste guide</p>
         <p className="mt-0.5 text-xs text-gray-500">
-          Each section maps directly to a field inside HighLevel. Use the copy buttons to fill in content one field at a time.
+          Prefer to paste text manually? Use the copy buttons below — each field maps to a specific element in the HighLevel page builder or automation builder.
         </p>
       </div>
 

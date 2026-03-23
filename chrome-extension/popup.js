@@ -1,44 +1,81 @@
-// popup.js — Challenge Funnel Library Extension (zero-config auto-save)
+// popup.js — Challenge Funnel Extension: load project → inject native HL elements
 
 const PAGES = ["landing", "optin", "thankyou", "booking"];
-let copying = {};
+const PAGE_LABELS = {
+  landing:  "Landing Page",
+  optin:    "Opt-In Page",
+  thankyou: "Thank You Page",
+  booking:  "Booking Page",
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await initApiKey();
   await init();
 });
+
+/* ── HL API Key ─────────────────────────────────────────────────────────── */
+
+async function initApiKey() {
+  const stored = await getStoredApiKey();
+  const input  = document.getElementById("api-key-input");
+  const badge  = document.getElementById("api-key-badge");
+  const saveBtn = document.getElementById("api-key-save");
+
+  if (stored) {
+    input.value = stored;
+    badge.style.display = "flex";
+  }
+
+  saveBtn.addEventListener("click", async () => {
+    const key = input.value.trim();
+    if (!key) return;
+    await saveApiKey(key);
+    badge.style.display = "flex";
+    saveBtn.textContent = "✓";
+    setTimeout(() => { saveBtn.textContent = "Save"; }, 1500);
+  });
+}
+
+function getStoredApiKey() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(["cfHlApiKey"], (s) => resolve(s.cfHlApiKey || null));
+  });
+}
+
+function saveApiKey(key) {
+  return new Promise((resolve) => {
+    chrome.storage.sync.set({ cfHlApiKey: key }, resolve);
+  });
+}
+
+/* ── Project / Init ─────────────────────────────────────────────────────── */
 
 async function init() {
   const cached = await getCached();
 
   if (cached) {
-    showLibrary(cached, false);
+    const ready = await getReady();
+    showLibrary(cached, false, ready);
     return;
   }
 
-  // Check if we're on a results page
   const tab = await getActiveTab();
-  if (!tab) {
-    showEmpty();
-    return;
-  }
+  if (!tab) { showEmpty(); return; }
 
   const match = parseResultsUrl(tab.url);
-  if (!match) {
-    showEmpty();
-    return;
-  }
+  if (!match) { showEmpty(); return; }
 
-  // Auto-save: fetch all pages and cache them
   showSaving();
   try {
     await autoSave(match.appUrl, match.projectId);
     const saved = await getCached();
     if (saved) {
-      showLibrary(saved, true);
+      showLibrary(saved, true, null);
     } else {
       showSaveError();
     }
-  } catch {
+  } catch (e) {
+    console.error("CF: autoSave failed", e);
     showSaveError();
   }
 }
@@ -47,13 +84,9 @@ function parseResultsUrl(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    // Match: /projects/{id} or /projects/{id}/results (Next.js route groups omit the wrapper folder)
     const m = u.pathname.match(/\/projects\/([^/]+)/);
     if (!m) return null;
-    return {
-      appUrl: u.origin,
-      projectId: m[1],
-    };
+    return { appUrl: u.origin, projectId: m[1] };
   } catch {
     return null;
   }
@@ -67,38 +100,30 @@ async function getActiveTab() {
   });
 }
 
-async function getCached() {
+function getCached() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(["cfProject"], (s) => {
-      resolve(s.cfProject || null);
-    });
+    chrome.storage.local.get(["cfProject"], (s) => resolve(s.cfProject || null));
+  });
+}
+
+function getReady() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["cfReady"], (s) => resolve(s.cfReady || null));
   });
 }
 
 async function autoSave(appUrl, projectId) {
-  // First fetch project info (?info=true) to get challenge concept
-  const infoUrl = `${appUrl}/api/highlevel/page-copy?projectId=${encodeURIComponent(projectId)}&info=true`;
-  const infoRes = await fetch(infoUrl);
-  if (!infoRes.ok) throw new Error("Could not fetch project info");
-  const info = await infoRes.json();
-  const challengeConcept = info.challengeConcept || "Challenge Funnel";
-
-  // Fetch all 4 pages in parallel
-  const pageHtmls = {};
-  await Promise.all(
-    PAGES.map(async (page) => {
-      const url = `${appUrl}/api/highlevel/page-copy?projectId=${encodeURIComponent(projectId)}&page=${page}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Failed to fetch ${page} page`);
-      pageHtmls[page] = await res.text();
-    })
-  );
+  // Fetch inject-token (includes project name + HMAC token) — requires user session cookies
+  const tokenUrl = `${appUrl}/api/highlevel/inject-token?projectId=${encodeURIComponent(projectId)}`;
+  const tokenRes = await fetch(tokenUrl, { credentials: "include" });
+  if (!tokenRes.ok) throw new Error("Could not fetch project token — are you logged in to the app?");
+  const tokenData = await tokenRes.json();
 
   const project = {
     projectId,
+    projectToken: tokenData.token,
     appUrl,
-    challengeConcept,
-    pages: pageHtmls,
+    challengeConcept: tokenData.projectName || "Challenge Funnel",
     savedAt: Date.now(),
   };
 
@@ -107,50 +132,52 @@ async function autoSave(appUrl, projectId) {
   });
 }
 
+/* ── UI states ───────────────────────────────────────────────────────────── */
+
 function showEmpty() {
-  document.getElementById("empty-state").style.display = "";
-  document.getElementById("saving-state").style.display = "none";
+  document.getElementById("empty-state").style.display     = "";
+  document.getElementById("saving-state").style.display    = "none";
   document.getElementById("save-error-state").style.display = "none";
-  document.getElementById("library-state").style.display = "none";
+  document.getElementById("library-state").style.display   = "none";
 }
 
 function showSaving() {
-  document.getElementById("empty-state").style.display = "none";
-  document.getElementById("saving-state").style.display = "";
+  document.getElementById("empty-state").style.display     = "none";
+  document.getElementById("saving-state").style.display    = "";
   document.getElementById("save-error-state").style.display = "none";
-  document.getElementById("library-state").style.display = "none";
+  document.getElementById("library-state").style.display   = "none";
 }
 
 function showSaveError() {
-  document.getElementById("empty-state").style.display = "none";
-  document.getElementById("saving-state").style.display = "none";
+  document.getElementById("empty-state").style.display     = "none";
+  document.getElementById("saving-state").style.display    = "none";
   document.getElementById("save-error-state").style.display = "";
-  document.getElementById("library-state").style.display = "none";
+  document.getElementById("library-state").style.display   = "none";
 }
 
-function showLibrary(cached, justSaved) {
-  document.getElementById("empty-state").style.display = "none";
-  document.getElementById("saving-state").style.display = "none";
+function showLibrary(cached, justSaved, ready) {
+  document.getElementById("empty-state").style.display     = "none";
+  document.getElementById("saving-state").style.display    = "none";
   document.getElementById("save-error-state").style.display = "none";
-  document.getElementById("library-state").style.display = "";
+  document.getElementById("library-state").style.display   = "";
 
-  // Project name
   document.getElementById("project-name").textContent = cached.challengeConcept || "Challenge Funnel";
 
-  // Saved banner
-  const banner = document.getElementById("saved-banner");
   if (justSaved) {
+    const banner = document.getElementById("saved-banner");
     banner.classList.add("show");
-    setTimeout(() => banner.classList.remove("show"), 4000);
+    setTimeout(() => banner.classList.remove("show"), 5000);
   }
 
-  // Change button — clear cache then immediately re-attempt auto-detect
-  document.getElementById("change-btn").addEventListener("click", async () => {
-    await new Promise((resolve) => chrome.storage.local.remove("cfProject", resolve));
-    document.getElementById("library-state").style.display = "none";
-    copying = {};
+  // Show loaded badge if a page is ready
+  refreshLoadedBadge(ready);
 
-    const tab = await getActiveTab();
+  // Change / clear button
+  document.getElementById("change-btn").addEventListener("click", async () => {
+    await new Promise((resolve) => chrome.storage.local.remove(["cfProject", "cfReady"], resolve));
+    document.getElementById("library-state").style.display = "none";
+
+    const tab   = await getActiveTab();
     const match = tab ? parseResultsUrl(tab.url) : null;
     if (match) {
       showSaving();
@@ -158,7 +185,7 @@ function showLibrary(cached, justSaved) {
         await autoSave(match.appUrl, match.projectId);
         const saved = await getCached();
         if (saved) {
-          showLibrary(saved, true);
+          showLibrary(saved, true, null);
         } else {
           showSaveError();
         }
@@ -170,67 +197,66 @@ function showLibrary(cached, justSaved) {
     }
   });
 
-  // Copy buttons
-  document.querySelectorAll(".copy-btn").forEach((btn) => {
-    btn.addEventListener("click", () => copyPage(btn.dataset.page, btn, cached));
+  // Load buttons
+  document.querySelectorAll(".load-btn").forEach((btn) => {
+    btn.addEventListener("click", () => loadPage(btn.dataset.page, btn, cached));
+  });
+
+  // Highlight already-loaded page if any
+  if (ready) highlightCard(ready.page);
+}
+
+function refreshLoadedBadge(ready) {
+  const badge = document.getElementById("loaded-badge");
+  if (ready && ready.page) {
+    badge.classList.add("show");
+    document.getElementById("loaded-page-name").textContent = PAGE_LABELS[ready.page] || ready.page;
+  } else {
+    badge.classList.remove("show");
+  }
+}
+
+function highlightCard(page) {
+  PAGES.forEach((p) => {
+    const card = document.getElementById(`card-${p}`);
+    const btn  = document.getElementById(`btn-${p}`);
+    if (!card || !btn) return;
+    if (p === page) {
+      card.classList.add("loaded-page");
+      btn.textContent = "Loaded";
+      btn.classList.add("loaded");
+    } else {
+      card.classList.remove("loaded-page");
+      btn.textContent = "Load";
+      btn.classList.remove("loaded");
+    }
   });
 }
 
-async function copyPage(page, btn, cached) {
-  if (copying[page]) return;
-  copying[page] = true;
+async function loadPage(page, _btn, cached) {
+  const ready = {
+    projectId:        cached.projectId,
+    projectToken:     cached.projectToken,
+    appUrl:           cached.appUrl,
+    challengeConcept: cached.challengeConcept,
+    page,
+    loadedAt: Date.now(),
+  };
 
-  const html = cached.pages && cached.pages[page];
-  if (!html) {
-    showNote("err", `No cached HTML for ${pageLabel(page)}. Clear project and re-save.`);
-    copying[page] = false;
-    return;
-  }
+  await new Promise((resolve) => {
+    chrome.storage.local.set({ cfReady: ready }, resolve);
+  });
 
-  btn.textContent = "…";
-  btn.disabled = true;
-  hideNote();
+  highlightCard(page);
+  refreshLoadedBadge(ready);
 
-  try {
-    await navigator.clipboard.writeText(html);
-    btn.textContent = "✓ Copied!";
-    btn.classList.add("done");
-    showNote(
-      "info",
-      `${pageLabel(page)} HTML copied!\n\nIn HL builder: drag an HTML Code element onto the page, click it, then paste with Ctrl+V (or ⌘V on Mac).`
-    );
-  } catch (e) {
-    showNote("err", `Copy failed: ${e.message}`);
-    btn.textContent = "Copy";
-    btn.classList.remove("done");
-    btn.disabled = false;
-    copying[page] = false;
-    return;
-  }
-
-  copying[page] = false;
-  setTimeout(() => {
-    btn.textContent = "Copy";
-    btn.classList.remove("done");
-    btn.disabled = false;
-  }, 4000);
+  showNote("info",
+    `${PAGE_LABELS[page]} is loaded!\n\nNow open that page in the HighLevel builder — the extension will show a "Paste into Page Builder" button.`
+  );
 }
 
 function showNote(type, msg) {
-  const el = document.getElementById("paste-note");
+  const el = document.getElementById("note");
   el.textContent = msg;
-  el.className = `paste-note show ${type}`;
-}
-
-function hideNote() {
-  document.getElementById("paste-note").className = "paste-note";
-}
-
-function pageLabel(page) {
-  return {
-    landing:  "Landing Page",
-    optin:    "Opt-In Page",
-    thankyou: "Thank You Page",
-    booking:  "Booking Page",
-  }[page] || page;
+  el.className   = `note show ${type}`;
 }

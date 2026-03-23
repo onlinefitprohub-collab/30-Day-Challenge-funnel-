@@ -46,11 +46,21 @@ scripts/                  # Test/generation scripts
 
 ## Chrome Extension
 
-`chrome-extension/` is a Manifest V3 extension that injects AI-generated funnel pages into HighLevel's native page builder with one click.
+`chrome-extension/` is a Manifest V3 extension that injects AI-generated funnel pages as **native HighLevel elements** into the GHL page builder with one click.
 
-- `manifest.json` — Manifest V3 with host_permissions for app.gohighlevel.com
-- `popup.html/js` — Full settings + inject UI (project ID, HL API key, page selector)
-- `content.js` — Injected into HL pages; reads locationId/pageId from URL; shows floating CF button
+### Flow
+1. User opens the results page → clicks extension icon → extension auto-fetches project info + HMAC token via `/api/highlevel/inject-token`
+2. User enters their HL Private Integration API key in the popup (stored in `chrome.storage.sync`)
+3. User clicks **Load** next to a page (Landing / Opt-In / Thank You / Booking) → stored in `chrome.storage.local.cfReady`
+4. User opens that funnel step in the GHL page builder
+5. `content.js` floating panel shows **"Paste into Page Builder"** → calls `/api/highlevel/inject` with projectId, projectToken, page, hlApiKey, locationId, pageId → native sections/rows/columns/headings/paragraphs/buttons are injected via HL REST API
+6. User refreshes builder — content appears as editable native elements
+
+### Files
+- `manifest.json` — Manifest V3; host_permissions for app.gohighlevel.com + replit.dev/.app
+- `popup.html/js` — HL API key settings + project load UI; fetches inject-token via user session cookies
+- `content.js` — Injected into all GHL pages; injects bridge.js, listens for page context, shows floating inject panel
+- `bridge.js` — Main-world script; intercepts fetch/XHR + URL navigation to extract locationId/pageId/funnelId
 - `background.js` — Service worker
 - Load unpacked from `chrome-extension/` folder in Chrome developer mode
 
