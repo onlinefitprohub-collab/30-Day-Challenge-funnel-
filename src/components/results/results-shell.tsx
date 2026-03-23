@@ -137,6 +137,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
                     ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
+                data-tab={tab.id}
               >
                 <tab.icon className="h-3.5 w-3.5 shrink-0" />
                 <span className="hidden sm:block">{tab.label}</span>
