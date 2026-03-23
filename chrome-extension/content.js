@@ -1,17 +1,50 @@
-// content.js — Challenge Funnel: inject native HL elements into GHL page builder.
-// Runs in the content-script (extension) world.
-// Communicates with bridge.js (main world) via window.postMessage.
+// content.js — Challenge Funnel in a Box
+// Runs in the content-script (extension) world on both:
+//   1. Our app pages (*.replit.dev / *.replit.app / *.replit.com) — receives CF_SAVE_PAGE
+//   2. GHL page builder (app.gohighlevel.com) — injects native elements
 
 (function () {
   "use strict";
 
+  const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
+
+  /* ─── CF_SAVE_PAGE handler (runs on our app pages) ──────────────────────
+   * The app POSTs the GHL element JSON via postMessage.
+   * We save it to chrome.storage.local and ACK so the app can show success.
+   * ─────────────────────────────────────────────────────────────────────── */
+  window.addEventListener("message", (evt) => {
+    if (evt.source !== window) return;
+    if (!evt.data || evt.data.source !== "cf-app" || evt.data.type !== "CF_SAVE_PAGE") return;
+
+    const { projectId, page, pageData, challengeConcept, appUrl } = evt.data.payload || {};
+    if (!projectId || !page || !pageData) return;
+
+    const ready = {
+      projectId,
+      appUrl: appUrl || window.location.origin,
+      challengeConcept: challengeConcept || "Challenge Funnel",
+      page,
+      pageData,
+      loadedAt: Date.now(),
+    };
+
+    chrome.storage.local.set({ cfReady: ready }, () => {
+      window.postMessage(
+        { source: "cf-ext", type: "CF_SAVE_ACK", payload: { page, success: true } },
+        "*"
+      );
+    });
+  });
+
+  /* ─── GHL-only from here on ──────────────────────────────────────────── */
+  if (!IS_GHL) return;
+
   const HOST_ID = "cf-funnel-host";
 
-  // Detected GHL context from bridge.js / URL parsing
   let hlContext = { pageId: null, locationId: null };
   let injecting = false;
 
-  /* ─── Inject bridge.js into main world ────────────────────────────────── */
+  /* ─── Inject bridge.js into main world ──────────────────────────────── */
   function injectBridge() {
     if (document.getElementById("cf-bridge-script")) return;
     const s = document.createElement("script");
@@ -20,7 +53,7 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
-  /* ─── Listen for bridge.js → CONTEXT_DETECTED ─────────────────────────── */
+  /* ─── Listen for bridge.js → CONTEXT_DETECTED ──────────────────────── */
   window.addEventListener("message", (evt) => {
     if (!evt.data || evt.data.source !== "cf-bridge") return;
     if (evt.data.type === "CONTEXT_DETECTED") {
@@ -31,8 +64,7 @@
     }
   });
 
-  /* ─── URL extraction (runs in extension world too) ────────────────────── */
-  // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
+  /* ─── URL extraction ────────────────────────────────────────────────── */
   function extractFromUrl(url) {
     try {
       const m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
@@ -43,7 +75,7 @@
     } catch {}
   }
 
-  /* ─── CSS ──────────────────────────────────────────────────────────────── */
+  /* ─── CSS ───────────────────────────────────────────────────────────── */
   const CSS = `
     :host { all: initial; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -131,7 +163,7 @@
     .hidden { display: none !important; }
   `;
 
-  /* ─── Build panel ──────────────────────────────────────────────────────── */
+  /* ─── Build panel ───────────────────────────────────────────────────── */
   let shadow = null;
 
   function buildPanel() {
@@ -155,7 +187,7 @@
         </div>
         <div class="body" id="body-content">
           <div class="no-project">
-            Open your Challenge Funnel results page, click the extension icon, and select a page to load — then come back here.
+            Open your Challenge Funnel results page and click <strong>Clone to GHL</strong> for the page you want — then come back here and click Paste.
           </div>
         </div>
       </div>
@@ -181,7 +213,7 @@
     booking:  "Booking Page",
   };
 
-  /* ─── Update panel state ───────────────────────────────────────────────── */
+  /* ─── Update panel state ────────────────────────────────────────────── */
   function updatePanel() {
     if (!shadow) return;
 
@@ -191,7 +223,7 @@
       if (!body) return;
 
       if (!ready || !ready.projectId) {
-        body.innerHTML = `<div class="no-project">Open your Challenge Funnel results page, click the extension icon, and select a page to load — then come back here.</div>`;
+        body.innerHTML = `<div class="no-project">Open your Challenge Funnel results page and click <strong>Clone to GHL</strong> for the page you want — then come back here and click Paste.</div>`;
         return;
       }
 
@@ -214,7 +246,7 @@
       } else if (!hasData) {
         html += `
           <div class="no-context">
-            Page data not cached — re-open the extension popup and click <strong>Load</strong> on this page again.
+            Page data not cached — go back to the app and click <strong>Clone to GHL</strong> again.
           </div>
         `;
       }
@@ -241,7 +273,7 @@
     });
   }
 
-  /* ─── Request bridge.js to perform the injection ──────────────────────── */
+  /* ─── Request bridge.js to perform the injection ────────────────────── */
   function requestBridgeInject(pageBuilderId, pageData) {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -266,7 +298,7 @@
     });
   }
 
-  /* ─── Perform injection ───────────────────────────────────────────────── */
+  /* ─── Perform injection ─────────────────────────────────────────────── */
   async function doInject(ready, btn) {
     if (injecting) return;
     injecting = true;
@@ -277,7 +309,7 @@
 
     try {
       if (!ready.pageData) {
-        showStatus("err", "Page data not cached — re-open the extension popup and click Load again.");
+        showStatus("err", "Page data not cached — go back to the app and click Clone to GHL again.");
         btn.innerHTML = '<span class="inject-icon">✗</span> No page data';
         btn.classList.add("err");
         return;
@@ -328,7 +360,7 @@
     if (el) { el.textContent = ""; el.className = "status"; }
   }
 
-  /* ─── Mount ────────────────────────────────────────────────────────────── */
+  /* ─── Mount ─────────────────────────────────────────────────────────── */
   function mount() {
     if (document.getElementById(HOST_ID)) return;
     injectBridge();
@@ -342,7 +374,6 @@
     mount();
   }
 
-  // Re-check on SPA navigation
   const _origPushState = history.pushState;
   history.pushState = function (...args) {
     const result = _origPushState.apply(this, args);
