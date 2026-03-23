@@ -1,297 +1,236 @@
-// popup.js — Challenge Funnel Extension v2
-// Auto-detects context from the current tab URL.
+// popup.js — Challenge Funnel Library Extension (zero-config auto-save)
 
-const RESULTS_RE = /\/dashboard\/projects\/([a-zA-Z0-9-]+)\/results/;
-const HL_RE      = /^https:\/\/app\.gohighlevel\.com/;
-
-let tab          = null;
-let savedProject = null;
-let hlApiKey     = null;
-let detectedCtx  = { pageId: null, funnelId: null, locationId: null };
-let injecting    = {};
+const PAGES = ["landing", "optin", "thankyou", "booking"];
+let copying = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Load storage
-  const data = await chrome.storage.local.get(["savedProject", "hlApiKey", "detectedContext"]);
-  savedProject = data.savedProject  || null;
-  hlApiKey     = data.hlApiKey      || null;
-  detectedCtx  = data.detectedContext || { pageId: null, funnelId: null, locationId: null };
-
-  // Get active tab
-  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  tab = activeTab;
-  const url = tab?.url || "";
-
-  const resMatch = url.match(RESULTS_RE);
-  const isHL     = HL_RE.test(url);
-
-  if (resMatch) {
-    renderResults(resMatch[1], url);
-  } else if (isHL) {
-    renderHL();
-  } else {
-    show("ctx-unknown");
-  }
+  await init();
 });
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function show(id) {
-  ["ctx-results", "ctx-hl", "ctx-unknown"].forEach((x) =>
-    document.getElementById(x).classList.toggle("hidden", x !== id)
-  );
-}
+async function init() {
+  const cached = await getCached();
 
-// ── Results page context ──────────────────────────────────────────────────────
-function renderResults(projectId, url) {
-  show("ctx-results");
-
-  // Derive appUrl from tab URL
-  const appUrl = new URL(url).origin;
-
-  // Prefill project name if already saved
-  if (savedProject?.projectId === projectId) {
-    document.getElementById("res-proj-name").textContent = savedProject.projectName || "Your Funnel";
-    document.getElementById("res-proj-meta").textContent = "Already in library";
-    document.getElementById("res-proj-card").style.display = "flex";
-    document.getElementById("res-banner").classList.add("hidden");
-    document.getElementById("res-saved-msg").classList.remove("hidden");
-    document.getElementById("res-save-btn").textContent = "♻ Re-save Project";
+  if (cached) {
+    showLibrary(cached, false);
+    return;
   }
 
-  document.getElementById("res-save-btn").addEventListener("click", () =>
-    saveProject(projectId, appUrl)
-  );
-}
+  // Check if we're on a results page
+  const tab = await getActiveTab();
+  if (!tab) {
+    showEmpty();
+    return;
+  }
 
-async function saveProject(projectId, appUrl) {
-  const btn = document.getElementById("res-save-btn");
-  btn.disabled = true;
-  btn.textContent = "⏳ Saving…";
+  const match = parseResultsUrl(tab.url);
+  if (!match) {
+    showEmpty();
+    return;
+  }
 
+  // Auto-save: fetch all pages and cache them
+  showSaving();
   try {
-    // Execute in the page context (has the session cookie)
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      world:  "MAIN",
-      func: async (pid) => {
-        try {
-          const res = await fetch(`/api/highlevel/inject-token?projectId=${pid}`);
-          if (!res.ok) return { error: await res.text() };
-          return await res.json();
-        } catch (e) {
-          return { error: e.message };
-        }
-      },
-      args: [projectId],
-    });
-
-    const result = results?.[0]?.result;
-    if (!result || result.error) {
-      showResultsBanner(`✗ ${result?.error || "Could not fetch project token. Are you logged in?"}`, "red");
-      btn.disabled = false;
-      btn.textContent = "💾 Save to Library";
-      return;
+    await autoSave(match.appUrl, match.projectId);
+    const saved = await getCached();
+    if (saved) {
+      showLibrary(saved, true);
+    } else {
+      showSaveError();
     }
+  } catch {
+    showSaveError();
+  }
+}
 
-    const project = {
-      appUrl,
-      projectId:    result.projectId,
-      projectName:  result.projectName,
-      projectToken: result.token,
-      savedAt:      Date.now(),
+function parseResultsUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    // Match: /dashboard/projects/{id}/results
+    const m = u.pathname.match(/\/dashboard\/projects\/([^/]+)\/results/);
+    if (!m) return null;
+    return {
+      appUrl: u.origin,
+      projectId: m[1],
     };
-
-    await chrome.storage.local.set({ savedProject: project });
-    savedProject = project;
-
-    // Update UI
-    document.getElementById("res-proj-name").textContent = project.projectName || "Your Funnel";
-    document.getElementById("res-proj-meta").textContent = "Saved at " + new Date().toLocaleTimeString();
-    document.getElementById("res-proj-card").style.display = "flex";
-    document.getElementById("res-banner").classList.add("hidden");
-    document.getElementById("res-saved-msg").classList.remove("hidden");
-    btn.textContent = "♻ Re-save Project";
-    btn.disabled = false;
-
-  } catch (err) {
-    showResultsBanner(`✗ ${err.message}`, "red");
-    btn.disabled = false;
-    btn.textContent = "💾 Save to Library";
+  } catch {
+    return null;
   }
 }
 
-function showResultsBanner(msg, color) {
-  const el = document.getElementById("res-banner");
-  el.className = `banner banner-${color === "red" ? "red" : "green"}`;
-  el.innerHTML = msg;
-  el.classList.remove("hidden");
-}
-
-// ── HL builder context ────────────────────────────────────────────────────────
-function renderHL() {
-  show("ctx-hl");
-
-  // Project card
-  if (savedProject) {
-    document.getElementById("hl-proj-name").textContent = savedProject.projectName || "Your Funnel";
-    document.getElementById("hl-proj-meta").textContent =
-      "From " + (savedProject.appUrl ? new URL(savedProject.appUrl).hostname : "your app");
-    document.getElementById("hl-proj-card").style.display = "flex";
-    document.getElementById("hl-no-proj").classList.add("hidden");
-  } else {
-    document.getElementById("hl-proj-card").style.display = "none";
-    document.getElementById("hl-no-proj").classList.remove("hidden");
-  }
-
-  // Context pills
-  updateContextPills();
-
-  // API key
-  if (hlApiKey) {
-    document.getElementById("hl-api-key").value = hlApiKey;
-    document.getElementById("hl-save-key").textContent = "Saved ✓";
-    document.getElementById("hl-save-key").classList.add("saved");
-  }
-
-  // Enable/disable inject buttons
-  updateInjectButtons();
-
-  // Bindings
-  document.getElementById("hl-save-key").addEventListener("click", saveApiKey);
-  document.querySelectorAll(".inj-btn[data-page]").forEach((btn) =>
-    btn.addEventListener("click", () => doInject(btn.dataset.page, btn))
-  );
-
-  // Poll context changes (bridge may detect after popup opens)
-  pollContext();
-}
-
-function updateContextPills() {
-  const locEl  = document.getElementById("ctx-loc");
-  const pageEl = document.getElementById("ctx-page");
-
-  if (detectedCtx.locationId) {
-    locEl.textContent  = "📍 " + detectedCtx.locationId.slice(0, 10) + "…";
-    locEl.className    = "ctx-pill ctx-ok";
-  } else {
-    locEl.textContent  = "📍 Location";
-    locEl.className    = "ctx-pill ctx-off";
-  }
-
-  if (detectedCtx.pageId) {
-    pageEl.textContent = "📄 " + detectedCtx.pageId.slice(0, 10) + "…";
-    pageEl.className   = "ctx-pill ctx-ok";
-  } else {
-    pageEl.textContent = "📄 Detecting…";
-    pageEl.className   = "ctx-pill ctx-off";
-  }
-}
-
-function updateInjectButtons() {
-  const ready = !!(savedProject && hlApiKey && detectedCtx.locationId && detectedCtx.pageId);
-  document.querySelectorAll(".inj-btn[data-page]").forEach((btn) => {
-    if (!injecting[btn.dataset.page]) {
-      btn.disabled = !ready;
-    }
+async function getActiveTab() {
+  return new Promise((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      resolve(tabs && tabs[0] ? tabs[0] : null);
+    });
   });
 }
 
-async function saveApiKey() {
-  const val = document.getElementById("hl-api-key").value.trim();
-  if (!val) return;
-  await chrome.storage.local.set({ hlApiKey: val });
-  hlApiKey = val;
-  const btn = document.getElementById("hl-save-key");
-  btn.textContent = "Saved ✓";
-  btn.classList.add("saved");
-  updateInjectButtons();
+async function getCached() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["cfProject"], (s) => {
+      resolve(s.cfProject || null);
+    });
+  });
 }
 
-async function doInject(pageType, btn) {
-  if (injecting[pageType] || !savedProject) return;
-  injecting[pageType] = true;
+async function autoSave(appUrl, projectId) {
+  // First fetch project info (?info=true) to get challenge concept
+  const infoUrl = `${appUrl}/api/highlevel/page-copy?projectId=${encodeURIComponent(projectId)}&info=true`;
+  const infoRes = await fetch(infoUrl);
+  if (!infoRes.ok) throw new Error("Could not fetch project info");
+  const info = await infoRes.json();
+  const challengeConcept = info.challengeConcept || "Challenge Funnel";
 
-  const orig = btn.textContent;
-  btn.textContent = "⏳";
-  btn.disabled    = true;
-  hideStatus();
+  // Fetch all 4 pages in parallel
+  const pageHtmls = {};
+  await Promise.all(
+    PAGES.map(async (page) => {
+      const url = `${appUrl}/api/highlevel/page-copy?projectId=${encodeURIComponent(projectId)}&page=${page}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to fetch ${page} page`);
+      pageHtmls[page] = await res.text();
+    })
+  );
 
-  try {
-    const resp = await fetch(`${savedProject.appUrl}/api/highlevel/inject`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectId:    savedProject.projectId,
-        projectToken: savedProject.projectToken,
-        page:         pageType,
-        hlApiKey,
-        locationId:   detectedCtx.locationId,
-        pageId:       detectedCtx.pageId,
-        funnelId:     detectedCtx.funnelId || undefined,
-      }),
-    });
+  const project = {
+    projectId,
+    appUrl,
+    challengeConcept,
+    pages: pageHtmls,
+    savedAt: Date.now(),
+  };
 
-    const body = await resp.json().catch(() => ({}));
+  await new Promise((resolve) => {
+    chrome.storage.local.set({ cfProject: project }, resolve);
+  });
+}
 
-    if (resp.ok) {
-      btn.textContent = "✓";
-      btn.classList.add("ok");
-      showStatus(`✓ ${pageLabel(pageType)} injected as native HL elements!`, "green");
-    } else {
-      btn.classList.add("err");
-      btn.textContent = "✗";
-      showStatus(`✗ ${body.error || "HTTP " + resp.status}`, "red");
-    }
-  } catch (err) {
-    btn.classList.add("err");
-    btn.textContent = "✗";
-    showStatus(`✗ ${err.message || "Network error"}`, "red");
+function showEmpty() {
+  document.getElementById("empty-state").style.display = "";
+  document.getElementById("saving-state").style.display = "none";
+  document.getElementById("save-error-state").style.display = "none";
+  document.getElementById("library-state").style.display = "none";
+}
+
+function showSaving() {
+  document.getElementById("empty-state").style.display = "none";
+  document.getElementById("saving-state").style.display = "";
+  document.getElementById("save-error-state").style.display = "none";
+  document.getElementById("library-state").style.display = "none";
+}
+
+function showSaveError() {
+  document.getElementById("empty-state").style.display = "none";
+  document.getElementById("saving-state").style.display = "none";
+  document.getElementById("save-error-state").style.display = "";
+  document.getElementById("library-state").style.display = "none";
+}
+
+function showLibrary(cached, justSaved) {
+  document.getElementById("empty-state").style.display = "none";
+  document.getElementById("saving-state").style.display = "none";
+  document.getElementById("save-error-state").style.display = "none";
+  document.getElementById("library-state").style.display = "";
+
+  // Project name
+  document.getElementById("project-name").textContent = cached.challengeConcept || "Challenge Funnel";
+
+  // Saved banner
+  const banner = document.getElementById("saved-banner");
+  if (justSaved) {
+    banner.classList.add("show");
+    setTimeout(() => banner.classList.remove("show"), 4000);
   }
 
-  injecting[pageType] = false;
+  // Change button — clear cache then immediately re-attempt auto-detect
+  document.getElementById("change-btn").addEventListener("click", async () => {
+    await new Promise((resolve) => chrome.storage.local.remove("cfProject", resolve));
+    document.getElementById("library-state").style.display = "none";
+    copying = {};
+
+    const tab = await getActiveTab();
+    const match = tab ? parseResultsUrl(tab.url) : null;
+    if (match) {
+      showSaving();
+      try {
+        await autoSave(match.appUrl, match.projectId);
+        const saved = await getCached();
+        if (saved) {
+          showLibrary(saved, true);
+        } else {
+          showSaveError();
+        }
+      } catch {
+        showSaveError();
+      }
+    } else {
+      showEmpty();
+    }
+  });
+
+  // Copy buttons
+  document.querySelectorAll(".copy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => copyPage(btn.dataset.page, btn, cached));
+  });
+}
+
+async function copyPage(page, btn, cached) {
+  if (copying[page]) return;
+  copying[page] = true;
+
+  const html = cached.pages && cached.pages[page];
+  if (!html) {
+    showNote("err", `No cached HTML for ${pageLabel(page)}. Clear project and re-save.`);
+    copying[page] = false;
+    return;
+  }
+
+  btn.textContent = "…";
+  btn.disabled = true;
+  hideNote();
+
+  try {
+    await navigator.clipboard.writeText(html);
+    btn.textContent = "✓ Copied!";
+    btn.classList.add("done");
+    showNote(
+      "info",
+      `${pageLabel(page)} HTML copied!\n\nIn HL builder: drag an HTML Code element onto the page, click it, then paste with Ctrl+V (or ⌘V on Mac).`
+    );
+  } catch (e) {
+    showNote("err", `Copy failed: ${e.message}`);
+    btn.textContent = "Copy";
+    btn.classList.remove("done");
+    btn.disabled = false;
+    copying[page] = false;
+    return;
+  }
+
+  copying[page] = false;
   setTimeout(() => {
-    btn.textContent = orig;
-    btn.classList.remove("ok", "err");
-    updateInjectButtons();
-  }, 3500);
+    btn.textContent = "Copy";
+    btn.classList.remove("done");
+    btn.disabled = false;
+  }, 4000);
 }
 
-function showStatus(msg, color) {
-  const el = document.getElementById("hl-status");
-  el.className   = `banner banner-${color === "green" ? "green" : "red"}`;
+function showNote(type, msg) {
+  const el = document.getElementById("paste-note");
   el.textContent = msg;
-  el.classList.remove("hidden");
+  el.className = `paste-note show ${type}`;
 }
 
-function hideStatus() {
-  document.getElementById("hl-status").classList.add("hidden");
-}
-
-// Poll storage for context updates while popup is open
-function pollContext() {
-  const interval = setInterval(async () => {
-    const data = await chrome.storage.local.get(["detectedContext"]);
-    const newCtx = data.detectedContext || {};
-    let changed = false;
-    if (newCtx.locationId && newCtx.locationId !== detectedCtx.locationId) {
-      detectedCtx.locationId = newCtx.locationId; changed = true;
-    }
-    if (newCtx.pageId && newCtx.pageId !== detectedCtx.pageId) {
-      detectedCtx.pageId = newCtx.pageId; changed = true;
-    }
-    if (newCtx.funnelId && newCtx.funnelId !== detectedCtx.funnelId) {
-      detectedCtx.funnelId = newCtx.funnelId; changed = true;
-    }
-    if (changed) {
-      updateContextPills();
-      updateInjectButtons();
-    }
-  }, 800);
-
-  // Stop polling when popup closes
-  window.addEventListener("unload", () => clearInterval(interval));
+function hideNote() {
+  document.getElementById("paste-note").className = "paste-note";
 }
 
 function pageLabel(page) {
-  return { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" }[page] || page;
+  return {
+    landing:  "Landing Page",
+    optin:    "Opt-In Page",
+    thankyou: "Thank You Page",
+    booking:  "Booking Page",
+  }[page] || page;
 }

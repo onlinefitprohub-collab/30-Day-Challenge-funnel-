@@ -1,212 +1,211 @@
-// content.js — Runs on app.gohighlevel.com
-// 1. Injects bridge.js into the page's MAIN world to detect pageId/locationId
-// 2. Maintains a floating panel with Inject buttons for the saved project
+// content.js — Challenge Funnel floating copy panel for HighLevel page builder
+// Uses Shadow DOM so HL's styles don't interfere.
 
-const PAGE_TYPES = [
-  { key: "landing",  label: "Landing Page",  emoji: "🏠" },
-  { key: "optin",    label: "Opt-In Page",   emoji: "📋" },
-  { key: "thankyou", label: "Thank You",     emoji: "🎉" },
-  { key: "booking",  label: "Booking Page",  emoji: "📅" },
-];
+(function () {
+  "use strict";
 
-let panel          = null;
-let detectedCtx    = { pageId: null, funnelId: null, locationId: null };
-let savedProject   = null;
-let hlApiKey       = null;
-let minimized      = false;
-let injecting      = false;
-let lastResult     = null; // { ok: bool, msg: string }
+  const HOST_ID = "cf-funnel-host";
+  let copying   = {};
 
-// ── Bridge injection ──────────────────────────────────────────────────────────
-function injectBridge() {
-  if (document.getElementById("__cf_bridge")) return;
-  const s = document.createElement("script");
-  s.id  = "__cf_bridge";
-  s.src = chrome.runtime.getURL("bridge.js");
-  s.onload = () => s.remove();
-  (document.head || document.documentElement).appendChild(s);
-}
+  const PAGES = [
+    { key: "landing",  icon: "🏠", label: "Landing" },
+    { key: "optin",    icon: "📋", label: "Opt-In" },
+    { key: "thankyou", icon: "🎉", label: "Thank You" },
+    { key: "booking",  icon: "📅", label: "Booking" },
+  ];
 
-window.addEventListener("message", (e) => {
-  if (e.source !== window) return;
-  if (e.data?.source !== "cf-bridge" || e.data?.type !== "CONTEXT_DETECTED") return;
+  const CSS = `
+    :host { all: initial; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
-  const { pageId, funnelId, locationId } = e.data.payload;
-  let changed = false;
-  if (pageId     && pageId     !== detectedCtx.pageId)     { detectedCtx.pageId     = pageId;     changed = true; }
-  if (funnelId   && funnelId   !== detectedCtx.funnelId)   { detectedCtx.funnelId   = funnelId;   changed = true; }
-  if (locationId && locationId !== detectedCtx.locationId)  { detectedCtx.locationId = locationId; changed = true; }
+    #panel {
+      position: fixed; bottom: 20px; right: 20px; z-index: 2147483647;
+      width: 260px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
 
-  chrome.storage.local.set({ detectedContext: detectedCtx });
-  if (changed) renderPanel();
-});
+    .head {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .logo {
+      width: 26px; height: 26px; border-radius: 6px; background: #f97316;
+      color: #fff; font-weight: 900; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .title { color: #fff; font-size: 12px; font-weight: 700; }
+    .sub   { color: rgba(255,255,255,.45); font-size: 10px; }
+    .close {
+      background: rgba(255,255,255,.12); border: none; border-radius: 4px;
+      color: rgba(255,255,255,.7); padding: 2px 6px; cursor: pointer; font-size: 14px;
+    }
+    .close:hover { background: rgba(255,255,255,.2); }
 
-function tryUrlExtract() {
-  const url = window.location.href;
-  const loc  = url.match(/\/location\/([a-zA-Z0-9]+)/i);
-  const page = url.match(/\/(?:page-builder|pages)\/([a-zA-Z0-9]+)/i);
-  if (loc?.[1])  detectedCtx.locationId = loc[1];
-  if (page?.[1]) detectedCtx.pageId     = page[1];
-  if (loc?.[1] || page?.[1]) {
-    chrome.storage.local.set({ detectedContext: detectedCtx });
-    renderPanel();
-  }
-}
+    .body { padding: 10px 12px; }
 
-// ── Panel ─────────────────────────────────────────────────────────────────────
-function ensurePanel() {
-  if (panel) return;
-  panel = document.createElement("div");
-  panel.style.cssText = `
-    position:fixed; bottom:20px; right:20px; z-index:2147483647;
-    width:252px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-    font-size:13px; color:#111827; border-radius:12px;
-    box-shadow:0 4px 24px rgba(0,0,0,.18); overflow:hidden; user-select:none;
+    .empty {
+      font-size: 11px; color: #92400e; background: #fff7ed;
+      border: 1px solid #fed7aa; border-radius: 7px; padding: 8px 10px;
+      line-height: 1.5;
+    }
+
+    .label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: #64748b; margin-bottom: 6px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .btn {
+      background: #f97316; color: #fff; border: none; border-radius: 7px;
+      padding: 7px 6px; font-size: 11px; font-weight: 700; cursor: pointer;
+      text-align: center; transition: background .15s; line-height: 1.3;
+    }
+    .btn:hover:not(:disabled) { background: #ea580c; }
+    .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .btn.ok  { background: #22c55e; }
+    .btn.err { background: #ef4444; }
+    .icon { display: block; font-size: 13px; margin-bottom: 1px; }
+
+    .status {
+      margin-top: 8px; border-radius: 7px; padding: 7px 9px;
+      font-size: 10px; line-height: 1.5; display: none;
+    }
+    .status.info { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .status.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+
+    /* FAB */
+    #fab {
+      position: fixed; bottom: 20px; right: 20px; z-index: 2147483647;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff; font-weight: 900; font-size: 12px;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(249,115,22,.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #fab:hover { box-shadow: 0 6px 24px rgba(249,115,22,.7); }
+    .hidden { display: none !important; }
   `;
-  document.body.appendChild(panel);
-}
 
-function renderPanel() {
-  ensurePanel();
+  function buildPanel(shadow, project) {
+    const hasPages = project && project.pages;
 
-  const hasProject  = !!savedProject;
-  const hasKey      = !!hlApiKey;
-  const hasLoc      = !!detectedCtx.locationId;
-  const hasPage     = !!detectedCtx.pageId;
-  const ready       = hasProject && hasKey && hasLoc && hasPage;
-  const dot         = ready ? "#22c55e" : hasProject && hasKey ? "#f59e0b" : "#ef4444";
-
-  const headerHtml = `
-    <div id="__cfh" style="
-      display:flex;align-items:center;justify-content:space-between;
-      padding:9px 12px;background:linear-gradient(135deg,#3b5bdb,#7950f2);cursor:pointer;
-    ">
-      <span style="color:#fff;font-weight:700;font-size:11px;letter-spacing:.05em;">🏋️ CF FUNNEL</span>
-      <div style="display:flex;align-items:center;gap:7px;">
-        <div style="width:7px;height:7px;border-radius:50%;background:${dot};"></div>
-        <span style="color:rgba(255,255,255,.75);font-size:15px;">${minimized ? "＋" : "−"}</span>
+    shadow.innerHTML = `
+      <style>${CSS}</style>
+      <div id="panel">
+        <div class="head">
+          <div class="brand">
+            <div class="logo">CF</div>
+            <div>
+              <div class="title">CF Funnel Library</div>
+              <div class="sub">${hasPages ? (project.challengeConcept || "Click to copy page HTML") : "Click to copy page HTML"}</div>
+            </div>
+          </div>
+          <button class="close" id="close-btn">−</button>
+        </div>
+        <div class="body">
+          ${!hasPages ? `
+            <div class="empty">
+              Open your results page and click the extension icon first — your funnel will be saved automatically.
+            </div>
+          ` : `
+            <div class="label">Copy page HTML</div>
+            <div class="grid">
+              ${PAGES.map(p => `
+                <button class="btn" data-page="${p.key}" id="btn-${p.key}">
+                  <span class="icon">${p.icon}</span>${p.label}
+                </button>
+              `).join("")}
+            </div>
+            <div class="status" id="status"></div>
+          `}
+        </div>
       </div>
-    </div>
-  `;
+      <button id="fab" class="hidden" title="CF Funnel Library">CF</button>
+    `;
 
-  if (minimized) {
-    panel.innerHTML = headerHtml;
-    panel.querySelector("#__cfh").addEventListener("click", () => { minimized = false; renderPanel(); });
-    return;
-  }
-
-  let statusMsg = "";
-  if (!hasProject)  statusMsg = "Open your results page first.";
-  else if (!hasKey)  statusMsg = "Enter HL API key in the extension popup.";
-  else if (!hasLoc)  statusMsg = "Navigate to a funnel step in HL.";
-  else if (!hasPage) statusMsg = "Detecting page… open or save the step.";
-
-  const btnsHtml = ready ? PAGE_TYPES.map(({ key, label, emoji }) => `
-    <button data-inj="${key}" style="
-      display:flex;align-items:center;gap:6px;width:100%;
-      padding:6px 9px;background:#f0f4ff;border:1px solid #c7d7ff;
-      border-radius:7px;cursor:pointer;color:#3b5bdb;
-      font-size:11px;font-weight:600;font-family:inherit;transition:background .1s;
-    ">${emoji} ${label}</button>
-  `).join("") : `
-    <div style="font-size:11px;color:#9ca3af;background:#f9fafb;border-radius:7px;padding:8px 9px;">${statusMsg}</div>
-  `;
-
-  const resultHtml = lastResult
-    ? `<div style="margin-top:6px;font-size:11px;text-align:center;color:${lastResult.ok ? "#22c55e" : "#ef4444"};">
-        ${lastResult.ok ? "✓ Injected!" : "✗ " + lastResult.msg}
-       </div>`
-    : "";
-
-  const injectingHtml = injecting
-    ? `<div style="margin-top:6px;font-size:11px;text-align:center;color:#6366f1;">⏳ Injecting…</div>`
-    : "";
-
-  panel.innerHTML = headerHtml + `
-    <div style="padding:10px 11px;background:#fff;">
-      ${hasProject ? `
-        <div style="font-weight:600;color:#1e3a8a;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">
-          ${savedProject.projectName || "Your Challenge Funnel"}
-        </div>
-        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">
-          ${hasLoc ? "📍 " + detectedCtx.locationId.slice(0,10) + "…" : "📍 waiting…"}
-          ${hasPage ? " · 📄 " + detectedCtx.pageId.slice(0,10) + "…" : " · 📄 detecting…"}
-        </div>
-      ` : `<div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">No project loaded.</div>`}
-      <div style="display:flex;flex-direction:column;gap:4px;">${btnsHtml}</div>
-      ${injectingHtml}${resultHtml}
-    </div>
-  `;
-
-  panel.querySelector("#__cfh").addEventListener("click", () => { minimized = true; renderPanel(); });
-
-  if (ready) {
-    panel.querySelectorAll("button[data-inj]").forEach((btn) => {
-      btn.addEventListener("mouseover", () => { btn.style.background = "#dce4ff"; });
-      btn.addEventListener("mouseout",  () => { btn.style.background = "#f0f4ff"; });
-      btn.addEventListener("click", () => doInject(btn.dataset.inj));
+    shadow.getElementById("close-btn").addEventListener("click", () => {
+      shadow.getElementById("panel").classList.add("hidden");
+      shadow.getElementById("fab").classList.remove("hidden");
     });
-  }
-}
-
-async function doInject(pageType) {
-  if (injecting || !savedProject) return;
-  injecting   = true;
-  lastResult  = null;
-  renderPanel();
-
-  try {
-    const resp = await fetch(`${savedProject.appUrl}/api/highlevel/inject`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectId:    savedProject.projectId,
-        projectToken: savedProject.projectToken,
-        page:         pageType,
-        hlApiKey,
-        locationId:   detectedCtx.locationId,
-        pageId:       detectedCtx.pageId,
-        funnelId:     detectedCtx.funnelId || undefined,
-      }),
+    shadow.getElementById("fab").addEventListener("click", () => {
+      shadow.getElementById("panel").classList.remove("hidden");
+      shadow.getElementById("fab").classList.add("hidden");
     });
 
-    const body = await resp.json().catch(() => ({}));
-    lastResult = resp.ok
-      ? { ok: true,  msg: "" }
-      : { ok: false, msg: body.error || `HTTP ${resp.status}` };
-  } catch (err) {
-    lastResult = { ok: false, msg: err.message || "Network error" };
+    if (!hasPages) return;
+
+    PAGES.forEach(({ key }) => {
+      const btn = shadow.getElementById(`btn-${key}`);
+      if (!btn) return;
+      btn.addEventListener("click", () => doCopy(key, btn, shadow, project));
+    });
   }
 
-  injecting = false;
-  renderPanel();
-  setTimeout(() => { lastResult = null; renderPanel(); }, 4000);
-}
+  async function doCopy(page, btn, shadow, project) {
+    if (copying[page]) return;
+    copying[page] = true;
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-chrome.storage.local.get(["savedProject", "hlApiKey", "detectedContext"], (data) => {
-  savedProject  = data.savedProject   || null;
-  hlApiKey      = data.hlApiKey       || null;
-  detectedCtx   = data.detectedContext || { pageId: null, funnelId: null, locationId: null };
+    const html = project.pages && project.pages[page];
+    if (!html) {
+      showStatus(shadow, "err", `No cached HTML for ${page}. Open your results page and click the extension icon.`);
+      copying[page] = false;
+      return;
+    }
 
-  tryUrlExtract();
-  injectBridge();
-  renderPanel();
-});
+    const orig = btn.innerHTML;
+    btn.textContent = "…";
+    btn.disabled = true;
+    clearStatus(shadow);
 
-chrome.storage.onChanged.addListener((changes) => {
-  if (changes.savedProject) savedProject = changes.savedProject.newValue || null;
-  if (changes.hlApiKey)     hlApiKey     = changes.hlApiKey.newValue     || null;
-  renderPanel();
-});
+    try {
+      await navigator.clipboard.writeText(html);
+      btn.textContent = "✓";
+      btn.classList.add("ok");
+      showStatus(shadow, "info", "Copied! In HL builder: drag an HTML Code element → paste with Ctrl+V.");
+    } catch (e) {
+      btn.classList.add("err");
+      btn.textContent = "✗";
+      showStatus(shadow, "err", `Copy failed: ${e.message}`);
+    }
 
-// SPA navigation watcher
-let lastHref = location.href;
-new MutationObserver(() => {
-  if (location.href !== lastHref) {
-    lastHref = location.href;
-    tryUrlExtract();
-    injectBridge();
-    renderPanel();
+    copying[page] = false;
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.remove("ok", "err");
+      btn.disabled = false;
+    }, 3500);
   }
-}).observe(document, { subtree: true, childList: true });
+
+  function showStatus(shadow, type, msg) {
+    const el = shadow.getElementById("status");
+    if (el) { el.textContent = msg; el.className = `status ${type}`; }
+  }
+
+  function clearStatus(shadow) {
+    const el = shadow.getElementById("status");
+    if (el) { el.textContent = ""; el.className = "status"; }
+  }
+
+  function mount() {
+    if (document.getElementById(HOST_ID)) return;
+    const host = document.createElement("div");
+    host.id = HOST_ID;
+    document.body.appendChild(host);
+    const shadow = host.attachShadow({ mode: "open" });
+
+    chrome.storage.local.get(["cfProject"], (s) => {
+      buildPanel(shadow, s.cfProject || null);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mount);
+  } else {
+    mount();
+  }
+})();

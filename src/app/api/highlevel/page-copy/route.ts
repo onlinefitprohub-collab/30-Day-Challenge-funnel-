@@ -33,11 +33,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId");
   const page      = searchParams.get("page");
+  const info      = searchParams.get("info");
 
-  const validPages = ["landing", "optin", "thankyou", "booking"] as const;
-  if (!projectId || !page || !validPages.includes(page as typeof validPages[number])) {
+  if (!projectId) {
     return NextResponse.json(
-      { error: "Missing or invalid projectId / page param" },
+      { error: "Missing projectId param" },
       { status: 400, headers: CORS_HEADERS },
     );
   }
@@ -63,6 +63,23 @@ export async function GET(request: Request) {
   }
 
   const assets = data.outputs as unknown as GeneratedFunnelAssets;
+
+  // ?info=true — return project metadata (no page HTML)
+  if (info === "true") {
+    const challengeConcept = assets.offerSummary?.challengeConcept ?? "Challenge Funnel";
+    return NextResponse.json(
+      { challengeConcept, pages: ["landing", "optin", "thankyou", "booking"] },
+      { status: 200, headers: CORS_HEADERS },
+    );
+  }
+
+  const validPages = ["landing", "optin", "thankyou", "booking"] as const;
+  if (!page || !validPages.includes(page as typeof validPages[number])) {
+    return NextResponse.json(
+      { error: "Missing or invalid page param" },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
 
   let html: string;
   switch (page) {

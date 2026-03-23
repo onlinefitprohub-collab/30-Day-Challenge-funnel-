@@ -96,23 +96,23 @@ function ExtensionCTAPanel({ projectId: _projectId }: { projectId: string }) {
     a.href = "/api/highlevel/extension-download";
     a.download = "challenge-funnel-extension.zip";
     a.click();
-    toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the steps below." });
+    toast({ title: "Extension downloaded!", description: "Load it unpacked in Chrome — see the README inside for instructions." });
   }
 
   return (
-    <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
+    <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-5">
       <div className="flex items-start gap-3 mb-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500 text-white">
           <Puzzle className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-indigo-900 text-sm">Chrome Extension — Native HL Injection</p>
-            <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">ZERO CONFIG</span>
+            <p className="font-semibold text-orange-900 text-sm">Chrome Extension — Page Library</p>
+            <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">NEW</span>
           </div>
-          <p className="mt-0.5 text-xs text-indigo-700 leading-relaxed">
-            Install the extension and click the icon on <strong>this page</strong> — it auto-detects your project.
-            Then open HL and inject native sections, rows, and buttons in one click.
+          <p className="mt-0.5 text-xs text-orange-700 leading-relaxed">
+            Install the extension once, then open it from any page to copy your funnel HTML directly into HighLevel.
+            No API keys, no configuration needed.
           </p>
         </div>
       </div>
@@ -120,7 +120,7 @@ function ExtensionCTAPanel({ projectId: _projectId }: { projectId: string }) {
       <div className="flex flex-wrap gap-3 mb-4">
         <button
           onClick={handleDownload}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors shadow-sm"
         >
           <Download className="h-4 w-4" />
           Download Extension (.zip)
@@ -129,28 +129,36 @@ function ExtensionCTAPanel({ projectId: _projectId }: { projectId: string }) {
           href="https://app.gohighlevel.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-white px-4 py-2.5 text-sm font-medium text-orange-700 hover:border-orange-300 hover:bg-orange-50 transition-colors"
         >
           Open HighLevel <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </div>
 
+      {/* Single callout — zero config instruction */}
+      <div className="rounded-lg border border-orange-300 bg-orange-100 px-4 py-3 mb-4 flex items-start gap-3">
+        <span className="text-xl mt-0.5">👆</span>
+        <p className="text-sm text-orange-900 leading-relaxed">
+          <strong>Open the extension icon in your browser toolbar while on this page</strong> — your funnel will be saved automatically to the library.
+        </p>
+      </div>
+
       <div className="space-y-1.5">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-indigo-800">How it works (3 steps):</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-orange-800">How it works:</p>
         {[
-          { step: "1", text: "Download the zip → chrome://extensions → Developer mode → Load unpacked" },
-          { step: "2", text: "Click the extension icon on this Results page → \"Save to Library\". That's it — no settings to fill in." },
-          { step: "3", text: "Open HighLevel → Funnels → step editor. A floating panel appears. Enter your HL API key once, then click Inject next to any page type — native elements are added instantly." },
+          { step: "1", text: "Download the zip, go to chrome://extensions → Developer mode → Load unpacked" },
+          { step: "2", text: "Come back to this results page and click the extension icon — it auto-saves all 4 pages" },
+          { step: "3", text: "In HighLevel builder: drag an HTML Code element, open the extension, click Copy, then paste" },
         ].map(({ step, text }) => (
           <div key={step} className="flex items-start gap-2.5">
-            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] font-black mt-0.5">{step}</div>
-            <p className="text-xs text-indigo-800 leading-relaxed">{text}</p>
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black mt-0.5">{step}</div>
+            <p className="text-xs text-orange-800 leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 text-[11px] text-indigo-500 border-t border-indigo-200 pt-3">
-        Manifest V3 · Auto-detects project · One-time HL API key · Injects native HL elements
+      <p className="mt-3 text-[11px] text-orange-600 border-t border-orange-200 pt-3">
+        Manifest V3 · No API keys or tokens required · Works from any page
       </p>
     </div>
   );
