@@ -73,6 +73,12 @@ export interface CampaignNaming {
   utmContent: string;
 }
 
+export interface GeneratedAdImage {
+  url: string;
+  prompt: string;
+  index: number;
+}
+
 export interface GeneratedFunnelAssets {
   offerSummary: OfferSummary;
   landingPage: LandingPageCopy;
@@ -84,6 +90,7 @@ export interface GeneratedFunnelAssets {
   adCopy: AdCopy;
   creativePrompts: CreativePrompts;
   campaignNaming: CampaignNaming;
+  generatedAdImages?: GeneratedAdImage[];
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

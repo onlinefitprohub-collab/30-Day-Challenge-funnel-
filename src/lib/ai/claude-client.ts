@@ -57,6 +57,19 @@ YOUR COPY RULES — NON-NEGOTIABLE:
 - Match the coach's stated tone exactly. A "simple" tone coach should not sound like a motivational speaker.
 - The copy should sound like it was written by the coach, not about the coach
 
+FACEBOOK AD POLICY COMPLIANCE — ALL COPY MUST FOLLOW THESE RULES:
+- Never imply personal attributes of the audience: never say "because you're overweight", "if you have diabetes", "for people who are struggling financially" — this violates FB's anti-discrimination policy
+- Never make specific guaranteed outcome claims: "lose 10kg guaranteed", "earn £5000 in 30 days" are prohibited
+- Never use before/after body transformation framing in ad images (FB restricts these in health/fitness)
+- Never make medical claims: "cures", "treats", "eliminates chronic pain" — these violate health claims policy
+- Use empowering, aspirational language instead of problem-shaming: "for people who want to build consistency" not "for people who can't stick to a diet"
+- No urgency tactics that are fabricated: "only 3 spots left" is only acceptable if actually true
+- No superlatives without substantiation: "the best", "the most effective", "number one" need proof behind them
+- Testimonials must represent typical results, not outliers. If using a result, imply it is one example, not what everyone gets
+- For fitness: focus on lifestyle, habits, energy, and consistency — not weight loss metrics as the primary hook
+- Ad copy must be appropriate for all adults, not contain sexual, violent, or discriminatory content
+- No click-bait or misleading headlines that don't match what the ad links to
+
 OUTPUT FORMAT — CRITICAL:
 - Return valid JSON only — nothing before it, nothing after it
 - No markdown formatting, no code fences, no \`\`\`json blocks

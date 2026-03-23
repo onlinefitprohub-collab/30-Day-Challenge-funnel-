@@ -10,9 +10,8 @@
  * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
  *
  * Model routing:
- *   Groups 1 & 2 → Claude 3.5 Sonnet when ANTHROPIC_API_KEY is set (better persuasive copy)
+ *   All 3 groups → Claude 3.5 Sonnet when ANTHROPIC_API_KEY is set (better persuasive copy)
  *                → GPT-4o fallback when ANTHROPIC_API_KEY is absent or Claude call fails
- *   Group 3      → GPT-4o always (structured data: ad copy, UTMs, campaign naming)
  */
 
 import { getOpenAIClient, SYSTEM_PROMPT } from "./client";
@@ -120,9 +119,7 @@ export async function generateFunnelAssets(
   const context = buildCoachContext(inputs);
   const mock    = generateMockAssets(inputs);
 
-  // Fire all 3 groups in parallel
-  // Groups 1 & 2: copy-heavy → Claude preferred, GPT-4o fallback
-  // Group  3    : structured data → GPT-4o always
+  // Fire all 3 groups in parallel — all through Claude (GPT-4o fallback on failure)
   const [offerPagesResult, sequencesResult, adsCampaignResult] = await Promise.all([
     callCopyGroup(
       buildOfferPagesPrompt(context),
@@ -136,7 +133,7 @@ export async function generateFunnelAssets(
       "sequences",
       TOKENS.sequences,
     ),
-    callGroup(
+    callCopyGroup(
       buildAdsCampaignPrompt(context),
       adsCampaignResponseSchema,
       "ads-campaign",

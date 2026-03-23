@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateFunnelAssets } from "@/lib/ai/generate";
+import { generateAdImages } from "@/lib/ai/image-generation";
 import { generateMockAssets } from "@/lib/ai/mock";
 import { wizardInputsSchema } from "@/types/wizard";
 import type { GenerationRunRow, ProjectRow } from "@/types/project";
@@ -56,11 +57,26 @@ export async function POST(request: Request) {
       ? generateMockAssets(validatedInputs)
       : await generateFunnelAssets(validatedInputs);
 
+    // Generate real ad images (non-blocking — failures just mean no images shown)
+    let generatedAdImages: typeof assets.generatedAdImages = [];
+    if (!isMockMode && process.env.OPENAI_API_KEY) {
+      try {
+        generatedAdImages = await generateAdImages(validatedInputs, projectId);
+        console.log(`[generate] Generated ${generatedAdImages.length} ad images`);
+      } catch (imgErr) {
+        console.warn("[generate] Ad image generation failed (non-fatal):", imgErr);
+      }
+    }
+
     // Save outputs — include mock flag so results page can show a banner
     await supabase.from("project_outputs").insert({
       project_id: projectId,
       generation_run_id: runId,
-      outputs: { ...assets, _isMock: isMockMode } as Record<string, unknown>,
+      outputs: {
+        ...assets,
+        generatedAdImages,
+        _isMock: isMockMode,
+      } as Record<string, unknown>,
     });
 
     // Mark run complete

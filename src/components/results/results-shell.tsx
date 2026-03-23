@@ -74,7 +74,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     smsSequence:     <SmsSection             data={assets.smsSequence} />,
     emailSequence:   <EmailSection           data={assets.emailSequence} />,
     adCopy:          <AdCopySection          data={assets.adCopy} />,
-    creativePrompts: <CreativePromptsSection data={assets.creativePrompts} />,
+    creativePrompts: <CreativePromptsSection data={assets.creativePrompts} generatedAdImages={assets.generatedAdImages} />,
     campaignNaming:  <CampaignNamingSection  data={assets.campaignNaming} />,
   };
 

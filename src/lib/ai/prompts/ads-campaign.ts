@@ -13,12 +13,25 @@ export function buildAdsCampaignPrompt(context: string): string {
 
 Write Facebook/Instagram ad copy, creative direction, and campaign naming for this specific challenge and coach. These ads are targeting cold audiences who don't know the coach yet — make the copy earn their attention without overselling.
 
+─── FACEBOOK AD POLICY COMPLIANCE (MANDATORY) ───
+
+All copy must pass Facebook ad policy review. Violations get ads rejected or accounts flagged:
+- NEVER imply personal attributes: no "if you're overweight", "for people who struggle financially", "if you have [health condition]" — this is discriminatory targeting
+- NEVER make guaranteed outcome claims: no "lose 10kg in 30 days guaranteed", no specific income promises
+- NEVER use before/after body transformation framing — Facebook restricts fitness before/after imagery
+- NEVER make medical claims: "cures", "treats", "eliminates pain", "reverses [condition]" are prohibited
+- DO use aspirational lifestyle language instead of problem-shaming
+- DO frame results as possible, not guaranteed: "members often find...", "many coaches see..." not "you will..."
+- DO use first-person coach voice — less likely to trigger personal attribute violations than "you" framing
+- Testimonials must imply they are individual results, not typical outcomes
+
 ─── AD COPY RULES ───
 
 HOOKS (first 1–2 lines of the primary text — the scroll-stopper):
 - The hook decides whether anyone reads the rest. Write 3 genuinely different hooks.
 - Hook angles to try: name the specific person ("If you're a [specific audience description]..."), call out a specific situation they recognise, open with a contrarian or surprising statement, use a specific number or timeframe
 - Do NOT start any hook with "Are you tired of...", "Have you ever...", or "Imagine if..."
+- Do NOT use "you" language that implies a personal attribute (weight, health, finances)
 - Hooks should be 10–20 words. Tight and specific.
 - Each hook should work on its own — if someone only reads the first line, it should land
 
@@ -56,10 +69,11 @@ TALKING HEAD VIDEO PROMPTS (3 concepts):
 - One should be 15–20 seconds max (hook + one point + CTA)
 - One should address a specific objection from the context
 
-BEFORE/AFTER CONCEPTS (2 concepts):
-- Describe what the "before" state looks or feels like and what the "after" represents
-- Frame around feelings, habits, or lifestyle — not body metrics unless the challenge type makes it appropriate and the context supports it
-- Must be implementable without professional equipment
+LIFESTYLE CONTRAST CONCEPTS (2 concepts):
+- Facebook restricts body transformation before/after imagery. Instead: contrast lifestyle states, habits, or routines — not appearance
+- Describe the "before" feeling/situation and the "after" feeling/situation in terms of energy, confidence, routine, or consistency
+- Frame around habits, mindset, or schedule — never around weight, body size, or physical appearance metrics
+- Must be implementable without professional equipment and must pass Facebook's ad policy on body image
 
 UGC-STYLE PROMPTS (2 concepts):
 - Written as if briefing a client or friend to film a short testimonial/review video
