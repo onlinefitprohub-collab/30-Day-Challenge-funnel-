@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Click \"Clone to GHL\" on your results page — then open the GHL builder and click Paste. Native elements, no API key.",
   "icons": {
     "16":  "icons/icon16.png",

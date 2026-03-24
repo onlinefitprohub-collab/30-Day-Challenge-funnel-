@@ -6,6 +6,12 @@
 (function () {
   "use strict";
 
+  // Guard against double-injection: background.js may inject this script into
+  // tabs that already have it running from the manifest's content_scripts.
+  // Without this, duplicate message listeners would fire twice per click.
+  if (window.__cfExtLoaded) return;
+  window.__cfExtLoaded = true;
+
   const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
   /* ─── CF_SAVE_PAGE handler (runs on our app pages) ──────────────────────

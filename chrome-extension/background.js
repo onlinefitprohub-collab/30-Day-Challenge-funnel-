@@ -15,7 +15,9 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
       for (const tab of tabs) {
         if (!tab.url) continue;
         const isGHL    = tab.url.startsWith("https://app.gohighlevel.com/");
-        const isReplit = /https:\/\/[^/]+\.replit\.(dev|app|com)\//.test(tab.url);
+        const isReplit =
+          tab.url.startsWith("https://replit.com/") ||
+          /https:\/\/[^/]+\.replit\.(dev|app|com)\//.test(tab.url);
         if (!isGHL && !isReplit) continue;
         chrome.scripting.executeScript({
           target: { tabId: tab.id, allFrames: true },
