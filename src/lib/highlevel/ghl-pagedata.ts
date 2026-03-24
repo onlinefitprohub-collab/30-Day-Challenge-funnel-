@@ -241,6 +241,77 @@ function makeDivider(color = "rgba(255,255,255,0.1)", marginV = 12): GhlNode {
   );
 }
 
+function makeVideo(youtubeUrl: string, styles: StyleMap = {}): GhlNode {
+  return buildNode(
+    ghlId("el"), "element", "video", "video", "Video",
+    [],
+    {
+      width:        sv(100, "%"),
+      borderRadius: sv(12),
+      overflow:     ss("hidden"),
+      ...styles,
+    },
+    { width: sv(100, "%") },
+    {
+      videoType:     ss("youtube"),
+      url:           ss(youtubeUrl),
+      autoplay:      { value: false },
+      loop:          { value: false },
+      muted:         { value: false },
+      controls:      { value: true },
+      aspectRatio:   ss("16:9"),
+    },
+  );
+}
+
+function makeCountdown(endDate: string, styles: StyleMap = {}): GhlNode {
+  return buildNode(
+    ghlId("el"), "element", "countdown", "countdown", "Countdown Timer",
+    [],
+    {
+      textAlign:   ss("center"),
+      paddingTop:  sv(8),
+      paddingBottom: sv(8),
+      ...styles,
+    },
+    {},
+    {
+      timerType:    ss("fixed"),
+      endDate:      ss(endDate),
+      timezone:     ss("America/New_York"),
+      expireAction: ss("none"),
+      labelDays:    ss("Days"),
+      labelHours:   ss("Hours"),
+      labelMinutes: ss("Minutes"),
+      labelSeconds: ss("Seconds"),
+      displayStyle: ss("block"),
+    },
+  );
+}
+
+function makeBulletList(items: string[], primary: string, styles: StyleMap = {}): GhlNode {
+  return buildNode(
+    ghlId("el"), "element", "bullet-list", "bullet-list", "Bullet List",
+    [],
+    {
+      fontSize:        sv(16),
+      color:           ss("#e2e8f0"),
+      lineHeight:      ss("1.7"),
+      paddingBottom:   sv(8),
+      ...styles,
+    },
+    {},
+    {
+      items:           { value: items.map((t) => ({ text: t, icon: "check" })) },
+      listType:        ss("icon"),
+      iconType:        ss("check"),
+      iconColor:       ss(primary),
+      iconSize:        ss("18px"),
+      listItemSpacing: ss("10px"),
+    },
+  );
+}
+
 // ── Builder accumulator ────────────────────────────────────────────────────
 
 function createBuilder(): Builder {
@@ -260,39 +331,68 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const lp      = data.landingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
-  // ── 1. HERO ──────────────────────────────────────────────────────────────
+  // ── 1. HERO (2-column: text left, video right) ────────────────────────────
   {
+    // ── Left column: badge, headline, bullet points, CTA, urgency ─────────
     const badge = el(b, makeParagraph(
       `🔥 Limited Spots — ${concept}`,
-      { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
+      { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") },
     ));
     const h1 = el(b, makeHeadline(
       lp.headlineOptions[0] ?? `Join the Free ${concept}`,
       "h1",
-      { color: ss("#ffffff"), fontSize: sv(54), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.08"), paddingBottom: sv(20), maxWidth: sv(820), marginLeft: ss("auto"), marginRight: ss("auto") },
-      { fontSize: sv(30), paddingBottom: sv(16) },
+      { color: ss("#ffffff"), fontSize: sv(46), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+      { fontSize: sv(30), paddingBottom: sv(12) },
     ));
     const sub = el(b, makeParagraph(
       lp.subheadline,
-      { color: ss("#94a3b8"), fontSize: sv(19), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(620), marginLeft: ss("auto"), marginRight: ss("auto"), paddingBottom: sv(36) },
-      { fontSize: sv(16) },
+      { color: ss("#94a3b8"), fontSize: sv(17), lineHeight: ss("1.7"), paddingBottom: sv(24) },
+      { fontSize: sv(15) },
+    ));
+    const bullets = el(b, makeBulletList(
+      lp.bulletPoints.slice(0, 4),
+      s.primary,
+      { paddingBottom: sv(28) },
     ));
     const cta = el(b, makeButton(
       `${lp.ctaText} →`, "next-step", "",
-      { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}66`) },
+      { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`) },
     ));
-    const elIds = [badge, h1, sub, cta];
+    const leftElIds: string[] = [badge, h1, sub, bullets, cta];
     if (lp.urgencyIdeas[0]) {
-      elIds.push(el(b, makeParagraph(
+      leftElIds.push(el(b, makeParagraph(
         lp.urgencyIdeas[0],
-        { color: ss("#f87171"), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingTop: sv(18) },
+        { color: ss("#f87171"), fontSize: sv(13), fontWeight: ss("600"), paddingTop: sv(14) },
       )));
     }
-    const c = co(b, makeCol(elIds, 100, { align: "center", padH: 32 }));
-    const r = ro(b, makeRow([c], 860, 0));
+    const leftCol = co(b, makeCol(leftElIds, 45, { padH: 24, valign: "middle" }));
+
+    // ── Right column: countdown timer + placeholder video frame ───────────
+    // Countdown — 7 days from "today" when pages are generated; trainers can edit in GHL.
+    const countdownEnd = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d.toISOString().slice(0, 16);
+    })();
+    const countdownLabel = el(b, makeParagraph(
+      "Challenge starts in:",
+      { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), paddingBottom: sv(4) },
+    ));
+    const countdown = el(b, makeCountdown(countdownEnd, { paddingBottom: sv(20) }));
+    const videoEl = el(b, makeVideo(
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      { borderRadius: sv(16), boxShadow: ss(`0 24px 64px rgba(0,0,0,0.5)`) },
+    ));
+    const videoNote = el(b, makeParagraph(
+      "▶  Replace this video with your own challenge intro",
+      { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) },
+    ));
+    const rightCol = co(b, makeCol([countdownLabel, countdown, videoEl, videoNote], 55, { padH: 24, valign: "middle" }));
+
+    const r = ro(b, makeRow([leftCol, rightCol], 1200, 0));
     sec(b, makeSection([r], {
       bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`,
-      ptD: 108, pbD: 108, ptM: 64, pbM: 64,
+      ptD: 88, pbD: 88, ptM: 56, pbM: 56,
     }));
   }
 
@@ -336,28 +436,29 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
       { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
     ));
     const h2 = el(b, makeHeadline(
-      "Everything you need to succeed in 30 days",
+      "Everything included in your free challenge",
       "h2",
-      { color: ss("#111827"), fontSize: sv(36), fontWeight: ss("800"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(52), maxWidth: sv(640), marginLeft: ss("auto"), marginRight: ss("auto") },
+      { color: ss("#111827"), fontSize: sv(36), fontWeight: ss("800"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(48), maxWidth: sv(640), marginLeft: ss("auto"), marginRight: ss("auto") },
       { fontSize: sv(24), paddingBottom: sv(32) },
     ));
     const headerCol = co(b, makeCol([eyebrow, h2], 100, { align: "center" }));
     const headerRow = ro(b, makeRow([headerCol], 800));
 
-    const bullets = lp.bulletPoints.slice(0, 6);
+    // Show all bullets (including any beyond the 4 shown in hero) in 3-column cards
+    const allBullets = lp.bulletPoints.slice(0, 9);
     const perRow  = 3;
     const bulletRows: string[] = [];
-    for (let start = 0; start < bullets.length; start += perRow) {
-      const rowBullets = bullets.slice(start, start + perRow);
+    for (let start = 0; start < allBullets.length; start += perRow) {
+      const rowBullets = allBullets.slice(start, start + perRow);
       const colWidth   = Math.floor(100 / rowBullets.length);
       const colIds = rowBullets.map((b_text) => {
         const icon = el(b, makeParagraph("✓", {
-          color: ss(s.primary), fontSize: sv(20), fontWeight: ss("900"), paddingBottom: sv(6),
+          color: ss(s.primary), fontSize: sv(22), fontWeight: ss("900"), paddingBottom: sv(8),
         }));
         const txt = el(b, makeParagraph(b_text, {
           color: ss("#374151"), fontSize: sv(15), lineHeight: ss("1.6"),
         }));
-        return co(b, makeCol([icon, txt], colWidth, { padH: 24, padV: 4 }));
+        return co(b, makeCol([icon, txt], colWidth, { padH: 24, padV: 20 }));
       });
       bulletRows.push(ro(b, makeRow(colIds, 1200, 0)));
     }

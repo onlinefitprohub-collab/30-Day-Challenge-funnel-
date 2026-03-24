@@ -1,4 +1,4 @@
-// bridge.js v2.5.5 — Injected into the HighLevel page (MAIN world).
+// bridge.js v2.5.6 — Injected into the HighLevel page (MAIN world).
 // Detects the page-builder context from the URL / window globals,
 // and executes the actual GHL injection using either:
 //   A) "capture-replay": intercepts GHL's own save request (URL + auth headers)
@@ -717,18 +717,25 @@
     const group  = `CF Funnel \u2014 ${challengeName || "Challenge"}`;
     const locId  = locationId || "";
 
-    // Candidate prebuilt-section endpoints (tried in order; first 2xx wins per section).
-    // capturedPrebuiltUrl is auto-captured when GHL loads the Prebuilt Sections sidebar panel.
-    if (!capturedPrebuiltUrl) {
-      return replyPrebuilt({
-        ok: false,
-        error: "GHL\u2019s Prebuilt Sections endpoint not captured yet.\n\nStep: In the GHL page builder left sidebar, click \u201cPrebuilt Sections\u201d to open that panel \u2014 the extension will then capture the endpoint automatically. Then click \u201cAdd to Prebuilt Sections\u201d again.",
-      });
-    }
-
-    const PREBUILT_URLS = [
-      capturedPrebuiltUrl,
+    // Build candidate prebuilt-section URL list.
+    // capturedPrebuiltUrl is captured when the user opens the Prebuilt Sections panel (preferred).
+    // Fallback: well-known GHL endpoints tried in order — keeps the feature working without requiring panel open.
+    const BACKENDS = [
+      "https://backend.leadconnectorhq.com",
+      "https://services.leadconnectorhq.com",
     ];
+    const PREBUILT_PATHS = [
+      "/sites/prebuilt-section",
+      "/prebuilt-section",
+      "/v1/prebuilt-section",
+      "/sites/v1/prebuilt-section",
+      "/sites/sections/prebuilt",
+      "/funnels/prebuilt-section",
+    ];
+    const PREBUILT_URLS = [
+      ...(capturedPrebuiltUrl ? [capturedPrebuiltUrl] : []),
+      ...BACKENDS.flatMap((base) => PREBUILT_PATHS.map((path) => base + path)),
+    ].filter((u, i, arr) => arr.indexOf(u) === i); // dedupe
 
     let succeeded = 0;
     let failed    = 0;
