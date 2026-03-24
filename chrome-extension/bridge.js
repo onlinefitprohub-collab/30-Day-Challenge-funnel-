@@ -178,44 +178,51 @@
     }
   }
 
-  async function ghlGet(path) {
-    const revex = getRevex();
-    if (revex) {
-      const res = await revex.get(`${GHL_API}${path}`);
-      if (res?.status >= 200 && res?.status < 300 && res?.data) return res.data;
-      throw new Error(`GHL GET ${res?.status}: ${path}`);
+  // Poll until GHL's authenticated axios instance is available on the Vue app.
+  // Needed because bridge.js now runs at document_start — before Vue mounts.
+  // Raw window.fetch() is intentionally NOT used as a fallback: it lacks GHL's
+  // auth tokens and causes CORS "Network Error" failures.
+  async function waitForRevex(maxMs = 5000) {
+    const start = Date.now();
+    while (Date.now() - start < maxMs) {
+      const r = getRevex();
+      if (r) return r;
+      await new Promise((res) => setTimeout(res, 200));
     }
-    const res = await fetch(`${GHL_API}${path}`, {
-      method:      "GET",
-      credentials: "include",
-      headers:     { "Content-Type": "application/json" },
-    });
-    if (res.ok) return res.json();
-    const text = await res.text().catch(() => "");
-    throw new Error(`GHL GET ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
+    return null;
   }
 
-  // ghlPut returns { ok: true } on success, or throws with the status.
-  // Callers use the status code to decide whether to retry.
-  async function ghlPut(path, body) {
-    const revex = getRevex();
-    if (revex) {
-      const res = await revex.put(`${GHL_API}${path}`, body);
-      if (res?.status >= 200 && res?.status < 300) return { ok: true };
-      const err = new Error(`GHL PUT ${res?.status}: ${path}`);
-      err.status = res?.status;
-      throw err;
+  // Log revex availability 2 s after page load for debugging.
+  setTimeout(() => {
+    console.log("[CF] revex available at 2 s:", !!getRevex());
+  }, 2000);
+
+  async function ghlGet(path) {
+    const revex = await waitForRevex();
+    if (!revex) {
+      throw new Error(
+        "GHL service not ready — wait for the page builder to fully load, then try again"
+      );
     }
-    const res = await fetch(`${GHL_API}${path}`, {
-      method:      "PUT",
-      credentials: "include",
-      headers:     { "Content-Type": "application/json" },
-      body:        JSON.stringify(body),
-    });
-    if (res.ok) return { ok: true };
-    const text = await res.text().catch(() => "");
-    const err = new Error(`GHL PUT ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
-    err.status = res.status;
+    const res = await revex.get(`${GHL_API}${path}`);
+    if (res?.status >= 200 && res?.status < 300 && res?.data) return res.data;
+    const err = new Error(`GHL GET ${res?.status}: ${path}`);
+    err.status = res?.status;
+    throw err;
+  }
+
+  // ghlPut returns { ok: true } on success, or throws with err.status set.
+  async function ghlPut(path, body) {
+    const revex = await waitForRevex();
+    if (!revex) {
+      throw new Error(
+        "GHL service not ready — wait for the page builder to fully load, then try again"
+      );
+    }
+    const res = await revex.put(`${GHL_API}${path}`, body);
+    if (res?.status >= 200 && res?.status < 300) return { ok: true };
+    const err = new Error(`GHL PUT ${res?.status}: ${path}`);
+    err.status = res?.status;
     throw err;
   }
 
