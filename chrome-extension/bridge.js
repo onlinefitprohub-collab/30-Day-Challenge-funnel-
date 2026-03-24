@@ -75,7 +75,7 @@
 
     const response = await _origFetch.apply(this, args);
 
-    if (url.includes("backend.leadconnectorhq.com")) {
+    if (url.includes("leadconnectorhq.com")) {
       // Sniff GHL's own GET requests to learn the real page API endpoint.
       if (method === "GET" && response.ok) {
         try {
@@ -129,7 +129,7 @@
   // We wrap send() so we can read GET responses and capture the real page API URL,
   // and also capture write endpoints from PUT/PATCH/POST requests.
   XMLHttpRequest.prototype.send = function (...args) {
-    if (this._cfUrl && this._cfUrl.includes("backend.leadconnectorhq.com")) {
+    if (this._cfUrl && this._cfUrl.includes("leadconnectorhq.com")) {
       if (this._cfMethod === "GET") {
         this.addEventListener("load", function () {
           if (this.status >= 200 && this.status < 300) {
@@ -313,6 +313,7 @@
           const allTried = [
             "GET: " + triedGetPaths.join(", "),
             "PUT: " + triedPutPaths.join(", "),
+            "sniffed: " + (capturedPageApiUrl ?? "none"),
           ].join(" | ");
           throw new Error(`${putErr.message} — endpoints tried: ${allTried}`);
         }
@@ -322,6 +323,7 @@
         const allTried = [
           "GET: " + triedGetPaths.join(", "),
           "PUT: " + triedPutPaths.join(", "),
+          "sniffed: " + (capturedPageApiUrl ?? "none"),
         ].join(" | ");
         throw new Error(`All PUT candidates returned 404 — endpoints tried: ${allTried}`);
       }
