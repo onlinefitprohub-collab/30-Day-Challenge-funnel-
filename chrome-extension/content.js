@@ -382,17 +382,29 @@
         );
       } else {
         const rawErr = result.error || "";
+        const status = result.topStatus;
+        const authCount = result.authHeaderCount || 0;
         btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
         btn.classList.add("err");
-        const isEndpointMissing = rawErr.includes("not captured") || rawErr.includes("endpoint not captured");
-        if (isEndpointMissing) {
-          showStatus("warn",
-            "Step required: In the GHL page builder left sidebar, click \u201cPrebuilt Sections\u201d to open that panel. " +
-            "The extension will capture the endpoint automatically. Then click \u201cAdd to Prebuilt Sections\u201d again."
-          );
+
+        let msg = "";
+        if (rawErr) {
+          msg = rawErr.slice(0, 240);
+        } else if (status === "401" || status === 401) {
+          msg = "HTTP 401 — GHL auth headers not captured. Navigate to another GHL page (e.g. Contacts or Dashboard), then come back to the builder and try again.";
+        } else if (status === "403" || status === 403) {
+          msg = `HTTP 403 — Permission denied (captured ${authCount} auth header${authCount === 1 ? "" : "s"}). Open your browser Console (F12) → filter by "[CF]" — share those logs for further help.`;
+        } else if (status === "404" || status === 404) {
+          msg = "HTTP 404 — Endpoint not found. In the GHL left sidebar, click \u201cPrebuilt Sections\u201d to open that panel — the extension will capture GHL\u2019s real endpoint automatically. Then try again.";
+        } else if (status === "400" || status === 400 || status === "422" || status === 422) {
+          msg = `HTTP ${status} — GHL rejected the data format. Open browser Console (F12), filter "[CF] Prebuilt section 1 attempt table" and share it — we\u2019ll adjust the schema to match.`;
+        } else if (status === "ERR") {
+          msg = `Network error reaching GHL — are you logged into app.gohighlevel.com? (captured ${authCount} auth header${authCount === 1 ? "" : "s"})`;
         } else {
-          showStatus("err", rawErr.slice(0, 280) || `${result.failed || 0} section(s) failed — check console for HTTP status codes.`);
+          msg = `${result.failed || 0} section(s) failed (HTTP ${status || "?"}, ${authCount} auth headers captured). Open browser Console (F12), filter "[CF] Prebuilt" and share the output.`;
         }
+
+        showStatus("err", msg);
       }
     } catch (e) {
       btn.innerHTML = '<span class="inject-icon">✗</span> Error';

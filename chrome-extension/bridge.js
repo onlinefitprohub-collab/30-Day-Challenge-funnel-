@@ -782,9 +782,9 @@
       });
 
       let posted = false;
+      const sectionStatuses = [];
       for (const url of PREBUILT_URLS) {
         try {
-          // Normalize header keys: remove any case-variant of content-type before adding ours.
           const mergedHeaders = Object.fromEntries(
             Object.entries(headersToUse).filter(([k]) => k.toLowerCase() !== "content-type")
           );
@@ -802,17 +802,35 @@
             break;
           }
           const text = await resp.text().catch(() => "");
-          console.warn("[CF] Prebuilt POST", url, "returned", resp.status, text.slice(0, 200));
+          console.warn("[CF] Prebuilt POST", url, "returned", resp.status, text.slice(0, 300));
+          sectionStatuses.push({ url: url.replace("https://backend.leadconnectorhq.com","").replace("https://services.leadconnectorhq.com","[svc]"), status: resp.status });
         } catch (e) {
           console.warn("[CF] Prebuilt POST", url, "threw:", e.message);
+          sectionStatuses.push({ url: url.slice(-40), status: "ERR", err: e.message });
         }
       }
 
       if (!posted) {
         failed++;
-        failedNames.push(`Section ${i + 1}`);
+        // Collect the unique status codes seen (so we can show them in the panel).
+        const uniqStatuses = [...new Set(sectionStatuses.map((s) => s.status))];
+        failedNames.push(`Section ${i + 1} [${uniqStatuses.join("/")}]`);
+        if (i === 0) {
+          // Log the full attempt table for the first section only (most useful for debugging).
+          console.warn("[CF] Prebuilt section 1 attempt table:", JSON.stringify(sectionStatuses, null, 2));
+        }
       }
     }
+
+    // Derive most common status code seen across all attempts — drives guidance message.
+    const allStatuses = [];
+    for (const name of failedNames) {
+      const m = name.match(/\[([^\]]+)\]/);
+      if (m) m[1].split("/").forEach((s) => allStatuses.push(parseInt(s, 10) || s));
+    }
+    const statusCounts = {};
+    allStatuses.forEach((s) => { statusCounts[s] = (statusCounts[s] || 0) + 1; });
+    const topStatus = Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
 
     replyPrebuilt({
       ok:          succeeded > 0,
@@ -821,6 +839,9 @@
       total:       pageData.sections.length,
       group,
       failedNames,
+      topStatus,
+      authHeaderCount: Object.keys(headersToUse).length,
+      prebuiltUrlCaptured: !!capturedPrebuiltUrl,
     });
   });
 
