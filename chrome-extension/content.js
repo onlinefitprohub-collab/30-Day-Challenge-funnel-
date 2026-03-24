@@ -299,7 +299,7 @@
       window.postMessage({
         source:  "cf-content",
         type:    "CF_DO_INJECT",
-        payload: { pageBuilderId, pageData },
+        payload: { pageBuilderId, locationId: hlContext.locationId, pageData },
       }, "*");
     });
   }

@@ -8,8 +8,6 @@
   if (window.__cf_bridge_active) return;
   window.__cf_bridge_active = true;
 
-  const GHL_API = "https://backend.leadconnectorhq.com";
-
   // Best-known API path for the current page — sniffed from GHL's own requests.
   // Starts null; updated whenever GHL makes a GET that looks like page content.
   let capturedPageApiUrl = null;
@@ -192,11 +190,14 @@
     return null;
   }
 
-  // Log revex availability 2 s after page load for debugging.
+  // Log revex availability + baseURL 2 s after page load for debugging.
   setTimeout(() => {
-    console.log("[CF] revex available at 2 s:", !!getRevex());
+    const r = getRevex();
+    console.log("[CF] revex available at 2 s:", !!r, "baseURL:", r?.defaults?.baseURL ?? "n/a");
   }, 2000);
 
+  // revex (GHL's axios instance) already has its baseURL configured — we pass
+  // just the path so its own interceptors handle the domain correctly.
   async function ghlGet(path) {
     const revex = await waitForRevex();
     if (!revex) {
@@ -204,7 +205,8 @@
         "GHL service not ready — wait for the page builder to fully load, then try again"
       );
     }
-    const res = await revex.get(`${GHL_API}${path}`);
+    console.log("[CF] GET", path, "via revex (baseURL:", revex.defaults?.baseURL, ")");
+    const res = await revex.get(path);
     if (res?.status >= 200 && res?.status < 300 && res?.data) return res.data;
     const err = new Error(`GHL GET ${res?.status}: ${path}`);
     err.status = res?.status;
@@ -219,7 +221,8 @@
         "GHL service not ready — wait for the page builder to fully load, then try again"
       );
     }
-    const res = await revex.put(`${GHL_API}${path}`, body);
+    console.log("[CF] PUT", path, "via revex");
+    const res = await revex.put(path, body);
     if (res?.status >= 200 && res?.status < 300) return { ok: true };
     const err = new Error(`GHL PUT ${res?.status}: ${path}`);
     err.status = res?.status;
@@ -231,7 +234,7 @@
     if (evt.source !== window) return;
     if (!evt.data || evt.data.source !== "cf-content" || evt.data.type !== "CF_DO_INJECT") return;
 
-    const { pageBuilderId, pageData } = evt.data.payload || {};
+    const { pageBuilderId, locationId, pageData } = evt.data.payload || {};
 
     function reply(success, error) {
       window.postMessage({
@@ -247,14 +250,19 @@
 
     try {
       // Build ordered list of endpoint candidates to try.
-      // The sniffed URL (if captured) is most reliable; hardcoded fallbacks cover
-      // common GHL page types: funnel steps, funnel-pages, website pages, site pages.
+      // Prefer the sniffed URL (captured from GHL's own requests at document_start).
+      // Then try location-scoped paths (GHL website pages use /locations/{loc}/pages/).
+      // Finally fall back to generic and funnel-specific paths.
       const candidates = [
         capturedPageApiUrl,
-        `/funnels/page/${pageBuilderId}`,
-        `/funnel-pages/${pageBuilderId}`,
+        locationId && `/locations/${locationId}/pages/${pageBuilderId}`,
+        locationId && `/locations/${locationId}/site-pages/${pageBuilderId}`,
+        `/v2/pages/${pageBuilderId}`,
+        `/websites/pages/${pageBuilderId}`,
         `/pages/${pageBuilderId}`,
         `/site-pages/${pageBuilderId}`,
+        `/funnel-pages/${pageBuilderId}`,
+        `/funnels/page/${pageBuilderId}`,
       ].filter(Boolean);
 
       let pageContext = null;
