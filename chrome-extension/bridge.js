@@ -1,27 +1,26 @@
-// bridge.js — Injected into the HighLevel page (MAIN world).
+// bridge.js v2.5.2 — Injected into the HighLevel page (MAIN world).
 // Detects the page-builder context from the URL / window globals,
-// and executes the actual GHL injection using the page's own
-// authenticated HTTP service (revexBackendService) — no API key needed.
+// and executes the actual GHL injection using either:
+//   A) "capture-replay": intercepts GHL's own save request (URL + auth headers)
+//      then replays it via _origFetch — no revex guessing needed.
+//   B) "revex path-only": path-only calls through GHL's authenticated axios
+//      instance, trying all 12 endpoint candidates and continuing on ALL errors.
 // Communicates with content.js (extension world) via window.postMessage.
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
   window.__cf_bridge_active = true;
 
-  // GHL's authenticated backend — revex uses its own baseURL which is NOT this.
-  // We must always pass the full URL to revex, exactly like CloneLevel does:
-  //   revex.get("https://backend.leadconnectorhq.com/funnels/page/${id}")
-  const GHL_API = "https://backend.leadconnectorhq.com";
+  const GHL_API = "https://backend.leadconnectorhq.com"; // for diagnostics only
 
-  // Best-known API path for the current page — sniffed from GHL's own requests.
-  // Starts null; updated whenever GHL makes a GET that looks like page content.
-  let capturedPageApiUrl = null;
-
-  // Best-known write path — sniffed from GHL's own PUT/PATCH/POST save requests.
-  let capturedPagePutUrl = null;
+  // ── Captured from GHL's own network requests ───────────────────────────────
+  let capturedPageApiUrl  = null; // GET path (page content endpoint)
+  let capturedPutFullUrl  = null; // full URL of GHL's last save request
+  let capturedPutHeaders  = {};   // auth headers from GHL's last save request
+  let capturedPutBody     = null; // body string from GHL's last save request
+  let capturedPutMethod   = null; // PUT / PATCH / POST
 
   /* ─── URL parsing ─────────────────────────────────────────────────────── */
-  // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
   function parseBuilderUrl(url) {
     try {
       const m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
@@ -37,17 +36,12 @@
   }
 
   /* ─── Read Nuxt payload (GHL's frontend is Nuxt — page data is SSR'd) ── */
-  // GHL's page-builder does NOT fetch page data via XHR — it's server-rendered
-  // into window.__NUXT__ by Nuxt.js. This is why `sniffed: none`.
-  // We read it directly here to get page structure and any API URLs embedded.
   function getPageDataFromNuxt() {
     try {
       const nuxt = window.__NUXT__;
       if (!nuxt) return null;
-      // Nuxt 3 stores data in nuxt.data or nuxt.payload.data
       const data = nuxt?.data ?? nuxt?.payload?.data ?? nuxt?.state;
       if (!data || typeof data !== "object") return null;
-      // Also try useNuxtApp() if available (CloneLevel approach)
       let nuxtAppData = null;
       try {
         if (typeof useNuxtApp === "function") {
@@ -58,8 +52,6 @@
         }
       } catch {}
       const combined = nuxtAppData ?? data;
-      // GHL page objects have body/elements/sections/content at top level,
-      // or nested under .page / .pageData
       for (const key of Object.keys(combined)) {
         const val = combined[key];
         if (!val || typeof val !== "object") continue;
@@ -102,34 +94,51 @@
 
   checkUrl(window.location.href);
 
-  /* ─── Intercept fetch/XHR to sniff GHL's own page-load endpoint ──────── */
-  // We watch ALL traffic now (not just leadconnectorhq.com) because GHL may
-  // use same-origin API calls (app.gohighlevel.com/api/...) that we'd miss.
-  const PAGE_BUILDER_RE = /\/page-builder\/([^/?]+)/i;
-  const LOCATION_RE     = /\/location\/([^/?]+)/i;
-
-  // Patterns that indicate a request carries page content.
+  /* ─── Intercept fetch/XHR ──────────────────────────────────────────────── */
+  const PAGE_BUILDER_RE   = /\/page-builder\/([^/?]+)/i;
+  const LOCATION_RE       = /\/location\/([^/?]+)/i;
   const PAGE_CONTENT_KEYS = ["elements", "content", "pageContent", "sections", "body"];
-
-  // Interesting URL patterns (same approach as CloneLevel's INTERESTING array).
   const INTERESTING_PATH_RE = /\/(funnels?\/page|funnel-pages|pages?|site-pages|v1\/page|services\/pages|prebuilt-section|page-builder)\//i;
+  const WRITE_PATH_RE     = /\/(funnels\/page|funnel-pages|pages|site-pages|v1\/page)\/([^/?#]+)/i;
 
-  // Patterns that indicate a write request is a page-save call.
-  const WRITE_PATH_RE = /\/(funnels\/page|funnel-pages|pages|site-pages|v1\/page)\/([^/?#]+)/i;
+  // Capture headers from fetch init object into a plain object.
+  function extractFetchHeaders(init) {
+    const headers = {};
+    const h = init?.headers;
+    if (!h) return headers;
+    if (typeof Headers !== "undefined" && h instanceof Headers) {
+      h.forEach((v, k) => { headers[k] = v; });
+    } else if (Array.isArray(h)) {
+      h.forEach(([k, v]) => { headers[k] = v; });
+    } else if (typeof h === "object") {
+      Object.assign(headers, h);
+    }
+    return headers;
+  }
 
   const _origFetch = window.fetch;
   window.fetch = async function (...args) {
     const url = typeof args[0] === "string" ? args[0]
               : args[0] instanceof URL      ? args[0].toString()
               : args[0] instanceof Request  ? args[0].url : "";
-    const method = (typeof args[1] === "object" && args[1]?.method)
-      ? args[1].method.toUpperCase()
+    const init   = args[1] ?? {};
+    const method = (typeof init === "object" && init?.method)
+      ? init.method.toUpperCase()
       : "GET";
+
+    // Sniff write requests BEFORE calling _origFetch so we capture the auth headers.
+    if (["PUT", "PATCH", "POST"].includes(method) && WRITE_PATH_RE.test(url)) {
+      capturedPutFullUrl = url;
+      capturedPutMethod  = method;
+      capturedPutBody    = typeof init.body === "string" ? init.body : null;
+      capturedPutHeaders = extractFetchHeaders(init);
+      console.log("[CF] Captured save request (fetch):", method, url,
+        "| headers:", Object.keys(capturedPutHeaders).join(", "));
+    }
 
     const response = await _origFetch.apply(this, args);
 
     if (INTERESTING_PATH_RE.test(url)) {
-      // Sniff GHL's own GET requests to learn the real page API endpoint.
       if (method === "GET" && response.ok) {
         try {
           const json = await response.clone().json();
@@ -142,20 +151,8 @@
           }
         } catch {}
       }
-
-      // Sniff GHL's own PUT/PATCH/POST save requests to learn the write endpoint.
-      if (["PUT", "PATCH", "POST"].includes(method)) {
-        try {
-          const pathname = new URL(url).pathname;
-          if (WRITE_PATH_RE.test(pathname)) {
-            capturedPagePutUrl = pathname;
-            console.log("[CF] Captured page PUT URL (fetch):", pathname);
-          }
-        } catch {}
-      }
     }
 
-    // Context detection
     const pbMatch  = url.match(PAGE_BUILDER_RE);
     const locMatch = url.match(LOCATION_RE);
     if (pbMatch?.[1] || locMatch?.[1]) {
@@ -166,12 +163,29 @@
   };
 
   /* ─── Intercept XHR ───────────────────────────────────────────────────── */
-  const _origOpen = XMLHttpRequest.prototype.open;
-  const _origSend = XMLHttpRequest.prototype.send;
+  const _origOpen         = XMLHttpRequest.prototype.open;
+  const _origSend         = XMLHttpRequest.prototype.send;
+  const _origSetReqHeader = XMLHttpRequest.prototype.setRequestHeader;
+
+  // Capture headers from XHR via setRequestHeader.
+  XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+    if (this._cfIsWriteReq) {
+      this._cfHeaders = this._cfHeaders || {};
+      this._cfHeaders[name] = value;
+    }
+    return _origSetReqHeader.apply(this, [name, value]);
+  };
 
   XMLHttpRequest.prototype.open = function (method, url, ...rest) {
     this._cfMethod = method.toUpperCase();
     this._cfUrl    = String(url);
+    this._cfHeaders = {};
+
+    // Mark write requests so setRequestHeader captures their headers.
+    if (["PUT", "PATCH", "POST"].includes(this._cfMethod) && WRITE_PATH_RE.test(this._cfUrl)) {
+      this._cfIsWriteReq = true;
+    }
+
     const pbMatch  = this._cfUrl.match(PAGE_BUILDER_RE);
     const locMatch = this._cfUrl.match(LOCATION_RE);
     if (pbMatch?.[1] || locMatch?.[1]) {
@@ -182,6 +196,15 @@
 
   // GHL's revexBackendService is axios → uses XHR, not window.fetch.
   XMLHttpRequest.prototype.send = function (...args) {
+    if (this._cfIsWriteReq) {
+      capturedPutFullUrl = this._cfUrl;
+      capturedPutMethod  = this._cfMethod;
+      capturedPutHeaders = { ...this._cfHeaders };
+      capturedPutBody    = typeof args[0] === "string" ? args[0] : null;
+      console.log("[CF] Captured save request (XHR):", this._cfMethod, this._cfUrl,
+        "| headers:", Object.keys(capturedPutHeaders).join(", "));
+    }
+
     if (this._cfUrl && INTERESTING_PATH_RE.test(this._cfUrl)) {
       if (this._cfMethod === "GET") {
         this.addEventListener("load", function () {
@@ -200,16 +223,6 @@
           }
         });
       }
-
-      if (["PUT", "PATCH", "POST"].includes(this._cfMethod)) {
-        try {
-          const pathname = new URL(this._cfUrl).pathname;
-          if (WRITE_PATH_RE.test(pathname)) {
-            capturedPagePutUrl = pathname;
-            console.log("[CF] Captured page PUT URL (XHR):", capturedPagePutUrl);
-          }
-        } catch {}
-      }
     }
     return _origSend.apply(this, args);
   };
@@ -225,7 +238,7 @@
     setTimeout(() => checkUrl(window.location.href), 50);
   });
 
-  /* ─── GHL HTTP client helper ──────────────────────────────────────────── */
+  /* ─── GHL HTTP client helper (revex) ─────────────────────────────────── */
   function getRevex() {
     try {
       return document.querySelector("#app")
@@ -235,9 +248,6 @@
     }
   }
 
-  // Poll until GHL's authenticated axios instance is available on the Vue app.
-  // Needed because bridge.js runs at document_start — before Vue mounts.
-  // Raw window.fetch() is NOT used as a fallback: it lacks GHL's auth tokens.
   async function waitForRevex(maxMs = 5000) {
     const start = Date.now();
     while (Date.now() - start < maxMs) {
@@ -248,55 +258,67 @@
     return null;
   }
 
-  // Log revex availability + baseURL 2 s after page load for debugging.
-  // Also attempt Nuxt payload read so we can log page structure early.
+  /* ─── Deep diagnostics — logged 3 s after page load ──────────────────── */
   setTimeout(() => {
     const r = getRevex();
-    console.log(
-      "[CF] revex at 2 s:", !!r,
-      "| baseURL:", r?.defaults?.baseURL ?? "n/a",
-      "| will call:", GHL_API + "/funnels/page/TEST"
-    );
-    const nuxt = getPageDataFromNuxt();
-    if (nuxt) {
-      console.log("[CF] Nuxt page data at 2 s — key:", nuxt.nuxtKey, "| fields:", Object.keys(nuxt.pageData).slice(0, 10));
-    } else {
-      console.log("[CF] No Nuxt page data at 2 s — __NUXT__:", !!window.__NUXT__);
+    console.log("[CF-DIAG] revex available:", !!r);
+    if (r) {
+      console.log("[CF-DIAG] revex.defaults.baseURL:", r.defaults?.baseURL ?? "n/a");
+      console.log("[CF-DIAG] revex.defaults.headers:", JSON.stringify(r.defaults?.headers ?? {}));
+      const reqH = r.interceptors?.request?.handlers?.filter(Boolean).length ?? 0;
+      const resH = r.interceptors?.response?.handlers?.filter(Boolean).length ?? 0;
+      console.log("[CF-DIAG] revex interceptors: req=" + reqH + " resp=" + resH);
     }
-  }, 2000);
 
-  // IMPORTANT: Always prefix with GHL_API — revex's own baseURL is not
-  // backend.leadconnectorhq.com, so path-only calls hit the wrong server.
-  // CloneLevel confirms: revex.get("https://backend.leadconnectorhq.com/funnels/page/...")
-  async function ghlGet(path) {
-    const revex = await waitForRevex();
-    if (!revex) {
-      throw new Error(
-        "GHL service not ready — wait for the page builder to fully load, then try again"
-      );
+    const nuxt = window.__NUXT__;
+    console.log("[CF-DIAG] window.__NUXT__ exists:", !!nuxt);
+    if (nuxt) {
+      console.log("[CF-DIAG] __NUXT__ top-level keys:", Object.keys(nuxt).join(", "));
+      const data = nuxt?.data ?? nuxt?.payload?.data ?? nuxt?.state ?? {};
+      console.log("[CF-DIAG] __NUXT__.data keys:", Object.keys(data).slice(0, 20).join(", "));
+      for (const [k, v] of Object.entries(data)) {
+        if (v && typeof v === "object") {
+          console.log("[CF-DIAG]   __NUXT__.data." + k + ":", Object.keys(v).slice(0, 12).join(", "));
+        }
+      }
     }
-    const fullUrl = GHL_API + path;
-    console.log("[CF] GET", fullUrl, "via revex (baseURL:", revex.defaults?.baseURL, ")");
-    const res = await revex.get(fullUrl);
+
+    const vueApp = document.querySelector("#app")?.__vue_app__;
+    if (vueApp) {
+      const gp = vueApp.config.globalProperties;
+      const nonDollarKeys = Object.keys(gp).filter(k => !k.startsWith("$")).slice(0, 20);
+      console.log("[CF-DIAG] Vue globalProperties (non-$):", nonDollarKeys.join(", "));
+      const store = gp.$pinia ?? gp.$store;
+      if (store?.state?.value) {
+        console.log("[CF-DIAG] Pinia state keys:", Object.keys(store.state.value).slice(0, 15).join(", "));
+      }
+    }
+
+    console.log("[CF-DIAG] capturedPutFullUrl:", capturedPutFullUrl ?? "none — save once in GHL to enable capture-replay");
+    console.log("[CF-DIAG] capturedPutHeaders count:", Object.keys(capturedPutHeaders).length);
+  }, 3000);
+
+  /* ─── revex: path-only GET (fallback when no capture available) ───────── */
+  // v2.5.0 confirmed: path-only reaches backend.leadconnectorhq.com (returns 404 = server found).
+  // Full URL (GHL_API + path) triggers revex interceptors to fail with Network Error.
+  async function revexGet(path) {
+    const revex = await waitForRevex(4000);
+    if (!revex) throw new Error("GHL service not ready");
+    console.log("[CF] revex GET (path-only):", path, "| baseURL:", revex.defaults?.baseURL ?? "n/a");
+    const res = await revex.get(path);
     if (res?.status >= 200 && res?.status < 300 && res?.data) return res.data;
-    const err = new Error(`GHL GET ${res?.status}: ${path}`);
+    const err = new Error(`GHL GET ${res?.status ?? "?"}: ${path}`);
     err.status = res?.status;
     throw err;
   }
 
-  // ghlPut returns { ok: true } on success, or throws with err.status set.
-  async function ghlPut(path, body) {
-    const revex = await waitForRevex();
-    if (!revex) {
-      throw new Error(
-        "GHL service not ready — wait for the page builder to fully load, then try again"
-      );
-    }
-    const fullUrl = GHL_API + path;
-    console.log("[CF] PUT", fullUrl, "via revex");
-    const res = await revex.put(fullUrl, body);
+  async function revexPut(path, body) {
+    const revex = await waitForRevex(4000);
+    if (!revex) throw new Error("GHL service not ready");
+    console.log("[CF] revex PUT (path-only):", path);
+    const res = await revex.put(path, body);
     if (res?.status >= 200 && res?.status < 300) return { ok: true, data: res.data };
-    const err = new Error(`GHL PUT ${res?.status}: ${path}`);
+    const err = new Error(`GHL PUT ${res?.status ?? "?"}: ${path}`);
     err.status = res?.status;
     throw err;
   }
@@ -321,15 +343,14 @@
     }
 
     try {
-      // Try to get current page structure from Nuxt SSR payload first.
+      // Read page structure from Nuxt SSR payload.
       const nuxtResult = getPageDataFromNuxt();
       if (nuxtResult) {
-        console.log("[CF] Nuxt page data available for merge — key:", nuxtResult.nuxtKey);
+        console.log("[CF] Nuxt page data available — key:", nuxtResult.nuxtKey,
+          "| fields:", Object.keys(nuxtResult.pageData).slice(0, 8));
       }
 
-      // Build ordered list of endpoint candidates.
-      // Order: CloneLevel's proven funnel path first, then location-scoped,
-      // then CloneLevel-inspired paths (/v1/page/, /services/pages/), then generic.
+      // Build ordered list of GET endpoint candidates (path-only for revex).
       const candidates = [
         capturedPageApiUrl,
         `/funnels/page/${pageBuilderId}`,
@@ -337,8 +358,8 @@
         locationId && `/locations/${locationId}/site-pages/${pageBuilderId}`,
         `/v1/pages/${pageBuilderId}`,
         `/v1/page/${pageBuilderId}`,
-        `/v2/pages/${pageBuilderId}`,
         `/websites/pages/${pageBuilderId}`,
+        `/v2/pages/${pageBuilderId}`,
         `/pages/${pageBuilderId}`,
         `/site-pages/${pageBuilderId}`,
         `/funnel-pages/${pageBuilderId}`,
@@ -349,40 +370,67 @@
       let workingPath = null;
       const triedGetPaths = [];
 
+      // Try all GET candidates — continue on ALL errors (not just 404).
       for (const path of candidates) {
         triedGetPaths.push(path);
         try {
-          pageContext = await ghlGet(path);
+          pageContext = await revexGet(path);
           workingPath = path;
-          console.log("[CF] Working endpoint:", path);
+          console.log("[CF] GET succeeded at:", path);
           break;
         } catch (e) {
-          if (e.message.includes("404") || e.message.includes("GHL GET 404") || e.status === 404) {
-            console.warn("[CF] 404 on", path, "— trying next candidate");
-            continue;
-          }
-          throw e;
+          // Always continue — Network Error, 404, auth error — all are non-fatal here.
+          console.warn("[CF] GET failed on", path, "—", e.message);
+          continue;
         }
       }
 
-      // If no GET succeeded, still attempt PUT with best available path.
       if (!workingPath) {
-        workingPath = candidates[0];
-        console.warn("[CF] No endpoint responded to GET — attempting PUT at", workingPath);
+        console.warn("[CF] No GET candidate succeeded — will attempt PUT anyway");
       }
 
-      // Merge: prefer API response as base (definitive live state).
-      // Fall back to Nuxt SSR payload only if the GET failed (no working endpoint).
-      // Then spread our template data on top of whatever base we have.
+      // Merge: API response → Nuxt SSR payload → empty object.
       const baseContext = pageContext ?? nuxtResult?.pageData ?? {};
       if (!pageContext && nuxtResult?.pageData) {
-        console.log("[CF] Using Nuxt SSR payload as base (no API GET succeeded)");
+        console.log("[CF] Using Nuxt SSR payload as merge base (no API GET succeeded)");
       }
       const putPayload = { ...baseContext, ...pageData };
 
-      // Build PUT candidates: sniffed write URL first, then GET path, then rest.
+      // ── STRATEGY A: Capture-replay (CloneLevel "learned-mutation-replay") ──
+      // Use GHL's own save URL + auth headers captured from the XHR/fetch interceptor.
+      // This bypasses revex entirely — uses window.fetch() directly with real auth.
+      const hasCapture = capturedPutFullUrl && Object.keys(capturedPutHeaders).length > 0;
+
+      if (hasCapture) {
+        console.log("[CF] Strategy A: capture-replay →", capturedPutMethod, capturedPutFullUrl);
+        try {
+          const resp = await _origFetch(capturedPutFullUrl, {
+            method: capturedPutMethod ?? "PUT",
+            headers: {
+              ...capturedPutHeaders,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(putPayload),
+          });
+          if (resp.ok) {
+            console.log("[CF] Capture-replay PUT succeeded:", resp.status);
+            const iframe = document.querySelector('[name="funnel-builder"]');
+            if (iframe) iframe.src = iframe.src;
+            return reply(true);
+          }
+          console.warn("[CF] Capture-replay PUT returned", resp.status, "— falling through to Strategy B");
+        } catch (fetchErr) {
+          console.warn("[CF] Capture-replay PUT threw:", fetchErr.message, "— falling through to Strategy B");
+        }
+      } else {
+        console.log("[CF] No captured save request yet (capturedPutFullUrl:", capturedPutFullUrl,
+          "| headers:", Object.keys(capturedPutHeaders).length, ") — using Strategy B (revex path-only)");
+      }
+
+      // ── STRATEGY B: revex path-only PUT loop ─────────────────────────────
+      // Try all PUT path candidates; continue on ALL errors, never throw early.
       const putCandidates = [
-        capturedPagePutUrl,
+        capturedPutFullUrl ? (() => { try { return new URL(capturedPutFullUrl).pathname; } catch { return null; } })() : null,
         workingPath,
         ...candidates.filter((p) => p !== workingPath),
       ].filter(Boolean).filter((p, i, arr) => arr.indexOf(p) === i);
@@ -393,37 +441,30 @@
       for (const putPath of putCandidates) {
         triedPutPaths.push(putPath);
         try {
-          await ghlPut(putPath, putPayload);
-          console.log("[CF] PUT succeeded at:", putPath);
+          await revexPut(putPath, putPayload);
+          console.log("[CF] revex PUT succeeded at:", putPath);
           putSucceeded = true;
           break;
         } catch (putErr) {
-          const is404 = putErr.status === 404 ||
-            putErr.message.includes("404") ||
-            putErr.message.includes("GHL PUT 404");
-          if (is404) {
-            console.warn("[CF] PUT 404 on", putPath, "— trying next candidate");
-            continue;
-          }
-          const allTried = [
-            "GET: " + triedGetPaths.join(", "),
-            "PUT: " + triedPutPaths.join(", "),
-            "sniffed: " + (capturedPageApiUrl ?? "none"),
-          ].join(" | ");
-          throw new Error(`${putErr.message} — endpoints tried: ${allTried}`);
+          // Continue on ALL errors — Network Error, 404, auth, timeout.
+          console.warn("[CF] revex PUT failed on", putPath, "—", putErr.message);
+          continue;
         }
       }
 
       if (!putSucceeded) {
+        const hint = !hasCapture
+          ? " TIP: Click Save in GHL once to enable the capture-replay strategy (more reliable)."
+          : "";
         const allTried = [
           "GET: " + triedGetPaths.join(", "),
           "PUT: " + triedPutPaths.join(", "),
           "sniffed: " + (capturedPageApiUrl ?? "none"),
         ].join(" | ");
-        throw new Error(`All PUT candidates returned 404 — endpoints tried: ${allTried}`);
+        throw new Error(`Injection failed — all endpoints exhausted.${hint} Tried: ${allTried}`);
       }
 
-      // Reload the builder iframe so the new content is visible
+      // Reload the builder iframe so the new content is visible.
       const iframe = document.querySelector('[name="funnel-builder"]');
       if (iframe) iframe.src = iframe.src;
 
