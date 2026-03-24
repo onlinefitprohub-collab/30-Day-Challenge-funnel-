@@ -101,21 +101,24 @@
   // New-builder uses /sites/... paths; also covers legacy /funnels/page, /pages, etc.
   const INTERESTING_PATH_RE = /\/(funnels?\/page|funnel-pages|pages?|site-pages|sites?|v1\/page|services\/pages|prebuilt-section|page-builder)\//i;
 
-  // GHL backend domains — any PUT/PATCH/POST to these is a candidate save request.
-  // We capture ALL writes to GHL's backend, regardless of path, because the new-builder
-  // uses different paths than the legacy funnel builder (e.g. /sites/pages/... not /funnels/page/...).
-  const GHL_WRITE_DOMAIN_RE = /\/(backend|services|api)\.leadconnectorhq\.com|\.leadconnectorhq\.com/;
-
-  // Helper: is this URL a GHL backend write we should capture?
+  // Only capture writes to GHL's actual API backend.
+  // IMPORTANT: "*.leadconnectorhq.com" is too broad — GHL also uses that domain for
+  // session recording (data.getfinderlevel.com), analytics, etc. which are all POST.
+  // Page builder saves go specifically to backend.leadconnectorhq.com via PUT or PATCH.
+  // We ONLY capture PUT/PATCH to backend.leadconnectorhq.com (or services.leadconnectorhq.com).
+  // POST requests on that domain are usually create/analytics — we still capture them as
+  // a fallback but PUT/PATCH always win (they're never overwritten by a POST capture).
   function isGhlWriteUrl(url, method) {
     if (!["PUT", "PATCH", "POST"].includes(method)) return false;
-    // Accept any write to a known GHL domain — domain check is enough.
-    // Path-based filtering caused us to miss the new-builder's save path.
     try {
       const host = new URL(url).hostname;
-      return host.endsWith("leadconnectorhq.com") || host.endsWith("gohighlevel.com");
+      // Only GHL's API services — NOT data.*, recording.*, analytics.*, etc.
+      return host === "backend.leadconnectorhq.com" ||
+             host === "services.leadconnectorhq.com" ||
+             host === "api.gohighlevel.com";
     } catch {
-      return url.includes("leadconnectorhq.com") || url.includes("gohighlevel.com");
+      return url.startsWith("https://backend.leadconnectorhq.com") ||
+             url.startsWith("https://services.leadconnectorhq.com");
     }
   }
 
@@ -148,8 +151,11 @@
       : "GET";
 
     // Sniff write requests BEFORE calling _origFetch so we capture the auth headers.
-    // Use domain-based check (not path-based) — the new-builder uses /sites/pages/... etc.
-    if (isGhlWriteUrl(url, method)) {
+    // PUT/PATCH = page saves. POST = might be creates or analytics — only capture POST
+    // if we haven't already captured a PUT/PATCH (POST never overwrites PUT/PATCH).
+    const isPutPatch = method === "PUT" || method === "PATCH";
+    const hasGoodCapture = capturedPutFullUrl && (capturedPutMethod === "PUT" || capturedPutMethod === "PATCH");
+    if (isGhlWriteUrl(url, method) && (isPutPatch || !hasGoodCapture)) {
       capturedPutFullUrl = url;
       capturedPutMethod  = method;
       capturedPutBody    = typeof init.body === "string" ? init.body : null;
@@ -220,12 +226,16 @@
   // GHL's revexBackendService is axios → uses XHR, not window.fetch.
   XMLHttpRequest.prototype.send = function (...args) {
     if (this._cfIsWriteReq) {
-      capturedPutFullUrl = this._cfUrl;
-      capturedPutMethod  = this._cfMethod;
-      capturedPutHeaders = { ...this._cfHeaders };
-      capturedPutBody    = typeof args[0] === "string" ? args[0] : null;
-      console.log("[CF] Captured save request (XHR):", this._cfMethod, this._cfUrl,
-        "| headers:", Object.keys(capturedPutHeaders).join(", "));
+      const isPutPatch = this._cfMethod === "PUT" || this._cfMethod === "PATCH";
+      const hasGoodCapture = capturedPutFullUrl && (capturedPutMethod === "PUT" || capturedPutMethod === "PATCH");
+      if (isPutPatch || !hasGoodCapture) {
+        capturedPutFullUrl = this._cfUrl;
+        capturedPutMethod  = this._cfMethod;
+        capturedPutHeaders = { ...this._cfHeaders };
+        capturedPutBody    = typeof args[0] === "string" ? args[0] : null;
+        console.log("[CF] Captured save request (XHR):", this._cfMethod, this._cfUrl,
+          "| headers:", Object.keys(capturedPutHeaders).join(", "));
+      }
     }
 
     if (this._cfUrl && INTERESTING_PATH_RE.test(this._cfUrl)) {
@@ -261,11 +271,51 @@
     setTimeout(() => checkUrl(window.location.href), 50);
   });
 
-  /* ─── GHL HTTP client helper (revex) ─────────────────────────────────── */
+  /* ─── GHL HTTP client helper ─────────────────────────────────────────── */
+  // CRITICAL FINDING from v2.5.3 diagnostics:
+  //   revexBackendService.defaults.baseURL = "https://backend.leadconnectorhq.com/phone-system"
+  //   This is the PHONE SYSTEM service — page builder calls go to a different service.
+  // Strategy: probe ALL Vue globalProperties for an axios instance whose baseURL is
+  // "https://backend.leadconnectorhq.com" (no path suffix). That's the right service.
   function getRevex() {
     try {
-      return document.querySelector("#app")
-        ?.__vue_app__?.config.globalProperties?.revexBackendService ?? null;
+      const gp = document.querySelector("#app")
+        ?.__vue_app__?.config.globalProperties;
+      if (!gp) return null;
+
+      // Probe order: publicApi, saasService, isvService, then fall back to revexBackendService.
+      // From diagnostics: devtools, productionTip, remoteConfig, firebaseApp, pythonBackend,
+      // membershipBackend, dialogLoadEngagements, paymentService, publicApi, saasService,
+      // isvService, revexBackendService, humanRollDverService, emailBackend
+      const candidates = [
+        "publicApi", "saasService", "isvService",
+        "pythonBackend", "membershipBackend", "paymentService",
+        "revexBackendService",  // known to be /phone-system — last resort
+      ];
+
+      let bestMatch = null;
+      for (const name of candidates) {
+        const svc = gp[name];
+        if (!svc || typeof svc.get !== "function") continue;
+        const base = svc.defaults?.baseURL ?? "";
+        // Find the service whose baseURL ends at the domain (no extra path segment).
+        // /phone-system suffix means wrong service.
+        if (base === "https://backend.leadconnectorhq.com" ||
+            base === "https://services.leadconnectorhq.com" ||
+            base === "https://backend.leadconnectorhq.com/") {
+          console.log("[CF] Using service:", name, "| baseURL:", base);
+          return svc;
+        }
+        // Keep first available as fallback even if baseURL looks wrong.
+        if (!bestMatch) bestMatch = { name, svc, base };
+      }
+
+      if (bestMatch) {
+        console.warn("[CF] No service with clean baseURL found. Using:", bestMatch.name,
+          "| baseURL:", bestMatch.base);
+        return bestMatch.svc;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -284,7 +334,7 @@
   /* ─── Deep diagnostics — logged 3 s after page load ──────────────────── */
   setTimeout(() => {
     const r = getRevex();
-    console.log("[CF-DIAG] revex available:", !!r);
+    console.log("[CF-DIAG] revex (best service) available:", !!r);
     if (r) {
       console.log("[CF-DIAG] revex.defaults.baseURL:", r.defaults?.baseURL ?? "n/a");
       console.log("[CF-DIAG] revex.defaults.headers:", JSON.stringify(r.defaults?.headers ?? {}));
@@ -292,6 +342,21 @@
       const resH = r.interceptors?.response?.handlers?.filter(Boolean).length ?? 0;
       console.log("[CF-DIAG] revex interceptors: req=" + reqH + " resp=" + resH);
     }
+
+    // Log ALL Vue service baseURLs so we can identify the right one.
+    try {
+      const gp = document.querySelector("#app")?.__vue_app__?.config.globalProperties;
+      if (gp) {
+        const svcNames = ["publicApi","saasService","isvService","pythonBackend",
+          "membershipBackend","paymentService","revexBackendService","emailBackend","humanRollDverService"];
+        for (const name of svcNames) {
+          const svc = gp[name];
+          if (svc && typeof svc.get === "function") {
+            console.log("[CF-DIAG] service", name, "| baseURL:", svc.defaults?.baseURL ?? "n/a");
+          }
+        }
+      }
+    } catch {}
 
     const nuxt = window.__NUXT__;
     console.log("[CF-DIAG] window.__NUXT__ exists:", !!nuxt);
