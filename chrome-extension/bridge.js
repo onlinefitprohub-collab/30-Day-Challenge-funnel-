@@ -1,4 +1,4 @@
-// bridge.js v2.5.2 — Injected into the HighLevel page (MAIN world).
+// bridge.js v2.5.5 — Injected into the HighLevel page (MAIN world).
 // Detects the page-builder context from the URL / window globals,
 // and executes the actual GHL injection using either:
 //   A) "capture-replay": intercepts GHL's own save request (URL + auth headers)
@@ -98,21 +98,36 @@
   const PAGE_BUILDER_RE   = /\/page-builder\/([^/?]+)/i;
   const LOCATION_RE       = /\/location\/([^/?]+)/i;
   const PAGE_CONTENT_KEYS = ["elements", "content", "pageContent", "sections", "body"];
-  // New-builder uses /sites/... paths; also covers legacy /funnels/page, /pages, etc.
-  const INTERESTING_PATH_RE = /\/(funnels?\/page|funnel-pages|pages?|site-pages|sites?|v1\/page|services\/pages|prebuilt-section|page-builder)\//i;
 
-  // Only capture writes to GHL's actual API backend.
-  // IMPORTANT: "*.leadconnectorhq.com" is too broad — GHL also uses that domain for
-  // session recording (data.getfinderlevel.com), analytics, etc. which are all POST.
-  // Page builder saves go specifically to backend.leadconnectorhq.com via PUT or PATCH.
-  // We ONLY capture PUT/PATCH to backend.leadconnectorhq.com (or services.leadconnectorhq.com).
-  // POST requests on that domain are usually create/analytics — we still capture them as
-  // a fallback but PUT/PATCH always win (they're never overwritten by a POST capture).
-  function isGhlWriteUrl(url, method) {
-    if (!["PUT", "PATCH", "POST"].includes(method)) return false;
+  // URL patterns that are strong signals of page-builder API traffic.
+  const INTERESTING_RE = /\/(funnels?\/page|funnel-pages|pages?|site-pages|sites?|v1\/page|v1\/funnel|services\/pages|prebuilt-section|page-builder|builder\/publish|builder\/save|elements?)[\/?]/i;
+
+  // URL patterns that are definitely NOT page saves — analytics, session recording, CDN, etc.
+  // Any URL matching NOISE_RE is silently skipped even if it's on the GHL backend domain.
+  const NOISE_RE = /analytics|gtm\.|googletagmanager|segment\.io|mixpanel|amplitude|hotjar|intercom|sentry|datadog|getfinderlevel|session-recording|cdn\.|\.png|\.jpg|\.svg|\.woff|favicon/i;
+
+  // Timestamp of the most recent click on GHL's native Save/Publish button.
+  // We try to detect this via a capture click listener.
+  let saveMarkTs = null;
+
+  // ── GHL save-button click detector ────────────────────────────────────────
+  // Bridge.js runs in MAIN world, so we can listen for clicks on the builder canvas.
+  // GHL's "Publish"/"Save" button text differs by version; we cast a wide net.
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("button, [role='button'], [class*='save'], [class*='publish']");
+    if (!el) return;
+    const txt = (el.textContent || el.getAttribute("aria-label") || "").trim().toLowerCase();
+    if (txt === "save" || txt === "publish" || txt.includes("autosave") ||
+        el.className.includes("save") || el.className.includes("publish")) {
+      saveMarkTs = Date.now();
+      console.log("[CF] GHL save/publish click detected — capture window open");
+    }
+  }, true);
+
+  // ── URL classification helpers ─────────────────────────────────────────────
+  function isGhlBackend(url) {
     try {
       const host = new URL(url).hostname;
-      // Only GHL's API services — NOT data.*, recording.*, analytics.*, etc.
       return host === "backend.leadconnectorhq.com" ||
              host === "services.leadconnectorhq.com" ||
              host === "api.gohighlevel.com";
@@ -122,8 +137,45 @@
     }
   }
 
+  // Returns true if the request body looks like page structure data.
+  // This is the key signal that separates a page-save from an analytics POST.
+  function looksLikeStructure(body) {
+    if (!body || typeof body !== "string") return false;
+    if (body.length < 20) return false;
+    try {
+      const obj = JSON.parse(body);
+      if (typeof obj !== "object" || obj === null) return false;
+      return ["elements", "sections", "components", "blocks", "content",
+              "rows", "columns", "pages", "steps", "nodes", "items",
+              "children", "body", "funnel", "page"].some((k) => k in obj);
+    } catch {
+      return false;
+    }
+  }
+
+  // Should we capture this write request?
+  // Priority order: PUT/PATCH on GHL backend with any match → POST only if body looks structural.
+  // Also: within 5 s of detected GHL save-button click, accept any GHL backend write.
+  function shouldCaptureWrite(url, method, body) {
+    if (!["PUT", "PATCH", "POST"].includes(method)) return false;
+    if (!isGhlBackend(url)) return false;
+    if (NOISE_RE.test(url)) return false;
+
+    const isPutPatch = method === "PUT" || method === "PATCH";
+    const nearSave   = saveMarkTs && (Date.now() - saveMarkTs < 5000);
+    const interesting = INTERESTING_RE.test(url);
+    const structural  = looksLikeStructure(body);
+
+    // Always accept PUT/PATCH on the backend — page saves use PUT/PATCH.
+    if (isPutPatch) return true;
+    // POST: only capture if URL is interesting OR body looks like structure OR near a save click.
+    return interesting || structural || nearSave;
+  }
+
   // Legacy path filter — still used for GET sniffing (page content detection).
   const WRITE_PATH_RE = /\/(funnels\/page|funnel-pages|pages|site-pages|v1\/page)\/([^/?#]+)/i;
+  // Also used for interesting-path GET sniffing.
+  const INTERESTING_PATH_RE = INTERESTING_RE;
 
   // Capture headers from fetch init object into a plain object.
   function extractFetchHeaders(init) {
@@ -151,14 +203,15 @@
       : "GET";
 
     // Sniff write requests BEFORE calling _origFetch so we capture the auth headers.
-    // PUT/PATCH = page saves. POST = might be creates or analytics — only capture POST
-    // if we haven't already captured a PUT/PATCH (POST never overwrites PUT/PATCH).
+    // Uses shouldCaptureWrite(): GHL backend + not NOISE + (PUT/PATCH or structural body or near save click).
+    // PUT/PATCH always overwrites a prior POST capture; POST never overwrites a PUT/PATCH capture.
     const isPutPatch = method === "PUT" || method === "PATCH";
     const hasGoodCapture = capturedPutFullUrl && (capturedPutMethod === "PUT" || capturedPutMethod === "PATCH");
-    if (isGhlWriteUrl(url, method) && (isPutPatch || !hasGoodCapture)) {
+    const bodyStr = typeof init.body === "string" ? init.body : null;
+    if (shouldCaptureWrite(url, method, bodyStr) && (isPutPatch || !hasGoodCapture)) {
       capturedPutFullUrl = url;
       capturedPutMethod  = method;
-      capturedPutBody    = typeof init.body === "string" ? init.body : null;
+      capturedPutBody    = bodyStr;
       capturedPutHeaders = extractFetchHeaders(init);
       console.log("[CF] Captured save request (fetch):", method, url,
         "| headers:", Object.keys(capturedPutHeaders).join(", "));
@@ -210,8 +263,10 @@
     this._cfHeaders = {};
 
     // Mark write requests so setRequestHeader captures their headers.
-    // Domain-based check — catches new-builder paths we haven't pre-guessed.
-    if (isGhlWriteUrl(this._cfUrl, this._cfMethod)) {
+    // We use isGhlBackend() at open() time (no body yet). shouldCaptureWrite() is
+    // called at send() time when we have the body for looksLikeStructure() check.
+    if (isGhlBackend(this._cfUrl) && !NOISE_RE.test(this._cfUrl) &&
+        ["PUT", "PATCH", "POST"].includes(this._cfMethod)) {
       this._cfIsWriteReq = true;
     }
 
@@ -226,15 +281,18 @@
   // GHL's revexBackendService is axios → uses XHR, not window.fetch.
   XMLHttpRequest.prototype.send = function (...args) {
     if (this._cfIsWriteReq) {
-      const isPutPatch = this._cfMethod === "PUT" || this._cfMethod === "PATCH";
-      const hasGoodCapture = capturedPutFullUrl && (capturedPutMethod === "PUT" || capturedPutMethod === "PATCH");
-      if (isPutPatch || !hasGoodCapture) {
-        capturedPutFullUrl = this._cfUrl;
-        capturedPutMethod  = this._cfMethod;
-        capturedPutHeaders = { ...this._cfHeaders };
-        capturedPutBody    = typeof args[0] === "string" ? args[0] : null;
-        console.log("[CF] Captured save request (XHR):", this._cfMethod, this._cfUrl,
-          "| headers:", Object.keys(capturedPutHeaders).join(", "));
+      const bodyStr = typeof args[0] === "string" ? args[0] : null;
+      if (shouldCaptureWrite(this._cfUrl, this._cfMethod, bodyStr)) {
+        const isPutPatch = this._cfMethod === "PUT" || this._cfMethod === "PATCH";
+        const hasGoodCapture = capturedPutFullUrl && (capturedPutMethod === "PUT" || capturedPutMethod === "PATCH");
+        if (isPutPatch || !hasGoodCapture) {
+          capturedPutFullUrl = this._cfUrl;
+          capturedPutMethod  = this._cfMethod;
+          capturedPutHeaders = { ...this._cfHeaders };
+          capturedPutBody    = bodyStr;
+          console.log("[CF] Captured save request (XHR):", this._cfMethod, this._cfUrl,
+            "| headers:", Object.keys(capturedPutHeaders).join(", "));
+        }
       }
     }
 
@@ -384,6 +442,7 @@
 
     console.log("[CF-DIAG] capturedPutFullUrl:", capturedPutFullUrl ?? "none — save once in GHL to enable capture-replay");
     console.log("[CF-DIAG] capturedPutHeaders count:", Object.keys(capturedPutHeaders).length);
+    console.log("[CF-DIAG] saveMarkTs:", saveMarkTs ? new Date(saveMarkTs).toISOString() : "none");
   }, 3000);
 
   /* ─── revex: path-only GET (fallback when no capture available) ───────── */

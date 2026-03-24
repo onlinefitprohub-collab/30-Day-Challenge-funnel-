@@ -106,7 +106,7 @@ function makeSection(children: string[], opts: SectionOpts = {}): GhlNode {
   if (opts.bgColor) styles.backgroundColor = ss(opts.bgColor);
 
   return buildNode(
-    id, "section", "c-section", "section", "Section",
+    id, "section", "section", "section", "Section",
     children,
     styles,
     { paddingTop: sv(opts.ptM ?? 48), paddingBottom: sv(opts.pbM ?? 48) },
@@ -125,7 +125,7 @@ function makeSection(children: string[], opts: SectionOpts = {}): GhlNode {
 function makeRow(children: string[], maxWidth = 1200, padH = 0): GhlNode {
   const id = ghlId("row");
   return buildNode(
-    id, "row", "c-row", "row", "Row",
+    id, "row", "row", "row", "Row",
     children,
     {
       maxWidth:     sv(maxWidth),
@@ -159,7 +159,7 @@ function makeCol(
   if (opts.valign) styles.verticalAlign   = ss(opts.valign);
 
   return buildNode(
-    id, "col", "c-col", "col", "Column",
+    id, "column", "column", "column", "Column",
     children,
     styles,
     {},
@@ -176,7 +176,7 @@ function makeHeadline(
   mobileStyles: StyleMap = {},
 ): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "c-headline", "headline", "Headline",
+    ghlId("el"), "element", "heading", "heading", "Headline",
     [],
     styles,
     mobileStyles,
@@ -186,7 +186,7 @@ function makeHeadline(
 
 function makeParagraph(text: string, styles: StyleMap, mobileStyles: StyleMap = {}): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "c-paragraph", "paragraph", "Paragraph",
+    ghlId("el"), "element", "text", "text", "Paragraph",
     [],
     styles,
     mobileStyles,
@@ -202,7 +202,7 @@ function makeButton(
   mobileStyles: StyleMap = {},
 ): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "c-button", "button", "Button",
+    ghlId("el"), "element", "button", "button", "Button",
     [],
     {
       backgroundColor: ss("#f97316"),
@@ -226,7 +226,7 @@ function makeButton(
 
 function makeForm(): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "c-form", "form", "Form",
+    ghlId("el"), "element", "form", "form", "Form",
     [], {}, {},
     { formId: ss("") },
   );
@@ -234,7 +234,7 @@ function makeForm(): GhlNode {
 
 function makeDivider(color = "rgba(255,255,255,0.1)", marginV = 12): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "c-divider", "divider", "Divider",
+    ghlId("el"), "element", "divider", "divider", "Divider",
     [],
     { borderColor: ss(color), borderWidth: sv(1), marginTop: sv(marginV), marginBottom: sv(marginV) },
     {},
