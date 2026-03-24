@@ -115,6 +115,7 @@
   // Bridge.js runs in MAIN world, so we can listen for clicks on the builder canvas.
   // GHL's "Publish"/"Save" button text differs by version; we cast a wide net.
   document.addEventListener("click", (e) => {
+    if (!(e.target instanceof Element)) return;
     const el = e.target.closest("button, [role='button'], [class*='save'], [class*='publish']");
     if (!el) return;
     const txt = (el.textContent || el.getAttribute("aria-label") || "").trim().toLowerCase();
@@ -218,15 +219,19 @@
         "| headers:", Object.keys(capturedPutHeaders).join(", "));
     }
 
-    // Capture auth headers from ANY authenticated GHL backend request (GET fallback for prebuilt flow).
-    // This ensures CF_DO_PREBUILT can run even if the user has never clicked Save.
-    if (isGhlBackend(url) && !NOISE_RE.test(url) && Object.keys(capturedAuthHeaders).length === 0) {
+    // Merge auth headers from ANY authenticated GHL backend request (GET fallback for prebuilt flow).
+    // Merges on every request so later requests can fill in keys the first request was missing.
+    if (isGhlBackend(url) && !NOISE_RE.test(url)) {
       const allHeaders = extractFetchHeaders(init);
       const AUTH_KEYS = /^(authorization|token-id|channel|source|version|x-api-key|x-location-id)$/i;
       const authOnly = Object.fromEntries(Object.entries(allHeaders).filter(([k]) => AUTH_KEYS.test(k)));
       if (Object.keys(authOnly).length > 0) {
-        capturedAuthHeaders = authOnly;
-        console.log("[CF] Captured auth headers (GET fallback):", Object.keys(authOnly).join(", "));
+        const before = Object.keys(capturedAuthHeaders).length;
+        Object.assign(capturedAuthHeaders, authOnly);
+        const after = Object.keys(capturedAuthHeaders).length;
+        if (after > before) {
+          console.log("[CF] Merged auth headers (GET fallback):", Object.keys(capturedAuthHeaders).join(", "));
+        }
       }
     }
 
@@ -269,10 +274,11 @@
       this._cfHeaders = this._cfHeaders || {};
       this._cfHeaders[name] = value;
     }
-    // Also capture auth headers from any GHL backend request as GET fallback for prebuilt flow.
-    if (this._cfIsGhlReq && Object.keys(capturedAuthHeaders).length === 0 && XHR_AUTH_RE.test(name)) {
+    // Also merge auth headers from any GHL backend request as GET fallback for prebuilt flow.
+    if (this._cfIsGhlReq && XHR_AUTH_RE.test(name)) {
+      const had = capturedAuthHeaders[name];
       capturedAuthHeaders[name] = value;
-      console.log("[CF] Captured XHR auth header (GET fallback):", name);
+      if (!had) console.log("[CF] Merged XHR auth header (GET fallback):", name);
     }
     return _origSetReqHeader.apply(this, [name, value]);
   };
