@@ -7,6 +7,23 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "update") {
     console.log("[CF Funnel] Updated to v2 — zero config, native HL injection.");
   }
+
+  // Inject content.js into already-open matching tabs so the user doesn't
+  // have to refresh after installing or updating the extension.
+  if (reason === "install" || reason === "update") {
+    chrome.tabs.query({}, (tabs) => {
+      for (const tab of tabs) {
+        if (!tab.url) continue;
+        const isGHL    = tab.url.startsWith("https://app.gohighlevel.com/");
+        const isReplit = /https:\/\/[^/]+\.replit\.(dev|app|com)\//.test(tab.url);
+        if (!isGHL && !isReplit) continue;
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id, allFrames: true },
+          files: ["content.js"],
+        }).catch(() => {}); // silently skip restricted/chrome:// tabs
+      }
+    });
+  }
 });
 
 // Relay messages between content script and popup if needed

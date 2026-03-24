@@ -95,16 +95,42 @@
     return response;
   };
 
-  /* ─── Intercept XHR to catch context clues ────────────────────────────── */
+  /* ─── Intercept XHR to catch context clues + sniff page API URL ───────── */
   const _origOpen = XMLHttpRequest.prototype.open;
+  const _origSend = XMLHttpRequest.prototype.send;
+
   XMLHttpRequest.prototype.open = function (method, url, ...rest) {
-    const urlStr   = String(url);
-    const pbMatch  = urlStr.match(PAGE_BUILDER_RE);
-    const locMatch = urlStr.match(LOCATION_RE);
+    this._cfMethod = method.toUpperCase();
+    this._cfUrl    = String(url);
+    const pbMatch  = this._cfUrl.match(PAGE_BUILDER_RE);
+    const locMatch = this._cfUrl.match(LOCATION_RE);
     if (pbMatch?.[1] || locMatch?.[1]) {
       emit(pbMatch?.[1] || null, locMatch?.[1] || getLocationId(), "xhr");
     }
     return _origOpen.apply(this, [method, url, ...rest]);
+  };
+
+  // GHL's revexBackendService is axios → uses XHR, not window.fetch.
+  // We wrap send() so we can read GET responses and capture the real page API URL.
+  XMLHttpRequest.prototype.send = function (...args) {
+    if (
+      this._cfMethod === "GET" &&
+      this._cfUrl &&
+      this._cfUrl.includes("backend.leadconnectorhq.com")
+    ) {
+      this.addEventListener("load", function () {
+        if (this.status >= 200 && this.status < 300) {
+          try {
+            const json = JSON.parse(this.responseText);
+            if (json && PAGE_CONTENT_KEYS.some((k) => json[k] !== undefined)) {
+              capturedPageApiUrl = new URL(this._cfUrl).pathname;
+              console.log("[CF] Captured page API URL (XHR):", capturedPageApiUrl);
+            }
+          } catch {}
+        }
+      });
+    }
+    return _origSend.apply(this, args);
   };
 
   // Watch SPA navigation
