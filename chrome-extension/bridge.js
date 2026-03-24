@@ -10,6 +10,10 @@
 
   const GHL_API = "https://backend.leadconnectorhq.com";
 
+  // Best-known API path for the current page — sniffed from GHL's own requests.
+  // Starts null; updated whenever GHL makes a GET that looks like page content.
+  let capturedPageApiUrl = null;
+
   /* ─── URL parsing ─────────────────────────────────────────────────────── */
   // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
   function parseBuilderUrl(url) {
@@ -21,7 +25,6 @@
   }
 
   function getLocationId() {
-    // Prefer URL, fall back to GHL's own window.attribution global
     const parsed = parseBuilderUrl(window.location.href);
     if (parsed?.locationId) return parsed.locationId;
     return window?.attribution?.locationId || null;
@@ -42,28 +45,47 @@
       emit(parsed.pageBuilderId, parsed.locationId, "url");
       return;
     }
-    // Not a page-builder URL — try window.attribution as last resort
     const locId = window?.attribution?.locationId;
     if (locId) emit(null, locId, "attribution");
   }
 
-  // Run immediately on load
   checkUrl(window.location.href);
 
-  /* ─── Intercept fetch/XHR to catch late context clues ─────────────────── */
-  // GHL loads page data via its own axios calls; we watch for any response
-  // that reveals the pageBuilderId so content.js can show the inject button.
+  /* ─── Intercept fetch to sniff GHL's own page-load endpoint ───────────── */
   const PAGE_BUILDER_RE = /\/page-builder\/([^/?]+)/i;
   const LOCATION_RE     = /\/location\/([^/?]+)/i;
+
+  // Fields that indicate a response is the page's content object.
+  const PAGE_CONTENT_KEYS = ["elements", "content", "pageContent", "sections", "body"];
 
   const _origFetch = window.fetch;
   window.fetch = async function (...args) {
     const url = typeof args[0] === "string" ? args[0]
               : args[0] instanceof URL      ? args[0].toString()
               : args[0] instanceof Request  ? args[0].url : "";
+    const method = (typeof args[1] === "object" && args[1]?.method)
+      ? args[1].method.toUpperCase()
+      : "GET";
 
     const response = await _origFetch.apply(this, args);
 
+    // Sniff GHL's own GET requests to learn the real page API endpoint.
+    if (
+      method === "GET" &&
+      url.includes("backend.leadconnectorhq.com") &&
+      response.ok
+    ) {
+      try {
+        const json = await response.clone().json();
+        if (json && PAGE_CONTENT_KEYS.some((k) => json[k] !== undefined)) {
+          const pathname = new URL(url).pathname;
+          capturedPageApiUrl = pathname;
+          console.log("[CF] Captured page API URL:", pathname);
+        }
+      } catch {}
+    }
+
+    // Context detection (unchanged)
     const pbMatch  = url.match(PAGE_BUILDER_RE);
     const locMatch = url.match(LOCATION_RE);
     if (pbMatch?.[1] || locMatch?.[1]) {
@@ -73,6 +95,7 @@
     return response;
   };
 
+  /* ─── Intercept XHR to catch context clues ────────────────────────────── */
   const _origOpen = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (method, url, ...rest) {
     const urlStr   = String(url);
@@ -96,8 +119,6 @@
   });
 
   /* ─── GHL HTTP client helper ──────────────────────────────────────────── */
-  // GHL's Vue app exposes its own authenticated axios instance.
-  // Using it means no API key — the session is already there.
   function getRevex() {
     try {
       return document.querySelector("#app")
@@ -112,7 +133,7 @@
     if (revex) {
       const res = await revex.get(`${GHL_API}${path}`);
       if (res?.status >= 200 && res?.status < 300 && res?.data) return res.data;
-      throw new Error(`GHL GET: HTTP ${res?.status}`);
+      throw new Error(`GHL GET ${res?.status}: ${path}`);
     }
     const res = await fetch(`${GHL_API}${path}`, {
       method:      "GET",
@@ -121,7 +142,7 @@
     });
     if (res.ok) return res.json();
     const text = await res.text().catch(() => "");
-    throw new Error(`GHL GET: HTTP ${res.status}${text ? " — " + text.slice(0, 120) : ""}`);
+    throw new Error(`GHL GET ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
   }
 
   async function ghlPut(path, body) {
@@ -129,7 +150,7 @@
     if (revex) {
       const res = await revex.put(`${GHL_API}${path}`, body);
       if (res?.status >= 200 && res?.status < 300) return { ok: true };
-      throw new Error(`GHL PUT: HTTP ${res?.status}`);
+      throw new Error(`GHL PUT ${res?.status}: ${path}`);
     }
     const res = await fetch(`${GHL_API}${path}`, {
       method:      "PUT",
@@ -139,7 +160,7 @@
     });
     if (res.ok) return { ok: true };
     const text = await res.text().catch(() => "");
-    throw new Error(`GHL PUT: HTTP ${res.status}${text ? " — " + text.slice(0, 120) : ""}`);
+    throw new Error(`GHL PUT ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
   }
 
   /* ─── Handle CF_DO_INJECT from content.js ─────────────────────────────── */
@@ -162,27 +183,50 @@
     }
 
     try {
-      // Step 1: GET current page context (funnelId, stepId, existing shape)
-      // so we can confirm the endpoint works and include context if GHL needs it.
+      // Build ordered list of endpoint candidates to try.
+      // The sniffed URL (if captured) is most reliable; hardcoded fallbacks cover
+      // common GHL page types: funnel steps, funnel-pages, website pages, site pages.
+      const candidates = [
+        capturedPageApiUrl,
+        `/funnels/page/${pageBuilderId}`,
+        `/funnel-pages/${pageBuilderId}`,
+        `/pages/${pageBuilderId}`,
+        `/site-pages/${pageBuilderId}`,
+      ].filter(Boolean);
+
       let pageContext = null;
-      try {
-        pageContext = await ghlGet(`/funnels/page/${pageBuilderId}`);
-      } catch (getErr) {
-        // Non-fatal: if GET fails (e.g. different GHL version), log and continue.
-        // We still attempt the PUT with the pageData we have.
-        console.warn("[CF] GET page context failed:", getErr.message);
+      let workingPath = null;
+
+      for (const path of candidates) {
+        try {
+          pageContext = await ghlGet(path);
+          workingPath = path;
+          console.log("[CF] Working endpoint:", path);
+          break;
+        } catch (e) {
+          // Only skip on 404; other errors (auth, network) are fatal.
+          if (e.message.includes("404") || e.message.includes("GHL GET 404")) {
+            console.warn("[CF] 404 on", path, "— trying next candidate");
+            continue;
+          }
+          throw e;
+        }
       }
 
-      // Step 2: Build the PUT payload — include context fields GHL expects
-      // alongside our generated content structure.
+      // If no GET succeeded, still attempt PUT with best available path.
+      // This handles pages that exist but return 404 on GET yet accept PUT.
+      if (!workingPath) {
+        workingPath = candidates[0];
+        console.warn("[CF] No endpoint responded to GET — attempting PUT at", workingPath);
+      }
+
       const putPayload = pageContext
         ? { ...pageContext, ...pageData }
         : pageData;
 
-      // Step 3: PUT the updated page content
-      await ghlPut(`/funnels/page/${pageBuilderId}`, putPayload);
+      await ghlPut(workingPath, putPayload);
 
-      // Step 4: Reload the builder iframe so the new content is visible
+      // Reload the builder iframe so the new content is visible
       const iframe = document.querySelector('[name="funnel-builder"]');
       if (iframe) iframe.src = iframe.src;
 
