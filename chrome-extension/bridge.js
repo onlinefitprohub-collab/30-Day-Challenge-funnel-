@@ -629,4 +629,118 @@
     }
   });
 
+  /* ─── Handle CF_DO_PREBUILT from content.js (Track A) ─────────────────── */
+  // POSTs each page section to GHL's /prebuilt-section API so they appear in
+  // the "Prebuilt Sections" sidebar panel without touching the current page.
+  window.addEventListener("message", async (evt) => {
+    if (evt.source !== window) return;
+    if (!evt.data || evt.data.source !== "cf-content" || evt.data.type !== "CF_DO_PREBUILT") return;
+
+    const { locationId, challengeName, pageData } = evt.data.payload || {};
+
+    function replyPrebuilt(result) {
+      window.postMessage({ source: "cf-bridge", type: "PREBUILT_RESULT", payload: result }, "*");
+    }
+
+    if (!pageData || !Array.isArray(pageData.sections) || pageData.sections.length === 0) {
+      return replyPrebuilt({ ok: false, error: "No sections in page data." });
+    }
+
+    if (!capturedPutHeaders || Object.keys(capturedPutHeaders).length === 0) {
+      return replyPrebuilt({
+        ok: false,
+        error: "No auth headers captured yet — open any GHL page (e.g. Contacts), wait a moment for network activity, then try again.",
+      });
+    }
+
+    const group  = `CF Funnel \u2014 ${challengeName || "Challenge"}`;
+    const locId  = locationId || "";
+
+    // Candidate prebuilt-section endpoints (tried in order; first 2xx wins per section).
+    const PREBUILT_URLS = [
+      "https://backend.leadconnectorhq.com/v1/prebuilt-section",
+      "https://backend.leadconnectorhq.com/prebuilt-section",
+    ];
+
+    let succeeded = 0;
+    let failed    = 0;
+    const failedNames = [];
+
+    for (let i = 0; i < pageData.sections.length; i++) {
+      const section = pageData.sections[i];
+      const sectionId = section.id;
+
+      // Collect all rows / columns / elements that belong to this section.
+      const sectionRows = {};
+      const sectionCols = {};
+      const sectionEls  = {};
+
+      const rowIds = Array.isArray(section.metaData?.child) ? section.metaData.child : [];
+      for (const rowId of rowIds) {
+        const row = (pageData.rows || {})[rowId];
+        if (!row) continue;
+        sectionRows[rowId] = row;
+        const colIds = Array.isArray(row.metaData?.child) ? row.metaData.child : [];
+        for (const colId of colIds) {
+          const col = (pageData.columns || {})[colId];
+          if (!col) continue;
+          sectionCols[colId] = col;
+          const elIds = Array.isArray(col.metaData?.child) ? col.metaData.child : [];
+          for (const elId of elIds) {
+            const elem = (pageData.elements || {})[elId];
+            if (elem) sectionEls[elId] = elem;
+          }
+        }
+      }
+
+      const sectionName = `${group} \u2014 Section ${i + 1}`;
+      const body = JSON.stringify({
+        name:       sectionName,
+        group,
+        locationId: locId,
+        data: {
+          sections: [section],
+          rows:     sectionRows,
+          columns:  sectionCols,
+          elements: sectionEls,
+        },
+      });
+
+      let posted = false;
+      for (const url of PREBUILT_URLS) {
+        try {
+          const resp = await _origFetch(url, {
+            method: "POST",
+            headers: { ...capturedPutHeaders, "Content-Type": "application/json" },
+            body,
+          });
+          if (resp.ok || resp.status === 200 || resp.status === 201) {
+            console.log("[CF] Prebuilt POST ok:", sectionName, "→", resp.status);
+            succeeded++;
+            posted = true;
+            break;
+          }
+          const text = await resp.text().catch(() => "");
+          console.warn("[CF] Prebuilt POST", url, "returned", resp.status, text.slice(0, 200));
+        } catch (e) {
+          console.warn("[CF] Prebuilt POST", url, "threw:", e.message);
+        }
+      }
+
+      if (!posted) {
+        failed++;
+        failedNames.push(`Section ${i + 1}`);
+      }
+    }
+
+    replyPrebuilt({
+      ok:          succeeded > 0,
+      succeeded,
+      failed,
+      total:       pageData.sections.length,
+      group,
+      failedNames,
+    });
+  });
+
 })();

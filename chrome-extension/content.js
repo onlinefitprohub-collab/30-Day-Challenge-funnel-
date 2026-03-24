@@ -148,6 +148,17 @@
 
     .inject-icon { font-size: 14px; }
 
+    .secondary-btn {
+      width: 100%; background: transparent; color: #64748b; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      transition: background 0.12s, color 0.12s; margin-top: 6px;
+    }
+    .secondary-btn:hover:not(:disabled) { background: #f8fafc; color: #334155; }
+    .secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .secondary-btn.ok  { color: #16a34a; border-color: #bbf7d0; }
+    .secondary-btn.err { color: #dc2626; border-color: #fecaca; }
+
     .status {
       margin-top: 9px; border-radius: 8px; padding: 8px 10px;
       font-size: 10px; line-height: 1.55; display: none;
@@ -260,9 +271,13 @@
       const canInject = hasCtx && hasData;
 
       html += `
-        <button class="inject-btn" id="inject-btn" ${!canInject ? "disabled" : ""}>
+        <button class="inject-btn" id="prebuilt-btn" ${!canInject ? "disabled" : ""}>
+          <span class="inject-icon">✦</span>
+          Add to Prebuilt Sections
+        </button>
+        <button class="secondary-btn" id="inject-btn" ${!canInject ? "disabled" : ""}>
           <span class="inject-icon">⬇</span>
-          Paste into Page Builder
+          Paste into page builder (advanced)
         </button>
         <div class="status" id="status"></div>
       `;
@@ -271,6 +286,11 @@
 
       const sub = shadow.getElementById("head-sub");
       if (sub) sub.textContent = ready.challengeConcept || "Challenge Funnel in a Box";
+
+      const prebuiltBtn = shadow.getElementById("prebuilt-btn");
+      if (prebuiltBtn && canInject) {
+        prebuiltBtn.addEventListener("click", () => doPrebuilt(ready, prebuiltBtn));
+      }
 
       const injectBtn = shadow.getElementById("inject-btn");
       if (injectBtn && canInject) {
@@ -302,6 +322,84 @@
         payload: { pageBuilderId, locationId: hlContext.locationId, pageData },
       }, "*");
     });
+  }
+
+  /* ─── Request bridge.js to POST prebuilt sections (Track A) ────────── */
+  function requestBridgePrebuilt(locationId, challengeName, pageData) {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        window.removeEventListener("message", handler);
+        reject(new Error("Prebuilt section POST timed out — please try again."));
+      }, 30000);
+
+      function handler(evt) {
+        if (evt.source !== window) return;
+        if (!evt.data || evt.data.source !== "cf-bridge" || evt.data.type !== "PREBUILT_RESULT") return;
+        clearTimeout(timeout);
+        window.removeEventListener("message", handler);
+        resolve(evt.data.payload || { ok: false, error: "No payload" });
+      }
+
+      window.addEventListener("message", handler);
+      window.postMessage({
+        source:  "cf-content",
+        type:    "CF_DO_PREBUILT",
+        payload: { locationId, challengeName, pageData },
+      }, "*");
+    });
+  }
+
+  /* ─── Add to Prebuilt Sections flow ─────────────────────────────────── */
+  async function doPrebuilt(ready, btn) {
+    if (injecting) return;
+    injecting = true;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="inject-icon">⏳</span> Adding sections…';
+    clearStatus();
+
+    try {
+      if (!ready.pageData) {
+        showStatus("err", "Page data not cached — go back to the app and click Clone to GHL again.");
+        btn.innerHTML = '<span class="inject-icon">✗</span> No page data';
+        btn.classList.add("err");
+        return;
+      }
+
+      const result = await requestBridgePrebuilt(
+        hlContext.locationId,
+        ready.challengeConcept || "Challenge",
+        ready.pageData,
+      );
+
+      if (result.ok) {
+        const n = result.succeeded;
+        btn.innerHTML = `<span class="inject-icon">✓</span> ${n} section${n === 1 ? "" : "s"} added!`;
+        btn.classList.add("ok");
+        showStatus("info",
+          `${n} section${n === 1 ? "" : "s"} added to your Prebuilt Sections panel (group: "${result.group}"). ` +
+          `Open the left sidebar in GHL, click Prebuilt Sections, and drag them onto your page.`
+        );
+      } else {
+        const msg = result.error || `${result.failed || 0} section(s) failed`;
+        btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
+        btn.classList.add("err");
+        showStatus("err", `Could not add prebuilt sections: ${msg}`);
+      }
+    } catch (e) {
+      btn.innerHTML = '<span class="inject-icon">✗</span> Error';
+      btn.classList.add("err");
+      showStatus("err", `Error: ${e.message}`);
+    } finally {
+      injecting = false;
+      setTimeout(() => {
+        if (!shadow) return;
+        btn.innerHTML = '<span class="inject-icon">✦</span> Add to Prebuilt Sections';
+        btn.classList.remove("ok", "err");
+        btn.disabled = false;
+        updatePanel();
+      }, 8000);
+    }
   }
 
   /* ─── Perform injection ─────────────────────────────────────────────── */
@@ -348,7 +446,7 @@
       injecting = false;
       setTimeout(() => {
         if (!shadow) return;
-        btn.innerHTML = '<span class="inject-icon">⬇</span> Paste into Page Builder';
+        btn.innerHTML = '<span class="inject-icon">⬇</span> Paste into page builder (advanced)';
         btn.classList.remove("ok", "err");
         btn.disabled = false;
         updatePanel();
