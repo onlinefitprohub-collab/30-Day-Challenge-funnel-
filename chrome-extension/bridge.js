@@ -98,8 +98,29 @@
   const PAGE_BUILDER_RE   = /\/page-builder\/([^/?]+)/i;
   const LOCATION_RE       = /\/location\/([^/?]+)/i;
   const PAGE_CONTENT_KEYS = ["elements", "content", "pageContent", "sections", "body"];
-  const INTERESTING_PATH_RE = /\/(funnels?\/page|funnel-pages|pages?|site-pages|v1\/page|services\/pages|prebuilt-section|page-builder)\//i;
-  const WRITE_PATH_RE     = /\/(funnels\/page|funnel-pages|pages|site-pages|v1\/page)\/([^/?#]+)/i;
+  // New-builder uses /sites/... paths; also covers legacy /funnels/page, /pages, etc.
+  const INTERESTING_PATH_RE = /\/(funnels?\/page|funnel-pages|pages?|site-pages|sites?|v1\/page|services\/pages|prebuilt-section|page-builder)\//i;
+
+  // GHL backend domains — any PUT/PATCH/POST to these is a candidate save request.
+  // We capture ALL writes to GHL's backend, regardless of path, because the new-builder
+  // uses different paths than the legacy funnel builder (e.g. /sites/pages/... not /funnels/page/...).
+  const GHL_WRITE_DOMAIN_RE = /\/(backend|services|api)\.leadconnectorhq\.com|\.leadconnectorhq\.com/;
+
+  // Helper: is this URL a GHL backend write we should capture?
+  function isGhlWriteUrl(url, method) {
+    if (!["PUT", "PATCH", "POST"].includes(method)) return false;
+    // Accept any write to a known GHL domain — domain check is enough.
+    // Path-based filtering caused us to miss the new-builder's save path.
+    try {
+      const host = new URL(url).hostname;
+      return host.endsWith("leadconnectorhq.com") || host.endsWith("gohighlevel.com");
+    } catch {
+      return url.includes("leadconnectorhq.com") || url.includes("gohighlevel.com");
+    }
+  }
+
+  // Legacy path filter — still used for GET sniffing (page content detection).
+  const WRITE_PATH_RE = /\/(funnels\/page|funnel-pages|pages|site-pages|v1\/page)\/([^/?#]+)/i;
 
   // Capture headers from fetch init object into a plain object.
   function extractFetchHeaders(init) {
@@ -127,7 +148,8 @@
       : "GET";
 
     // Sniff write requests BEFORE calling _origFetch so we capture the auth headers.
-    if (["PUT", "PATCH", "POST"].includes(method) && WRITE_PATH_RE.test(url)) {
+    // Use domain-based check (not path-based) — the new-builder uses /sites/pages/... etc.
+    if (isGhlWriteUrl(url, method)) {
       capturedPutFullUrl = url;
       capturedPutMethod  = method;
       capturedPutBody    = typeof init.body === "string" ? init.body : null;
@@ -182,7 +204,8 @@
     this._cfHeaders = {};
 
     // Mark write requests so setRequestHeader captures their headers.
-    if (["PUT", "PATCH", "POST"].includes(this._cfMethod) && WRITE_PATH_RE.test(this._cfUrl)) {
+    // Domain-based check — catches new-builder paths we haven't pre-guessed.
+    if (isGhlWriteUrl(this._cfUrl, this._cfMethod)) {
       this._cfIsWriteReq = true;
     }
 
@@ -351,8 +374,16 @@
       }
 
       // Build ordered list of GET endpoint candidates (path-only for revex).
+      // New-builder (GHL Sites/website pages) uses /sites/... paths.
+      // Legacy funnel builder uses /funnels/page/... paths.
+      // We try both since we don't know which the user is on until one works.
       const candidates = [
         capturedPageApiUrl,
+        // New-builder (GHL Sites) candidates
+        `/sites/pages/${pageBuilderId}`,
+        locationId && `/sites/locations/${locationId}/pages/${pageBuilderId}`,
+        `/sites/page/${pageBuilderId}`,
+        // Legacy funnel builder — CloneLevel proven
         `/funnels/page/${pageBuilderId}`,
         locationId && `/locations/${locationId}/pages/${pageBuilderId}`,
         locationId && `/locations/${locationId}/site-pages/${pageBuilderId}`,
