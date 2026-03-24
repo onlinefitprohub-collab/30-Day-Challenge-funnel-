@@ -371,9 +371,13 @@
         console.warn("[CF] No endpoint responded to GET — attempting PUT at", workingPath);
       }
 
-      // Merge: use Nuxt data as base if available (most complete), then API data,
-      // then spread our template on top.
+      // Merge: prefer API response as base (definitive live state).
+      // Fall back to Nuxt SSR payload only if the GET failed (no working endpoint).
+      // Then spread our template data on top of whatever base we have.
       const baseContext = pageContext ?? nuxtResult?.pageData ?? {};
+      if (!pageContext && nuxtResult?.pageData) {
+        console.log("[CF] Using Nuxt SSR payload as base (no API GET succeeded)");
+      }
       const putPayload = { ...baseContext, ...pageData };
 
       // Build PUT candidates: sniffed write URL first, then GET path, then rest.
