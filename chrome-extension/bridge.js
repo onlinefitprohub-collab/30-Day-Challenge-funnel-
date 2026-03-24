@@ -261,11 +261,18 @@
   const _origSend         = XMLHttpRequest.prototype.send;
   const _origSetReqHeader = XMLHttpRequest.prototype.setRequestHeader;
 
+  const XHR_AUTH_RE = /^(authorization|token-id|channel|source|version|x-api-key|x-location-id)$/i;
+
   // Capture headers from XHR via setRequestHeader.
   XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
     if (this._cfIsWriteReq) {
       this._cfHeaders = this._cfHeaders || {};
       this._cfHeaders[name] = value;
+    }
+    // Also capture auth headers from any GHL backend request as GET fallback for prebuilt flow.
+    if (this._cfIsGhlReq && Object.keys(capturedAuthHeaders).length === 0 && XHR_AUTH_RE.test(name)) {
+      capturedAuthHeaders[name] = value;
+      console.log("[CF] Captured XHR auth header (GET fallback):", name);
     }
     return _origSetReqHeader.apply(this, [name, value]);
   };
@@ -275,11 +282,15 @@
     this._cfUrl    = String(url);
     this._cfHeaders = {};
 
+    // Mark ALL non-noise GHL backend requests so we can sniff auth headers.
+    if (isGhlBackend(this._cfUrl) && !NOISE_RE.test(this._cfUrl)) {
+      this._cfIsGhlReq = true;
+    }
+
     // Mark write requests so setRequestHeader captures their headers.
     // We use isGhlBackend() at open() time (no body yet). shouldCaptureWrite() is
     // called at send() time when we have the body for looksLikeStructure() check.
-    if (isGhlBackend(this._cfUrl) && !NOISE_RE.test(this._cfUrl) &&
-        ["PUT", "PATCH", "POST"].includes(this._cfMethod)) {
+    if (this._cfIsGhlReq && ["PUT", "PATCH", "POST"].includes(this._cfMethod)) {
       this._cfIsWriteReq = true;
     }
 

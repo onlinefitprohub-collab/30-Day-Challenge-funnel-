@@ -223,7 +223,7 @@ async function loadPage(page, btn, cached) {
     refreshLoadedBadge(ready);
 
     showNote("info",
-      `${PAGE_LABELS[page]} is loaded!\n\nNow open that page in the HighLevel builder — the extension panel will show a "Paste into Page Builder" button.`
+      `${PAGE_LABELS[page]} is loaded!\n\nNow open that page in the HighLevel builder — the extension panel will show an "Add to Prebuilt Sections" button. Click it to push all sections to GHL's Prebuilt Sections sidebar (no save required). You can also use "Paste into page builder" for direct injection.`
     );
   } catch (e) {
     showNote("err", `Could not load page data: ${e.message}`);
