@@ -378,18 +378,26 @@
         btn.classList.add("ok");
         showStatus("info",
           `${n} section${n === 1 ? "" : "s"} added to your Prebuilt Sections panel (group: "${result.group}"). ` +
-          `Open the left sidebar in GHL, click Prebuilt Sections, and drag them onto your page.`
+          `In GHL left sidebar → click "Prebuilt Sections" → find your group → drag sections onto your page.`
         );
       } else {
-        const msg = result.error || `${result.failed || 0} section(s) failed`;
+        const rawErr = result.error || "";
         btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
         btn.classList.add("err");
-        showStatus("err", `Could not add prebuilt sections: ${msg}`);
+        const isEndpointMissing = rawErr.includes("not captured") || rawErr.includes("endpoint not captured");
+        if (isEndpointMissing) {
+          showStatus("warn",
+            "Step required: In the GHL page builder left sidebar, click \u201cPrebuilt Sections\u201d to open that panel. " +
+            "The extension will capture the endpoint automatically. Then click \u201cAdd to Prebuilt Sections\u201d again."
+          );
+        } else {
+          showStatus("err", rawErr.slice(0, 280) || `${result.failed || 0} section(s) failed — check console for HTTP status codes.`);
+        }
       }
     } catch (e) {
       btn.innerHTML = '<span class="inject-icon">✗</span> Error';
       btn.classList.add("err");
-      showStatus("err", `Error: ${e.message}`);
+      showStatus("err", `Error: ${e.message.slice(0, 200)}`);
     } finally {
       injecting = false;
       setTimeout(() => {
@@ -433,15 +441,20 @@
         btn.classList.add("ok");
         showStatus("info", "Done! The builder is reloading with your content — it may take a few seconds.");
       } else {
-        const msg = result.error || "Unknown error";
+        const rawMsg = result.error || "Unknown error";
         btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
         btn.classList.add("err");
-        showStatus("err", `Injection failed: ${msg}`);
+        // Show a clean actionable message — strip the long "Tried: GET: /..." endpoint list
+        const isEndpointExhausted = rawMsg.includes("all endpoints exhausted");
+        const cleanMsg = isEndpointExhausted
+          ? "All save endpoints failed. Click \u201cSave\u201d in GHL once to enable the smart capture strategy, then try again."
+          : rawMsg.slice(0, 220);
+        showStatus("err", cleanMsg);
       }
     } catch (e) {
       btn.innerHTML = '<span class="inject-icon">✗</span> Error';
       btn.classList.add("err");
-      showStatus("err", `Error: ${e.message}`);
+      showStatus("err", `Error: ${e.message.slice(0, 200)}`);
     } finally {
       injecting = false;
       setTimeout(() => {

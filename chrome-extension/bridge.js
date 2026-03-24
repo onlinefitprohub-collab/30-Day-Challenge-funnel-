@@ -20,6 +20,7 @@
   let capturedAuthHeaders = {};   // auth headers from ANY authenticated GHL request (GET safe fallback)
   let capturedPutBody     = null; // body string from GHL's last save request
   let capturedPutMethod   = null; // PUT / PATCH / POST
+  let capturedPrebuiltUrl = null; // full base URL of GHL's prebuilt-section API (auto-captured when user opens sidebar panel)
 
   /* ─── URL parsing ─────────────────────────────────────────────────────── */
   function parseBuilderUrl(url) {
@@ -252,6 +253,16 @@
       }
     }
 
+    // Auto-capture GHL's prebuilt-section API base URL when the user opens that panel.
+    // This tells us the exact endpoint to POST to (instead of guessing).
+    if (isGhlBackend(url) && /prebuilt[\-_]?section/i.test(url) && method === "GET" && !capturedPrebuiltUrl) {
+      try {
+        const u = new URL(url);
+        capturedPrebuiltUrl = u.origin + u.pathname.replace(/\/+$/, "");
+        console.log("[CF] Captured prebuilt-section API URL (fetch GET):", capturedPrebuiltUrl);
+      } catch {}
+    }
+
     const pbMatch  = url.match(PAGE_BUILDER_RE);
     const locMatch = url.match(LOCATION_RE);
     if (pbMatch?.[1] || locMatch?.[1]) {
@@ -326,8 +337,21 @@
       }
     }
 
-    if (this._cfUrl && INTERESTING_PATH_RE.test(this._cfUrl)) {
-      if (this._cfMethod === "GET") {
+    if (this._cfUrl && this._cfMethod === "GET") {
+      // Capture prebuilt-section base URL from XHR GET (e.g. when user opens Prebuilt Sections panel).
+      if (!capturedPrebuiltUrl && /prebuilt[\-_]?section/i.test(this._cfUrl) && isGhlBackend(this._cfUrl)) {
+        this.addEventListener("load", function () {
+          if (this.status >= 200 && this.status < 300 && !capturedPrebuiltUrl) {
+            try {
+              const u = new URL(this._cfUrl);
+              capturedPrebuiltUrl = u.origin + u.pathname.replace(/\/+$/, "");
+              console.log("[CF] Captured prebuilt-section API URL (XHR GET):", capturedPrebuiltUrl);
+            } catch {}
+          }
+        });
+      }
+
+      if (INTERESTING_PATH_RE.test(this._cfUrl)) {
         this.addEventListener("load", function () {
           if (this.status >= 200 && this.status < 300) {
             try {
@@ -472,7 +496,8 @@
 
     console.log("[CF-DIAG] capturedPutFullUrl:", capturedPutFullUrl ?? "none — save once in GHL to enable capture-replay");
     console.log("[CF-DIAG] capturedPutHeaders count:", Object.keys(capturedPutHeaders).length,
-      "| capturedAuthHeaders count:", Object.keys(capturedAuthHeaders).length);
+      "| capturedAuthHeaders count:", Object.keys(capturedAuthHeaders).length,
+      "| capturedPrebuiltUrl:", capturedPrebuiltUrl ?? "none (open Prebuilt Sections panel in GHL to capture)");
     console.log("[CF-DIAG] saveMarkTs:", saveMarkTs ? new Date(saveMarkTs).toISOString() : "none");
   }, 3000);
 
@@ -693,9 +718,16 @@
     const locId  = locationId || "";
 
     // Candidate prebuilt-section endpoints (tried in order; first 2xx wins per section).
+    // capturedPrebuiltUrl is auto-captured when GHL loads the Prebuilt Sections sidebar panel.
+    if (!capturedPrebuiltUrl) {
+      return replyPrebuilt({
+        ok: false,
+        error: "GHL\u2019s Prebuilt Sections endpoint not captured yet.\n\nStep: In the GHL page builder left sidebar, click \u201cPrebuilt Sections\u201d to open that panel \u2014 the extension will then capture the endpoint automatically. Then click \u201cAdd to Prebuilt Sections\u201d again.",
+      });
+    }
+
     const PREBUILT_URLS = [
-      "https://backend.leadconnectorhq.com/v1/prebuilt-section",
-      "https://backend.leadconnectorhq.com/prebuilt-section",
+      capturedPrebuiltUrl,
     ];
 
     let succeeded = 0;
