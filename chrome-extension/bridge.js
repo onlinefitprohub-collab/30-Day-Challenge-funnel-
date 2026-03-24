@@ -14,6 +14,9 @@
   // Starts null; updated whenever GHL makes a GET that looks like page content.
   let capturedPageApiUrl = null;
 
+  // Best-known write path — sniffed from GHL's own PUT/PATCH/POST save requests.
+  let capturedPagePutUrl = null;
+
   /* ─── URL parsing ─────────────────────────────────────────────────────── */
   // GHL page builder URL: /location/{locationId}/page-builder/{pageBuilderId}
   function parseBuilderUrl(url) {
@@ -58,6 +61,9 @@
   // Fields that indicate a response is the page's content object.
   const PAGE_CONTENT_KEYS = ["elements", "content", "pageContent", "sections", "body"];
 
+  // Patterns that indicate a write request is a page-save call.
+  const WRITE_PATH_RE = /\/(funnels\/page|funnel-pages|pages|site-pages)\/([^/?#]+)/i;
+
   const _origFetch = window.fetch;
   window.fetch = async function (...args) {
     const url = typeof args[0] === "string" ? args[0]
@@ -69,20 +75,29 @@
 
     const response = await _origFetch.apply(this, args);
 
-    // Sniff GHL's own GET requests to learn the real page API endpoint.
-    if (
-      method === "GET" &&
-      url.includes("backend.leadconnectorhq.com") &&
-      response.ok
-    ) {
-      try {
-        const json = await response.clone().json();
-        if (json && PAGE_CONTENT_KEYS.some((k) => json[k] !== undefined)) {
+    if (url.includes("backend.leadconnectorhq.com")) {
+      // Sniff GHL's own GET requests to learn the real page API endpoint.
+      if (method === "GET" && response.ok) {
+        try {
+          const json = await response.clone().json();
+          if (json && PAGE_CONTENT_KEYS.some((k) => json[k] !== undefined)) {
+            const pathname = new URL(url).pathname;
+            capturedPageApiUrl = pathname;
+            console.log("[CF] Captured page API URL:", pathname);
+          }
+        } catch {}
+      }
+
+      // Sniff GHL's own PUT/PATCH/POST save requests to learn the write endpoint.
+      if (["PUT", "PATCH", "POST"].includes(method)) {
+        try {
           const pathname = new URL(url).pathname;
-          capturedPageApiUrl = pathname;
-          console.log("[CF] Captured page API URL:", pathname);
-        }
-      } catch {}
+          if (WRITE_PATH_RE.test(pathname)) {
+            capturedPagePutUrl = pathname;
+            console.log("[CF] Captured page PUT URL:", pathname);
+          }
+        } catch {}
+      }
     }
 
     // Context detection (unchanged)
@@ -111,24 +126,33 @@
   };
 
   // GHL's revexBackendService is axios → uses XHR, not window.fetch.
-  // We wrap send() so we can read GET responses and capture the real page API URL.
+  // We wrap send() so we can read GET responses and capture the real page API URL,
+  // and also capture write endpoints from PUT/PATCH/POST requests.
   XMLHttpRequest.prototype.send = function (...args) {
-    if (
-      this._cfMethod === "GET" &&
-      this._cfUrl &&
-      this._cfUrl.includes("backend.leadconnectorhq.com")
-    ) {
-      this.addEventListener("load", function () {
-        if (this.status >= 200 && this.status < 300) {
-          try {
-            const json = JSON.parse(this.responseText);
-            if (json && PAGE_CONTENT_KEYS.some((k) => json[k] !== undefined)) {
-              capturedPageApiUrl = new URL(this._cfUrl).pathname;
-              console.log("[CF] Captured page API URL (XHR):", capturedPageApiUrl);
-            }
-          } catch {}
-        }
-      });
+    if (this._cfUrl && this._cfUrl.includes("backend.leadconnectorhq.com")) {
+      if (this._cfMethod === "GET") {
+        this.addEventListener("load", function () {
+          if (this.status >= 200 && this.status < 300) {
+            try {
+              const json = JSON.parse(this.responseText);
+              if (json && PAGE_CONTENT_KEYS.some((k) => json[k] !== undefined)) {
+                capturedPageApiUrl = new URL(this._cfUrl).pathname;
+                console.log("[CF] Captured page API URL (XHR):", capturedPageApiUrl);
+              }
+            } catch {}
+          }
+        });
+      }
+
+      if (["PUT", "PATCH", "POST"].includes(this._cfMethod)) {
+        try {
+          const pathname = new URL(this._cfUrl).pathname;
+          if (WRITE_PATH_RE.test(pathname)) {
+            capturedPagePutUrl = pathname;
+            console.log("[CF] Captured page PUT URL (XHR):", pathname);
+          }
+        } catch {}
+      }
     }
     return _origSend.apply(this, args);
   };
@@ -171,12 +195,16 @@
     throw new Error(`GHL GET ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
   }
 
+  // ghlPut returns { ok: true } on success, or throws with the status.
+  // Callers use the status code to decide whether to retry.
   async function ghlPut(path, body) {
     const revex = getRevex();
     if (revex) {
       const res = await revex.put(`${GHL_API}${path}`, body);
       if (res?.status >= 200 && res?.status < 300) return { ok: true };
-      throw new Error(`GHL PUT ${res?.status}: ${path}`);
+      const err = new Error(`GHL PUT ${res?.status}: ${path}`);
+      err.status = res?.status;
+      throw err;
     }
     const res = await fetch(`${GHL_API}${path}`, {
       method:      "PUT",
@@ -186,7 +214,9 @@
     });
     if (res.ok) return { ok: true };
     const text = await res.text().catch(() => "");
-    throw new Error(`GHL PUT ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
+    const err = new Error(`GHL PUT ${res.status}: ${path}${text ? " — " + text.slice(0, 80) : ""}`);
+    err.status = res.status;
+    throw err;
   }
 
   /* ─── Handle CF_DO_INJECT from content.js ─────────────────────────────── */
@@ -222,10 +252,10 @@
 
       let pageContext = null;
       let workingPath = null;
-      const triedPaths = [];
+      const triedGetPaths = [];
 
       for (const path of candidates) {
-        triedPaths.push(path);
+        triedGetPaths.push(path);
         try {
           pageContext = await ghlGet(path);
           workingPath = path;
@@ -252,15 +282,48 @@
         ? { ...pageContext, ...pageData }
         : pageData;
 
-      try {
-        await ghlPut(workingPath, putPayload);
-      } catch (putErr) {
-        // Enhance the error with the full list of endpoints tried so the user
-        // (and any debug logs) can see exactly what was attempted.
-        const tried = triedPaths.join(", ");
-        throw new Error(
-          `${putErr.message} — endpoints tried: ${tried}`
-        );
+      // Build ordered list of PUT candidates.
+      // Prefer the sniffed write endpoint, then the GET-derived working path,
+      // then all remaining GET candidates as fallbacks.
+      const putCandidates = [
+        capturedPagePutUrl,
+        workingPath,
+        ...candidates.filter((p) => p !== workingPath),
+      ].filter(Boolean).filter((p, i, arr) => arr.indexOf(p) === i);
+
+      const triedPutPaths = [];
+      let putSucceeded = false;
+
+      for (const putPath of putCandidates) {
+        triedPutPaths.push(putPath);
+        try {
+          await ghlPut(putPath, putPayload);
+          console.log("[CF] PUT succeeded at:", putPath);
+          putSucceeded = true;
+          break;
+        } catch (putErr) {
+          const is404 = putErr.status === 404 ||
+            putErr.message.includes("404") ||
+            putErr.message.includes("GHL PUT 404");
+          if (is404) {
+            console.warn("[CF] PUT 404 on", putPath, "— trying next candidate");
+            continue;
+          }
+          // Non-404 error is fatal — include all paths tried in the message.
+          const allTried = [
+            "GET: " + triedGetPaths.join(", "),
+            "PUT: " + triedPutPaths.join(", "),
+          ].join(" | ");
+          throw new Error(`${putErr.message} — endpoints tried: ${allTried}`);
+        }
+      }
+
+      if (!putSucceeded) {
+        const allTried = [
+          "GET: " + triedGetPaths.join(", "),
+          "PUT: " + triedPutPaths.join(", "),
+        ].join(" | ");
+        throw new Error(`All PUT candidates returned 404 — endpoints tried: ${allTried}`);
       }
 
       // Reload the builder iframe so the new content is visible
