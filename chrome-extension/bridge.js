@@ -745,9 +745,15 @@
       let posted = false;
       for (const url of PREBUILT_URLS) {
         try {
+          // Normalize header keys: remove any case-variant of content-type before adding ours.
+          const mergedHeaders = Object.fromEntries(
+            Object.entries(headersToUse).filter(([k]) => k.toLowerCase() !== "content-type")
+          );
+          mergedHeaders["Content-Type"] = "application/json";
+
           const resp = await _origFetch(url, {
             method: "POST",
-            headers: { ...headersToUse, "Content-Type": "application/json" },
+            headers: mergedHeaders,
             body,
           });
           if (resp.ok || resp.status === 200 || resp.status === 201) {
