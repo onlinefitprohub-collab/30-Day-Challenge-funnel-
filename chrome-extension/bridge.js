@@ -196,8 +196,10 @@
 
       let pageContext = null;
       let workingPath = null;
+      const triedPaths = [];
 
       for (const path of candidates) {
+        triedPaths.push(path);
         try {
           pageContext = await ghlGet(path);
           workingPath = path;
@@ -224,7 +226,16 @@
         ? { ...pageContext, ...pageData }
         : pageData;
 
-      await ghlPut(workingPath, putPayload);
+      try {
+        await ghlPut(workingPath, putPayload);
+      } catch (putErr) {
+        // Enhance the error with the full list of endpoints tried so the user
+        // (and any debug logs) can see exactly what was attempted.
+        const tried = triedPaths.join(", ");
+        throw new Error(
+          `${putErr.message} — endpoints tried: ${tried}`
+        );
+      }
 
       // Reload the builder iframe so the new content is visible
       const iframe = document.querySelector('[name="funnel-builder"]');
