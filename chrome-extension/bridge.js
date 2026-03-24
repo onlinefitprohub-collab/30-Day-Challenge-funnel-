@@ -16,7 +16,8 @@
   // ── Captured from GHL's own network requests ───────────────────────────────
   let capturedPageApiUrl  = null; // GET path (page content endpoint)
   let capturedPutFullUrl  = null; // full URL of GHL's last save request
-  let capturedPutHeaders  = {};   // auth headers from GHL's last save request
+  let capturedPutHeaders  = {};   // auth headers from GHL's last write (PUT/PATCH/POST)
+  let capturedAuthHeaders = {};   // auth headers from ANY authenticated GHL request (GET safe fallback)
   let capturedPutBody     = null; // body string from GHL's last save request
   let capturedPutMethod   = null; // PUT / PATCH / POST
 
@@ -215,6 +216,18 @@
       capturedPutHeaders = extractFetchHeaders(init);
       console.log("[CF] Captured save request (fetch):", method, url,
         "| headers:", Object.keys(capturedPutHeaders).join(", "));
+    }
+
+    // Capture auth headers from ANY authenticated GHL backend request (GET fallback for prebuilt flow).
+    // This ensures CF_DO_PREBUILT can run even if the user has never clicked Save.
+    if (isGhlBackend(url) && !NOISE_RE.test(url) && Object.keys(capturedAuthHeaders).length === 0) {
+      const allHeaders = extractFetchHeaders(init);
+      const AUTH_KEYS = /^(authorization|token-id|channel|source|version|x-api-key|x-location-id)$/i;
+      const authOnly = Object.fromEntries(Object.entries(allHeaders).filter(([k]) => AUTH_KEYS.test(k)));
+      if (Object.keys(authOnly).length > 0) {
+        capturedAuthHeaders = authOnly;
+        console.log("[CF] Captured auth headers (GET fallback):", Object.keys(authOnly).join(", "));
+      }
     }
 
     const response = await _origFetch.apply(this, args);
@@ -441,7 +454,8 @@
     }
 
     console.log("[CF-DIAG] capturedPutFullUrl:", capturedPutFullUrl ?? "none — save once in GHL to enable capture-replay");
-    console.log("[CF-DIAG] capturedPutHeaders count:", Object.keys(capturedPutHeaders).length);
+    console.log("[CF-DIAG] capturedPutHeaders count:", Object.keys(capturedPutHeaders).length,
+      "| capturedAuthHeaders count:", Object.keys(capturedAuthHeaders).length);
     console.log("[CF-DIAG] saveMarkTs:", saveMarkTs ? new Date(saveMarkTs).toISOString() : "none");
   }, 3000);
 
@@ -646,10 +660,15 @@
       return replyPrebuilt({ ok: false, error: "No sections in page data." });
     }
 
-    if (!capturedPutHeaders || Object.keys(capturedPutHeaders).length === 0) {
+    // Prefer full write-request headers; fall back to auth-only headers captured from GETs.
+    const headersToUse = Object.keys(capturedPutHeaders).length > 0
+      ? capturedPutHeaders
+      : capturedAuthHeaders;
+
+    if (!headersToUse || Object.keys(headersToUse).length === 0) {
       return replyPrebuilt({
         ok: false,
-        error: "No auth headers captured yet — open any GHL page (e.g. Contacts), wait a moment for network activity, then try again.",
+        error: "No GHL auth headers captured yet — navigate to any GHL page (e.g. Contacts or Dashboard) and wait a moment, then try again.",
       });
     }
 
@@ -711,7 +730,7 @@
         try {
           const resp = await _origFetch(url, {
             method: "POST",
-            headers: { ...capturedPutHeaders, "Content-Type": "application/json" },
+            headers: { ...headersToUse, "Content-Type": "application/json" },
             body,
           });
           if (resp.ok || resp.status === 200 || resp.status === 201) {
