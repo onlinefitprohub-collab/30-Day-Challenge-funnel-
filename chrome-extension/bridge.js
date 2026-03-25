@@ -1,4 +1,4 @@
-// bridge.js v2.5.6 — Injected into the HighLevel page (MAIN world).
+// bridge.js v2.5.7 — Injected into the HighLevel page (MAIN world).
 // Detects the page-builder context from the URL / window globals,
 // and executes the actual GHL injection using either:
 //   A) "capture-replay": intercepts GHL's own save request (URL + auth headers)
@@ -526,6 +526,33 @@
     throw err;
   }
 
+  async function revexPost(path, body) {
+    const revex = await waitForRevex(4000);
+    if (!revex) throw new Error("GHL service not ready");
+    console.log("[CF] revex POST (path-only):", path);
+    const res = await revex.post(path, body);
+    if (res?.status >= 200 && res?.status < 300) return { ok: true, data: res.data, status: res.status };
+    const err = new Error(`GHL POST ${res?.status ?? "?"}: ${path}`);
+    err.status = res?.status;
+    err.responseData = res?.data;
+    throw err;
+  }
+
+  /* ─── Fetch GHL page metadata (funnelId, stepId) via revex ────────────── */
+  async function getGhlPageInfo(pageBuilderId) {
+    try {
+      const data = await revexGet(`/funnels/page/${pageBuilderId}`);
+      return {
+        funnelId: data?.funnelId ?? null,
+        stepId:   data?.stepId ?? data?._id ?? null,
+        name:     data?.name ?? null,
+      };
+    } catch (e) {
+      console.warn("[CF] getGhlPageInfo failed:", e.message);
+      return { funnelId: null, stepId: null, name: null };
+    }
+  }
+
   /* ─── Handle CF_DO_INJECT from content.js ─────────────────────────────── */
   window.addEventListener("message", async (evt) => {
     if (evt.source !== window) return;
@@ -635,7 +662,37 @@
         }
       } else {
         console.log("[CF] No captured save request yet (capturedPutFullUrl:", capturedPutFullUrl,
-          "| headers:", Object.keys(capturedPutHeaders).length, ") — using Strategy B (revex path-only)");
+          "| headers:", Object.keys(capturedPutHeaders).length, ") — trying Strategy A.5");
+      }
+
+      // ── STRATEGY A.5: POST /funnels/builder/prebuilt-section/sync/changes ─
+      // Confirmed by CloneLevel source: this is GHL's native endpoint for injecting
+      // sections into the current builder page. Uses revex (authenticated axios).
+      // Payload: { sections, rows, columns, elements, pageId, funnelId, locationId }
+      {
+        console.log("[CF] Strategy A.5: prebuilt-section/sync/changes POST");
+        try {
+          const pageInfo = await getGhlPageInfo(pageBuilderId);
+          const syncBody = {
+            locationId: locationId || "",
+            sections:   Array.isArray(pageData.sections) ? pageData.sections : [],
+            rows:       pageData.rows    || {},
+            columns:    pageData.columns || {},
+            elements:   pageData.elements|| {},
+            ...(pageBuilderId          ? { pageId:   pageBuilderId }      : {}),
+            ...(pageInfo.funnelId      ? { funnelId: pageInfo.funnelId }  : {}),
+            ...(pageInfo.stepId        ? { stepId:   pageInfo.stepId }    : {}),
+          };
+          const syncResult = await revexPost("/funnels/builder/prebuilt-section/sync/changes", syncBody);
+          console.log("[CF] Strategy A.5 succeeded:", syncResult.status);
+          const iframe = document.querySelector('[name="funnel-builder"]');
+          if (iframe) iframe.src = iframe.src;
+          return reply(true);
+        } catch (syncErr) {
+          console.warn("[CF] Strategy A.5 failed:", syncErr.message,
+            "status:", syncErr.status ?? "?",
+            "resp:", JSON.stringify(syncErr.responseData ?? "").slice(0, 200));
+        }
       }
 
       // ── STRATEGY B: revex path-only PUT loop ─────────────────────────────
@@ -702,40 +759,31 @@
       return replyPrebuilt({ ok: false, error: "No sections in page data." });
     }
 
-    // Prefer full write-request headers; fall back to auth-only headers captured from GETs.
+    // Auth headers used as _origFetch fallback only (revexPost handles auth natively).
     const headersToUse = Object.keys(capturedPutHeaders).length > 0
       ? capturedPutHeaders
       : capturedAuthHeaders;
 
-    if (!headersToUse || Object.keys(headersToUse).length === 0) {
-      return replyPrebuilt({
-        ok: false,
-        error: "No GHL auth headers captured yet — navigate to any GHL page (e.g. Contacts or Dashboard) and wait a moment, then try again.",
-      });
+    if (Object.keys(headersToUse).length === 0) {
+      console.warn("[CF] Prebuilt: no captured auth headers — will rely on revexPost auth only.");
     }
 
     const group  = `CF Funnel \u2014 ${challengeName || "Challenge"}`;
     const locId  = locationId || "";
 
-    // Build candidate prebuilt-section URL list.
-    // capturedPrebuiltUrl is captured when the user opens the Prebuilt Sections panel (preferred).
-    // Fallback: well-known GHL endpoints tried in order — keeps the feature working without requiring panel open.
-    const BACKENDS = [
-      "https://backend.leadconnectorhq.com",
-      "https://services.leadconnectorhq.com",
-    ];
-    const PREBUILT_PATHS = [
-      "/sites/prebuilt-section",
-      "/prebuilt-section",
-      "/v1/prebuilt-section",
-      "/sites/v1/prebuilt-section",
-      "/sites/sections/prebuilt",
-      "/funnels/prebuilt-section",
-    ];
-    const PREBUILT_URLS = [
-      ...(capturedPrebuiltUrl ? [capturedPrebuiltUrl] : []),
-      ...BACKENDS.flatMap((base) => PREBUILT_PATHS.map((path) => base + path)),
-    ].filter((u, i, arr) => arr.indexOf(u) === i); // dedupe
+    // ── Resolve pageId / funnelId from current URL + GHL page API ────────────
+    // Confirmed correct endpoint (via CloneLevel source analysis):
+    //   POST /funnels/builder/prebuilt-section/sync/changes
+    // Payload: { sections, rows, columns, elements, pageId, funnelId, locationId, name }
+    const parsedBuilderUrl = parseBuilderUrl(window.location.href);
+    const currentPageId    = parsedBuilderUrl?.pageBuilderId ?? null;
+    const pageInfo         = currentPageId ? await getGhlPageInfo(currentPageId) : {};
+    const currentFunnelId  = pageInfo.funnelId ?? null;
+    const currentStepId    = pageInfo.stepId   ?? null;
+
+    console.log("[CF] Prebuilt: pageId=", currentPageId, "funnelId=", currentFunnelId, "stepId=", currentStepId);
+
+    const SYNC_PATH = "/funnels/builder/prebuilt-section/sync/changes";
 
     let succeeded = 0;
     let failed    = 0;
@@ -743,7 +791,6 @@
 
     for (let i = 0; i < pageData.sections.length; i++) {
       const section = pageData.sections[i];
-      const sectionId = section.id;
 
       // Collect all rows / columns / elements that belong to this section.
       const sectionRows = {};
@@ -769,44 +816,60 @@
       }
 
       const sectionName = `${group} \u2014 Section ${i + 1}`;
-      const body = JSON.stringify({
+
+      // Fixed body format — flat top-level fields, no "data" wrapper.
+      // Matches GHL's own prebuilt-section/sync/changes schema.
+      const syncBody = {
         name:       sectionName,
-        group,
         locationId: locId,
-        data: {
-          sections: [section],
-          rows:     sectionRows,
-          columns:  sectionCols,
-          elements: sectionEls,
-        },
-      });
+        sections:   [section],
+        rows:       sectionRows,
+        columns:    sectionCols,
+        elements:   sectionEls,
+        ...(currentPageId   ? { pageId:   currentPageId   } : {}),
+        ...(currentFunnelId ? { funnelId: currentFunnelId } : {}),
+        ...(currentStepId   ? { stepId:   currentStepId   } : {}),
+      };
 
       let posted = false;
       const sectionStatuses = [];
-      for (const url of PREBUILT_URLS) {
+
+      // Attempt 1: revexPost (path-only, authenticated via GHL's own axios)
+      try {
+        const res = await revexPost(SYNC_PATH, syncBody);
+        console.log("[CF] Prebuilt revexPost ok:", sectionName, "→", res.status);
+        succeeded++;
+        posted = true;
+      } catch (revexErr) {
+        const st = revexErr.status ?? "ERR";
+        console.warn("[CF] Prebuilt revexPost failed:", st, revexErr.message,
+          "resp:", JSON.stringify(revexErr.responseData ?? "").slice(0, 200));
+        sectionStatuses.push({ url: SYNC_PATH, status: st, err: revexErr.message });
+      }
+
+      // Attempt 2: _origFetch with captured auth headers (fallback)
+      if (!posted && Object.keys(headersToUse).length > 0) {
+        const fullUrl = "https://backend.leadconnectorhq.com" + SYNC_PATH;
         try {
           const mergedHeaders = Object.fromEntries(
             Object.entries(headersToUse).filter(([k]) => k.toLowerCase() !== "content-type")
           );
           mergedHeaders["Content-Type"] = "application/json";
-
-          const resp = await _origFetch(url, {
-            method: "POST",
-            headers: mergedHeaders,
-            body,
+          const resp = await _origFetch(fullUrl, {
+            method: "POST", headers: mergedHeaders, body: JSON.stringify(syncBody),
           });
           if (resp.ok || resp.status === 200 || resp.status === 201) {
-            console.log("[CF] Prebuilt POST ok:", sectionName, "→", resp.status);
+            console.log("[CF] Prebuilt _origFetch ok:", sectionName, "→", resp.status);
             succeeded++;
             posted = true;
-            break;
+          } else {
+            const text = await resp.text().catch(() => "");
+            console.warn("[CF] Prebuilt _origFetch returned", resp.status, text.slice(0, 300));
+            sectionStatuses.push({ url: SYNC_PATH, status: resp.status, err: text.slice(0, 100) });
           }
-          const text = await resp.text().catch(() => "");
-          console.warn("[CF] Prebuilt POST", url, "returned", resp.status, text.slice(0, 300));
-          sectionStatuses.push({ url: url.replace("https://backend.leadconnectorhq.com","").replace("https://services.leadconnectorhq.com","[svc]"), status: resp.status });
-        } catch (e) {
-          console.warn("[CF] Prebuilt POST", url, "threw:", e.message);
-          sectionStatuses.push({ url: url.slice(-40), status: "ERR", err: e.message });
+        } catch (fetchErr) {
+          console.warn("[CF] Prebuilt _origFetch threw:", fetchErr.message);
+          sectionStatuses.push({ url: SYNC_PATH, status: "ERR", err: fetchErr.message });
         }
       }
 

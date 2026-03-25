@@ -377,8 +377,9 @@
         btn.innerHTML = `<span class="inject-icon">✓</span> ${n} section${n === 1 ? "" : "s"} added!`;
         btn.classList.add("ok");
         showStatus("info",
-          `${n} section${n === 1 ? "" : "s"} added to your Prebuilt Sections panel (group: "${result.group}"). ` +
-          `In GHL left sidebar → click "Prebuilt Sections" → find your group → drag sections onto your page.`
+          `${n} section${n === 1 ? "" : "s"} sent to GHL successfully! ` +
+          `They should now appear in your page builder — reload the builder tab to see them. ` +
+          `If you don't see them on the page, check the "Prebuilt Sections" panel in the left sidebar.`
         );
       } else {
         const rawErr = result.error || "";
@@ -395,7 +396,7 @@
         } else if (status === "403" || status === 403) {
           msg = `HTTP 403 — Permission denied (captured ${authCount} auth header${authCount === 1 ? "" : "s"}). Open your browser Console (F12) → filter by "[CF]" — share those logs for further help.`;
         } else if (status === "404" || status === 404) {
-          msg = "HTTP 404 — Endpoint not found. In the GHL left sidebar, click \u201cPrebuilt Sections\u201d to open that panel — the extension will capture GHL\u2019s real endpoint automatically. Then try again.";
+          msg = "HTTP 404 — GHL builder endpoint not found. Make sure you are on the GHL page builder (the URL should contain /page-builder/). Refresh the page and try again.";
         } else if (status === "400" || status === 400 || status === "422" || status === 422) {
           msg = `HTTP ${status} — GHL rejected the data format. Open browser Console (F12), filter "[CF] Prebuilt section 1 attempt table" and share it — we\u2019ll adjust the schema to match.`;
         } else if (status === "ERR") {
