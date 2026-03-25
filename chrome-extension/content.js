@@ -1,4 +1,4 @@
-// content.js v2.9.0 — Challenge Funnel in a Box
+// content.js v2.9.3 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and saves pageData to
 //   both chrome.storage.local (cfReady) and chrome.storage.session (cf_copied_page).
 // On GHL pages: shows a minimal orange FAB. Click it to paste the copied page
@@ -61,6 +61,10 @@
     if (evt.source !== window) return;
     if (!evt.data || evt.data.source !== "cf-app") return;
     const t = evt.data.type;
+
+    if (t === "CF_PING") {
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.9.3" }, "*");
+    }
 
     if (t === "CF_GET_CAPTURED_GHL") {
       chrome.runtime.sendMessage({ type: "CF_GET_CAPTURED_GHL" }, (result) => {

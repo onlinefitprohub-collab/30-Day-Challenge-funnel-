@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.2 — GHL schema capture + inspector.");
+    console.log("[CF Funnel] Installed v2.9.3 — CF_PING detection + GHL schema capture + inspector.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.2 — CF_COPY_PAGE now captures full pageData; GHL Schema Inspector available in app.");
+    console.log("[CF Funnel] Updated to v2.9.3 — CF_PING handler in content.js fixes extension detection in GHL Inspector.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.

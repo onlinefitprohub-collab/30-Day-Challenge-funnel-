@@ -154,9 +154,9 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       clearTimeout(timeout);
       window.removeEventListener("message", onMsg);
       const payload = evt.data.payload as { ok: boolean; capturedGHLPage: CapturedGHLPage | null };
+      setExtPresent(true); // any response proves the extension is installed and running
       if (payload?.capturedGHLPage) {
         setCaptured(payload.capturedGHLPage);
-        setExtPresent(true);
       } else {
         setLoadError(
           'No GHL page captured yet. Open any GHL funnel page in the Page Builder, click the extension icon, then click "Copy Current GHL Page". Then come back here and click Load again.'
