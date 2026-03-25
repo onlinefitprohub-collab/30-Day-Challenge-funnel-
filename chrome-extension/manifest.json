@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.7.0",
-  "description": "Inject AI-generated pages into GHL builder via revex (no API key). Also clones any GHL page into your builder via clone-funnel-step.",
+  "version": "2.8.0",
+  "description": "Clone AI-generated pages and real GHL pages into your builder via a single Paste button. AI pages use revex PUT inject; real clones use clone-funnel-step.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

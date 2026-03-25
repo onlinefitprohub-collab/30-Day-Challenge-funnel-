@@ -1,6 +1,7 @@
-// content.js v2.7.0 — Challenge Funnel in a Box
+// content.js v2.8.0 — Challenge Funnel in a Box
 // Runs on GHL pages (app.gohighlevel.com) — shows a floating panel
-// with "Inject AI Page" (revex PUT) and "Paste GHL Page" (clone-funnel-step) buttons.
+// with a single "Paste into Page Builder" button that handles both AI pages
+// (revex PUT inject) and real GHL clones (clone-funnel-step).
 // Also runs on our app pages (*.replit.*) to handle CF_SAVE_PAGE.
 
 (function () {
@@ -21,6 +22,8 @@
     const { requestId, projectId, page, pageData, challengeConcept, appUrl } = evt.data.payload || {};
     if (!page || !pageData) return;
 
+    const PAGE_NAMES = { landing: "Landing Page", optin: "Opt-In Form", thankyou: "Thank You Page", booking: "Booking Page" };
+
     const ready = {
       projectId: projectId || "",
       appUrl:    appUrl || window.location.origin,
@@ -30,11 +33,25 @@
       loadedAt: Date.now(),
     };
 
+    // Also write to session storage as cf_copied_page (ai-inject type) so the
+    // unified "Paste into Page Builder" button in the floating panel can find it.
+    const sessionCopy = {
+      type:     "ai-inject",
+      page,
+      pageName: PAGE_NAMES[page] || page || "AI Page",
+      pageData,
+      projectId: projectId || "",
+      appUrl:    appUrl || window.location.origin,
+      copiedAt:  Date.now(),
+    };
+
     chrome.storage.local.set({ cfReady: ready }, () => {
-      window.postMessage(
-        { source: "cf-ext", type: "CF_SAVE_ACK", payload: { requestId, page, success: true } },
-        "*"
-      );
+      chrome.storage.session.set({ cf_copied_page: sessionCopy }, () => {
+        window.postMessage(
+          { source: "cf-ext", type: "CF_SAVE_ACK", payload: { requestId, page, success: true } },
+          "*"
+        );
+      });
     });
   });
 
@@ -236,80 +253,73 @@
   function updatePanel() {
     if (!shadow) return;
 
-    // Read both storage areas in parallel via nested callbacks
     chrome.storage.local.get(["cfReady"], (ls) => {
       chrome.storage.session.get(["cf_copied_page"], (ss) => {
-        const ready  = ls.cfReady      ?? null;
+        const ready  = ls.cfReady       ?? null;
         const copied = ss.cf_copied_page ?? null;
         const body   = shadow.getElementById("body-content");
         if (!body) return;
 
-        // ── AI inject section ───────────────────────────────────────────
-        const hasAI    = !!(ready?.pageData);
-        const canInject = hasAI && isBuilder;
-
         const PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
-        const aiLabel = hasAI ? (PAGE_LABELS[ready.page] || ready.page || "AI Page") : "";
 
-        let aiHtml = "";
-        if (hasAI) {
-          aiHtml = `
-            <div class="ai-card has-ai">
-              <strong>AI Page Loaded: ${esc(aiLabel)}</strong>
-              "${esc(ready.challengeConcept || "Challenge Funnel")}"
-            </div>
-            <button class="btn btn-inject" id="inject-btn" ${!canInject ? "disabled" : ""}>
-              ${canInject ? "✦ Inject AI Page" : "✦ Inject AI Page (need builder tab)"}
-            </button>
-          `;
-        }
+        // ── Determine what's available ──────────────────────────────────
+        const hasAiCopy     = !!(copied?.type === "ai-inject" && copied?.pageData);
+        const hasGHLCopy    = !!(copied?.funnelId && copied?.stepId);
+        const hasAIFallback = !hasAiCopy && !hasGHLCopy && !!(ready?.pageData);
+        const hasPaste      = hasAiCopy || hasGHLCopy || hasAIFallback;
+        const canPaste      = hasPaste && isBuilder;
 
-        // ── Clone/paste section ─────────────────────────────────────────
-        const hasCopy  = !!(copied?.funnelId && copied?.stepId);
-        const canPaste = hasCopy && isBuilder;
-
-        let copyHtml = "";
-        if (hasCopy) {
+        // ── Status card ─────────────────────────────────────────────────
+        let cardHtml = "";
+        if (hasGHLCopy) {
           const ago  = timeSince(copied.copiedAt);
           const name = copied.pageName || "GHL Page";
-          copyHtml = `
+          cardHtml = `
             <div class="copied-card has-copy">
               <strong>Copied: ${esc(name)}</strong>
-              Copied ${ago} — ready to paste.
-            </div>
-            <button class="btn btn-paste" id="paste-btn" ${!canPaste ? "disabled" : ""}>
-              Paste GHL Page
-            </button>
-            <button class="btn-clear" id="clear-btn">Clear copied</button>
-          `;
-        } else if (!hasAI) {
-          copyHtml = `
+              GHL clone · copied ${ago} · ready to paste.
+            </div>`;
+        } else if (hasAiCopy) {
+          const ago   = timeSince(copied.copiedAt);
+          const label = PAGE_LABELS[copied.page] || copied.pageName || "AI Page";
+          cardHtml = `
+            <div class="copied-card has-copy">
+              <strong>AI Page Ready: ${esc(label)}</strong>
+              Saved ${ago} · paste to inject into builder.
+            </div>`;
+        } else if (hasAIFallback) {
+          const label = PAGE_LABELS[ready.page] || "AI Page";
+          cardHtml = `
+            <div class="copied-card has-copy">
+              <strong>AI Page Ready: ${esc(label)}</strong>
+              Loaded via popup · paste to inject into builder.
+            </div>`;
+        } else {
+          cardHtml = `
             <div class="copied-card no-copy">
               <strong>No page loaded</strong>
-              Open the extension popup to load an AI page or copy a GHL page.
-            </div>
-          `;
+              Open the app, choose a funnel page, and click <strong>Clone to GHL</strong>.
+            </div>`;
         }
 
         // ── Builder warning ─────────────────────────────────────────────
-        const builderNote = !isBuilder && (hasAI || hasCopy)
-          ? `<div class="no-builder">Navigate to a <strong>/page-builder/</strong> URL to enable injection.</div>`
+        const builderNote = !isBuilder && hasPaste
+          ? `<div class="no-builder">Navigate to a <strong>/page-builder/</strong> URL to enable pasting.</div>`
           : "";
 
-        // ── Separator ───────────────────────────────────────────────────
-        const sep = (hasAI && hasCopy) ? `<hr class="sep">` : "";
+        // ── Clear button (only when session storage has data) ───────────
+        const clearHtml = (hasAiCopy || hasGHLCopy)
+          ? `<button class="btn-clear" id="clear-btn">Clear</button>`
+          : "";
 
         body.innerHTML = `
-          ${aiHtml}
-          ${sep}
-          ${copyHtml}
+          ${cardHtml}
+          ${hasPaste ? `<button class="btn btn-paste" id="paste-btn" ${!canPaste ? "disabled" : ""}>Paste into Page Builder</button>` : ""}
+          ${clearHtml}
           ${builderNote}
           <div class="status" id="status"></div>
         `;
 
-        if (canInject) {
-          shadow.getElementById("inject-btn").addEventListener("click", doInject);
-        }
         if (canPaste) {
           shadow.getElementById("paste-btn").addEventListener("click", doPaste);
         }
@@ -364,7 +374,7 @@
     pasting = true;
 
     const btn = shadow.getElementById("paste-btn");
-    if (btn) { btn.disabled = true; btn.textContent = "Cloning…"; }
+    if (btn) { btn.disabled = true; btn.textContent = "Pasting…"; }
     clearStatus();
 
     try {
@@ -374,7 +384,7 @@
 
       if (result?.ok) {
         if (btn) { btn.textContent = "Pasted!"; btn.classList.add("ok"); }
-        showStatus("info", "Page cloned successfully! The builder is reloading — it may take a few seconds.");
+        showStatus("info", "Page pasted successfully! The builder is reloading — your content will appear in a few seconds.");
       } else {
         const err = result?.error ?? "Unknown error";
         if (btn) { btn.textContent = "Failed"; btn.classList.add("err"); }

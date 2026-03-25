@@ -423,10 +423,56 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         // 1. Read what was copied
         const stored = await chrome.storage.session.get("cf_copied_page");
         const src    = stored.cf_copied_page;
-        if (!src?.funnelId || !src?.stepId) {
-          sendResponse({ ok: false, error: "Nothing copied yet — navigate to a GHL page and click Copy Page first" });
+
+        // ── Helper: run revex inject on the active builder tab ────────────
+        const doAIInject = async (pageData, debugLabel) => {
+          const tabId2 = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+          if (!tabId2) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+          const tab2 = await chrome.tabs.get(tabId2);
+          const m2   = (tab2.url ?? "").match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+          if (!m2) {
+            sendResponse({ ok: false, error: "Active tab is not a GHL page builder URL — navigate to the page you want to paste into, then try again" });
+            return;
+          }
+          const [, locId2, builderId2] = m2;
+          console.log("[CF] CF_PASTE_PAGE:", debugLabel, "→ builder", builderId2);
+          let r = {};
+          try {
+            const res2 = await chrome.scripting.executeScript({
+              target: { tabId: tabId2, allFrames: false },
+              world:  "MAIN",
+              func:   _cf_injectPageData,
+              args:   [builderId2, locId2, pageData],
+            });
+            r = JSON.parse(res2?.[0]?.result ?? "{}");
+          } catch(e) { r = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` }; }
+          if (r.ok) {
+            try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
+            sendResponse({ ok: true, builderId: builderId2, injectResult: r });
+          } else {
+            sendResponse({ ok: false, error: r.error ?? "inject failed" });
+          }
+        };
+
+        // ── Route A: AI-inject via session storage ────────────────────────
+        if (src?.type === "ai-inject" && src?.pageData) {
+          await doAIInject(src.pageData, "ai-inject");
           return;
         }
+
+        // ── Route B: No real GHL clone — try cfReady fallback (popup-loaded) ─
+        if (!src?.funnelId || !src?.stepId) {
+          const lsData = await chrome.storage.local.get("cfReady");
+          const ready  = lsData.cfReady;
+          if (ready?.pageData) {
+            await doAIInject(ready.pageData, "cfReady-fallback");
+            return;
+          }
+          sendResponse({ ok: false, error: "Nothing copied yet — open the app, click 'Clone to GHL' on a funnel page, then try again" });
+          return;
+        }
+
+        // ── Route C: Real GHL clone (clone-funnel-step) ───────────────────
 
         // 2. Get the active tab (must be GHL builder)
         const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
