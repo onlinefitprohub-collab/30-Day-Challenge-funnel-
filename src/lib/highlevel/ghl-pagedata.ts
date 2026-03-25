@@ -32,13 +32,78 @@ export interface GhlNode {
 }
 
 export interface GhlPageData {
+  fontsForPreview: string[];
+  general: {
+    general: {
+      colors: Array<{ label: string; value: string }>;
+      customFonts: unknown[];
+      fontsToLoad: string[];
+      fontsToLoadForPreview: string[];
+      pageStyles: string;
+    };
+  };
+  id: string;
+  pageStyles: string;
+  popups: unknown[];
   sections: GhlNode[];
   rows: Record<string, GhlNode>;
   columns: Record<string, GhlNode>;
   elements: Record<string, GhlNode>;
 }
 
-interface Builder extends GhlPageData {}
+interface Builder {
+  sections: GhlNode[];
+  rows: Record<string, GhlNode>;
+  columns: Record<string, GhlNode>;
+  elements: Record<string, GhlNode>;
+}
+
+// ── Page envelope builder ──────────────────────────────────────────────────
+
+const STANDARD_FONTS = ["Arial", "Lato", "Roboto", "Open Sans", "Oxygen", "Oswald", "Montserrat", "Manrope", "Poppins", "Bebas Neue"];
+const PREVIEW_FONTS  = ["Roboto", "Montserrat", "Bebas Neue", "Poppins"];
+
+function buildEnvelope(schemeKey: string | undefined): Omit<GhlPageData, "sections" | "rows" | "columns" | "elements"> {
+  const s = getScheme(schemeKey);
+  const pageStyles = [
+    `:root{`,
+    ` --primary:${s.primary};`,
+    ` --secondary:${s.accent};`,
+    ` --dark:${s.dark};`,
+    ` --mid:${s.mid};`,
+    ` --white:#ffffff;`,
+    ` --black:#000000;`,
+    ` --gray:#cbd5e0;`,
+    ` --transparent:transparent;`,
+    `}`,
+  ].join("\n");
+  const colors = [
+    { label: "Primary",     value: s.primary },
+    { label: "Secondary",   value: s.accent  },
+    { label: "Dark",        value: s.dark    },
+    { label: "Mid",         value: s.mid     },
+    { label: "White",       value: "#ffffff"  },
+    { label: "Gray",        value: "#cbd5e0"  },
+    { label: "Black",       value: "#000000"  },
+    { label: "Transparent", value: "transparent" },
+  ];
+  const previewFontsCss = PREVIEW_FONTS.map(f => `'${f}'`);
+  return {
+    fontsForPreview: previewFontsCss,
+    general: {
+      general: {
+        colors,
+        customFonts: [],
+        fontsToLoad: STANDARD_FONTS,
+        fontsToLoadForPreview: PREVIEW_FONTS,
+        pageStyles: `body { font-family: var(--contentfont, 'Roboto', sans-serif); }`,
+      },
+    },
+    id: Math.random().toString(36).slice(2, 14),
+    pageStyles,
+    popups: [],
+  };
+}
 
 // ── Low-level helpers ──────────────────────────────────────────────────────
 
@@ -106,7 +171,7 @@ function makeSection(children: string[], opts: SectionOpts = {}): GhlNode {
   if (opts.bgColor) styles.backgroundColor = ss(opts.bgColor);
 
   return buildNode(
-    id, "section", "section", "section", "Section",
+    id, "section", "c-section", "section", "Section",
     children,
     styles,
     { paddingTop: sv(opts.ptM ?? 48), paddingBottom: sv(opts.pbM ?? 48) },
@@ -125,7 +190,7 @@ function makeSection(children: string[], opts: SectionOpts = {}): GhlNode {
 function makeRow(children: string[], maxWidth = 1200, padH = 0): GhlNode {
   const id = ghlId("row");
   return buildNode(
-    id, "row", "row", "row", "Row",
+    id, "row", "c-row", "row", "Row",
     children,
     {
       maxWidth:     sv(maxWidth),
@@ -159,7 +224,7 @@ function makeCol(
   if (opts.valign) styles.verticalAlign   = ss(opts.valign);
 
   return buildNode(
-    id, "column", "column", "column", "Column",
+    id, "column", "c-column", "col", "Column",
     children,
     styles,
     {},
@@ -176,7 +241,7 @@ function makeHeadline(
   mobileStyles: StyleMap = {},
 ): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "heading", "heading", "Headline",
+    ghlId("el"), "element", "c-heading", "heading", "Headline",
     [],
     styles,
     mobileStyles,
@@ -186,7 +251,7 @@ function makeHeadline(
 
 function makeParagraph(text: string, styles: StyleMap, mobileStyles: StyleMap = {}): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "text", "text", "Paragraph",
+    ghlId("el"), "element", "c-paragraph", "paragraph", "Paragraph",
     [],
     styles,
     mobileStyles,
@@ -202,7 +267,7 @@ function makeButton(
   mobileStyles: StyleMap = {},
 ): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "button", "button", "Button",
+    ghlId("el"), "element", "c-button", "button", "Button",
     [],
     {
       backgroundColor: ss("#f97316"),
@@ -226,7 +291,7 @@ function makeButton(
 
 function makeForm(): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "form", "form", "Form",
+    ghlId("el"), "element", "c-form", "form", "Form",
     [], {}, {},
     { formId: ss("") },
   );
@@ -234,7 +299,7 @@ function makeForm(): GhlNode {
 
 function makeDivider(color = "rgba(255,255,255,0.1)", marginV = 12): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "divider", "divider", "Divider",
+    ghlId("el"), "element", "c-divider", "divider", "Divider",
     [],
     { borderColor: ss(color), borderWidth: sv(1), marginTop: sv(marginV), marginBottom: sv(marginV) },
     {},
@@ -243,7 +308,7 @@ function makeDivider(color = "rgba(255,255,255,0.1)", marginV = 12): GhlNode {
 
 function makeVideo(youtubeUrl: string, styles: StyleMap = {}): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "video", "video", "Video",
+    ghlId("el"), "element", "c-video", "video", "Video",
     [],
     {
       width:        sv(100, "%"),
@@ -266,7 +331,7 @@ function makeVideo(youtubeUrl: string, styles: StyleMap = {}): GhlNode {
 
 function makeCountdown(endDate: string, styles: StyleMap = {}): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "countdown", "countdown", "Countdown Timer",
+    ghlId("el"), "element", "c-countdown", "minute-timer", "Countdown Timer",
     [],
     {
       textAlign:   ss("center"),
@@ -291,7 +356,7 @@ function makeCountdown(endDate: string, styles: StyleMap = {}): GhlNode {
 
 function makeBulletList(items: string[], primary: string, styles: StyleMap = {}): GhlNode {
   return buildNode(
-    ghlId("el"), "element", "bullet-list", "bullet-list", "Bullet List",
+    ghlId("el"), "element", "c-bullet-list", "bulletList", "Bullet List",
     [],
     {
       fontSize:        sv(16),
@@ -316,6 +381,10 @@ function makeBulletList(items: string[], primary: string, styles: StyleMap = {})
 
 function createBuilder(): Builder {
   return { sections: [], rows: {}, columns: {}, elements: {} };
+}
+
+function finalize(b: Builder, schemeKey: string | undefined): GhlPageData {
+  return { ...buildEnvelope(schemeKey), ...b };
 }
 
 function el(b: Builder, n: GhlNode): string  { b.elements[n.id] = n; return n.id; }
@@ -515,7 +584,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     }));
   }
 
-  return b;
+  return finalize(b, data.colourScheme);
 }
 
 // ── OPT-IN PAGE ────────────────────────────────────────────────────────────
@@ -553,7 +622,7 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
     ptD: 88, pbD: 88, ptM: 56, pbM: 56,
   }));
 
-  return b;
+  return finalize(b, data.colourScheme);
 }
 
 // ── THANK YOU PAGE ─────────────────────────────────────────────────────────
@@ -639,7 +708,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     }));
   }
 
-  return b;
+  return finalize(b, data.colourScheme);
 }
 
 // ── BOOKING PAGE ───────────────────────────────────────────────────────────
@@ -747,7 +816,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     }));
   }
 
-  return b;
+  return finalize(b, data.colourScheme);
 }
 
 // ── All pages ──────────────────────────────────────────────────────────────

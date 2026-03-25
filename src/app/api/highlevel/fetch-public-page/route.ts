@@ -149,19 +149,29 @@ interface GhlElement {
   [key: string]: unknown;
 }
 
-interface GhlPageData {
+interface CapturedGhlPageData {
   sections: Array<{ id: string; metaData: GhlElement }>;
   rows: Record<string, { id: string; metaData: GhlElement }>;
   columns: Record<string, { id: string; metaData: GhlElement }>;
   elements: Record<string, { id: string; metaData: GhlElement }>;
 }
 
+interface Nuxt3ParseResult {
+  pageData: CapturedGhlPageData;
+  pageName: string;
+  funnelId: string;
+  stepId: string;
+  locationId: string;
+  fontsToLoad: string[];
+  popups: unknown[];
+}
+
 function wrapWithMetaData(el: GhlElement): { id: string; metaData: GhlElement } {
   return { id: el.id, metaData: { ...el, element: { ...el } } as GhlElement };
 }
 
-function buildPageDataFromElements(rawElements: unknown[]): GhlPageData {
-  const result: GhlPageData = { sections: [], rows: {}, columns: {}, elements: {} };
+function buildPageDataFromElements(rawElements: unknown[]): CapturedGhlPageData {
+  const result: CapturedGhlPageData = { sections: [], rows: {}, columns: {}, elements: {} };
   for (const raw of rawElements) {
     const el = raw as GhlElement;
     if (!el || typeof el.id !== "string") continue;
@@ -180,7 +190,11 @@ function buildPageDataFromElements(rawElements: unknown[]): GhlPageData {
   return result;
 }
 
-function tryParseNuxt3(html: string): { pageData: GhlPageData; pageName: string } | null {
+function strFromDevalue(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
+function tryParseNuxt3(html: string): Nuxt3ParseResult | null {
   // Look for <script id="__NUXT_DATA__" ...>
   const m = html.match(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
   if (!m) return null;
@@ -189,9 +203,7 @@ function tryParseNuxt3(html: string): { pageData: GhlPageData; pageName: string 
   try { arr = JSON.parse(m[1]); } catch { return null; }
   if (!Array.isArray(arr) || arr.length < 5) return null;
 
-  // Navigate: root → data object has {data: idx} → {pageData: idx} → {elements: idx}
   // We look for the pageData object by searching for a node with key "elements"
-  // that resolves to an array of GHL-shaped nodes.
   // Based on analysis: arr[4] = pageData object, arr[5] = elements array
   let pageDataIndex = -1;
   for (let i = 0; i < Math.min(arr.length, 20); i++) {
@@ -211,10 +223,28 @@ function tryParseNuxt3(html: string): { pageData: GhlPageData; pageName: string 
   const hasSections = (rawElements as GhlElement[]).some(el => el?.meta === "section" || el?.type === "section");
   if (!hasSections) return null;
 
-  const pageName = (typeof pageData.pageName === "string" ? pageData.pageName : "") ||
-                   (typeof pageData.domainName === "string" ? pageData.domainName : "");
+  const pageName   = strFromDevalue(pageData.pageName)   || strFromDevalue(pageData.domainName);
+  const funnelId   = strFromDevalue(pageData.funnelId);
+  const locationId = strFromDevalue(pageData.locationId);
+  // stepId may be a number in devalue, coerce to string
+  const rawStepId  = pageData.stepId;
+  const stepId     = rawStepId != null ? String(rawStepId) : "";
 
-  return { pageData: buildPageDataFromElements(rawElements as GhlElement[]), pageName };
+  const rawFonts = pageData.fontsToLoad;
+  const fontsToLoad = Array.isArray(rawFonts) ? (rawFonts as unknown[]).filter(f => typeof f === "string") as string[] : [];
+
+  const rawPopup = pageData.popup;
+  const popups = rawPopup != null ? [rawPopup] : [];
+
+  return {
+    pageData: buildPageDataFromElements(rawElements as GhlElement[]),
+    pageName,
+    funnelId,
+    stepId,
+    locationId,
+    fontsToLoad,
+    popups,
+  };
 }
 
 /* ── Nuxt 2 / Firebase fallback ─────────────────────────────────────────── */
@@ -287,7 +317,12 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ok: true,
       elementTree: nuxt3Result.pageData,
-      pageName: nuxt3Result.pageName,
+      pageName:    nuxt3Result.pageName,
+      funnelId:    nuxt3Result.funnelId,
+      stepId:      nuxt3Result.stepId,
+      locationId:  nuxt3Result.locationId,
+      fontsToLoad: nuxt3Result.fontsToLoad,
+      popups:      nuxt3Result.popups,
       source: "url-parse-nuxt3",
     });
   }

@@ -203,18 +203,24 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
         ok: boolean;
         elementTree?: Record<string, unknown>;
         pageName?: string;
+        funnelId?: string;
+        stepId?: string;
+        locationId?: string;
+        fontsToLoad?: string[];
+        popups?: unknown[];
+        source?: string;
         error?: string;
       };
 
       if (payload?.ok && payload.elementTree) {
         setCaptured({
           builderId:  "",
-          funnelId:   "",
-          stepId:     "",
-          locationId: "",
+          funnelId:   payload.funnelId   ?? "",
+          stepId:     payload.stepId     ?? "",
+          locationId: payload.locationId ?? "",
           pageName:   payload.pageName || new URL(trimmed).pathname,
           pageData:   payload.elementTree,
-          dataSource: "url-parse",
+          dataSource: payload.source ?? "url-parse",
           warning:    null,
           capturedAt: Date.now(),
         } as CapturedGHLPage);
