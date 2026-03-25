@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.4 — GHL Inspector now fetches real element tree from Firebase Storage.");
+    console.log("[CF Funnel] Installed v2.9.5 — GHL Inspector supports fetching from public/published GHL page URLs.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.4 — _cf_fetchFullPageData now follows pageDataDownloadUrl to get actual element tree.");
+    console.log("[CF Funnel] Updated to v2.9.5 — CF_FETCH_URL_PAGE: paste any public GHL page URL into the inspector to capture its element tree.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -796,6 +796,102 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     chrome.storage.session.remove("cf_copied_page", () => {
       sendResponse({ ok: true });
     });
+    return true;
+  }
+
+  /* ── CF_FETCH_URL_PAGE ────────────────────────────────────────────────────
+   * Fetches a public GHL page URL, extracts pageDataDownloadUrl from the
+   * embedded HTML, then fetches the actual element tree from Firebase.
+   * Works on published funnel pages (any domain) without needing revex.
+   * The background service worker has <all_urls> host_permissions so it can
+   * fetch any origin without CORS restrictions.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_FETCH_URL_PAGE") {
+    (async () => {
+      try {
+        const pageUrl = msg.url;
+        if (!pageUrl || typeof pageUrl !== "string") {
+          sendResponse({ ok: false, error: "No URL provided" });
+          return;
+        }
+
+        // 1. Fetch the page HTML
+        let html;
+        try {
+          const res = await fetch(pageUrl, {
+            credentials: "omit",
+            headers: { "Accept": "text/html,application/xhtml+xml" },
+          });
+          if (!res.ok) {
+            sendResponse({ ok: false, error: `Page returned HTTP ${res.status}. Make sure the URL is a published GHL funnel page.` });
+            return;
+          }
+          html = await res.text();
+        } catch (fetchErr) {
+          sendResponse({ ok: false, error: `Could not fetch the page: ${String(fetchErr).slice(0, 120)}` });
+          return;
+        }
+
+        // 2. Search HTML for pageDataDownloadUrl (handles JSON string escaping like \/)
+        // GHL SSR pages embed the page metadata in the Nuxt payload JSON inside a <script> tag.
+        const rawMatch = html.match(/"pageDataDownloadUrl"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (!rawMatch) {
+          sendResponse({
+            ok: false,
+            error: "Could not find page data in this URL. Make sure it is a published GHL funnel/website page with content. (Tip: the page must be published, not just saved as draft.)",
+          });
+          return;
+        }
+
+        // Unescape the JSON string value to get the real URL
+        let downloadUrl;
+        try {
+          downloadUrl = JSON.parse('"' + rawMatch[1] + '"');
+        } catch {
+          downloadUrl = rawMatch[1].replace(/\\/g, "");
+        }
+
+        // Also try to extract page name from the HTML
+        const nameMatch = html.match(/"name"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        let pageName = "";
+        try {
+          pageName = nameMatch ? JSON.parse('"' + nameMatch[1] + '"') : "";
+        } catch { pageName = nameMatch?.[1] ?? ""; }
+
+        // 3. Fetch the actual element tree from Firebase Storage
+        let elementTree;
+        try {
+          const fbRes = await fetch(downloadUrl);
+          if (!fbRes.ok) {
+            sendResponse({ ok: false, error: `Firebase Storage returned HTTP ${fbRes.status} — the page data may have expired or moved.` });
+            return;
+          }
+          elementTree = await fbRes.json();
+        } catch (fbErr) {
+          sendResponse({ ok: false, error: `Could not download element tree from Firebase: ${String(fbErr).slice(0, 100)}` });
+          return;
+        }
+
+        // 4. Store it in chrome.storage.local so CF_GET_CAPTURED_GHL returns it too
+        await chrome.storage.local.set({
+          capturedGHLPage: {
+            builderId:  "",
+            funnelId:   "",
+            stepId:     "",
+            locationId: "",
+            pageName:   pageName || new URL(pageUrl).pathname,
+            pageData:   elementTree,
+            dataSource: "url-parse",
+            warning:    null,
+            capturedAt: Date.now(),
+          },
+        });
+
+        sendResponse({ ok: true, elementTree, pageName, source: "url-parse" });
+      } catch (err) {
+        sendResponse({ ok: false, error: `CF_FETCH_URL_PAGE: ${String(err).slice(0, 200)}` });
+      }
+    })();
     return true;
   }
 

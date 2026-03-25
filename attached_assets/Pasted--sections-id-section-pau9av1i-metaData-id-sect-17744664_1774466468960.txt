@@ -1,0 +1,7391 @@
+{
+  "sections": [
+    {
+      "id": "section-pau9av1i",
+      "metaData": {
+        "id": "section-pau9av1i",
+        "_id": "section-pau9av1i",
+        "type": "section",
+        "tagName": "section",
+        "meta": "section",
+        "title": "Section",
+        "wrapper": {},
+        "child": [
+          "row-8xfnrig9"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "desktopFontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "mobileFontSize": {
+            "value": "16",
+            "unit": "px"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          },
+          "bgImage": {
+            "value": {
+              "options": "bgCover",
+              "url": "",
+              "svgCode": "",
+              "opacity": ".3",
+              "servingUrl": "",
+              "placeholderBase64": "",
+              "imageMeta": "",
+              "showSvgToggle": false,
+              "videoUrl": ""
+            }
+          }
+        },
+        "styles": {
+          "paddingTop": {
+            "value": 88,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 88,
+            "unit": "px"
+          },
+          "background": {
+            "value": "linear-gradient(160deg, #0a1f1e 0%, #0f2f2e 55%, #0a1f1e 100%)"
+          }
+        },
+        "mobileStyles": {
+          "paddingTop": {
+            "value": 56,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 56,
+            "unit": "px"
+          }
+        },
+        "class": {
+          "borders": {
+            "value": "noBorder"
+          },
+          "borderRadius": {
+            "value": "radius0"
+          }
+        },
+        "element": {
+          "id": "section-pau9av1i",
+          "_id": "section-pau9av1i",
+          "type": "section",
+          "tagName": "section",
+          "meta": "section",
+          "title": "Section",
+          "wrapper": {},
+          "child": [
+            "row-8xfnrig9"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "desktopFontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "mobileFontSize": {
+              "value": "16",
+              "unit": "px"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            },
+            "bgImage": {
+              "value": {
+                "options": "bgCover",
+                "url": "",
+                "svgCode": "",
+                "opacity": ".3",
+                "servingUrl": "",
+                "placeholderBase64": "",
+                "imageMeta": "",
+                "showSvgToggle": false,
+                "videoUrl": ""
+              }
+            }
+          },
+          "styles": {
+            "paddingTop": {
+              "value": 88,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 88,
+              "unit": "px"
+            },
+            "background": {
+              "value": "linear-gradient(160deg, #0a1f1e 0%, #0f2f2e 55%, #0a1f1e 100%)"
+            }
+          },
+          "mobileStyles": {
+            "paddingTop": {
+              "value": 56,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 56,
+              "unit": "px"
+            }
+          },
+          "class": {
+            "borders": {
+              "value": "noBorder"
+            },
+            "borderRadius": {
+              "value": "radius0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "section-bkpt9evz",
+      "metaData": {
+        "id": "section-bkpt9evz",
+        "_id": "section-bkpt9evz",
+        "type": "section",
+        "tagName": "section",
+        "meta": "section",
+        "title": "Section",
+        "wrapper": {},
+        "child": [
+          "row-7brpw6o1"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "desktopFontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "mobileFontSize": {
+            "value": "16",
+            "unit": "px"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          },
+          "bgImage": {
+            "value": {
+              "options": "bgCover",
+              "url": "",
+              "svgCode": "",
+              "opacity": ".3",
+              "servingUrl": "",
+              "placeholderBase64": "",
+              "imageMeta": "",
+              "showSvgToggle": false,
+              "videoUrl": ""
+            }
+          }
+        },
+        "styles": {
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          },
+          "backgroundColor": {
+            "value": "#0f2f2e"
+          }
+        },
+        "mobileStyles": {
+          "paddingTop": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "class": {
+          "borders": {
+            "value": "noBorder"
+          },
+          "borderRadius": {
+            "value": "radius0"
+          }
+        },
+        "element": {
+          "id": "section-bkpt9evz",
+          "_id": "section-bkpt9evz",
+          "type": "section",
+          "tagName": "section",
+          "meta": "section",
+          "title": "Section",
+          "wrapper": {},
+          "child": [
+            "row-7brpw6o1"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "desktopFontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "mobileFontSize": {
+              "value": "16",
+              "unit": "px"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            },
+            "bgImage": {
+              "value": {
+                "options": "bgCover",
+                "url": "",
+                "svgCode": "",
+                "opacity": ".3",
+                "servingUrl": "",
+                "placeholderBase64": "",
+                "imageMeta": "",
+                "showSvgToggle": false,
+                "videoUrl": ""
+              }
+            }
+          },
+          "styles": {
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            },
+            "backgroundColor": {
+              "value": "#0f2f2e"
+            }
+          },
+          "mobileStyles": {
+            "paddingTop": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 16,
+              "unit": "px"
+            }
+          },
+          "class": {
+            "borders": {
+              "value": "noBorder"
+            },
+            "borderRadius": {
+              "value": "radius0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "section-yzx8biwv",
+      "metaData": {
+        "id": "section-yzx8biwv",
+        "_id": "section-yzx8biwv",
+        "type": "section",
+        "tagName": "section",
+        "meta": "section",
+        "title": "Section",
+        "wrapper": {},
+        "child": [
+          "row-rj9v38qd",
+          "row-g9bdyp4r",
+          "row-a3ushg0h"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "desktopFontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "mobileFontSize": {
+            "value": "16",
+            "unit": "px"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          },
+          "bgImage": {
+            "value": {
+              "options": "bgCover",
+              "url": "",
+              "svgCode": "",
+              "opacity": ".3",
+              "servingUrl": "",
+              "placeholderBase64": "",
+              "imageMeta": "",
+              "showSvgToggle": false,
+              "videoUrl": ""
+            }
+          }
+        },
+        "styles": {
+          "paddingTop": {
+            "value": 88,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 88,
+            "unit": "px"
+          },
+          "backgroundColor": {
+            "value": "#ffffff"
+          }
+        },
+        "mobileStyles": {
+          "paddingTop": {
+            "value": 56,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 56,
+            "unit": "px"
+          }
+        },
+        "class": {
+          "borders": {
+            "value": "noBorder"
+          },
+          "borderRadius": {
+            "value": "radius0"
+          }
+        },
+        "element": {
+          "id": "section-yzx8biwv",
+          "_id": "section-yzx8biwv",
+          "type": "section",
+          "tagName": "section",
+          "meta": "section",
+          "title": "Section",
+          "wrapper": {},
+          "child": [
+            "row-rj9v38qd",
+            "row-g9bdyp4r",
+            "row-a3ushg0h"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "desktopFontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "mobileFontSize": {
+              "value": "16",
+              "unit": "px"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            },
+            "bgImage": {
+              "value": {
+                "options": "bgCover",
+                "url": "",
+                "svgCode": "",
+                "opacity": ".3",
+                "servingUrl": "",
+                "placeholderBase64": "",
+                "imageMeta": "",
+                "showSvgToggle": false,
+                "videoUrl": ""
+              }
+            }
+          },
+          "styles": {
+            "paddingTop": {
+              "value": 88,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 88,
+              "unit": "px"
+            },
+            "backgroundColor": {
+              "value": "#ffffff"
+            }
+          },
+          "mobileStyles": {
+            "paddingTop": {
+              "value": 56,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 56,
+              "unit": "px"
+            }
+          },
+          "class": {
+            "borders": {
+              "value": "noBorder"
+            },
+            "borderRadius": {
+              "value": "radius0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "section-q393ahyl",
+      "metaData": {
+        "id": "section-q393ahyl",
+        "_id": "section-q393ahyl",
+        "type": "section",
+        "tagName": "section",
+        "meta": "section",
+        "title": "Section",
+        "wrapper": {},
+        "child": [
+          "row-uuwj2f2g"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "desktopFontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "mobileFontSize": {
+            "value": "16",
+            "unit": "px"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          },
+          "bgImage": {
+            "value": {
+              "options": "bgCover",
+              "url": "",
+              "svgCode": "",
+              "opacity": ".3",
+              "servingUrl": "",
+              "placeholderBase64": "",
+              "imageMeta": "",
+              "showSvgToggle": false,
+              "videoUrl": ""
+            }
+          }
+        },
+        "styles": {
+          "paddingTop": {
+            "value": 72,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 80,
+            "unit": "px"
+          },
+          "backgroundColor": {
+            "value": "#f8fafc"
+          }
+        },
+        "mobileStyles": {
+          "paddingTop": {
+            "value": 48,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 56,
+            "unit": "px"
+          }
+        },
+        "class": {
+          "borders": {
+            "value": "noBorder"
+          },
+          "borderRadius": {
+            "value": "radius0"
+          }
+        },
+        "element": {
+          "id": "section-q393ahyl",
+          "_id": "section-q393ahyl",
+          "type": "section",
+          "tagName": "section",
+          "meta": "section",
+          "title": "Section",
+          "wrapper": {},
+          "child": [
+            "row-uuwj2f2g"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "desktopFontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "mobileFontSize": {
+              "value": "16",
+              "unit": "px"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            },
+            "bgImage": {
+              "value": {
+                "options": "bgCover",
+                "url": "",
+                "svgCode": "",
+                "opacity": ".3",
+                "servingUrl": "",
+                "placeholderBase64": "",
+                "imageMeta": "",
+                "showSvgToggle": false,
+                "videoUrl": ""
+              }
+            }
+          },
+          "styles": {
+            "paddingTop": {
+              "value": 72,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 80,
+              "unit": "px"
+            },
+            "backgroundColor": {
+              "value": "#f8fafc"
+            }
+          },
+          "mobileStyles": {
+            "paddingTop": {
+              "value": 48,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 56,
+              "unit": "px"
+            }
+          },
+          "class": {
+            "borders": {
+              "value": "noBorder"
+            },
+            "borderRadius": {
+              "value": "radius0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "section-ygcufffe",
+      "metaData": {
+        "id": "section-ygcufffe",
+        "_id": "section-ygcufffe",
+        "type": "section",
+        "tagName": "section",
+        "meta": "section",
+        "title": "Section",
+        "wrapper": {},
+        "child": [
+          "row-7t60px67"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "desktopFontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "mobileFontSize": {
+            "value": "16",
+            "unit": "px"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          },
+          "bgImage": {
+            "value": {
+              "options": "bgCover",
+              "url": "",
+              "svgCode": "",
+              "opacity": ".3",
+              "servingUrl": "",
+              "placeholderBase64": "",
+              "imageMeta": "",
+              "showSvgToggle": false,
+              "videoUrl": ""
+            }
+          }
+        },
+        "styles": {
+          "paddingTop": {
+            "value": 88,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 88,
+            "unit": "px"
+          },
+          "background": {
+            "value": "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
+          }
+        },
+        "mobileStyles": {
+          "paddingTop": {
+            "value": 48,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 48,
+            "unit": "px"
+          }
+        },
+        "class": {
+          "borders": {
+            "value": "noBorder"
+          },
+          "borderRadius": {
+            "value": "radius0"
+          }
+        },
+        "element": {
+          "id": "section-ygcufffe",
+          "_id": "section-ygcufffe",
+          "type": "section",
+          "tagName": "section",
+          "meta": "section",
+          "title": "Section",
+          "wrapper": {},
+          "child": [
+            "row-7t60px67"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "desktopFontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "mobileFontSize": {
+              "value": "16",
+              "unit": "px"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            },
+            "bgImage": {
+              "value": {
+                "options": "bgCover",
+                "url": "",
+                "svgCode": "",
+                "opacity": ".3",
+                "servingUrl": "",
+                "placeholderBase64": "",
+                "imageMeta": "",
+                "showSvgToggle": false,
+                "videoUrl": ""
+              }
+            }
+          },
+          "styles": {
+            "paddingTop": {
+              "value": 88,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 88,
+              "unit": "px"
+            },
+            "background": {
+              "value": "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
+            }
+          },
+          "mobileStyles": {
+            "paddingTop": {
+              "value": 48,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 48,
+              "unit": "px"
+            }
+          },
+          "class": {
+            "borders": {
+              "value": "noBorder"
+            },
+            "borderRadius": {
+              "value": "radius0"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "rows": {
+    "row-8xfnrig9": {
+      "id": "row-8xfnrig9",
+      "metaData": {
+        "id": "row-8xfnrig9",
+        "_id": "row-8xfnrig9",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-cl9fq85a",
+          "col-1sreebgr"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 1200,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 0,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-8xfnrig9",
+          "_id": "row-8xfnrig9",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-cl9fq85a",
+            "col-1sreebgr"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 1200,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 0,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "row-7brpw6o1": {
+      "id": "row-7brpw6o1",
+      "metaData": {
+        "id": "row-7brpw6o1",
+        "_id": "row-7brpw6o1",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-z65nlmak",
+          "col-wnykfvsf",
+          "col-d3s2oc46",
+          "col-bz678cmn",
+          "col-sg1vmyto"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 1200,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-7brpw6o1",
+          "_id": "row-7brpw6o1",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-z65nlmak",
+            "col-wnykfvsf",
+            "col-d3s2oc46",
+            "col-bz678cmn",
+            "col-sg1vmyto"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 1200,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "row-rj9v38qd": {
+      "id": "row-rj9v38qd",
+      "metaData": {
+        "id": "row-rj9v38qd",
+        "_id": "row-rj9v38qd",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-y5yecub5"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 800,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 0,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-rj9v38qd",
+          "_id": "row-rj9v38qd",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-y5yecub5"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 800,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 0,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "row-g9bdyp4r": {
+      "id": "row-g9bdyp4r",
+      "metaData": {
+        "id": "row-g9bdyp4r",
+        "_id": "row-g9bdyp4r",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-vsyytyo4",
+          "col-xyqr4u7q",
+          "col-lqxelphs"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 1200,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 0,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-g9bdyp4r",
+          "_id": "row-g9bdyp4r",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-vsyytyo4",
+            "col-xyqr4u7q",
+            "col-lqxelphs"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 1200,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 0,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "row-a3ushg0h": {
+      "id": "row-a3ushg0h",
+      "metaData": {
+        "id": "row-a3ushg0h",
+        "_id": "row-a3ushg0h",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-8o1cix5s",
+          "col-h1gfmtqg",
+          "col-z1a99tkk"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 1200,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 0,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-a3ushg0h",
+          "_id": "row-a3ushg0h",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-8o1cix5s",
+            "col-h1gfmtqg",
+            "col-z1a99tkk"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 1200,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 0,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "row-uuwj2f2g": {
+      "id": "row-uuwj2f2g",
+      "metaData": {
+        "id": "row-uuwj2f2g",
+        "_id": "row-uuwj2f2g",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-okvsbm5n"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 680,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-uuwj2f2g",
+          "_id": "row-uuwj2f2g",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-okvsbm5n"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 680,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "row-7t60px67": {
+      "id": "row-7t60px67",
+      "metaData": {
+        "id": "row-7t60px67",
+        "_id": "row-7t60px67",
+        "type": "row",
+        "tagName": "row",
+        "meta": "row",
+        "title": "Row",
+        "wrapper": {},
+        "child": [
+          "col-2ouice12"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "maxWidth": {
+            "value": 640,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 0,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "row-7t60px67",
+          "_id": "row-7t60px67",
+          "type": "row",
+          "tagName": "row",
+          "meta": "row",
+          "title": "Row",
+          "wrapper": {},
+          "child": [
+            "col-2ouice12"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "maxWidth": {
+              "value": 640,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 0,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    }
+  },
+  "columns": {
+    "col-cl9fq85a": {
+      "id": "col-cl9fq85a",
+      "metaData": {
+        "id": "col-cl9fq85a",
+        "_id": "col-cl9fq85a",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-dmccho7b",
+          "el-5g0hepgd",
+          "el-8arpm980",
+          "el-lykbahrw",
+          "el-li0u9f7x",
+          "el-5n2695d6"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 45,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 45,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "verticalAlign": {
+            "value": "middle"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-cl9fq85a",
+          "_id": "col-cl9fq85a",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-dmccho7b",
+            "el-5g0hepgd",
+            "el-8arpm980",
+            "el-lykbahrw",
+            "el-li0u9f7x",
+            "el-5n2695d6"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 45,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 45,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "verticalAlign": {
+              "value": "middle"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-1sreebgr": {
+      "id": "col-1sreebgr",
+      "metaData": {
+        "id": "col-1sreebgr",
+        "_id": "col-1sreebgr",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-hr5hvoh2",
+          "el-9ipvn1xu",
+          "el-0c63mz12",
+          "el-mwqr4lwo"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 55,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 55,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "verticalAlign": {
+            "value": "middle"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-1sreebgr",
+          "_id": "col-1sreebgr",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-hr5hvoh2",
+            "el-9ipvn1xu",
+            "el-0c63mz12",
+            "el-mwqr4lwo"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 55,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 55,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "verticalAlign": {
+              "value": "middle"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-z65nlmak": {
+      "id": "col-z65nlmak",
+      "metaData": {
+        "id": "col-z65nlmak",
+        "_id": "col-z65nlmak",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-l2nuz8f1"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-z65nlmak",
+          "_id": "col-z65nlmak",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-l2nuz8f1"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-wnykfvsf": {
+      "id": "col-wnykfvsf",
+      "metaData": {
+        "id": "col-wnykfvsf",
+        "_id": "col-wnykfvsf",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-fkdgkk49"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 4,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 4,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-wnykfvsf",
+          "_id": "col-wnykfvsf",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-fkdgkk49"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 4,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 4,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-d3s2oc46": {
+      "id": "col-d3s2oc46",
+      "metaData": {
+        "id": "col-d3s2oc46",
+        "_id": "col-d3s2oc46",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-b9bklql3"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 26,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 26,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-d3s2oc46",
+          "_id": "col-d3s2oc46",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-b9bklql3"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 26,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 26,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-bz678cmn": {
+      "id": "col-bz678cmn",
+      "metaData": {
+        "id": "col-bz678cmn",
+        "_id": "col-bz678cmn",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-hpm8h5fw"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 4,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 4,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-bz678cmn",
+          "_id": "col-bz678cmn",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-hpm8h5fw"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 4,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 4,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-sg1vmyto": {
+      "id": "col-sg1vmyto",
+      "metaData": {
+        "id": "col-sg1vmyto",
+        "_id": "col-sg1vmyto",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-lsi22ke7"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-sg1vmyto",
+          "_id": "col-sg1vmyto",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-lsi22ke7"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-y5yecub5": {
+      "id": "col-y5yecub5",
+      "metaData": {
+        "id": "col-y5yecub5",
+        "_id": "col-y5yecub5",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-66wm4ubj",
+          "el-n3uvxjfx"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 16,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-y5yecub5",
+          "_id": "col-y5yecub5",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-66wm4ubj",
+            "el-n3uvxjfx"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 16,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-vsyytyo4": {
+      "id": "col-vsyytyo4",
+      "metaData": {
+        "id": "col-vsyytyo4",
+        "_id": "col-vsyytyo4",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-71v9hlx5",
+          "el-5waoot0z"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-vsyytyo4",
+          "_id": "col-vsyytyo4",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-71v9hlx5",
+            "el-5waoot0z"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-xyqr4u7q": {
+      "id": "col-xyqr4u7q",
+      "metaData": {
+        "id": "col-xyqr4u7q",
+        "_id": "col-xyqr4u7q",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-f45oqisv",
+          "el-k1e6orc4"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-xyqr4u7q",
+          "_id": "col-xyqr4u7q",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-f45oqisv",
+            "el-k1e6orc4"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-lqxelphs": {
+      "id": "col-lqxelphs",
+      "metaData": {
+        "id": "col-lqxelphs",
+        "_id": "col-lqxelphs",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-dj6trht1",
+          "el-3qnb4k92"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-lqxelphs",
+          "_id": "col-lqxelphs",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-dj6trht1",
+            "el-3qnb4k92"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-8o1cix5s": {
+      "id": "col-8o1cix5s",
+      "metaData": {
+        "id": "col-8o1cix5s",
+        "_id": "col-8o1cix5s",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-hs9behtc",
+          "el-atvrr3yn"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-8o1cix5s",
+          "_id": "col-8o1cix5s",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-hs9behtc",
+            "el-atvrr3yn"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-h1gfmtqg": {
+      "id": "col-h1gfmtqg",
+      "metaData": {
+        "id": "col-h1gfmtqg",
+        "_id": "col-h1gfmtqg",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-e5duzxw9",
+          "el-qwiu3iwj"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-h1gfmtqg",
+          "_id": "col-h1gfmtqg",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-e5duzxw9",
+            "el-qwiu3iwj"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-z1a99tkk": {
+      "id": "col-z1a99tkk",
+      "metaData": {
+        "id": "col-z1a99tkk",
+        "_id": "col-z1a99tkk",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-froz5myy",
+          "el-m0b69c81"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 33,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 33,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 20,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-z1a99tkk",
+          "_id": "col-z1a99tkk",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-froz5myy",
+            "el-m0b69c81"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 33,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 33,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 20,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-okvsbm5n": {
+      "id": "col-okvsbm5n",
+      "metaData": {
+        "id": "col-okvsbm5n",
+        "_id": "col-okvsbm5n",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-ei8ljg4e",
+          "el-rfhzq8xr",
+          "el-lci9zn63",
+          "el-y7tvbxi5",
+          "el-cv619won",
+          "el-sobzv9w2",
+          "el-hw1lszx0",
+          "el-zppa7dcm",
+          "el-y530h2e7",
+          "el-n8tdbwif",
+          "el-vtgv3t2r",
+          "el-o0x1gl2w",
+          "el-c3vgjws4"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-okvsbm5n",
+          "_id": "col-okvsbm5n",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-ei8ljg4e",
+            "el-rfhzq8xr",
+            "el-lci9zn63",
+            "el-y7tvbxi5",
+            "el-cv619won",
+            "el-sobzv9w2",
+            "el-hw1lszx0",
+            "el-zppa7dcm",
+            "el-y530h2e7",
+            "el-n8tdbwif",
+            "el-vtgv3t2r",
+            "el-o0x1gl2w",
+            "el-c3vgjws4"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "col-2ouice12": {
+      "id": "col-2ouice12",
+      "metaData": {
+        "id": "col-2ouice12",
+        "_id": "col-2ouice12",
+        "type": "column",
+        "tagName": "column",
+        "meta": "column",
+        "title": "Column",
+        "wrapper": {},
+        "child": [
+          "el-g126iqtx",
+          "el-gdcflyck",
+          "el-ienzjl01"
+        ],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "width": {
+            "value": 100,
+            "unit": "%"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "paddingLeft": {
+            "value": 32,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 32,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 0,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 0,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "col-2ouice12",
+          "_id": "col-2ouice12",
+          "type": "column",
+          "tagName": "column",
+          "meta": "column",
+          "title": "Column",
+          "wrapper": {},
+          "child": [
+            "el-g126iqtx",
+            "el-gdcflyck",
+            "el-ienzjl01"
+          ],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "width": {
+              "value": 100,
+              "unit": "%"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "paddingLeft": {
+              "value": 32,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 32,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 0,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 0,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    }
+  },
+  "elements": {
+    "el-dmccho7b": {
+      "id": "el-dmccho7b",
+      "metaData": {
+        "id": "el-dmccho7b",
+        "_id": "el-dmccho7b",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "🔥 Limited Spots — NexGen Fitness runs a structured 30-day programme — the 30-day Fat loss challenge — led by Tom Brenchley. It's built specifically for Busy men with busy lifestyles who want to lose weight, giving participants a clear daily structure to Feel more energetic, lose weight without the guesswork of doing it alone."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 12,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "paddingBottom": {
+            "value": 16,
+            "unit": "px"
+          },
+          "letterSpacing": {
+            "value": "0.08em"
+          },
+          "textTransform": {
+            "value": "uppercase"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-dmccho7b",
+          "_id": "el-dmccho7b",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "🔥 Limited Spots — NexGen Fitness runs a structured 30-day programme — the 30-day Fat loss challenge — led by Tom Brenchley. It's built specifically for Busy men with busy lifestyles who want to lose weight, giving participants a clear daily structure to Feel more energetic, lose weight without the guesswork of doing it alone."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 12,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "paddingBottom": {
+              "value": 16,
+              "unit": "px"
+            },
+            "letterSpacing": {
+              "value": "0.08em"
+            },
+            "textTransform": {
+              "value": "uppercase"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-5g0hepgd": {
+      "id": "el-5g0hepgd",
+      "metaData": {
+        "id": "el-5g0hepgd",
+        "_id": "el-5g0hepgd",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h1"
+          },
+          "content": {
+            "value": "Feel more energetic, lose weight in 30 Days — a programme built for Busy men"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#ffffff"
+          },
+          "fontSize": {
+            "value": 46,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "lineHeight": {
+            "value": "1.1"
+          },
+          "paddingBottom": {
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {
+          "fontSize": {
+            "value": 30,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 12,
+            "unit": "px"
+          }
+        },
+        "element": {
+          "id": "el-5g0hepgd",
+          "_id": "el-5g0hepgd",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h1"
+            },
+            "content": {
+              "value": "Feel more energetic, lose weight in 30 Days — a programme built for Busy men"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#ffffff"
+            },
+            "fontSize": {
+              "value": 46,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "lineHeight": {
+              "value": "1.1"
+            },
+            "paddingBottom": {
+              "value": 16,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {
+            "fontSize": {
+              "value": 30,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "el-8arpm980": {
+      "id": "el-8arpm980",
+      "metaData": {
+        "id": "el-8arpm980",
+        "_id": "el-8arpm980",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "The 30-day Fat loss challenge with Tom Brenchley gives Busy men a structured, supported 30 days to Feel more energetic, lose weight. No overwhelm. No guesswork. Just consistent progress."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#94a3b8"
+          },
+          "fontSize": {
+            "value": 17,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.7"
+          },
+          "paddingBottom": {
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          }
+        },
+        "element": {
+          "id": "el-8arpm980",
+          "_id": "el-8arpm980",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "The 30-day Fat loss challenge with Tom Brenchley gives Busy men a structured, supported 30 days to Feel more energetic, lose weight. No overwhelm. No guesswork. Just consistent progress."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#94a3b8"
+            },
+            "fontSize": {
+              "value": 17,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.7"
+            },
+            "paddingBottom": {
+              "value": 24,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "el-lykbahrw": {
+      "id": "el-lykbahrw",
+      "metaData": {
+        "id": "el-lykbahrw",
+        "_id": "el-lykbahrw",
+        "type": "element",
+        "tagName": "bullet-list",
+        "meta": "bullet-list",
+        "title": "Bullet List",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "items": {
+            "value": [
+              {
+                "text": "Workouts — so you always know exactly what to do each day",
+                "icon": "check"
+              },
+              {
+                "text": "Weekly check-ins with Tom Brenchley — you're not doing this alone",
+                "icon": "check"
+              },
+              {
+                "text": "Feel more energetic, lose weight — the one result this programme is built around",
+                "icon": "check"
+              },
+              {
+                "text": "Fits around a full schedule — most days take under 30 minutes",
+                "icon": "check"
+              }
+            ]
+          },
+          "listType": {
+            "value": "icon"
+          },
+          "iconType": {
+            "value": "check"
+          },
+          "iconColor": {
+            "value": "#14b8a6"
+          },
+          "iconSize": {
+            "value": "18px"
+          },
+          "listItemSpacing": {
+            "value": "10px"
+          }
+        },
+        "styles": {
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "color": {
+            "value": "#e2e8f0"
+          },
+          "lineHeight": {
+            "value": "1.7"
+          },
+          "paddingBottom": {
+            "value": 28,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-lykbahrw",
+          "_id": "el-lykbahrw",
+          "type": "element",
+          "tagName": "bullet-list",
+          "meta": "bullet-list",
+          "title": "Bullet List",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "items": {
+              "value": [
+                {
+                  "text": "Workouts — so you always know exactly what to do each day",
+                  "icon": "check"
+                },
+                {
+                  "text": "Weekly check-ins with Tom Brenchley — you're not doing this alone",
+                  "icon": "check"
+                },
+                {
+                  "text": "Feel more energetic, lose weight — the one result this programme is built around",
+                  "icon": "check"
+                },
+                {
+                  "text": "Fits around a full schedule — most days take under 30 minutes",
+                  "icon": "check"
+                }
+              ]
+            },
+            "listType": {
+              "value": "icon"
+            },
+            "iconType": {
+              "value": "check"
+            },
+            "iconColor": {
+              "value": "#14b8a6"
+            },
+            "iconSize": {
+              "value": "18px"
+            },
+            "listItemSpacing": {
+              "value": "10px"
+            }
+          },
+          "styles": {
+            "fontSize": {
+              "value": 16,
+              "unit": "px"
+            },
+            "color": {
+              "value": "#e2e8f0"
+            },
+            "lineHeight": {
+              "value": "1.7"
+            },
+            "paddingBottom": {
+              "value": 28,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-li0u9f7x": {
+      "id": "el-li0u9f7x",
+      "metaData": {
+        "id": "el-li0u9f7x",
+        "_id": "el-li0u9f7x",
+        "type": "element",
+        "tagName": "button",
+        "meta": "button",
+        "title": "Button",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Join the Challenge →"
+          },
+          "action": {
+            "value": "next-step"
+          },
+          "url": {
+            "value": ""
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "backgroundColor": {
+            "value": "#14b8a6"
+          },
+          "color": {
+            "value": "#ffffff"
+          },
+          "fontSize": {
+            "value": 17,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "minHeight": {
+            "value": 54,
+            "unit": "px"
+          },
+          "borderRadius": {
+            "value": 999,
+            "unit": "px"
+          },
+          "paddingLeft": {
+            "value": 36,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 36,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 14,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 14,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "display": {
+            "value": "inline-block"
+          },
+          "boxShadow": {
+            "value": "0 12px 32px #14b8a655"
+          }
+        },
+        "mobileStyles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          }
+        },
+        "element": {
+          "id": "el-li0u9f7x",
+          "_id": "el-li0u9f7x",
+          "type": "element",
+          "tagName": "button",
+          "meta": "button",
+          "title": "Button",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Join the Challenge →"
+            },
+            "action": {
+              "value": "next-step"
+            },
+            "url": {
+              "value": ""
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "backgroundColor": {
+              "value": "#14b8a6"
+            },
+            "color": {
+              "value": "#ffffff"
+            },
+            "fontSize": {
+              "value": 17,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "minHeight": {
+              "value": 54,
+              "unit": "px"
+            },
+            "borderRadius": {
+              "value": 999,
+              "unit": "px"
+            },
+            "paddingLeft": {
+              "value": 36,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 36,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 14,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 14,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "display": {
+              "value": "inline-block"
+            },
+            "boxShadow": {
+              "value": "0 12px 32px #14b8a655"
+            }
+          },
+          "mobileStyles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            }
+          }
+        }
+      }
+    },
+    "el-5n2695d6": {
+      "id": "el-5n2695d6",
+      "metaData": {
+        "id": "el-5n2695d6",
+        "_id": "el-5n2695d6",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Cohort size: limit each intake to [X] people so Tom Brenchley can give proper attention. State the exact number available."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#f87171"
+          },
+          "fontSize": {
+            "value": 13,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "600"
+          },
+          "paddingTop": {
+            "value": 14,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-5n2695d6",
+          "_id": "el-5n2695d6",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Cohort size: limit each intake to [X] people so Tom Brenchley can give proper attention. State the exact number available."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#f87171"
+            },
+            "fontSize": {
+              "value": 13,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "600"
+            },
+            "paddingTop": {
+              "value": 14,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-hr5hvoh2": {
+      "id": "el-hr5hvoh2",
+      "metaData": {
+        "id": "el-hr5hvoh2",
+        "_id": "el-hr5hvoh2",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Challenge starts in:"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 12,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "letterSpacing": {
+            "value": "0.1em"
+          },
+          "textTransform": {
+            "value": "uppercase"
+          },
+          "paddingBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-hr5hvoh2",
+          "_id": "el-hr5hvoh2",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Challenge starts in:"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 12,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "letterSpacing": {
+              "value": "0.1em"
+            },
+            "textTransform": {
+              "value": "uppercase"
+            },
+            "paddingBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-9ipvn1xu": {
+      "id": "el-9ipvn1xu",
+      "metaData": {
+        "id": "el-9ipvn1xu",
+        "_id": "el-9ipvn1xu",
+        "type": "element",
+        "tagName": "countdown",
+        "meta": "countdown",
+        "title": "Countdown Timer",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "timerType": {
+            "value": "fixed"
+          },
+          "endDate": {
+            "value": "2026-04-01T19:20"
+          },
+          "timezone": {
+            "value": "America/New_York"
+          },
+          "expireAction": {
+            "value": "none"
+          },
+          "labelDays": {
+            "value": "Days"
+          },
+          "labelHours": {
+            "value": "Hours"
+          },
+          "labelMinutes": {
+            "value": "Minutes"
+          },
+          "labelSeconds": {
+            "value": "Seconds"
+          },
+          "displayStyle": {
+            "value": "block"
+          }
+        },
+        "styles": {
+          "textAlign": {
+            "value": "center"
+          },
+          "paddingTop": {
+            "value": 8,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-9ipvn1xu",
+          "_id": "el-9ipvn1xu",
+          "type": "element",
+          "tagName": "countdown",
+          "meta": "countdown",
+          "title": "Countdown Timer",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "timerType": {
+              "value": "fixed"
+            },
+            "endDate": {
+              "value": "2026-04-01T19:20"
+            },
+            "timezone": {
+              "value": "America/New_York"
+            },
+            "expireAction": {
+              "value": "none"
+            },
+            "labelDays": {
+              "value": "Days"
+            },
+            "labelHours": {
+              "value": "Hours"
+            },
+            "labelMinutes": {
+              "value": "Minutes"
+            },
+            "labelSeconds": {
+              "value": "Seconds"
+            },
+            "displayStyle": {
+              "value": "block"
+            }
+          },
+          "styles": {
+            "textAlign": {
+              "value": "center"
+            },
+            "paddingTop": {
+              "value": 8,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 20,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-0c63mz12": {
+      "id": "el-0c63mz12",
+      "metaData": {
+        "id": "el-0c63mz12",
+        "_id": "el-0c63mz12",
+        "type": "element",
+        "tagName": "video",
+        "meta": "video",
+        "title": "Video",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "videoType": {
+            "value": "youtube"
+          },
+          "url": {
+            "value": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          },
+          "autoplay": {
+            "value": false
+          },
+          "loop": {
+            "value": false
+          },
+          "muted": {
+            "value": false
+          },
+          "controls": {
+            "value": true
+          },
+          "aspectRatio": {
+            "value": "16:9"
+          }
+        },
+        "styles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          },
+          "borderRadius": {
+            "value": 16,
+            "unit": "px"
+          },
+          "overflow": {
+            "value": "hidden"
+          },
+          "boxShadow": {
+            "value": "0 24px 64px rgba(0,0,0,0.5)"
+          }
+        },
+        "mobileStyles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          }
+        },
+        "element": {
+          "id": "el-0c63mz12",
+          "_id": "el-0c63mz12",
+          "type": "element",
+          "tagName": "video",
+          "meta": "video",
+          "title": "Video",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "videoType": {
+              "value": "youtube"
+            },
+            "url": {
+              "value": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            },
+            "autoplay": {
+              "value": false
+            },
+            "loop": {
+              "value": false
+            },
+            "muted": {
+              "value": false
+            },
+            "controls": {
+              "value": true
+            },
+            "aspectRatio": {
+              "value": "16:9"
+            }
+          },
+          "styles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            },
+            "borderRadius": {
+              "value": 16,
+              "unit": "px"
+            },
+            "overflow": {
+              "value": "hidden"
+            },
+            "boxShadow": {
+              "value": "0 24px 64px rgba(0,0,0,0.5)"
+            }
+          },
+          "mobileStyles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            }
+          }
+        }
+      }
+    },
+    "el-mwqr4lwo": {
+      "id": "el-mwqr4lwo",
+      "metaData": {
+        "id": "el-mwqr4lwo",
+        "_id": "el-mwqr4lwo",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "▶  Replace this video with your own challenge intro"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "rgba(148,163,184,0.6)"
+          },
+          "fontSize": {
+            "value": 11,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "paddingTop": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-mwqr4lwo",
+          "_id": "el-mwqr4lwo",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "▶  Replace this video with your own challenge intro"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "rgba(148,163,184,0.6)"
+            },
+            "fontSize": {
+              "value": 11,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "paddingTop": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-l2nuz8f1": {
+      "id": "el-l2nuz8f1",
+      "metaData": {
+        "id": "el-l2nuz8f1",
+        "_id": "el-l2nuz8f1",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "⭐⭐⭐⭐⭐  500+ coaches launched"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#94a3b8"
+          },
+          "fontSize": {
+            "value": 13,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-l2nuz8f1",
+          "_id": "el-l2nuz8f1",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "⭐⭐⭐⭐⭐  500+ coaches launched"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#94a3b8"
+            },
+            "fontSize": {
+              "value": 13,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-fkdgkk49": {
+      "id": "el-fkdgkk49",
+      "metaData": {
+        "id": "el-fkdgkk49",
+        "_id": "el-fkdgkk49",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "·"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "rgba(255,255,255,0.2)"
+          },
+          "fontSize": {
+            "value": 20,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-fkdgkk49",
+          "_id": "el-fkdgkk49",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "·"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "rgba(255,255,255,0.2)"
+            },
+            "fontSize": {
+              "value": 20,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-b9bklql3": {
+      "id": "el-b9bklql3",
+      "metaData": {
+        "id": "el-b9bklql3",
+        "_id": "el-b9bklql3",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓  In 30 days, you'll Feel more energetic, lose weight — with a daily plan, accountability from Tom Brenchley, and a group behind you."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#94a3b8"
+          },
+          "fontSize": {
+            "value": 13,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-b9bklql3",
+          "_id": "el-b9bklql3",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓  In 30 days, you'll Feel more energetic, lose weight — with a daily plan, accountability from Tom Brenchley, and a group behind you."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#94a3b8"
+            },
+            "fontSize": {
+              "value": 13,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-hpm8h5fw": {
+      "id": "el-hpm8h5fw",
+      "metaData": {
+        "id": "el-hpm8h5fw",
+        "_id": "el-hpm8h5fw",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "·"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "rgba(255,255,255,0.2)"
+          },
+          "fontSize": {
+            "value": 20,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-hpm8h5fw",
+          "_id": "el-hpm8h5fw",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "·"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "rgba(255,255,255,0.2)"
+            },
+            "fontSize": {
+              "value": 20,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-lsi22ke7": {
+      "id": "el-lsi22ke7",
+      "metaData": {
+        "id": "el-lsi22ke7",
+        "_id": "el-lsi22ke7",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓  No credit card required"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#94a3b8"
+          },
+          "fontSize": {
+            "value": 13,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-lsi22ke7",
+          "_id": "el-lsi22ke7",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓  No credit card required"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#94a3b8"
+            },
+            "fontSize": {
+              "value": 13,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-66wm4ubj": {
+      "id": "el-66wm4ubj",
+      "metaData": {
+        "id": "el-66wm4ubj",
+        "_id": "el-66wm4ubj",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "What You'll Get"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 11,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "letterSpacing": {
+            "value": "0.12em"
+          },
+          "textTransform": {
+            "value": "uppercase"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-66wm4ubj",
+          "_id": "el-66wm4ubj",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "What You'll Get"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 11,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "letterSpacing": {
+              "value": "0.12em"
+            },
+            "textTransform": {
+              "value": "uppercase"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-n3uvxjfx": {
+      "id": "el-n3uvxjfx",
+      "metaData": {
+        "id": "el-n3uvxjfx",
+        "_id": "el-n3uvxjfx",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h2"
+          },
+          "content": {
+            "value": "Everything included in your free challenge"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#111827"
+          },
+          "fontSize": {
+            "value": 36,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "800"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "lineHeight": {
+            "value": "1.2"
+          },
+          "paddingBottom": {
+            "value": 48,
+            "unit": "px"
+          },
+          "maxWidth": {
+            "value": 640,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          }
+        },
+        "mobileStyles": {
+          "fontSize": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 32,
+            "unit": "px"
+          }
+        },
+        "element": {
+          "id": "el-n3uvxjfx",
+          "_id": "el-n3uvxjfx",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h2"
+            },
+            "content": {
+              "value": "Everything included in your free challenge"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#111827"
+            },
+            "fontSize": {
+              "value": 36,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "800"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "lineHeight": {
+              "value": "1.2"
+            },
+            "paddingBottom": {
+              "value": 48,
+              "unit": "px"
+            },
+            "maxWidth": {
+              "value": 640,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            }
+          },
+          "mobileStyles": {
+            "fontSize": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 32,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "el-71v9hlx5": {
+      "id": "el-71v9hlx5",
+      "metaData": {
+        "id": "el-71v9hlx5",
+        "_id": "el-71v9hlx5",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-71v9hlx5",
+          "_id": "el-71v9hlx5",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-5waoot0z": {
+      "id": "el-5waoot0z",
+      "metaData": {
+        "id": "el-5waoot0z",
+        "_id": "el-5waoot0z",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Workouts — so you always know exactly what to do each day"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#374151"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.6"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-5waoot0z",
+          "_id": "el-5waoot0z",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Workouts — so you always know exactly what to do each day"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#374151"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.6"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-f45oqisv": {
+      "id": "el-f45oqisv",
+      "metaData": {
+        "id": "el-f45oqisv",
+        "_id": "el-f45oqisv",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-f45oqisv",
+          "_id": "el-f45oqisv",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-k1e6orc4": {
+      "id": "el-k1e6orc4",
+      "metaData": {
+        "id": "el-k1e6orc4",
+        "_id": "el-k1e6orc4",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Weekly check-ins with Tom Brenchley — you're not doing this alone"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#374151"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.6"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-k1e6orc4",
+          "_id": "el-k1e6orc4",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Weekly check-ins with Tom Brenchley — you're not doing this alone"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#374151"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.6"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-dj6trht1": {
+      "id": "el-dj6trht1",
+      "metaData": {
+        "id": "el-dj6trht1",
+        "_id": "el-dj6trht1",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-dj6trht1",
+          "_id": "el-dj6trht1",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-3qnb4k92": {
+      "id": "el-3qnb4k92",
+      "metaData": {
+        "id": "el-3qnb4k92",
+        "_id": "el-3qnb4k92",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Feel more energetic, lose weight — the one result this programme is built around"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#374151"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.6"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-3qnb4k92",
+          "_id": "el-3qnb4k92",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Feel more energetic, lose weight — the one result this programme is built around"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#374151"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.6"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-hs9behtc": {
+      "id": "el-hs9behtc",
+      "metaData": {
+        "id": "el-hs9behtc",
+        "_id": "el-hs9behtc",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-hs9behtc",
+          "_id": "el-hs9behtc",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-atvrr3yn": {
+      "id": "el-atvrr3yn",
+      "metaData": {
+        "id": "el-atvrr3yn",
+        "_id": "el-atvrr3yn",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Fits around a full schedule — most days take under 30 minutes"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#374151"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.6"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-atvrr3yn",
+          "_id": "el-atvrr3yn",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Fits around a full schedule — most days take under 30 minutes"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#374151"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.6"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-e5duzxw9": {
+      "id": "el-e5duzxw9",
+      "metaData": {
+        "id": "el-e5duzxw9",
+        "_id": "el-e5duzxw9",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-e5duzxw9",
+          "_id": "el-e5duzxw9",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-qwiu3iwj": {
+      "id": "el-qwiu3iwj",
+      "metaData": {
+        "id": "el-qwiu3iwj",
+        "_id": "el-qwiu3iwj",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Private group access — accountability from people going through it with you"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#374151"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.6"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-qwiu3iwj",
+          "_id": "el-qwiu3iwj",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Private group access — accountability from people going through it with you"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#374151"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.6"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-froz5myy": {
+      "id": "el-froz5myy",
+      "metaData": {
+        "id": "el-froz5myy",
+        "_id": "el-froz5myy",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "✓"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-froz5myy",
+          "_id": "el-froz5myy",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "✓"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-m0b69c81": {
+      "id": "el-m0b69c81",
+      "metaData": {
+        "id": "el-m0b69c81",
+        "_id": "el-m0b69c81",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Built for Busy men specifically — not a generic plan"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#374151"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.6"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-m0b69c81",
+          "_id": "el-m0b69c81",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Built for Busy men specifically — not a generic plan"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#374151"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.6"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-ei8ljg4e": {
+      "id": "el-ei8ljg4e",
+      "metaData": {
+        "id": "el-ei8ljg4e",
+        "_id": "el-ei8ljg4e",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h2"
+          },
+          "content": {
+            "value": "Frequently Asked Questions"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#111827"
+          },
+          "fontSize": {
+            "value": 30,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "lineHeight": {
+            "value": "1.2"
+          },
+          "paddingBottom": {
+            "value": 44,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {
+          "fontSize": {
+            "value": 22,
+            "unit": "px"
+          }
+        },
+        "element": {
+          "id": "el-ei8ljg4e",
+          "_id": "el-ei8ljg4e",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h2"
+            },
+            "content": {
+              "value": "Frequently Asked Questions"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#111827"
+            },
+            "fontSize": {
+              "value": 30,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "lineHeight": {
+              "value": "1.2"
+            },
+            "paddingBottom": {
+              "value": 44,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {
+            "fontSize": {
+              "value": 22,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "el-rfhzq8xr": {
+      "id": "el-rfhzq8xr",
+      "metaData": {
+        "id": "el-rfhzq8xr",
+        "_id": "el-rfhzq8xr",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h3"
+          },
+          "content": {
+            "value": "I've tried things like this before and stopped — what makes this different?"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#111827"
+          },
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "paddingTop": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-rfhzq8xr",
+          "_id": "el-rfhzq8xr",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h3"
+            },
+            "content": {
+              "value": "I've tried things like this before and stopped — what makes this different?"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#111827"
+            },
+            "fontSize": {
+              "value": 16,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "paddingTop": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-lci9zn63": {
+      "id": "el-lci9zn63",
+      "metaData": {
+        "id": "el-lci9zn63",
+        "_id": "el-lci9zn63",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Most programmes fail because there's no structure and no one checking in. This challenge gives you a daily plan and Tom Brenchley is actively involved throughout — you're not left to figure it out on your own."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#6b7280"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.7"
+          },
+          "paddingBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-lci9zn63",
+          "_id": "el-lci9zn63",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Most programmes fail because there's no structure and no one checking in. This challenge gives you a daily plan and Tom Brenchley is actively involved throughout — you're not left to figure it out on your own."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#6b7280"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.7"
+            },
+            "paddingBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-y7tvbxi5": {
+      "id": "el-y7tvbxi5",
+      "metaData": {
+        "id": "el-y7tvbxi5",
+        "_id": "el-y7tvbxi5",
+        "type": "element",
+        "tagName": "divider",
+        "meta": "divider",
+        "title": "Divider",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "borderColor": {
+            "value": "#e5e7eb"
+          },
+          "borderWidth": {
+            "value": 1,
+            "unit": "px"
+          },
+          "marginTop": {
+            "value": 4,
+            "unit": "px"
+          },
+          "marginBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-y7tvbxi5",
+          "_id": "el-y7tvbxi5",
+          "type": "element",
+          "tagName": "divider",
+          "meta": "divider",
+          "title": "Divider",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "borderColor": {
+              "value": "#e5e7eb"
+            },
+            "borderWidth": {
+              "value": 1,
+              "unit": "px"
+            },
+            "marginTop": {
+              "value": 4,
+              "unit": "px"
+            },
+            "marginBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-cv619won": {
+      "id": "el-cv619won",
+      "metaData": {
+        "id": "el-cv619won",
+        "_id": "el-cv619won",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h3"
+          },
+          "content": {
+            "value": "How much time does it take each day?"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#111827"
+          },
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "paddingTop": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-cv619won",
+          "_id": "el-cv619won",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h3"
+            },
+            "content": {
+              "value": "How much time does it take each day?"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#111827"
+            },
+            "fontSize": {
+              "value": 16,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "paddingTop": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-sobzv9w2": {
+      "id": "el-sobzv9w2",
+      "metaData": {
+        "id": "el-sobzv9w2",
+        "_id": "el-sobzv9w2",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Most days require 20–30 minutes. The programme is designed around a busy schedule — not an idealised one."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#6b7280"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.7"
+          },
+          "paddingBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-sobzv9w2",
+          "_id": "el-sobzv9w2",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Most days require 20–30 minutes. The programme is designed around a busy schedule — not an idealised one."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#6b7280"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.7"
+            },
+            "paddingBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-hw1lszx0": {
+      "id": "el-hw1lszx0",
+      "metaData": {
+        "id": "el-hw1lszx0",
+        "_id": "el-hw1lszx0",
+        "type": "element",
+        "tagName": "divider",
+        "meta": "divider",
+        "title": "Divider",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "borderColor": {
+            "value": "#e5e7eb"
+          },
+          "borderWidth": {
+            "value": 1,
+            "unit": "px"
+          },
+          "marginTop": {
+            "value": 4,
+            "unit": "px"
+          },
+          "marginBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-hw1lszx0",
+          "_id": "el-hw1lszx0",
+          "type": "element",
+          "tagName": "divider",
+          "meta": "divider",
+          "title": "Divider",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "borderColor": {
+              "value": "#e5e7eb"
+            },
+            "borderWidth": {
+              "value": 1,
+              "unit": "px"
+            },
+            "marginTop": {
+              "value": 4,
+              "unit": "px"
+            },
+            "marginBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-zppa7dcm": {
+      "id": "el-zppa7dcm",
+      "metaData": {
+        "id": "el-zppa7dcm",
+        "_id": "el-zppa7dcm",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h3"
+          },
+          "content": {
+            "value": "Dont have time — is this still for me?"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#111827"
+          },
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "paddingTop": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-zppa7dcm",
+          "_id": "el-zppa7dcm",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h3"
+            },
+            "content": {
+              "value": "Dont have time — is this still for me?"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#111827"
+            },
+            "fontSize": {
+              "value": 16,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "paddingTop": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-y530h2e7": {
+      "id": "el-y530h2e7",
+      "metaData": {
+        "id": "el-y530h2e7",
+        "_id": "el-y530h2e7",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Yes — and you're not alone in feeling that. Tom Brenchley has worked with plenty of people in exactly that situation. The challenge is built to work around real constraints, not ignore them."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#6b7280"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.7"
+          },
+          "paddingBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-y530h2e7",
+          "_id": "el-y530h2e7",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Yes — and you're not alone in feeling that. Tom Brenchley has worked with plenty of people in exactly that situation. The challenge is built to work around real constraints, not ignore them."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#6b7280"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.7"
+            },
+            "paddingBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-n8tdbwif": {
+      "id": "el-n8tdbwif",
+      "metaData": {
+        "id": "el-n8tdbwif",
+        "_id": "el-n8tdbwif",
+        "type": "element",
+        "tagName": "divider",
+        "meta": "divider",
+        "title": "Divider",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "borderColor": {
+            "value": "#e5e7eb"
+          },
+          "borderWidth": {
+            "value": 1,
+            "unit": "px"
+          },
+          "marginTop": {
+            "value": 4,
+            "unit": "px"
+          },
+          "marginBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-n8tdbwif",
+          "_id": "el-n8tdbwif",
+          "type": "element",
+          "tagName": "divider",
+          "meta": "divider",
+          "title": "Divider",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "borderColor": {
+              "value": "#e5e7eb"
+            },
+            "borderWidth": {
+              "value": 1,
+              "unit": "px"
+            },
+            "marginTop": {
+              "value": 4,
+              "unit": "px"
+            },
+            "marginBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-vtgv3t2r": {
+      "id": "el-vtgv3t2r",
+      "metaData": {
+        "id": "el-vtgv3t2r",
+        "_id": "el-vtgv3t2r",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h3"
+          },
+          "content": {
+            "value": "What happens after the 30 days?"
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#111827"
+          },
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "paddingTop": {
+            "value": 24,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-vtgv3t2r",
+          "_id": "el-vtgv3t2r",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h3"
+            },
+            "content": {
+              "value": "What happens after the 30 days?"
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#111827"
+            },
+            "fontSize": {
+              "value": 16,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "paddingTop": {
+              "value": 24,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-o0x1gl2w": {
+      "id": "el-o0x1gl2w",
+      "metaData": {
+        "id": "el-o0x1gl2w",
+        "_id": "el-o0x1gl2w",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "You'll have a working routine, visible results, and a clear sense of what works for your body and schedule. Tom Brenchley will share options for continuing if you want to keep going."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#6b7280"
+          },
+          "fontSize": {
+            "value": 15,
+            "unit": "px"
+          },
+          "lineHeight": {
+            "value": "1.7"
+          },
+          "paddingBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-o0x1gl2w",
+          "_id": "el-o0x1gl2w",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "You'll have a working routine, visible results, and a clear sense of what works for your body and schedule. Tom Brenchley will share options for continuing if you want to keep going."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#6b7280"
+            },
+            "fontSize": {
+              "value": 15,
+              "unit": "px"
+            },
+            "lineHeight": {
+              "value": "1.7"
+            },
+            "paddingBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-c3vgjws4": {
+      "id": "el-c3vgjws4",
+      "metaData": {
+        "id": "el-c3vgjws4",
+        "_id": "el-c3vgjws4",
+        "type": "element",
+        "tagName": "divider",
+        "meta": "divider",
+        "title": "Divider",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          }
+        },
+        "styles": {
+          "borderColor": {
+            "value": "#e5e7eb"
+          },
+          "borderWidth": {
+            "value": 1,
+            "unit": "px"
+          },
+          "marginTop": {
+            "value": 4,
+            "unit": "px"
+          },
+          "marginBottom": {
+            "value": 4,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-c3vgjws4",
+          "_id": "el-c3vgjws4",
+          "type": "element",
+          "tagName": "divider",
+          "meta": "divider",
+          "title": "Divider",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            }
+          },
+          "styles": {
+            "borderColor": {
+              "value": "#e5e7eb"
+            },
+            "borderWidth": {
+              "value": 1,
+              "unit": "px"
+            },
+            "marginTop": {
+              "value": 4,
+              "unit": "px"
+            },
+            "marginBottom": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-g126iqtx": {
+      "id": "el-g126iqtx",
+      "metaData": {
+        "id": "el-g126iqtx",
+        "_id": "el-g126iqtx",
+        "type": "element",
+        "tagName": "heading",
+        "meta": "heading",
+        "title": "Headline",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "tag": {
+            "value": "h2"
+          },
+          "content": {
+            "value": "Ready to start? Spots are limited."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "#ffffff"
+          },
+          "fontSize": {
+            "value": 40,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "900"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "lineHeight": {
+            "value": "1.12"
+          },
+          "paddingBottom": {
+            "value": 16,
+            "unit": "px"
+          },
+          "maxWidth": {
+            "value": 600,
+            "unit": "px"
+          },
+          "marginLeft": {
+            "value": "auto"
+          },
+          "marginRight": {
+            "value": "auto"
+          }
+        },
+        "mobileStyles": {
+          "fontSize": {
+            "value": 26,
+            "unit": "px"
+          }
+        },
+        "element": {
+          "id": "el-g126iqtx",
+          "_id": "el-g126iqtx",
+          "type": "element",
+          "tagName": "heading",
+          "meta": "heading",
+          "title": "Headline",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "tag": {
+              "value": "h2"
+            },
+            "content": {
+              "value": "Ready to start? Spots are limited."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "#ffffff"
+            },
+            "fontSize": {
+              "value": 40,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "900"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "lineHeight": {
+              "value": "1.12"
+            },
+            "paddingBottom": {
+              "value": 16,
+              "unit": "px"
+            },
+            "maxWidth": {
+              "value": 600,
+              "unit": "px"
+            },
+            "marginLeft": {
+              "value": "auto"
+            },
+            "marginRight": {
+              "value": "auto"
+            }
+          },
+          "mobileStyles": {
+            "fontSize": {
+              "value": 26,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "el-gdcflyck": {
+      "id": "el-gdcflyck",
+      "metaData": {
+        "id": "el-gdcflyck",
+        "_id": "el-gdcflyck",
+        "type": "element",
+        "tagName": "text",
+        "meta": "text",
+        "title": "Paragraph",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Start date: registrations close [DATE]. Build a countdown on the page in the final 48 hours."
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "color": {
+            "value": "rgba(255,255,255,0.82)"
+          },
+          "fontSize": {
+            "value": 17,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "paddingBottom": {
+            "value": 36,
+            "unit": "px"
+          }
+        },
+        "mobileStyles": {},
+        "element": {
+          "id": "el-gdcflyck",
+          "_id": "el-gdcflyck",
+          "type": "element",
+          "tagName": "text",
+          "meta": "text",
+          "title": "Paragraph",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Start date: registrations close [DATE]. Build a countdown on the page in the final 48 hours."
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "color": {
+              "value": "rgba(255,255,255,0.82)"
+            },
+            "fontSize": {
+              "value": 17,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "paddingBottom": {
+              "value": 36,
+              "unit": "px"
+            }
+          },
+          "mobileStyles": {}
+        }
+      }
+    },
+    "el-ienzjl01": {
+      "id": "el-ienzjl01",
+      "metaData": {
+        "id": "el-ienzjl01",
+        "_id": "el-ienzjl01",
+        "type": "element",
+        "tagName": "button",
+        "meta": "button",
+        "title": "Button",
+        "wrapper": {},
+        "child": [],
+        "extra": {
+          "visibility": {
+            "value": {
+              "hideMobile": false,
+              "hideDesktop": false
+            }
+          },
+          "content": {
+            "value": "Join the Challenge →"
+          },
+          "action": {
+            "value": "next-step"
+          },
+          "url": {
+            "value": ""
+          },
+          "typography": {
+            "value": "var(--contentfont)"
+          }
+        },
+        "styles": {
+          "backgroundColor": {
+            "value": "#ffffff"
+          },
+          "color": {
+            "value": "#14b8a6"
+          },
+          "fontSize": {
+            "value": 17,
+            "unit": "px"
+          },
+          "fontWeight": {
+            "value": "700"
+          },
+          "minHeight": {
+            "value": 54,
+            "unit": "px"
+          },
+          "borderRadius": {
+            "value": 999,
+            "unit": "px"
+          },
+          "paddingLeft": {
+            "value": 36,
+            "unit": "px"
+          },
+          "paddingRight": {
+            "value": 36,
+            "unit": "px"
+          },
+          "paddingTop": {
+            "value": 14,
+            "unit": "px"
+          },
+          "paddingBottom": {
+            "value": 14,
+            "unit": "px"
+          },
+          "textAlign": {
+            "value": "center"
+          },
+          "display": {
+            "value": "inline-block"
+          },
+          "boxShadow": {
+            "value": "0 8px 24px rgba(0,0,0,0.18)"
+          }
+        },
+        "mobileStyles": {
+          "width": {
+            "value": 100,
+            "unit": "%"
+          }
+        },
+        "element": {
+          "id": "el-ienzjl01",
+          "_id": "el-ienzjl01",
+          "type": "element",
+          "tagName": "button",
+          "meta": "button",
+          "title": "Button",
+          "wrapper": {},
+          "child": [],
+          "extra": {
+            "visibility": {
+              "value": {
+                "hideMobile": false,
+                "hideDesktop": false
+              }
+            },
+            "content": {
+              "value": "Join the Challenge →"
+            },
+            "action": {
+              "value": "next-step"
+            },
+            "url": {
+              "value": ""
+            },
+            "typography": {
+              "value": "var(--contentfont)"
+            }
+          },
+          "styles": {
+            "backgroundColor": {
+              "value": "#ffffff"
+            },
+            "color": {
+              "value": "#14b8a6"
+            },
+            "fontSize": {
+              "value": 17,
+              "unit": "px"
+            },
+            "fontWeight": {
+              "value": "700"
+            },
+            "minHeight": {
+              "value": 54,
+              "unit": "px"
+            },
+            "borderRadius": {
+              "value": 999,
+              "unit": "px"
+            },
+            "paddingLeft": {
+              "value": 36,
+              "unit": "px"
+            },
+            "paddingRight": {
+              "value": 36,
+              "unit": "px"
+            },
+            "paddingTop": {
+              "value": 14,
+              "unit": "px"
+            },
+            "paddingBottom": {
+              "value": 14,
+              "unit": "px"
+            },
+            "textAlign": {
+              "value": "center"
+            },
+            "display": {
+              "value": "inline-block"
+            },
+            "boxShadow": {
+              "value": "0 8px 24px rgba(0,0,0,0.18)"
+            }
+          },
+          "mobileStyles": {
+            "width": {
+              "value": 100,
+              "unit": "%"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -98,7 +98,7 @@ interface CapturedGHLPage {
   locationId: string;
   pageName:   string;
   pageData:   Record<string, unknown>;
-  dataSource: "firebase" | "metadata" | "unknown";
+  dataSource: "firebase" | "metadata" | "url-parse" | "unknown";
   warning?:   string | null;
   capturedAt: number;
 }
@@ -123,6 +123,10 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
   const [aiPage,    setAiPage]    = useState<AiPageId>("landing");
   const [aiData,    setAiData]    = useState<Record<string, unknown> | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [urlInput,    setUrlInput]    = useState("");
+  const [urlLoading,  setUrlLoading]  = useState(false);
+  const [urlError,    setUrlError]    = useState<string | null>(null);
 
   /* Detect extension on mount */
   useEffect(() => {
@@ -177,6 +181,50 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     setLoadError(null);
     window.postMessage({ source: "cf-app", type: "CF_CLEAR_CAPTURED_GHL" }, "*");
   }
+
+  /* Fetch element tree from a public GHL page URL */
+  const fetchFromUrl = useCallback(() => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+    setUrlLoading(true);
+    setUrlError(null);
+
+    const timeout = setTimeout(() => {
+      window.removeEventListener("message", onMsg);
+      setUrlLoading(false);
+      setUrlError("Extension not responding. Make sure the latest extension is installed and reload the page.");
+      setExtPresent(false);
+    }, 15000); // longer timeout for network fetch
+
+    function onMsg(evt: MessageEvent) {
+      if (evt.source !== window) return;
+      if (evt.data?.source !== "cf-ext" || evt.data?.type !== "CF_URL_PAGE_DATA") return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", onMsg);
+      setUrlLoading(false);
+      setExtPresent(true);
+      const payload = evt.data.payload as { ok: boolean; elementTree?: Record<string, unknown>; error?: string };
+      if (payload?.ok && payload.elementTree) {
+        setCaptured({
+          builderId:  "",
+          funnelId:   "",
+          stepId:     "",
+          locationId: "",
+          pageName:   payload.pageName as string || new URL(trimmed).pathname,
+          pageData:   payload.elementTree,
+          dataSource: "url-parse",
+          warning:    null,
+          capturedAt: Date.now(),
+        } as CapturedGHLPage);
+        setLoadError(null);
+      } else {
+        setUrlError(payload?.error ?? "Could not extract page data from that URL.");
+      }
+    }
+
+    window.addEventListener("message", onMsg);
+    window.postMessage({ source: "cf-app", type: "CF_FETCH_URL_PAGE", url: trimmed }, "*");
+  }, [urlInput]);
 
   /* Load AI pageData for comparison */
   const loadAiData = useCallback(async (page: string) => {
@@ -277,6 +325,43 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
               <p className="text-xs text-amber-800">{loadError}</p>
             </div>
           )}
+
+          {/* ── URL fetch — works on any published GHL page (no builder required) ── */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="mb-1.5 text-xs font-semibold text-gray-700">
+              Or fetch from any published GHL page URL
+            </p>
+            <p className="mb-2 text-[10px] text-gray-400">
+              Works on custom domains, GHL-hosted pages, and any published funnel step — no builder tab required
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={e => setUrlInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") fetchFromUrl(); }}
+                placeholder="https://yourcustomdomain.com/your-funnel-page"
+                disabled={urlLoading}
+                className="flex-1 rounded border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-200 disabled:opacity-50"
+              />
+              <Button
+                onClick={fetchFromUrl}
+                disabled={urlLoading || !urlInput.trim()}
+                className="shrink-0 bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1.5 h-auto"
+              >
+                {urlLoading
+                  ? <><RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />Fetching…</>
+                  : "Fetch"
+                }
+              </Button>
+            </div>
+            {urlError && (
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-800">{urlError}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -293,6 +378,11 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
             {captured.dataSource === "metadata" && (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                 ⚠ Page metadata only
+              </span>
+            )}
+            {captured.dataSource === "url-parse" && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                ✓ Real element tree (URL fetch)
               </span>
             )}
           </div>
