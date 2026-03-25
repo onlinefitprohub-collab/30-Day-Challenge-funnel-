@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
-  ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate,
+  ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -49,8 +50,10 @@ interface ResultsShellProps {
 }
 
 export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsShellProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("highlevel");
-  const [copiedAll, setCopiedAll]  = useState(false);
+  const router = useRouter();
+  const [activeTab, setActiveTab]       = useState<TabId>("highlevel");
+  const [copiedAll, setCopiedAll]       = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   // Strip internal _isMock flag from the copy-all output
   const { _isMock: _removed, ...cleanOutputs } = outputs;
@@ -61,6 +64,35 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     setCopiedAll(true);
     toast({ title: "All content copied!", description: "Paste it wherever you need it." });
     setTimeout(() => setCopiedAll(false), 2000);
+  }
+
+  async function handleRegenerate() {
+    if (regenerating) return;
+    setRegenerating(true);
+    try {
+      // Step 1: mark project as "generating" and get saved inputs back (awaited)
+      const startRes = await fetch(`/api/regenerate/${project.id}`, { method: "POST" });
+      if (!startRes.ok) {
+        const err = await startRes.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? `HTTP ${startRes.status}`);
+      }
+      const { inputs } = await startRes.json() as { inputs: unknown; projectId: string };
+
+      // Step 2: fire the heavy AI generation with keepalive so it survives navigation
+      fetch("/api/generate", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ projectId: project.id, inputs }),
+        keepalive: true,
+      }).catch(() => {});
+
+      // Step 3: navigate to the generating screen (status is now "generating")
+      router.push(`/projects/${project.id}/generating`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      toast({ title: "Could not start regeneration", description: msg, variant: "destructive" });
+      setRegenerating(false);
+    }
   }
 
   const sections: Record<TabId, React.ReactNode> = {
@@ -110,12 +142,23 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
             <p className="text-sm text-gray-500">Your complete challenge funnel</p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleCopyAll}>
-          {copiedAll
-            ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
-            : <><Copy className="h-4 w-4" /> Copy all</>
-          }
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            title="Re-run AI generation with your saved inputs"
+          >
+            <RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />
+            {regenerating ? "Starting…" : "Regenerate"}
+          </Button>
+          <Button variant="outline" onClick={handleCopyAll}>
+            {copiedAll
+              ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
+              : <><Copy className="h-4 w-4" /> Copy all</>
+            }
+          </Button>
+        </div>
       </div>
 
       {/* Tab bar — scrollable on mobile */}
