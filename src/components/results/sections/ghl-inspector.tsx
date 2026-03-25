@@ -206,8 +206,6 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
         funnelId?: string;
         stepId?: string;
         locationId?: string;
-        fontsToLoad?: string[];
-        popups?: unknown[];
         source?: string;
         error?: string;
       };
@@ -405,7 +403,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
                 ["Page Name",   captured.pageName   || "(builder page)"],
                 ["Funnel ID",   captured.funnelId],
                 ["Step ID",     captured.stepId],
-                ["Builder ID",  captured.builderId],
+                ["Location ID", captured.locationId || captured.builderId],
               ] as [string, string][]).map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-gray-100 bg-gray-50 p-2.5">
                   <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{label}</p>

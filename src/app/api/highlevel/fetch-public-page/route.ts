@@ -156,14 +156,20 @@ interface CapturedGhlPageData {
   elements: Record<string, { id: string; metaData: GhlElement }>;
 }
 
+interface FullCapturedPageData extends CapturedGhlPageData {
+  fontsForPreview: string[];
+  general: Record<string, unknown>;
+  id: string;
+  pageStyles: string;
+  popups: unknown[];
+}
+
 interface Nuxt3ParseResult {
-  pageData: CapturedGhlPageData;
+  pageData: FullCapturedPageData;
   pageName: string;
   funnelId: string;
   stepId: string;
   locationId: string;
-  fontsToLoad: string[];
-  popups: unknown[];
 }
 
 function wrapWithMetaData(el: GhlElement): { id: string; metaData: GhlElement } {
@@ -266,23 +272,58 @@ function tryParseNuxt3(html: string): Nuxt3ParseResult | null {
   const rawStepId  = pageData.stepId;
   const stepId     = rawStepId != null ? String(rawStepId) : "";
 
-  const rawFonts = pageData.fontsToLoad;
+  // Build envelope from whatever font/popup data the devalue tree exposed,
+  // falling back to GHL defaults so the pageData is always a complete record.
+  const STANDARD_FONTS = ["Arial","Lato","Roboto","Open Sans","Oxygen","Oswald","Montserrat","Manrope","Poppins","Bebas Neue"];
+  const PREVIEW_FONTS  = ["Roboto","Montserrat","Bebas Neue","Poppins"];
+
+  const rawFonts    = pageData.fontsToLoad;
   const fontsToLoad = Array.isArray(rawFonts)
     ? (rawFonts as unknown[]).filter(f => typeof f === "string") as string[]
-    : [];
+    : STANDARD_FONTS;
 
   const rawPopup = pageData.popup;
-  const popups   = rawPopup != null ? [rawPopup] : [];
+  const popups   = Array.isArray(pageData.popups)
+    ? pageData.popups
+    : rawPopup != null ? [rawPopup] : [];
 
-  return {
-    pageData: buildPageDataFromElements(rawElements as GhlElement[]),
-    pageName,
-    funnelId,
-    stepId,
-    locationId,
-    fontsToLoad,
+  const fontsForPreview = PREVIEW_FONTS.map(f => `'${f}'`);
+
+  const general: Record<string, unknown> = {
+    general: {
+      colors: [
+        { label: "Primary",     value: "#37ca37" },
+        { label: "Secondary",   value: "#188bf6" },
+        { label: "White",       value: "#ffffff"  },
+        { label: "Gray",        value: "#cbd5e0"  },
+        { label: "Black",       value: "#000000"  },
+        { label: "Transparent", value: "transparent" },
+      ],
+      customFonts: [],
+      fontsToLoad: fontsToLoad.length ? fontsToLoad : STANDARD_FONTS,
+      fontsToLoadForPreview: PREVIEW_FONTS,
+      pageStyles: strFromDevalue(pageData.pageStyles) ||
+        `body { font-family: var(--contentfont, 'Roboto', sans-serif); }`,
+    },
+  };
+
+  const pageStyles = strFromDevalue(pageData.pageStyles) ||
+    `:root{ --primary: #37ca37;\n--secondary: #188bf6;\n--white: #ffffff;\n--gray: #cbd5e0;\n--black: #000000;\n--transparent: transparent;\n}`;
+
+  const id = strFromDevalue(pageData.id) || Math.random().toString(36).slice(2, 14);
+
+  const elementTree = buildPageDataFromElements(rawElements as GhlElement[]);
+
+  const fullPageData: FullCapturedPageData = {
+    ...elementTree,
+    fontsForPreview,
+    general,
+    id,
+    pageStyles,
     popups,
   };
+
+  return { pageData: fullPageData, pageName, funnelId, stepId, locationId };
 }
 
 /* ── Nuxt 2 / Firebase fallback ─────────────────────────────────────────── */
@@ -353,15 +394,13 @@ export async function GET(request: Request) {
   const nuxt3Result = tryParseNuxt3(html);
   if (nuxt3Result) {
     return NextResponse.json({
-      ok: true,
+      ok:          true,
       elementTree: nuxt3Result.pageData,
       pageName:    nuxt3Result.pageName,
       funnelId:    nuxt3Result.funnelId,
       stepId:      nuxt3Result.stepId,
       locationId:  nuxt3Result.locationId,
-      fontsToLoad: nuxt3Result.fontsToLoad,
-      popups:      nuxt3Result.popups,
-      source: "url-parse-nuxt3",
+      source:      "url-parse-nuxt3",
     });
   }
 
