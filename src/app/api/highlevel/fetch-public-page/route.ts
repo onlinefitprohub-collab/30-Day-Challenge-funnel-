@@ -66,6 +66,9 @@ async function validateHostSsrf(hostname: string): Promise<string | null> {
   if (BLOCKED_EXACT.has(h)) return "Blocked host";
   if (BLOCKED_TLDS.some(tld => h.endsWith(tld))) return "Blocked internal domain";
 
+  // If the literal value is a private IPv6 address, block it directly
+  if (isPrivateIPv6(h)) return "Private IPv6 address not allowed";
+
   // If already a bare IPv4, validate directly without DNS
   const ipv4Parts = h.split(".").map(Number);
   if (ipv4Parts.length === 4 && ipv4Parts.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
@@ -253,13 +256,16 @@ export async function GET(request: Request) {
     );
   }
 
-  // Validate the Firebase Storage URL (must be a known safe domain)
+  // Validate the Firebase Storage URL (must be https: and a known safe domain)
   let fbUrl: URL;
   try {
     fbUrl = new URL(downloadUrl);
-    if (!fbUrl.hostname.endsWith(".googleapis.com") && !fbUrl.hostname.endsWith(".firebasestorage.app")) {
+    const allowedFbHost =
+      fbUrl.hostname.endsWith(".googleapis.com") ||
+      fbUrl.hostname.endsWith(".firebasestorage.app");
+    if (fbUrl.protocol !== "https:" || !allowedFbHost) {
       return NextResponse.json(
-        { ok: false, error: "Unexpected page data host — only Firebase Storage URLs are accepted." },
+        { ok: false, error: "Unexpected page data URL — only Firebase Storage URLs are accepted." },
         { status: 200 }
       );
     }
