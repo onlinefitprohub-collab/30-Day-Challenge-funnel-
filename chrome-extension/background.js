@@ -2,21 +2,18 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.7.0 — inject AI pages directly via revex, no API key needed.");
+    console.log("[CF Funnel] Installed v2.9.1 — inject AI pages via revex, works on any app domain.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.7.0 — inject AI pages + clone-funnel-step copy/paste.");
+    console.log("[CF Funnel] Updated to v2.9.1 — <all_urls> match + tabs.onUpdated injection.");
   }
 
+  // On install/update: inject content.js into all already-open https:// tabs
+  // so users don't have to manually refresh after installing the extension.
   if (reason === "install" || reason === "update") {
     chrome.tabs.query({}, (tabs) => {
       for (const tab of tabs) {
-        if (!tab.url) continue;
-        const isGHL    = tab.url.startsWith("https://app.gohighlevel.com/");
-        const isReplit =
-          tab.url.startsWith("https://replit.com/") ||
-          /https:\/\/[^/]+\.replit\.(dev|app|com)\//.test(tab.url);
-        if (!isGHL && !isReplit) continue;
+        if (!tab.url || !tab.url.startsWith("https://")) continue;
         chrome.scripting.executeScript({
           target: { tabId: tab.id, allFrames: true },
           files: ["content.js"],
@@ -24,6 +21,20 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
       }
     });
   }
+});
+
+// Inject content.js on every completed https:// page load.
+// This ensures the script runs even when the user navigates to the app
+// on any domain (Replit dev, Replit app, custom domain, etc.) without
+// needing to enumerate specific match patterns in the manifest.
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== "complete") return;
+  const url = tab.url ?? "";
+  if (!url.startsWith("https://")) return;
+  chrome.scripting.executeScript({
+    target: { tabId, allFrames: true },
+    files: ["content.js"],
+  }).catch(() => {});
 });
 
 /* ════════════════════════════════════════════════════════════════════════════
