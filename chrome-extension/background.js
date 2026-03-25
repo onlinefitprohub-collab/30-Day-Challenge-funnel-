@@ -8,12 +8,13 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
     console.log("[CF Funnel] Updated to v2.9.1 — <all_urls> match + tabs.onUpdated injection.");
   }
 
-  // On install/update: inject content.js into all already-open https:// tabs
-  // so users don't have to manually refresh after installing the extension.
+  // On install/update: re-inject content.js into already-open GHL and Replit tabs.
+  // The manifest <all_urls> match handles new navigations; this handles open tabs.
   if (reason === "install" || reason === "update") {
+    const re = /^https:\/\/(app\.gohighlevel\.com|[^/]*\.replit\.(dev|app|com))\//;
     chrome.tabs.query({}, (tabs) => {
       for (const tab of tabs) {
-        if (!tab.url || !tab.url.startsWith("https://")) continue;
+        if (!tab.url || !re.test(tab.url)) continue;
         chrome.scripting.executeScript({
           target: { tabId: tab.id, allFrames: true },
           files: ["content.js"],
@@ -23,14 +24,14 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   }
 });
 
-// Inject content.js on every completed https:// page load.
-// This ensures the script runs even when the user navigates to the app
-// on any domain (Replit dev, Replit app, custom domain, etc.) without
-// needing to enumerate specific match patterns in the manifest.
+// Dynamic injection fallback for GHL and Replit tabs.
+// The manifest <all_urls> match handles any-domain app pages declaratively;
+// this listener re-injects into tabs that were already open before install/update.
+const CF_INJECT_RE = /^https:\/\/(app\.gohighlevel\.com|[^/]*\.replit\.(dev|app|com))\//;
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status !== "complete") return;
   const url = tab.url ?? "";
-  if (!url.startsWith("https://")) return;
+  if (!CF_INJECT_RE.test(url)) return;
   chrome.scripting.executeScript({
     target: { tabId, allFrames: true },
     files: ["content.js"],
