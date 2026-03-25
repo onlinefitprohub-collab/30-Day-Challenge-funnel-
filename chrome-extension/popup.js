@@ -28,12 +28,12 @@ function initCopyPaste() {
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && changes.cf_copied_page) refreshCopiedCard();
+    if (area === "session" && changes.cf_copied_page) refreshCopiedCard();
   });
 }
 
 function refreshCopiedCard() {
-  chrome.storage.local.get("cf_copied_page", (s) => {
+  chrome.storage.session.get("cf_copied_page", (s) => {
     const copied    = s.cf_copied_page ?? null;
     const card      = document.getElementById("copied-card");
     const clearBtn  = document.getElementById("clear-btn");
@@ -126,7 +126,7 @@ async function doPaste() {
 }
 
 function doClear() {
-  chrome.storage.local.remove("cf_copied_page", refreshCopiedCard);
+  chrome.storage.session.remove("cf_copied_page", refreshCopiedCard);
   document.getElementById("copy-result").className  = "copy-result";
   document.getElementById("paste-result").className = "paste-result";
 }

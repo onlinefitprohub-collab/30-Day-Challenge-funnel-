@@ -216,7 +216,7 @@
   /* ─── Render panel body ──────────────────────────────────────────────── */
   function updatePanel() {
     if (!shadow) return;
-    chrome.storage.local.get(["cf_copied_page"], (s) => {
+    chrome.storage.session.get(["cf_copied_page"], (s) => {
       const copied = s.cf_copied_page ?? null;
       const body   = shadow.getElementById("body-content");
       if (!body) return;
@@ -263,7 +263,7 @@
       const clearBtn = shadow.getElementById("clear-btn");
       if (clearBtn) {
         clearBtn.addEventListener("click", () => {
-          chrome.storage.local.remove("cf_copied_page", updatePanel);
+          chrome.storage.session.remove("cf_copied_page", updatePanel);
         });
       }
     });
@@ -328,7 +328,7 @@
 
   /* ─── Listen for storage changes (real-time copy status updates) ─────── */
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && changes.cf_copied_page) updatePanel();
+    if (area === "session" && changes.cf_copied_page) updatePanel();
   });
 
   /* ─── Mount ─────────────────────────────────────────────────────────── */

@@ -336,7 +336,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             source:     info.source     ?? "",
             copiedAt:   Date.now(),
           };
-          await chrome.storage.local.set({ cf_copied_page: record });
+          await chrome.storage.session.set({ cf_copied_page: record });
           console.log("[CF] CF_COPY_PAGE: copied", record.funnelId, "/", record.stepId);
           sendResponse({ ok: true, record });
         } else {
@@ -360,7 +360,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       try {
         // 1. Read what was copied
-        const stored = await chrome.storage.local.get("cf_copied_page");
+        const stored = await chrome.storage.session.get("cf_copied_page");
         const src    = stored.cf_copied_page;
         if (!src?.funnelId || !src?.stepId) {
           sendResponse({ ok: false, error: "Nothing copied yet — navigate to a GHL page and click Copy Page first" });
@@ -425,6 +425,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         }
 
         if (cloneResult.ok) {
+          console.log("[CF] clone-funnel-step ok:", cloneResult.status ?? 200);
           // 5. Refresh the builder iframe
           try {
             await chrome.scripting.executeScript({
@@ -449,7 +450,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   /* ── CF_GET_COPIED ── return what's currently copied ── */
   if (type === "CF_GET_COPIED") {
-    chrome.storage.local.get("cf_copied_page", (s) => {
+    chrome.storage.session.get("cf_copied_page", (s) => {
       sendResponse({ ok: true, data: s.cf_copied_page ?? null });
     });
     return true;
@@ -457,7 +458,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   /* ── CF_CLEAR_COPIED ── */
   if (type === "CF_CLEAR_COPIED") {
-    chrome.storage.local.remove("cf_copied_page", () => {
+    chrome.storage.session.remove("cf_copied_page", () => {
       sendResponse({ ok: true });
     });
     return true;
