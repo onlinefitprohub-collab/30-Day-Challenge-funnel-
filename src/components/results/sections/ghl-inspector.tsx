@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Microscope, Download, Copy, Check,
-  ChevronDown, ChevronRight, RefreshCw, AlertTriangle, Trash2,
+  ChevronDown, ChevronRight, RefreshCw, AlertTriangle, Trash2, Clipboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -128,6 +128,9 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
   const [urlLoading,  setUrlLoading]  = useState(false);
   const [urlError,    setUrlError]    = useState<string | null>(null);
 
+  const [urlCloneSending, setUrlCloneSending] = useState(false);
+  const [urlCloneQueued,  setUrlCloneQueued]  = useState(false);
+
   /* Detect extension on mount */
   useEffect(() => {
     const timeout = setTimeout(() => { if (extPresent === null) setExtPresent(false); }, 1500);
@@ -188,6 +191,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     if (!trimmed) return;
     setUrlLoading(true);
     setUrlError(null);
+    setUrlCloneQueued(false);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
@@ -236,6 +240,42 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       setUrlLoading(false);
     }
   }, [urlInput]);
+
+  /* Queue captured URL page for paste via extension FAB */
+  const copyToGhl = useCallback(() => {
+    if (!captured?.pageData) return;
+    setUrlCloneSending(true);
+    setUrlCloneQueued(false);
+
+    const requestId = Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => {
+      window.removeEventListener("message", onAck);
+      setUrlCloneSending(false);
+    }, 4000);
+
+    function onAck(evt: MessageEvent) {
+      if (evt.source !== window) return;
+      if (evt.data?.source !== "cf-ext" || evt.data?.type !== "CF_URL_CLONE_ACK") return;
+      if (evt.data?.payload?.requestId !== requestId) return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", onAck);
+      setUrlCloneSending(false);
+      setUrlCloneQueued(true);
+    }
+
+    window.addEventListener("message", onAck);
+    window.postMessage({
+      source:  "cf-app",
+      type:    "CF_SAVE_URL_PAGE",
+      payload: {
+        requestId,
+        pageData:   captured.pageData,
+        pageName:   captured.pageName,
+        funnelId:   captured.funnelId,
+        locationId: captured.locationId,
+      },
+    }, "*");
+  }, [captured]);
 
   /* Load AI pageData for comparison */
   const loadAiData = useCallback(async (page: string) => {
@@ -415,6 +455,38 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-800">{captured.warning}</p>
+              </div>
+            )}
+
+            {/* Copy to GHL — available whenever we have a real element tree */}
+            {(captured.dataSource === "url-parse" || captured.dataSource === "url-parse-nuxt3" || captured.dataSource === "firebase") && (
+              <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-3">
+                <p className="mb-1 text-xs font-semibold text-indigo-900">Paste this page into GHL</p>
+                <p className="mb-2.5 text-[10px] text-indigo-700">
+                  Queue the captured element tree for injection. Then switch to your GHL page builder tab and click the orange CF button.
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {urlCloneQueued ? (
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-green-700">
+                      <Check className="h-4 w-4" />
+                      Queued! Go to GHL page builder and click the orange CF button.
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={copyToGhl}
+                      disabled={urlCloneSending || !extPresent}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 h-auto"
+                    >
+                      {urlCloneSending
+                        ? <><RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />Sending…</>
+                        : <><Clipboard className="h-3.5 w-3.5 mr-1.5" />Copy to GHL</>
+                      }
+                    </Button>
+                  )}
+                  {!extPresent && (
+                    <span className="text-[10px] text-red-500">Extension not detected — install the CF extension first</span>
+                  )}
+                </div>
               </div>
             )}
           </div>

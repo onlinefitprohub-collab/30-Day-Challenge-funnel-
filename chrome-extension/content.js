@@ -1,6 +1,7 @@
-// content.js v2.9.5 — Challenge Funnel in a Box
-// On app pages (*.replit.*): intercepts CF_SAVE_PAGE and saves pageData to
-//   both chrome.storage.local (cfReady) and chrome.storage.session (cf_copied_page).
+// content.js v2.9.6 — Challenge Funnel in a Box
+// On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
+//   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
+//   chrome.storage.local (cfReady) for the popup.
 // On GHL pages: shows a minimal orange FAB. Click it to paste the copied page
 //   directly into the builder — no panel, no separate inject button.
 
@@ -83,6 +84,25 @@
       chrome.runtime.sendMessage({ type: "CF_FETCH_URL_PAGE", url: evt.data.url }, (result) => {
         window.postMessage(
           { source: "cf-ext", type: "CF_URL_PAGE_DATA", payload: result ?? { ok: false, error: "no_response" } },
+          "*"
+        );
+      });
+    }
+
+    if (t === "CF_SAVE_URL_PAGE") {
+      const { pageData, pageName, funnelId, locationId, requestId } = evt.data.payload || {};
+      if (!pageData) return;
+      const sessionCopy = {
+        type:       "url-clone",
+        pageName:   pageName  || "Captured GHL Page",
+        pageData,
+        funnelId:   funnelId  || "",
+        locationId: locationId || "",
+        copiedAt:   Date.now(),
+      };
+      chrome.storage.session.set({ cf_copied_page: sessionCopy }, () => {
+        window.postMessage(
+          { source: "cf-ext", type: "CF_URL_CLONE_ACK", payload: { requestId, success: true } },
           "*"
         );
       });
@@ -215,8 +235,9 @@
           const copied = ss.cf_copied_page ?? null;
 
           const hasAiCopy  = !!(copied?.type === "ai-inject" && copied?.pageData);
+          const hasUrlClone = !!(copied?.type === "url-clone" && copied?.pageData);
           const hasGHLCopy = !!(copied?.funnelId && copied?.stepId);
-          const hasAIOnly  = !hasAiCopy && !hasGHLCopy && !!(ready?.pageData);
+          const hasAIOnly  = !hasAiCopy && !hasUrlClone && !hasGHLCopy && !!(ready?.pageData);
 
           if (hasGHLCopy) {
             const name = copied.pageName || "GHL Page";
@@ -226,6 +247,15 @@
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show ghl";
+
+          } else if (hasUrlClone) {
+            const name = copied.pageName || "Captured GHL Page";
+            fab.title   = isBuilder
+              ? `Captured: ${name} — click to paste`
+              : `Captured: ${name} — open a /page-builder/ tab to paste`;
+            fab.disabled = !isBuilder || pasting;
+            fab.classList.remove("no-page");
+            badge.className = "show";
 
           } else if (hasAiCopy || hasAIOnly) {
             const pg    = hasAiCopy ? copied.page : ready.page;

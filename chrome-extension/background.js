@@ -576,9 +576,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           }
         };
 
-        // ── Route A: AI-inject via session storage ────────────────────────
-        if (src?.type === "ai-inject" && src?.pageData) {
-          await doAIInject(src.pageData, "ai-inject");
+        // ── Route A: AI-inject or URL-clone via session storage ──────────
+        if ((src?.type === "ai-inject" || src?.type === "url-clone") && src?.pageData) {
+          await doAIInject(src.pageData, src.type);
           return;
         }
 
