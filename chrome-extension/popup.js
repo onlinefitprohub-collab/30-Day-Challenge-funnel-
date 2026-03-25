@@ -39,16 +39,32 @@ function refreshCopiedCard() {
     const clearBtn  = document.getElementById("clear-btn");
     const pasteBtn  = document.getElementById("paste-btn");
 
+    const PAGE_LABELS = {
+      landing: "Landing Page", optin: "Opt-In Page",
+      thankyou: "Thank You Page", booking: "Booking Page",
+    };
+
     if (copied?.funnelId && copied?.stepId) {
+      // Real GHL clone (clone-funnel-step path)
       const name = copied.pageName || "GHL Page";
       const ago  = timeSince(copied.copiedAt);
       card.className = "copied-card has";
-      card.innerHTML = `<strong>Copied: ${esc(name)}</strong>Copied ${ago} — funnelId: <code>${esc(copied.funnelId.slice(0,12))}…</code>`;
+      card.innerHTML = `<strong>Copied: ${esc(name)}</strong>GHL clone · copied ${ago} — ready to paste.`;
       clearBtn.style.display = "";
       pasteBtn.disabled      = false;
+
+    } else if (copied?.type === "ai-inject" && copied?.pageData) {
+      // AI-generated page (revex inject path)
+      const label = PAGE_LABELS[copied.page] || copied.pageName || "AI Page";
+      const ago   = timeSince(copied.copiedAt);
+      card.className = "copied-card has";
+      card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Saved ${ago} — click Paste to inject into the builder.`;
+      clearBtn.style.display = "";
+      pasteBtn.disabled      = false;
+
     } else {
       card.className = "copied-card none";
-      card.innerHTML = `<strong>Nothing copied yet</strong>Navigate to any GHL funnel or builder page, then click Copy.`;
+      card.innerHTML = `<strong>Nothing copied yet</strong>Go to your Challenge Funnel results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
       clearBtn.style.display = "none";
       pasteBtn.disabled      = true;
     }
@@ -102,7 +118,7 @@ async function doPaste() {
     if (result?.ok) {
       btn.textContent = "Pasted!";
       btn.className   = "btn btn-paste ok";
-      res.textContent = "Page cloned into the builder! The builder is reloading — switch to that tab to see your content.";
+      res.textContent = "Page pasted into the builder! The builder is reloading — switch to that tab to see your content.";
       res.className   = "paste-result ok";
     } else {
       const err = result?.error ?? "Unknown error";
