@@ -182,35 +182,37 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     window.postMessage({ source: "cf-app", type: "CF_CLEAR_CAPTURED_GHL" }, "*");
   }
 
-  /* Fetch element tree from a public GHL page URL */
-  const fetchFromUrl = useCallback(() => {
+  /* Fetch element tree from a public GHL page URL (server-side, no extension needed) */
+  const fetchFromUrl = useCallback(async () => {
     const trimmed = urlInput.trim();
     if (!trimmed) return;
     setUrlLoading(true);
     setUrlError(null);
 
-    const timeout = setTimeout(() => {
-      window.removeEventListener("message", onMsg);
-      setUrlLoading(false);
-      setUrlError("Extension not responding. Make sure the latest extension is installed and reload the page.");
-      setExtPresent(false);
-    }, 15000); // longer timeout for network fetch
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
-    function onMsg(evt: MessageEvent) {
-      if (evt.source !== window) return;
-      if (evt.data?.source !== "cf-ext" || evt.data?.type !== "CF_URL_PAGE_DATA") return;
+    try {
+      const res = await fetch(
+        `/api/highlevel/fetch-public-page?url=${encodeURIComponent(trimmed)}`,
+        { signal: controller.signal }
+      );
       clearTimeout(timeout);
-      window.removeEventListener("message", onMsg);
-      setUrlLoading(false);
-      setExtPresent(true);
-      const payload = evt.data.payload as { ok: boolean; elementTree?: Record<string, unknown>; error?: string };
+
+      const payload = await res.json() as {
+        ok: boolean;
+        elementTree?: Record<string, unknown>;
+        pageName?: string;
+        error?: string;
+      };
+
       if (payload?.ok && payload.elementTree) {
         setCaptured({
           builderId:  "",
           funnelId:   "",
           stepId:     "",
           locationId: "",
-          pageName:   payload.pageName as string || new URL(trimmed).pathname,
+          pageName:   payload.pageName || new URL(trimmed).pathname,
           pageData:   payload.elementTree,
           dataSource: "url-parse",
           warning:    null,
@@ -220,10 +222,15 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       } else {
         setUrlError(payload?.error ?? "Could not extract page data from that URL.");
       }
+    } catch (err) {
+      clearTimeout(timeout);
+      const msg = err instanceof Error && err.name === "AbortError"
+        ? "Request timed out. The page took too long to respond."
+        : `Unexpected error: ${String(err).slice(0, 100)}`;
+      setUrlError(msg);
+    } finally {
+      setUrlLoading(false);
     }
-
-    window.addEventListener("message", onMsg);
-    window.postMessage({ source: "cf-app", type: "CF_FETCH_URL_PAGE", url: trimmed }, "*");
   }, [urlInput]);
 
   /* Load AI pageData for comparison */
