@@ -1,22 +1,18 @@
-// content.js — Challenge Funnel in a Box
-// Runs in the content-script (extension) world on both:
-//   1. Our app pages (*.replit.dev / *.replit.app / *.replit.com) — receives CF_SAVE_PAGE
-//   2. GHL page builder (app.gohighlevel.com) — injects native elements
+// content.js v2.6.0 — Challenge Funnel in a Box
+// Runs on GHL pages (app.gohighlevel.com) — shows a floating panel
+// with "Paste into Builder" button backed by clone-funnel-step.
+// Also runs on our app pages (*.replit.*) to handle CF_SAVE_PAGE.
 
 (function () {
   "use strict";
 
-  // Guard against double-injection: background.js may inject this script into
-  // tabs that already have it running from the manifest's content_scripts.
-  // Without this, duplicate message listeners would fire twice per click.
   if (window.__cfExtLoaded) return;
   window.__cfExtLoaded = true;
 
   const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
   /* ─── CF_SAVE_PAGE handler (runs on our app pages) ──────────────────────
-   * The app POSTs the GHL element JSON via postMessage.
-   * We save it to chrome.storage.local and ACK so the app can show success.
+   * The app sends page data via postMessage; we cache it for later loading.
    * ─────────────────────────────────────────────────────────────────────── */
   window.addEventListener("message", (evt) => {
     if (evt.source !== window) return;
@@ -27,7 +23,7 @@
 
     const ready = {
       projectId: projectId || "",
-      appUrl: appUrl || window.location.origin,
+      appUrl:    appUrl || window.location.origin,
       challengeConcept: challengeConcept || "Challenge Funnel",
       page,
       pageData,
@@ -45,11 +41,6 @@
   /* ─── GHL-only from here on ──────────────────────────────────────────── */
   if (!IS_GHL) return;
 
-  const HOST_ID = "cf-funnel-host";
-
-  let hlContext = { pageId: null, locationId: null };
-  let injecting = false;
-
   /* ─── Inject bridge.js into main world ──────────────────────────────── */
   function injectBridge() {
     if (document.getElementById("cf-bridge-script")) return;
@@ -59,36 +50,38 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
+  const HOST_ID  = "cf-funnel-host";
+  let   shadow   = null;
+  let   isBuilder = false;  // true if current URL is a page-builder URL
+
   /* ─── Listen for bridge.js → CONTEXT_DETECTED ──────────────────────── */
   window.addEventListener("message", (evt) => {
     if (!evt.data || evt.data.source !== "cf-bridge") return;
     if (evt.data.type === "CONTEXT_DETECTED") {
       const { pageId, locationId } = evt.data.payload || {};
-      if (pageId)     hlContext.pageId     = pageId;
-      if (locationId) hlContext.locationId = locationId;
+      isBuilder = !!(pageId || locationId);
       updatePanel();
     }
   });
 
-  /* ─── URL extraction ────────────────────────────────────────────────── */
-  function extractFromUrl(url) {
-    try {
-      const m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
-      if (m) {
-        hlContext.locationId = m[1];
-        hlContext.pageId     = m[2];
-      }
-    } catch {}
+  /* ─── Detect builder URL on load ───────────────────────────────────── */
+  function checkBuilderUrl() {
+    isBuilder = /\/page-builder\//.test(window.location.href);
   }
 
-  /* ─── CSS ───────────────────────────────────────────────────────────── */
+  /* ────────────────────────────────────────────────────────────────────────
+     CSS (shadow DOM — fully isolated from GHL styles)
+     ──────────────────────────────────────────────────────────────────────── */
   const CSS = `
     :host { all: initial; }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
     #panel {
       position: fixed; bottom: 24px; right: 24px; z-index: 2147483647;
-      width: 280px;
+      width: 290px;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 8px 40px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.07);
@@ -110,63 +103,65 @@
     .sub   { color: rgba(255,255,255,.45); font-size: 10px; }
     .close {
       background: rgba(255,255,255,.12); border: none; border-radius: 4px;
-      color: rgba(255,255,255,.7); padding: 2px 7px; cursor: pointer; font-size: 14px; line-height: 1;
+      color: rgba(255,255,255,.7); padding: 2px 7px; cursor: pointer;
+      font-size: 14px; line-height: 1;
     }
     .close:hover { background: rgba(255,255,255,.22); }
 
-    .body { padding: 13px 14px; }
+    .body { padding: 13px 14px; display: flex; flex-direction: column; gap: 8px; }
 
-    .no-project {
-      font-size: 11px; color: #92400e; background: #fff7ed;
-      border: 1px solid #fed7aa; border-radius: 8px; padding: 9px 11px;
-      line-height: 1.55;
+    /* Copied page card */
+    .copied-card {
+      font-size: 11px; border-radius: 8px; padding: 8px 10px; line-height: 1.55;
     }
-
-    .ready-page {
-      font-size: 11px; color: #1e40af; background: #eff6ff;
-      border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 11px;
-      line-height: 1.55; margin-bottom: 10px;
+    .copied-card.has-copy {
+      background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
     }
-    .ready-page strong { font-weight: 700; }
-
-    .no-context {
-      font-size: 11px; color: #92400e; background: #fff7ed;
-      border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 11px;
-      line-height: 1.55; margin-bottom: 10px;
+    .copied-card.no-copy {
+      background: #fff7ed; border: 1px solid #fed7aa; color: #92400e;
     }
+    .copied-card strong { font-weight: 700; display: block; margin-bottom: 2px; }
 
-    .inject-btn {
-      width: 100%; background: #f97316; color: #fff; border: none; border-radius: 9px;
+    /* Buttons */
+    .btn {
+      width: 100%; border: none; border-radius: 9px;
       padding: 10px 14px; font-size: 13px; font-weight: 800; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 7px;
-      transition: background 0.15s; letter-spacing: -0.01em;
+      transition: background 0.15s, opacity 0.15s; letter-spacing: -0.01em;
     }
-    .inject-btn:hover:not(:disabled) { background: #ea580c; }
-    .inject-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
-    .inject-btn.ok  { background: #16a34a; }
-    .inject-btn.err { background: #dc2626; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    .inject-icon { font-size: 14px; }
+    .btn-copy  { background: #0ea5e9; color: #fff; }
+    .btn-copy:hover:not(:disabled)  { background: #0284c7; }
 
-    .secondary-btn {
-      width: 100%; background: transparent; color: #64748b; border: 1px solid #e2e8f0;
-      border-radius: 8px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 5px;
-      transition: background 0.12s, color 0.12s; margin-top: 6px;
+    .btn-paste { background: #f97316; color: #fff; }
+    .btn-paste:hover:not(:disabled) { background: #ea580c; }
+    .btn-paste.ok  { background: #16a34a; }
+    .btn-paste.err { background: #dc2626; }
+
+    .btn-clear {
+      background: transparent; color: #94a3b8; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 5px 10px; font-size: 10px; font-weight: 600;
+      cursor: pointer;
     }
-    .secondary-btn:hover:not(:disabled) { background: #f8fafc; color: #334155; }
-    .secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .secondary-btn.ok  { color: #16a34a; border-color: #bbf7d0; }
-    .secondary-btn.err { color: #dc2626; border-color: #fecaca; }
+    .btn-clear:hover { color: #dc2626; border-color: #fecaca; }
 
+    /* Status */
     .status {
-      margin-top: 9px; border-radius: 8px; padding: 8px 10px;
+      border-radius: 8px; padding: 8px 10px;
       font-size: 10px; line-height: 1.55; display: none;
     }
     .status.info { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
     .status.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
     .status.warn { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; display: block; }
 
+    /* No-builder warning */
+    .no-builder {
+      font-size: 11px; color: #78350f; background: #fffbeb;
+      border: 1px solid #fde68a; border-radius: 8px; padding: 8px 10px; line-height: 1.5;
+    }
+
+    /* FAB */
     #fab {
       position: fixed; bottom: 24px; right: 24px; z-index: 2147483647;
       width: 44px; height: 44px; border-radius: 50%;
@@ -180,15 +175,12 @@
     .hidden { display: none !important; }
   `;
 
-  /* ─── Build panel ───────────────────────────────────────────────────── */
-  let shadow = null;
-
+  /* ─── Build shadow DOM panel ─────────────────────────────────────────── */
   function buildPanel() {
     const host = document.createElement("div");
     host.id    = HOST_ID;
     document.body.appendChild(host);
     shadow = host.attachShadow({ mode: "open" });
-
     shadow.innerHTML = `
       <style>${CSS}</style>
       <div id="panel">
@@ -197,15 +189,13 @@
             <div class="logo">CF</div>
             <div>
               <div class="title">CF Funnel</div>
-              <div class="sub" id="head-sub">Challenge Funnel in a Box</div>
+              <div class="sub">Clone any GHL page into your builder</div>
             </div>
           </div>
           <button class="close" id="close-btn">−</button>
         </div>
         <div class="body" id="body-content">
-          <div class="no-project">
-            Open your Challenge Funnel results page and click <strong>Clone to GHL</strong> for the page you want — then come back here and click Paste.
-          </div>
+          <div class="no-builder">Loading…</div>
         </div>
       </div>
       <button id="fab" class="hidden" title="CF Funnel">CF</button>
@@ -223,263 +213,96 @@
     updatePanel();
   }
 
-  const PAGE_LABELS = {
-    landing:  "Landing Page",
-    optin:    "Opt-In Page",
-    thankyou: "Thank You Page",
-    booking:  "Booking Page",
-  };
-
-  /* ─── Update panel state ────────────────────────────────────────────── */
+  /* ─── Render panel body ──────────────────────────────────────────────── */
   function updatePanel() {
     if (!shadow) return;
-
-    chrome.storage.local.get(["cfReady"], (s) => {
-      const ready = s.cfReady || null;
-      const body  = shadow.getElementById("body-content");
+    chrome.storage.local.get(["cf_copied_page"], (s) => {
+      const copied = s.cf_copied_page ?? null;
+      const body   = shadow.getElementById("body-content");
       if (!body) return;
 
-      if (!ready || !ready.projectId) {
-        body.innerHTML = `<div class="no-project">Open your Challenge Funnel results page and click <strong>Clone to GHL</strong> for the page you want — then come back here and click Paste.</div>`;
-        return;
-      }
-
-      const pageLabel = PAGE_LABELS[ready.page] || ready.page;
-      const hasCtx    = !!(hlContext.pageId && hlContext.locationId);
-      const hasData   = !!ready.pageData;
-
-      let html = `
-        <div class="ready-page">
-          <strong>${pageLabel}</strong> is loaded and ready to inject into this builder page.
-        </div>
-      `;
-
-      if (!hasCtx) {
-        html += `
-          <div class="no-context">
-            HighLevel page builder not detected yet — make sure you are on a page builder URL (/page-builder/…).
+      let copiedHtml = "";
+      if (copied?.funnelId && copied?.stepId) {
+        const ago = timeSince(copied.copiedAt);
+        const name = copied.pageName || "GHL Page";
+        copiedHtml = `
+          <div class="copied-card has-copy">
+            <strong>Copied: ${esc(name)}</strong>
+            Copied ${ago} — ready to paste into any builder page.
           </div>
         `;
-      } else if (!hasData) {
-        html += `
-          <div class="no-context">
-            Page data not cached — go back to the app and click <strong>Clone to GHL</strong> again.
+      } else {
+        copiedHtml = `
+          <div class="copied-card no-copy">
+            <strong>Nothing copied yet</strong>
+            Navigate to any GHL funnel page and click <strong>Copy GHL Page</strong> in the extension popup — then come back here.
           </div>
         `;
       }
 
-      const canInject = hasCtx && hasData;
+      const hasCopy    = !!(copied?.funnelId && copied?.stepId);
+      const canPaste   = hasCopy && isBuilder;
 
-      html += `
-        <button class="inject-btn" id="prebuilt-btn" ${!canInject ? "disabled" : ""}>
-          <span class="inject-icon">✦</span>
-          Add to Prebuilt Sections
+      const builderNote = !isBuilder
+        ? `<div class="no-builder">This doesn't look like a page-builder URL — navigate to <strong>/page-builder/...</strong> first.</div>`
+        : "";
+
+      body.innerHTML = `
+        ${copiedHtml}
+        ${builderNote}
+        <button class="btn btn-paste" id="paste-btn" ${!canPaste ? "disabled" : ""}>
+          Paste into Builder
         </button>
-        <button class="secondary-btn" id="inject-btn" ${!canInject ? "disabled" : ""}>
-          <span class="inject-icon">⬇</span>
-          Paste into page builder (advanced)
-        </button>
+        ${hasCopy ? `<button class="btn-clear" id="clear-btn">Clear copied page</button>` : ""}
         <div class="status" id="status"></div>
       `;
 
-      body.innerHTML = html;
-
-      const sub = shadow.getElementById("head-sub");
-      if (sub) sub.textContent = ready.challengeConcept || "Challenge Funnel in a Box";
-
-      const prebuiltBtn = shadow.getElementById("prebuilt-btn");
-      if (prebuiltBtn && canInject) {
-        prebuiltBtn.addEventListener("click", () => doPrebuilt(ready, prebuiltBtn));
+      if (canPaste) {
+        shadow.getElementById("paste-btn").addEventListener("click", doPaste);
       }
-
-      const injectBtn = shadow.getElementById("inject-btn");
-      if (injectBtn && canInject) {
-        injectBtn.addEventListener("click", () => doInject(ready, injectBtn));
+      const clearBtn = shadow.getElementById("clear-btn");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          chrome.storage.local.remove("cf_copied_page", updatePanel);
+        });
       }
     });
   }
 
-  /* ─── Request bridge.js to perform the injection ────────────────────── */
-  function requestBridgeInject(pageBuilderId, pageData) {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        window.removeEventListener("message", handler);
-        reject(new Error("Injection timed out — the page builder may not be fully loaded yet."));
-      }, 30000);
+  /* ─── Paste action ──────────────────────────────────────────────────── */
+  let pasting = false;
 
-      function handler(evt) {
-        if (evt.source !== window) return;
-        if (!evt.data || evt.data.source !== "cf-bridge" || evt.data.type !== "INJECT_RESULT") return;
-        clearTimeout(timeout);
-        window.removeEventListener("message", handler);
-        resolve(evt.data.payload || { success: false, error: "No payload returned" });
-      }
+  async function doPaste() {
+    if (pasting) return;
+    pasting = true;
 
-      window.addEventListener("message", handler);
-      window.postMessage({
-        source:  "cf-content",
-        type:    "CF_DO_INJECT",
-        payload: { pageBuilderId, locationId: hlContext.locationId, pageData },
-      }, "*");
-    });
-  }
-
-  /* ─── Request bridge.js to POST prebuilt sections (Track A) ────────── */
-  function requestBridgePrebuilt(locationId, challengeName, pageData) {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        window.removeEventListener("message", handler);
-        reject(new Error("Prebuilt section POST timed out — please try again."));
-      }, 30000);
-
-      function handler(evt) {
-        if (evt.source !== window) return;
-        if (!evt.data || evt.data.source !== "cf-bridge" || evt.data.type !== "PREBUILT_RESULT") return;
-        clearTimeout(timeout);
-        window.removeEventListener("message", handler);
-        resolve(evt.data.payload || { ok: false, error: "No payload" });
-      }
-
-      window.addEventListener("message", handler);
-      window.postMessage({
-        source:  "cf-content",
-        type:    "CF_DO_PREBUILT",
-        payload: { locationId, challengeName, pageData },
-      }, "*");
-    });
-  }
-
-  /* ─── Add to Prebuilt Sections flow ─────────────────────────────────── */
-  async function doPrebuilt(ready, btn) {
-    if (injecting) return;
-    injecting = true;
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="inject-icon">⏳</span> Adding sections…';
+    const btn = shadow.getElementById("paste-btn");
+    if (btn) { btn.disabled = true; btn.textContent = "Cloning…"; }
     clearStatus();
 
     try {
-      if (!ready.pageData) {
-        showStatus("err", "Page data not cached — go back to the app and click Clone to GHL again.");
-        btn.innerHTML = '<span class="inject-icon">✗</span> No page data';
-        btn.classList.add("err");
-        return;
-      }
+      const result = await new Promise((resolve) => {
+        chrome.runtime.sendMessage({ type: "CF_PASTE_PAGE" }, resolve);
+      });
 
-      const result = await requestBridgePrebuilt(
-        hlContext.locationId,
-        ready.challengeConcept || "Challenge",
-        ready.pageData,
-      );
-
-      if (result.ok) {
-        const n = result.succeeded;
-        btn.innerHTML = `<span class="inject-icon">✓</span> ${n} section${n === 1 ? "" : "s"} added!`;
-        btn.classList.add("ok");
-        showStatus("info",
-          `${n} section${n === 1 ? "" : "s"} sent to GHL successfully! ` +
-          `They should now appear in your page builder — reload the builder tab to see them. ` +
-          `If you don't see them on the page, check the "Prebuilt Sections" panel in the left sidebar.`
-        );
+      if (result?.ok) {
+        if (btn) { btn.textContent = "Pasted!"; btn.classList.add("ok"); }
+        showStatus("info", "Page cloned successfully! The builder is reloading — it may take a few seconds.");
       } else {
-        const rawErr = result.error || "";
-        const status = result.topStatus;
-        const authCount = result.authHeaderCount || 0;
-        btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
-        btn.classList.add("err");
-
-        let msg = "";
-        if (rawErr) {
-          msg = rawErr.slice(0, 240);
-        } else if (status === "401" || status === 401) {
-          msg = "HTTP 401 — GHL auth headers not captured. Navigate to another GHL page (e.g. Contacts or Dashboard), then come back to the builder and try again.";
-        } else if (status === "403" || status === 403) {
-          msg = `HTTP 403 — Permission denied (captured ${authCount} auth header${authCount === 1 ? "" : "s"}). Open your browser Console (F12) → filter by "[CF]" — share those logs for further help.`;
-        } else if (status === "404" || status === 404) {
-          msg = "HTTP 404 — GHL builder endpoint not found. Make sure you are on the GHL page builder (the URL should contain /page-builder/). Refresh the page and try again.";
-        } else if (status === "400" || status === 400 || status === "422" || status === 422) {
-          msg = `HTTP ${status} — GHL rejected the data format. Open browser Console (F12), filter "[CF] Prebuilt section 1 attempt table" and share it — we\u2019ll adjust the schema to match.`;
-        } else if (status === "ERR") {
-          msg = `Network error reaching GHL — are you logged into app.gohighlevel.com? (captured ${authCount} auth header${authCount === 1 ? "" : "s"})`;
-        } else {
-          msg = `${result.failed || 0} section(s) failed (HTTP ${status || "?"}, ${authCount} auth headers captured). Open browser Console (F12), filter "[CF] Prebuilt" and share the output.`;
-        }
-
-        showStatus("err", msg);
+        const err = result?.error ?? "Unknown error";
+        if (btn) { btn.textContent = "Failed"; btn.classList.add("err"); }
+        showStatus("err", err.slice(0, 300));
       }
-    } catch (e) {
-      btn.innerHTML = '<span class="inject-icon">✗</span> Error';
-      btn.classList.add("err");
+    } catch(e) {
+      if (btn) { btn.textContent = "Error"; btn.classList.add("err"); }
       showStatus("err", `Error: ${e.message.slice(0, 200)}`);
     } finally {
-      injecting = false;
-      setTimeout(() => {
-        if (!shadow) return;
-        btn.innerHTML = '<span class="inject-icon">✦</span> Add to Prebuilt Sections';
-        btn.classList.remove("ok", "err");
-        btn.disabled = false;
-        updatePanel();
-      }, 8000);
+      pasting = false;
+      setTimeout(updatePanel, 5000);
     }
   }
 
-  /* ─── Perform injection ─────────────────────────────────────────────── */
-  async function doInject(ready, btn) {
-    if (injecting) return;
-    injecting = true;
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="inject-icon">⏳</span> Injecting…';
-    clearStatus();
-
-    try {
-      if (!ready.pageData) {
-        showStatus("err", "Page data not cached — go back to the app and click Clone to GHL again.");
-        btn.innerHTML = '<span class="inject-icon">✗</span> No page data';
-        btn.classList.add("err");
-        return;
-      }
-
-      if (!hlContext.pageId || !hlContext.locationId) {
-        showStatus("err", "Page builder not detected — make sure you are on the builder URL.");
-        btn.innerHTML = '<span class="inject-icon">✗</span> No page detected';
-        btn.classList.add("err");
-        return;
-      }
-
-      const result = await requestBridgeInject(hlContext.pageId, ready.pageData);
-
-      if (result.success) {
-        btn.innerHTML = '<span class="inject-icon">✓</span> Injected!';
-        btn.classList.add("ok");
-        showStatus("info", "Done! The builder is reloading with your content — it may take a few seconds.");
-      } else {
-        const rawMsg = result.error || "Unknown error";
-        btn.innerHTML = '<span class="inject-icon">✗</span> Failed';
-        btn.classList.add("err");
-        // Show a clean actionable message — strip the long "Tried: GET: /..." endpoint list
-        const isEndpointExhausted = rawMsg.includes("all endpoints exhausted");
-        const cleanMsg = isEndpointExhausted
-          ? "All save endpoints failed. Click \u201cSave\u201d in GHL once to enable the smart capture strategy, then try again."
-          : rawMsg.slice(0, 220);
-        showStatus("err", cleanMsg);
-      }
-    } catch (e) {
-      btn.innerHTML = '<span class="inject-icon">✗</span> Error';
-      btn.classList.add("err");
-      showStatus("err", `Error: ${e.message.slice(0, 200)}`);
-    } finally {
-      injecting = false;
-      setTimeout(() => {
-        if (!shadow) return;
-        btn.innerHTML = '<span class="inject-icon">⬇</span> Paste into page builder (advanced)';
-        btn.classList.remove("ok", "err");
-        btn.disabled = false;
-        updatePanel();
-      }, 6000);
-    }
-  }
-
+  /* ─── Helpers ───────────────────────────────────────────────────────── */
   function showStatus(type, msg) {
     const el = shadow && shadow.getElementById("status");
     if (el) { el.textContent = msg; el.className = `status ${type}`; }
@@ -490,11 +313,29 @@
     if (el) { el.textContent = ""; el.className = "status"; }
   }
 
+  function esc(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function timeSince(ts) {
+    if (!ts) return "";
+    const secs = Math.floor((Date.now() - ts) / 1000);
+    if (secs < 60)    return "just now";
+    if (secs < 3600)  return `${Math.floor(secs/60)}m ago`;
+    if (secs < 86400) return `${Math.floor(secs/3600)}h ago`;
+    return `${Math.floor(secs/86400)}d ago`;
+  }
+
+  /* ─── Listen for storage changes (real-time copy status updates) ─────── */
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes.cf_copied_page) updatePanel();
+  });
+
   /* ─── Mount ─────────────────────────────────────────────────────────── */
   function mount() {
     if (document.getElementById(HOST_ID)) return;
+    checkBuilderUrl();
     injectBridge();
-    extractFromUrl(window.location.href);
     buildPanel();
   }
 
@@ -503,15 +344,5 @@
   } else {
     mount();
   }
-
-  const _origPushState = history.pushState;
-  history.pushState = function (...args) {
-    const result = _origPushState.apply(this, args);
-    setTimeout(() => { extractFromUrl(window.location.href); updatePanel(); }, 100);
-    return result;
-  };
-  window.addEventListener("popstate", () => {
-    setTimeout(() => { extractFromUrl(window.location.href); updatePanel(); }, 100);
-  });
 
 })();

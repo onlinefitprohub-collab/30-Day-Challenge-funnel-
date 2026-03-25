@@ -9,11 +9,12 @@
 
     :root {
       --orange: #f97316;
+      --blue:   #0ea5e9;
       --dark:   #0f172a;
       --mid:    #1e293b;
       --border: #e2e8f0;
       --muted:  #64748b;
-      --green:  #22c55e;
+      --green:  #16a34a;
     }
 
     body {
@@ -28,7 +29,7 @@
     .header {
       background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
       padding: 14px 18px;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
     .logo {
@@ -39,8 +40,73 @@
     .title { color: #fff; font-weight: 700; font-size: 14px; }
     .sub   { color: rgba(255,255,255,0.55); font-size: 11px; }
 
-    /* ── Body ── */
-    .body { padding: 14px 18px; }
+    /* ── Sections ── */
+    .section {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    /* ── Copied status card ── */
+    .copied-card {
+      border-radius: 9px; padding: 10px 12px; font-size: 12px; line-height: 1.55;
+      margin-bottom: 10px;
+    }
+    .copied-card.has  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .copied-card.none { background: #fff7ed; border: 1px solid #fed7aa; color: #92400e; }
+    .copied-card strong { display: block; font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .copied-meta { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%; border: none; border-radius: 9px;
+      padding: 10px 14px; font-size: 13px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn + .btn   { margin-top: 7px; }
+
+    .btn-copy  { background: var(--blue);   color: #fff; }
+    .btn-copy:hover:not(:disabled)  { background: #0284c7; }
+
+    .btn-paste { background: var(--orange); color: #fff; }
+    .btn-paste:hover:not(:disabled) { background: #ea580c; }
+    .btn-paste.ok  { background: var(--green); }
+    .btn-paste.err { background: #dc2626; }
+
+    .btn-clear {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 7px;
+      padding: 6px 10px; font-size: 11px; font-weight: 600; cursor: pointer;
+      margin-top: 6px; width: 100%;
+    }
+    .btn-clear:hover { color: #dc2626; border-color: #fecaca; }
+
+    /* ── Copy action result ── */
+    .copy-result {
+      border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
+      margin-top: 8px; display: none;
+    }
+    .copy-result.ok   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .copy-result.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+
+    /* ── Paste result ── */
+    .paste-result {
+      border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
+      margin-top: 8px; display: none;
+    }
+    .paste-result.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .paste-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none; border-top: 1px solid var(--border); margin: 0;
+    }
 
     /* ── Empty state ── */
     .empty-state {
@@ -149,12 +215,46 @@
       <div class="logo">CF</div>
       <div>
         <div class="title">Challenge Funnel</div>
-        <div class="sub">HighLevel Page Injector</div>
+        <div class="sub">HighLevel Page Cloner</div>
       </div>
     </div>
   </div>
 
-  <div class="body">
+  <!-- ── COPY / PASTE SECTION (always visible) ── -->
+  <div class="section" id="copy-paste-section">
+    <div class="section-title">Clone any GHL page</div>
+
+    <!-- What's currently copied -->
+    <div class="copied-card none" id="copied-card">
+      <strong>Nothing copied yet</strong>
+      Navigate to any GHL funnel page, then click Copy below.
+    </div>
+
+    <!-- Copy action -->
+    <button class="btn btn-copy" id="copy-btn">
+      Copy Current GHL Page
+    </button>
+
+    <!-- Paste action -->
+    <button class="btn btn-paste" id="paste-btn">
+      Paste into GHL Builder
+    </button>
+
+    <!-- Clear copied -->
+    <button class="btn-clear" id="clear-btn" style="display:none;">
+      Clear copied page
+    </button>
+
+    <!-- Copy result message -->
+    <div class="copy-result" id="copy-result"></div>
+
+    <!-- Paste result message -->
+    <div class="paste-result" id="paste-result"></div>
+  </div>
+
+  <!-- ── AI CONTENT SECTION (project library) ── -->
+  <div class="section" id="ai-section">
+    <div class="section-title">AI-generated pages</div>
 
     <!-- Empty state (no project saved) -->
     <div id="empty-state" class="empty-state" style="display:none;">
@@ -187,7 +287,7 @@
       <!-- Currently loaded page badge -->
       <div class="loaded-badge" id="loaded-badge">
         <span>🟦</span>
-        <span><strong id="loaded-page-name">Landing Page</strong> is loaded — go to HighLevel builder and click <strong>Paste into Page Builder</strong></span>
+        <span><strong id="loaded-page-name">Landing Page</strong> is loaded — go to HighLevel builder to paste it</span>
       </div>
 
       <!-- Project name + change link -->
@@ -234,7 +334,6 @@
       <div class="note" id="note"></div>
 
     </div>
-
   </div>
 
   <script src="popup.js"></script>

@@ -44,24 +44,33 @@ supabase/                 # DB migrations/schema
 scripts/                  # Test/generation scripts
 ```
 
-## Chrome Extension
+## Chrome Extension (v2.6.0)
 
-`chrome-extension/` is a Manifest V3 extension that injects AI-generated funnel pages as **native HighLevel elements** into the GHL page builder with one click.
+`chrome-extension/` is a Manifest V3 extension that copies any GHL page and pastes it into the GHL page builder using GHL's own `clone-funnel-step` API — the same mechanism used by CloneLevel and SiteGrab.
 
-### Flow
-1. User opens the results page → clicks extension icon → extension auto-fetches project info + HMAC token via `/api/highlevel/inject-token`
-2. User enters their HL Private Integration API key in the popup (stored in `chrome.storage.sync`)
-3. User clicks **Load** next to a page (Landing / Opt-In / Thank You / Booking) → stored in `chrome.storage.local.cfReady`
-4. User opens that funnel step in the GHL page builder
-5. `content.js` floating panel shows **"Paste into Page Builder"** → calls `/api/highlevel/inject` with projectId, projectToken, page, hlApiKey, locationId, pageId → native sections/rows/columns/headings/paragraphs/buttons are injected via HL REST API
-6. User refreshes builder — content appears as editable native elements
+### Copy/Paste Flow (v2.6.0)
+1. User navigates to any GHL funnel page (public or private)
+2. Opens extension popup → clicks **"Copy Current GHL Page"**
+3. `background.js` runs `_cf_extractGhlMetadata()` in the page's MAIN world via `chrome.scripting.executeScript()` → extracts `funnelId + stepId` from Nuxt payload / window globals
+4. Stores `{ funnelId, stepId, pageName }` in `chrome.storage.local` as `cf_copied_page`
+5. User navigates to their GHL builder page (`/page-builder/...`)
+6. Clicks **"Paste into GHL Builder"** (popup or floating panel)
+7. `background.js` runs `_cf_getBuilderInfo(builderId)` → gets destination `funnelId + stepId` via revexBackendService
+8. Runs `_cf_cloneFunnelStep(req)` → calls `POST /funnels/funnel/clone-funnel-step/` via revex with the full backend URL
+9. Runs `_cf_refreshBuilderIframe()` → reloads builder iframe
+10. GHL's own backend clones all page content into the destination step
+
+### Why This Works
+- Uses `revex.post()` with the **full URL** (`https://backend.leadconnectorhq.com/...`) — avoids the wrong-baseURL bug
+- GHL's own server handles the page data copy — no schema to construct
+- `activeTab` permission grants access to any active tab when user clicks the popup
 
 ### Files
 - `manifest.json` — Manifest V3; host_permissions for app.gohighlevel.com + replit.dev/.app
-- `popup.html/js` — HL API key settings + project load UI; fetches inject-token via user session cookies
-- `content.js` — Injected into all GHL pages; injects bridge.js, listens for page context, shows floating inject panel
-- `bridge.js` — Main-world script; intercepts fetch/XHR + URL navigation to extract locationId/pageId/funnelId
-- `background.js` — Service worker
+- `popup.html/js` — Copy/Paste buttons + AI project library
+- `content.js` — Floating panel on GHL builder; Paste button via chrome.runtime.sendMessage
+- `bridge.js` — Minimal MAIN-world script; emits CONTEXT_DETECTED (URL detection only)
+- `background.js` — Service worker with CF_COPY_PAGE + CF_PASTE_PAGE handlers + inline MAIN-world functions
 - Load unpacked from `chrome-extension/` folder in Chrome developer mode
 
 ## Colour Schemes (5)
