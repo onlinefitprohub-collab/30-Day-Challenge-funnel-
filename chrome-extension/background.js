@@ -519,8 +519,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       try {
         // 1. Read the loaded AI page from local storage
-        const s     = await chrome.storage.local.get("cfReady");
-        const ready = s.cfReady;
+        const s     = await chrome.storage.local.get(["cfReady", "cfProject"]);
+        let   ready = s.cfReady;
         if (!ready?.pageData) {
           sendResponse({ ok: false, error: "No AI page loaded — open the extension popup, pick a page from the AI library and click Load, then try again." });
           return;
@@ -538,6 +538,29 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           return;
         }
         const [, locationId, builderId] = m;
+
+        // 2b. Re-fetch fresh pageData from the server (avoids stale cached data)
+        //     Uses the projectId + page stored in cfReady so we always inject latest AI output.
+        if (ready.projectId && ready.page) {
+          try {
+            const apiOrigin = ready.appUrl ?? s.cfProject?.apiOrigin ?? "https://challenge-funnel.replit.app";
+            const freshResp = await fetch(
+              `${apiOrigin}/api/highlevel/page-data?projectId=${encodeURIComponent(ready.projectId)}&page=${encodeURIComponent(ready.page)}`
+            );
+            if (freshResp.ok) {
+              const freshJson = await freshResp.json();
+              if (freshJson?.pageData) {
+                ready = { ...ready, pageData: freshJson.pageData };
+                await chrome.storage.local.set({ cfReady: ready });
+                console.log("[CF] CF_INJECT_AI_PAGE: refreshed pageData from server");
+              }
+            } else {
+              console.warn("[CF] CF_INJECT_AI_PAGE: could not refresh pageData (status", freshResp.status, "), using cached version");
+            }
+          } catch(fetchErr) {
+            console.warn("[CF] CF_INJECT_AI_PAGE: refresh fetch failed, using cached version:", fetchErr.message);
+          }
+        }
 
         // 3. Inject AI pageData via revex in MAIN world
         console.log("[CF] CF_INJECT_AI_PAGE: injecting page=", ready.page, "→ builder=", builderId);
