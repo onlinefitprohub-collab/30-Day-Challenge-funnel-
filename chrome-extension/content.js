@@ -141,6 +141,13 @@
   }
 
   /* ─── Update FAB badge + tooltip ────────────────────────────────────── */
+  function setFabNoPage(fab, badge) {
+    fab.title    = "CF Funnel — click Clone to GHL in the app to load a page";
+    fab.disabled = true;
+    fab.classList.add("no-page");
+    badge.className = "";
+  }
+
   function updateFab() {
     if (!shadow) return;
     const fab   = shadow.getElementById("fab");
@@ -150,44 +157,61 @@
     const PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
     const isBuilder = /\/page-builder\//.test(window.location.href);
 
-    chrome.storage.local.get(["cfReady"], (ls) => {
-      chrome.storage.session.get(["cf_copied_page"], (ss) => {
-        const ready  = ls.cfReady       ?? null;
-        const copied = ss.cf_copied_page ?? null;
+    // Safety net: if storage callbacks never fire (e.g. service worker restart),
+    // reset the FAB to the "no page" state after 3 seconds instead of staying disabled.
+    const fallbackTimer = setTimeout(() => setFabNoPage(fab, badge), 3000);
 
-        const hasAiCopy  = !!(copied?.type === "ai-inject" && copied?.pageData);
-        const hasGHLCopy = !!(copied?.funnelId && copied?.stepId);
-        const hasAIOnly  = !hasAiCopy && !hasGHLCopy && !!(ready?.pageData);
-
-        if (hasGHLCopy) {
-          const name = copied.pageName || "GHL Page";
-          fab.title   = isBuilder
-            ? `GHL Clone ready: ${name} — click to paste`
-            : `GHL Clone: ${name} — open a /page-builder/ tab to paste`;
-          fab.disabled = !isBuilder || pasting;
-          fab.classList.remove("no-page");
-          badge.className = "show ghl";
-
-        } else if (hasAiCopy || hasAIOnly) {
-          const pg    = hasAiCopy ? copied.page : ready.page;
-          const label = PAGE_LABELS[pg] || "AI Page";
-          fab.title   = isBuilder
-            ? `AI Page Ready: ${label} — click to paste`
-            : `AI Page: ${label} — open a /page-builder/ tab to paste`;
-          fab.disabled = !isBuilder || pasting;
-          fab.classList.remove("no-page");
-          badge.className = "show";
-
-        } else {
-          fab.title    = "CF Funnel — click Clone to GHL in the app to load a page";
-          fab.disabled = true;
-          fab.classList.add("no-page");
-          badge.className = "";
+    try {
+      chrome.storage.local.get(["cfReady"], (ls) => {
+        if (chrome.runtime.lastError) {
+          clearTimeout(fallbackTimer);
+          setFabNoPage(fab, badge);
+          return;
         }
+        chrome.storage.session.get(["cf_copied_page"], (ss) => {
+          clearTimeout(fallbackTimer);
+          if (chrome.runtime.lastError) {
+            setFabNoPage(fab, badge);
+            return;
+          }
 
-        if (pasting) fab.disabled = true;
+          const ready  = ls.cfReady       ?? null;
+          const copied = ss.cf_copied_page ?? null;
+
+          const hasAiCopy  = !!(copied?.type === "ai-inject" && copied?.pageData);
+          const hasGHLCopy = !!(copied?.funnelId && copied?.stepId);
+          const hasAIOnly  = !hasAiCopy && !hasGHLCopy && !!(ready?.pageData);
+
+          if (hasGHLCopy) {
+            const name = copied.pageName || "GHL Page";
+            fab.title   = isBuilder
+              ? `GHL Clone ready: ${name} — click to paste`
+              : `GHL Clone: ${name} — open a /page-builder/ tab to paste`;
+            fab.disabled = !isBuilder || pasting;
+            fab.classList.remove("no-page");
+            badge.className = "show ghl";
+
+          } else if (hasAiCopy || hasAIOnly) {
+            const pg    = hasAiCopy ? copied.page : ready.page;
+            const label = PAGE_LABELS[pg] || "AI Page";
+            fab.title   = isBuilder
+              ? `AI Page Ready: ${label} — click to paste`
+              : `AI Page: ${label} — open a /page-builder/ tab to paste`;
+            fab.disabled = !isBuilder || pasting;
+            fab.classList.remove("no-page");
+            badge.className = "show";
+
+          } else {
+            setFabNoPage(fab, badge);
+          }
+
+          if (pasting) fab.disabled = true;
+        });
       });
-    });
+    } catch (e) {
+      clearTimeout(fallbackTimer);
+      setFabNoPage(fab, badge);
+    }
   }
 
   /* ─── Paste action ──────────────────────────────────────────────────── */
