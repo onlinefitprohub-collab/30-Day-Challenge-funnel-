@@ -159,7 +159,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
         setExtPresent(true);
       } else {
         setLoadError(
-          "No GHL page captured yet. Open any GHL funnel page in the Page Builder, click the extension icon, then click "Copy Current GHL Page". Then come back here and click Load again."
+          'No GHL page captured yet. Open any GHL funnel page in the Page Builder, click the extension icon, then click "Copy Current GHL Page". Then come back here and click Load again.'
         );
       }
       setLoading(false);
