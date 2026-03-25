@@ -53,6 +53,29 @@
     });
   });
 
+  /* ─── CF_GET_CAPTURED_GHL handler (runs on app pages) ───────────────────
+   * App sends { source: "cf-app", type: "CF_GET_CAPTURED_GHL" }.
+   * We forward to background, then postMessage the result back to the page.
+   * ─────────────────────────────────────────────────────────────────────── */
+  window.addEventListener("message", (evt) => {
+    if (evt.source !== window) return;
+    if (!evt.data || evt.data.source !== "cf-app") return;
+    const t = evt.data.type;
+
+    if (t === "CF_GET_CAPTURED_GHL") {
+      chrome.runtime.sendMessage({ type: "CF_GET_CAPTURED_GHL" }, (result) => {
+        window.postMessage(
+          { source: "cf-ext", type: "CF_CAPTURED_GHL_DATA", payload: result ?? { ok: false, capturedGHLPage: null } },
+          "*"
+        );
+      });
+    }
+
+    if (t === "CF_CLEAR_CAPTURED_GHL") {
+      chrome.runtime.sendMessage({ type: "CF_CLEAR_CAPTURED_GHL" });
+    }
+  });
+
   /* ─── GHL-only from here on ──────────────────────────────────────────── */
   if (!IS_GHL) return;
 

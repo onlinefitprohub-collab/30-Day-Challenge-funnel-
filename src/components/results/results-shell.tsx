@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
-  ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw,
+  ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -24,10 +24,12 @@ import { CreativePromptsSection } from "./sections/creative-prompts";
 import { CampaignNamingSection }  from "./sections/campaign-naming";
 import { HighLevelSection }       from "./sections/highlevel";
 import { FunnelPreviewSection }   from "./sections/funnel-preview";
+import { GhlInspectorSection }    from "./sections/ghl-inspector";
 
 const tabs = [
   { id: "highlevel",       label: "HighLevel",       icon: Layers,          highlight: true },
   { id: "funnelPreview",   label: "Funnel Preview",  icon: LayoutTemplate },
+  { id: "ghlInspector",    label: "GHL Inspector",   icon: Microscope },
   { id: "offerSummary",    label: "Offer Summary",   icon: Target },
   { id: "landingPage",     label: "Landing Page",    icon: FileText },
   { id: "optInForm",       label: "Opt-in Form",     icon: FormInput },
@@ -98,6 +100,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   const sections: Record<TabId, React.ReactNode> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} />,
+    ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,

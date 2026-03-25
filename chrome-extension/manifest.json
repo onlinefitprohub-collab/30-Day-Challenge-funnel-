@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "description": "Paste AI-generated funnel pages into GHL builder via a discreet orange FAB or the popup. No API key needed. Works on any app domain. Also clones real GHL pages.",
   "icons": {
     "16":  "icons/icon16.png",

@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.1 — inject AI pages via revex, works on any app domain.");
+    console.log("[CF Funnel] Installed v2.9.2 — GHL schema capture + inspector.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.1 — <all_urls> match + tabs.onUpdated injection.");
+    console.log("[CF Funnel] Updated to v2.9.2 — CF_COPY_PAGE now captures full pageData; GHL Schema Inspector available in app.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -177,6 +177,51 @@ async function _cf_getBuilderInfo(builderId) {
     });
   } catch(e) {
     return JSON.stringify({ ok: false, error: `_cf_getBuilderInfo: ${String(e).slice(0, 140)}` });
+  }
+}
+
+/* Fetch full pageData from GHL builder for schema inspection (MAIN world).
+ * Tries GET /funnels/funnel/page/{builderId} first (same path used by inject PUT).
+ * Falls back to GET /funnels/page/{builderId} if that errors.
+ * Returns { ok, data } serialised as JSON string. */
+async function _cf_fetchFullPageData(builderId) {
+  try {
+    const appMap = window.app ?? {};
+    let revex = null;
+
+    for (const ai of Object.values(appMap)) {
+      const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      if (r && typeof r.get === "function") { revex = r; break; }
+    }
+    if (!revex) {
+      const appEl = document.querySelector("#app");
+      revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    }
+    if (!revex) {
+      return JSON.stringify({ ok: false, error: "revexBackendService not found" });
+    }
+
+    let data = null;
+    // Primary: /funnels/funnel/page/{id} — same route used by the PUT inject call
+    try {
+      const r1 = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+      data = r1?.data ?? r1;
+    } catch (e1) {
+      // Fallback: /funnels/page/{id} — the metadata endpoint
+      try {
+        const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+        data = r2?.data ?? r2;
+      } catch (e2) {
+        return JSON.stringify({ ok: false, error: `both endpoints failed — primary: ${String(e1).slice(0, 80)}` });
+      }
+    }
+
+    if (!data) return JSON.stringify({ ok: false, error: "empty response from GHL" });
+
+    // Deep-clone to guarantee serializability before passing back across worlds
+    return JSON.stringify({ ok: true, data: JSON.parse(JSON.stringify(data)) });
+  } catch (e) {
+    return JSON.stringify({ ok: false, error: `_cf_fetchFullPageData: ${String(e).slice(0, 140)}` });
   }
 }
 
@@ -412,6 +457,41 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           await chrome.storage.session.set({ cf_copied_page: record });
           console.log("[CF] CF_COPY_PAGE: copied", record.funnelId, "/", record.stepId);
           sendResponse({ ok: true, record });
+
+          // ── Also capture full pageData for schema inspection (non-blocking) ──
+          // Only works when the tab is a /page-builder/ URL (revex is accessible).
+          try {
+            const tab2 = await chrome.tabs.get(tabId);
+            const bm   = (tab2.url ?? "").match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+            if (bm) {
+              const [, , builderId] = bm;
+              const pdRes = await chrome.scripting.executeScript({
+                target: { tabId, allFrames: false },
+                world:  "MAIN",
+                func:   _cf_fetchFullPageData,
+                args:   [builderId],
+              });
+              const pdResult = JSON.parse(pdRes?.[0]?.result ?? "{}");
+              if (pdResult.ok && pdResult.data) {
+                await chrome.storage.local.set({
+                  capturedGHLPage: {
+                    builderId,
+                    funnelId:   record.funnelId,
+                    stepId:     record.stepId,
+                    locationId: record.locationId,
+                    pageName:   record.pageName,
+                    pageData:   pdResult.data,
+                    capturedAt: Date.now(),
+                  },
+                });
+                console.log("[CF] CF_COPY_PAGE: full pageData captured for schema inspector (builderId:", builderId, ")");
+              } else {
+                console.warn("[CF] CF_COPY_PAGE: pageData capture failed:", pdResult.error);
+              }
+            }
+          } catch (pdErr) {
+            console.warn("[CF] CF_COPY_PAGE: pageData capture threw:", String(pdErr).slice(0, 80));
+          }
         } else {
           console.warn("[CF] CF_COPY_PAGE: failed", info.error ?? info.log);
           sendResponse({ ok: false, error: info.error ?? "Could not find funnelId/stepId on this page", log: info.log });
@@ -664,6 +744,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     chrome.storage.session.get("cf_copied_page", (s) => {
       sendResponse({ ok: true, data: s.cf_copied_page ?? null });
     });
+    return true;
+  }
+
+  /* ── CF_GET_CAPTURED_GHL ── return pageData captured from a GHL builder page ── */
+  if (type === "CF_GET_CAPTURED_GHL") {
+    chrome.storage.local.get("capturedGHLPage", (s) => {
+      sendResponse({ ok: true, capturedGHLPage: s.capturedGHLPage ?? null });
+    });
+    return true;
+  }
+
+  /* ── CF_CLEAR_CAPTURED_GHL ── clear the captured schema data ── */
+  if (type === "CF_CLEAR_CAPTURED_GHL") {
+    chrome.storage.local.remove("capturedGHLPage", () => sendResponse({ ok: true }));
     return true;
   }
 
