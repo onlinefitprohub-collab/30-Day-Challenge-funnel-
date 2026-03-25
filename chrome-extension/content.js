@@ -64,7 +64,7 @@
     const t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.9.5" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.9.6" }, "*");
     }
 
     if (t === "CF_GET_CAPTURED_GHL") {

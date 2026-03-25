@@ -130,6 +130,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
 
   const [urlCloneSending, setUrlCloneSending] = useState(false);
   const [urlCloneQueued,  setUrlCloneQueued]  = useState(false);
+  const [urlCloneError,   setUrlCloneError]   = useState<string | null>(null);
 
   /* Detect extension on mount */
   useEffect(() => {
@@ -192,6 +193,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     setUrlLoading(true);
     setUrlError(null);
     setUrlCloneQueued(false);
+    setUrlCloneError(null);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
@@ -246,11 +248,13 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     if (!captured?.pageData) return;
     setUrlCloneSending(true);
     setUrlCloneQueued(false);
+    setUrlCloneError(null);
 
     const requestId = Math.random().toString(36).slice(2);
     const timeout = setTimeout(() => {
       window.removeEventListener("message", onAck);
       setUrlCloneSending(false);
+      setUrlCloneError("Extension did not respond. Make sure the CF extension is installed and this page is allowed.");
     }, 4000);
 
     function onAck(evt: MessageEvent) {
@@ -487,6 +491,9 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
                     <span className="text-[10px] text-red-500">Extension not detected — install the CF extension first</span>
                   )}
                 </div>
+                {urlCloneError && (
+                  <p className="mt-2 text-[10px] text-red-600">{urlCloneError}</p>
+                )}
               </div>
             )}
           </div>
