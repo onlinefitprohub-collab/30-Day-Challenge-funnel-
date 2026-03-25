@@ -194,6 +194,37 @@ function strFromDevalue(v: unknown): string {
   return typeof v === "string" ? v : "";
 }
 
+function looksLikeGhlPageData(obj: unknown): obj is Record<string, unknown> {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+  const o = obj as Record<string, unknown>;
+  if (!Array.isArray(o.elements) || o.elements.length === 0) return false;
+  return (o.elements as unknown[]).some(el => {
+    if (!el || typeof el !== "object" || Array.isArray(el)) return false;
+    const e = el as Record<string, unknown>;
+    const meta = e.meta ?? e.type ?? "";
+    return meta === "section";
+  });
+}
+
+function deepFindGhlPageData(obj: unknown, depth = 0): Record<string, unknown> | null {
+  if (depth > 6 || !obj || typeof obj !== "object") return null;
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const found = deepFindGhlPageData(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (looksLikeGhlPageData(obj)) return obj as Record<string, unknown>;
+  for (const val of Object.values(obj as Record<string, unknown>)) {
+    if (val && typeof val === "object") {
+      const found = deepFindGhlPageData(val, depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 function tryParseNuxt3(html: string): Nuxt3ParseResult | null {
   // Look for <script id="__NUXT_DATA__" ...>
   const m = html.match(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
@@ -203,38 +234,45 @@ function tryParseNuxt3(html: string): Nuxt3ParseResult | null {
   try { arr = JSON.parse(m[1]); } catch { return null; }
   if (!Array.isArray(arr) || arr.length < 5) return null;
 
-  // We look for the pageData object by searching for a node with key "elements"
-  // Based on analysis: arr[4] = pageData object, arr[5] = elements array
-  let pageDataIndex = -1;
-  for (let i = 0; i < Math.min(arr.length, 20); i++) {
-    const val = arr[i];
-    if (val && typeof val === "object" && !Array.isArray(val) && "elements" in (val as object)) {
-      pageDataIndex = i;
-      break;
+  // Strategy 1: resolve from the Nuxt state root (arr[0]) and deep-search the
+  // resolved object tree for an object with an `elements` array of GHL nodes.
+  let pageData: Record<string, unknown> | null = null;
+  try {
+    const root = resolveDevalue(arr, 0);
+    pageData = deepFindGhlPageData(root);
+  } catch { /* ignore */ }
+
+  // Strategy 2: fallback — scan ALL entries in the raw array for a node that
+  // has an `elements` key (before devalue resolution) then resolve it.
+  if (!pageData) {
+    for (let i = 0; i < arr.length; i++) {
+      const val = arr[i];
+      if (val && typeof val === "object" && !Array.isArray(val) && "elements" in (val as object)) {
+        try {
+          const resolved = resolveDevalue(arr, i) as Record<string, unknown>;
+          if (looksLikeGhlPageData(resolved)) { pageData = resolved; break; }
+        } catch { /* continue */ }
+      }
     }
   }
-  if (pageDataIndex < 0) return null;
 
-  const pageData = resolveDevalue(arr, pageDataIndex) as Record<string, unknown>;
-  const rawElements = pageData?.elements;
-  if (!Array.isArray(rawElements) || rawElements.length === 0) return null;
+  if (!pageData) return null;
 
-  // Must contain at least one section-like element
-  const hasSections = (rawElements as GhlElement[]).some(el => el?.meta === "section" || el?.type === "section");
-  if (!hasSections) return null;
+  const rawElements = pageData.elements as unknown[];
 
   const pageName   = strFromDevalue(pageData.pageName)   || strFromDevalue(pageData.domainName);
   const funnelId   = strFromDevalue(pageData.funnelId);
   const locationId = strFromDevalue(pageData.locationId);
-  // stepId may be a number in devalue, coerce to string
   const rawStepId  = pageData.stepId;
   const stepId     = rawStepId != null ? String(rawStepId) : "";
 
   const rawFonts = pageData.fontsToLoad;
-  const fontsToLoad = Array.isArray(rawFonts) ? (rawFonts as unknown[]).filter(f => typeof f === "string") as string[] : [];
+  const fontsToLoad = Array.isArray(rawFonts)
+    ? (rawFonts as unknown[]).filter(f => typeof f === "string") as string[]
+    : [];
 
   const rawPopup = pageData.popup;
-  const popups = rawPopup != null ? [rawPopup] : [];
+  const popups   = rawPopup != null ? [rawPopup] : [];
 
   return {
     pageData: buildPageDataFromElements(rawElements as GhlElement[]),
