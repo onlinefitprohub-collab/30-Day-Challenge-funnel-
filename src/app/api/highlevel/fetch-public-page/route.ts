@@ -6,84 +6,65 @@ export const dynamic = "force-dynamic";
 /*
  * GET /api/highlevel/fetch-public-page?url=<encoded-url>
  *
- * Server-side fetches a published GHL funnel/website page, extracts the
- * `pageDataDownloadUrl` from the embedded Nuxt SSR payload, then fetches
- * the actual element tree from Firebase Storage and returns it.
+ * Fetches a published GHL funnel/website page and extracts its element tree.
  *
- * Works on any public GHL-hosted or custom-domain funnel page.
- * No authentication or extension required — all requests happen server-side.
+ * GHL publishes pages in two formats:
+ *  1. Nuxt 3 SSR (current): The full element tree is embedded in the page HTML
+ *     inside a <script id="__NUXT_DATA__"> tag using unjs/devalue serialization.
+ *  2. Nuxt 2 SSR (older): A `pageDataDownloadUrl` appears in window.__NUXT__ and
+ *     points to Firebase Storage where the element tree is stored.
+ *
+ * This route tries format 1 first, then falls back to format 2.
  *
  * SSRF protection:
  *  - Only https: allowed
  *  - Private/reserved IPs and internal hostnames blocked before any request
- *  - Each redirect hop is individually validated against the same blocklist
- *  - Firebase Storage secondary fetch is domain-allowlisted
+ *  - Each redirect hop individually re-validated
+ *  - Firebase secondary fetch is domain-allowlisted
  */
 
-/* ── SSRF helpers ────────────────────────────────────────────────────────── */
+/* ── SSRF guard ──────────────────────────────────────────────────────────── */
 
 function isPrivateIPv4(parts: number[]): boolean {
   const [a, b] = parts;
   return (
-    a === 10 ||                                    // 10.0.0.0/8
-    a === 127 ||                                   // 127.0.0.0/8 (loopback)
-    a === 0 ||                                     // 0.0.0.0/8
-    (a === 172 && b >= 16 && b <= 31) ||           // 172.16.0.0/12
-    (a === 192 && b === 168) ||                    // 192.168.0.0/16
-    (a === 169 && b === 254) ||                    // 169.254.0.0/16 (link-local / IMDS)
-    (a === 100 && b >= 64 && b <= 127)             // 100.64.0.0/10 (CGNAT)
+    a === 10 ||
+    a === 127 ||
+    a === 0 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 169 && b === 254) ||
+    (a === 100 && b >= 64 && b <= 127)
   );
 }
 
 function isPrivateIPv6(addr: string): boolean {
   const a = addr.toLowerCase();
-  return (
-    a === "::1" ||
-    a.startsWith("fc") ||    // fc00::/7 (unique local)
-    a.startsWith("fd") ||    // fc00::/7 (unique local)
-    a.startsWith("fe80") ||  // fe80::/10 (link-local)
-    a.startsWith("::")       // loopback / unspecified family
-  );
+  return a === "::1" || a.startsWith("fc") || a.startsWith("fd") || a.startsWith("fe80") || a.startsWith("::");
 }
 
 const BLOCKED_EXACT = new Set([
-  "localhost",
-  "0.0.0.0",
-  "::1",
-  "metadata.google.internal",
-  "169.254.169.254",  // AWS / GCP / Azure IMDS
-  "100.100.100.200",  // Alibaba Cloud metadata
+  "localhost", "0.0.0.0", "::1",
+  "metadata.google.internal", "169.254.169.254", "100.100.100.200",
 ]);
-
-const BLOCKED_TLDS = [
-  ".local", ".internal", ".intranet", ".lan",
-  ".test", ".example", ".invalid", ".localhost",
-];
+const BLOCKED_TLDS = [".local", ".internal", ".intranet", ".lan", ".test", ".example", ".invalid", ".localhost"];
 
 async function validateHostSsrf(hostname: string): Promise<string | null> {
-  const h = hostname.toLowerCase().replace(/^\[|\]$/g, ""); // strip IPv6 brackets
-
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (BLOCKED_EXACT.has(h)) return "Blocked host";
   if (BLOCKED_TLDS.some(tld => h.endsWith(tld))) return "Blocked internal domain";
-
-  // If the literal value is a private IPv6 address, block it directly
   if (isPrivateIPv6(h)) return "Private IPv6 address not allowed";
-
-  // If already a bare IPv4, validate directly without DNS
   const ipv4Parts = h.split(".").map(Number);
   if (ipv4Parts.length === 4 && ipv4Parts.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
     if (isPrivateIPv4(ipv4Parts)) return "Private IPv4 address not allowed";
     return null;
   }
-
-  // Resolve hostname and check all returned IPs
   const [v4, v6] = await Promise.all([
     dns.resolve4(h).catch(() => [] as string[]),
     dns.resolve6(h).catch(() => [] as string[]),
   ]);
   for (const addr of v4) {
-    const parts = addr.split(".").map(Number);
-    if (isPrivateIPv4(parts)) return `Hostname resolves to private IP (${addr})`;
+    if (isPrivateIPv4(addr.split(".").map(Number))) return `Hostname resolves to private IP (${addr})`;
   }
   for (const addr of v6) {
     if (isPrivateIPv6(addr)) return `Hostname resolves to private IPv6 (${addr})`;
@@ -91,17 +72,13 @@ async function validateHostSsrf(hostname: string): Promise<string | null> {
   return null;
 }
 
-/*
- * safeFetch — follows redirects manually with per-hop SSRF re-validation.
- * Only https: is allowed. Max 5 hops.
- */
+/* Manual redirect follower with per-hop SSRF revalidation */
 async function safeFetch(
   startUrl: URL,
   headers: Record<string, string>,
   maxHops = 5,
 ): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   let current = startUrl;
-
   for (let hop = 0; hop < maxHops; hop++) {
     let res: Response;
     try {
@@ -111,80 +88,150 @@ async function safeFetch(
         signal: AbortSignal.timeout(12000),
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
       const isTimeout = err instanceof Error && err.name === "TimeoutError";
-      return { ok: false, error: isTimeout ? "Request timed out." : `Fetch error: ${msg.slice(0, 100)}` };
+      return { ok: false, error: isTimeout ? "Request timed out." : `Fetch error: ${String(err).slice(0, 100)}` };
     }
-
-    // Success
     if (res.status >= 200 && res.status < 300) {
-      const text = await res.text();
-      return { ok: true, text };
+      return { ok: true, text: await res.text() };
     }
-
-    // Redirect — validate the target before following
     if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get("location");
-      if (!location) {
-        return { ok: false, error: `HTTP ${res.status} redirect with no Location header.` };
-      }
-
+      const loc = res.headers.get("location");
+      if (!loc) return { ok: false, error: `HTTP ${res.status} redirect with no Location header.` };
       let next: URL;
-      try {
-        next = new URL(location, current); // handles relative redirects
-      } catch {
-        return { ok: false, error: "Redirect contained an invalid URL." };
-      }
-
-      // Only allow https: after redirects
-      if (next.protocol !== "https:") {
-        return { ok: false, error: "Redirect to a non-https URL was blocked for security." };
-      }
-
-      // SSRF-check the redirect destination before following
+      try { next = new URL(loc, current); } catch { return { ok: false, error: "Redirect contained an invalid URL." }; }
+      if (next.protocol !== "https:") return { ok: false, error: "Redirect to non-https URL blocked." };
       const ssrfErr = await validateHostSsrf(next.hostname);
-      if (ssrfErr) {
-        return { ok: false, error: "Redirect to a disallowed host was blocked." };
-      }
-
+      if (ssrfErr) return { ok: false, error: "Redirect to a disallowed host was blocked." };
       current = next;
       continue;
     }
-
     return { ok: false, error: `Page returned HTTP ${res.status}. Make sure the URL is published and publicly accessible.` };
   }
-
   return { ok: false, error: "Too many redirects." };
 }
 
-/* ── HTML extraction helpers ─────────────────────────────────────────────── */
+/* ── Nuxt 3 devalue parser ───────────────────────────────────────────────── */
+
+const DEVALUE_WRAPPERS = new Set(["ShallowReactive", "Ref", "Reactive", "ShallowRef"]);
+
+function resolveDevalue(arr: unknown[], index: number, seen = new Map<number, unknown>()): unknown {
+  if (index < 0) return undefined;
+  if (seen.has(index)) return seen.get(index);
+  const val = arr[index];
+  if (val === null || typeof val !== "object") return val;
+  if (Array.isArray(val)) {
+    // Nuxt devalue special forms: ["ShallowReactive", idx]
+    if (val.length === 2 && typeof val[0] === "string" && DEVALUE_WRAPPERS.has(val[0])) {
+      return resolveDevalue(arr, val[1] as number, seen);
+    }
+    const result: unknown[] = [];
+    seen.set(index, result);
+    for (const v of val) {
+      result.push(typeof v === "number" ? resolveDevalue(arr, v, seen) : v);
+    }
+    return result;
+  }
+  const result: Record<string, unknown> = {};
+  seen.set(index, result);
+  for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+    result[k] = typeof v === "number" ? resolveDevalue(arr, v, seen) : v;
+  }
+  return result;
+}
+
+interface GhlElement {
+  id: string;
+  _id?: string;
+  meta?: string;
+  type?: string;
+  tagName?: string;
+  child?: string[];
+  [key: string]: unknown;
+}
+
+interface GhlPageData {
+  sections: Array<{ id: string; metaData: GhlElement }>;
+  rows: Record<string, { id: string; metaData: GhlElement }>;
+  columns: Record<string, { id: string; metaData: GhlElement }>;
+  elements: Record<string, { id: string; metaData: GhlElement }>;
+}
+
+function wrapWithMetaData(el: GhlElement): { id: string; metaData: GhlElement } {
+  return { id: el.id, metaData: { ...el, element: { ...el } } as GhlElement };
+}
+
+function buildPageDataFromElements(rawElements: unknown[]): GhlPageData {
+  const result: GhlPageData = { sections: [], rows: {}, columns: {}, elements: {} };
+  for (const raw of rawElements) {
+    const el = raw as GhlElement;
+    if (!el || typeof el.id !== "string") continue;
+    const meta = el.meta ?? el.type ?? "";
+    const wrapped = wrapWithMetaData(el);
+    if (meta === "section") {
+      result.sections.push(wrapped);
+    } else if (meta === "row") {
+      result.rows[el.id] = wrapped;
+    } else if (meta === "column" || meta === "col") {
+      result.columns[el.id] = wrapped;
+    } else {
+      result.elements[el.id] = wrapped;
+    }
+  }
+  return result;
+}
+
+function tryParseNuxt3(html: string): { pageData: GhlPageData; pageName: string } | null {
+  // Look for <script id="__NUXT_DATA__" ...>
+  const m = html.match(/<script[^>]*id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) return null;
+
+  let arr: unknown[];
+  try { arr = JSON.parse(m[1]); } catch { return null; }
+  if (!Array.isArray(arr) || arr.length < 5) return null;
+
+  // Navigate: root → data object has {data: idx} → {pageData: idx} → {elements: idx}
+  // We look for the pageData object by searching for a node with key "elements"
+  // that resolves to an array of GHL-shaped nodes.
+  // Based on analysis: arr[4] = pageData object, arr[5] = elements array
+  let pageDataIndex = -1;
+  for (let i = 0; i < Math.min(arr.length, 20); i++) {
+    const val = arr[i];
+    if (val && typeof val === "object" && !Array.isArray(val) && "elements" in (val as object)) {
+      pageDataIndex = i;
+      break;
+    }
+  }
+  if (pageDataIndex < 0) return null;
+
+  const pageData = resolveDevalue(arr, pageDataIndex) as Record<string, unknown>;
+  const rawElements = pageData?.elements;
+  if (!Array.isArray(rawElements) || rawElements.length === 0) return null;
+
+  // Must contain at least one section-like element
+  const hasSections = (rawElements as GhlElement[]).some(el => el?.meta === "section" || el?.type === "section");
+  if (!hasSections) return null;
+
+  const pageName = (typeof pageData.pageName === "string" ? pageData.pageName : "") ||
+                   (typeof pageData.domainName === "string" ? pageData.domainName : "");
+
+  return { pageData: buildPageDataFromElements(rawElements as GhlElement[]), pageName };
+}
+
+/* ── Nuxt 2 / Firebase fallback ─────────────────────────────────────────── */
 
 function extractDownloadUrl(html: string): string | null {
-  /*
-   * GHL pages are Nuxt 2 SSR apps. The server-side state is embedded as:
-   *   <script>window.__NUXT__={...json...}</script>
-   *
-   * We try three progressively looser patterns to handle any escaping.
-   */
-
-  // Pattern 1: standard JSON string value (handles \" and \/ escaping)
   const m1 = html.match(/"pageDataDownloadUrl"\s*:\s*"((?:[^"\\]|\\.)*)"/);
   if (m1) {
     try { return JSON.parse('"' + m1[1] + '"'); } catch { return m1[1].replace(/\\/g, ""); }
   }
-
-  // Pattern 2: looser — grab everything up to the next unescaped quote
   const m2 = html.match(/pageDataDownloadUrl["']?\s*:\s*["'](https?:\/\/[^"']+)["']/);
   if (m2) return m2[1];
-
-  // Pattern 3: find a Firebase Storage URL within 500 chars after the keyword
   const idx = html.indexOf("pageDataDownloadUrl");
   if (idx !== -1) {
     const slice = html.slice(idx, idx + 500);
     const m3 = slice.match(/(https?:\/\/firebasestorage\.googleapis\.com\/[^\s"'<>]+)/);
     if (m3) return m3[1];
   }
-
   return null;
 }
 
@@ -204,24 +251,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Missing url parameter" }, { status: 400 });
   }
 
-  // Only allow https:
   let pageUrl: URL;
   try {
     pageUrl = new URL(rawUrl);
     if (pageUrl.protocol !== "https:") {
-      return NextResponse.json(
-        { ok: false, error: "Only https:// URLs are supported." },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "Only https:// URLs are supported." }, { status: 400 });
     }
   } catch {
-    return NextResponse.json(
-      { ok: false, error: "Invalid URL — must be a valid https:// address." },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: "Invalid URL — must be a valid https:// address." }, { status: 400 });
   }
 
-  // SSRF: validate the initial hostname before any network request
   const ssrfError = await validateHostSsrf(pageUrl.hostname);
   if (ssrfError) {
     return NextResponse.json(
@@ -230,7 +269,7 @@ export async function GET(request: Request) {
     );
   }
 
-  // 1. Fetch the page HTML with manual redirect handling (each hop re-validated)
+  // 1. Fetch page HTML with manual redirect handling (per-hop SSRF revalidation)
   const pageResult = await safeFetch(pageUrl, {
     "Accept": "text/html,application/xhtml+xml",
     "User-Agent": "Mozilla/5.0 (compatible; ChallengeInspector/1.0)",
@@ -242,47 +281,54 @@ export async function GET(request: Request) {
 
   const html = pageResult.text;
 
-  // 2. Extract pageDataDownloadUrl
+  // 2a. Try Nuxt 3 devalue format (current GHL format — element tree embedded in HTML)
+  const nuxt3Result = tryParseNuxt3(html);
+  if (nuxt3Result) {
+    return NextResponse.json({
+      ok: true,
+      elementTree: nuxt3Result.pageData,
+      pageName: nuxt3Result.pageName,
+      source: "url-parse-nuxt3",
+    });
+  }
+
+  // 2b. Fallback: try Nuxt 2 format (older GHL pages with pageDataDownloadUrl)
   const downloadUrl = extractDownloadUrl(html);
   if (!downloadUrl) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          "Could not find GHL page data in the HTML. Make sure this is a published GHL funnel or website page " +
-          "(not a WordPress/Squarespace/etc. site). The page must be published — drafts don't embed the data.",
+          "Could not extract page data from this URL. Make sure it is a published GHL funnel or website page. " +
+          "The page must be published (not saved as draft) and must be a GHL-built page.",
       },
       { status: 200 }
     );
   }
 
-  // Validate the Firebase Storage URL (must be https: and a known safe domain)
+  // Validate Firebase Storage URL
   let fbUrl: URL;
   try {
     fbUrl = new URL(downloadUrl);
     const allowedFbHost =
-      fbUrl.hostname.endsWith(".googleapis.com") ||
-      fbUrl.hostname.endsWith(".firebasestorage.app");
+      fbUrl.hostname.endsWith(".googleapis.com") || fbUrl.hostname.endsWith(".firebasestorage.app");
     if (fbUrl.protocol !== "https:" || !allowedFbHost) {
       return NextResponse.json(
-        { ok: false, error: "Unexpected page data URL — only Firebase Storage URLs are accepted." },
+        { ok: false, error: "Unexpected page data URL format." },
         { status: 200 }
       );
     }
   } catch {
-    return NextResponse.json(
-      { ok: false, error: "Invalid page data URL found in page." },
-      { status: 200 }
-    );
+    return NextResponse.json({ ok: false, error: "Invalid page data URL found in page." }, { status: 200 });
   }
 
-  // 3. Fetch element tree from Firebase Storage
+  // Fetch element tree from Firebase Storage
   let elementTree: unknown;
   try {
     const fbRes = await fetch(fbUrl.toString(), { signal: AbortSignal.timeout(10000) });
     if (!fbRes.ok) {
       return NextResponse.json(
-        { ok: false, error: `Firebase Storage returned HTTP ${fbRes.status} — the page data URL may have expired.` },
+        { ok: false, error: `Firebase Storage returned HTTP ${fbRes.status}.` },
         { status: 200 }
       );
     }
@@ -295,12 +341,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const pageName = extractPageName(html);
-
   return NextResponse.json({
     ok: true,
     elementTree,
-    pageName: pageName || pageUrl.pathname,
+    pageName: extractPageName(html),
     source: "url-parse",
   });
 }
