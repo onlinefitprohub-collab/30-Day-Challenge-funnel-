@@ -1,6 +1,6 @@
-// popup.js v2.6.0 — Challenge Funnel Extension
+// popup.js v2.7.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
-// Also handles: AI project library (load app-generated pages)
+// Also handles: AI project library (load → inject via revex, no API key)
 
 const PAGES = ["landing", "optin", "thankyou", "booking"];
 const PAGE_LABELS = {
@@ -342,7 +342,7 @@ async function loadPage(page, btn, cached) {
     refreshLoadedBadge(ready);
 
     showNote("info",
-      `${PAGE_LABELS[page]} is loaded!\n\nOpen that page in the HighLevel builder — the extension panel will show a "Paste into Builder" button.`
+      `${PAGE_LABELS[page]} is loaded!\n\nNow open that funnel page in the GHL builder — the extension panel will show an "Inject AI Page" button. Click it to inject the AI-generated content directly, no API key needed.`
     );
   } catch (e) {
     showNote("err", `Could not load page data: ${e.message}`);

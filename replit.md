@@ -44,33 +44,38 @@ supabase/                 # DB migrations/schema
 scripts/                  # Test/generation scripts
 ```
 
-## Chrome Extension (v2.6.0)
+## Chrome Extension (v2.7.0)
 
-`chrome-extension/` is a Manifest V3 extension that copies any GHL page and pastes it into the GHL page builder using GHL's own `clone-funnel-step` API — the same mechanism used by CloneLevel and SiteGrab.
+`chrome-extension/` is a Manifest V3 extension (v2.7.0) with two core features:
+1. **AI Inject** — inject AI-generated native GHL pages directly via `revex.put()` (no API key needed)
+2. **Clone/Paste** — copy any GHL page and paste it into another builder via `clone-funnel-step`
 
-### Copy/Paste Flow (v2.6.0)
-1. User navigates to any GHL funnel page (public or private)
-2. Opens extension popup → clicks **"Copy Current GHL Page"**
-3. `background.js` runs `_cf_extractGhlMetadata()` in the page's MAIN world via `chrome.scripting.executeScript()` → extracts `funnelId + stepId` from Nuxt payload / window globals
-4. Stores `{ funnelId, stepId, pageName }` in `chrome.storage.local` as `cf_copied_page`
-5. User navigates to their GHL builder page (`/page-builder/...`)
-6. Clicks **"Paste into GHL Builder"** (popup or floating panel)
-7. `background.js` runs `_cf_getBuilderInfo(builderId)` → gets destination `funnelId + stepId` via revexBackendService
-8. Runs `_cf_cloneFunnelStep(req)` → calls `POST /funnels/funnel/clone-funnel-step/` via revex with the full backend URL
-9. Runs `_cf_refreshBuilderIframe()` → reloads builder iframe
-10. GHL's own backend clones all page content into the destination step
+### AI Inject Flow (v2.7.0 — primary flow)
+1. User opens their Challenge Funnel app results page
+2. Opens extension popup → project auto-saved → clicks **"Load"** next to a page (Landing/Opt-In/etc.)
+3. Popup fetches GHL-native JSON from `/api/highlevel/page-data` → stored in `chrome.storage.local.cfReady`
+4. User navigates to the corresponding GHL builder page (`/page-builder/...`)
+5. Floating panel shows **"✦ Inject AI Page"** button
+6. `background.js` CF_INJECT_AI_PAGE handler: reads `cfReady.pageData`, runs `_cf_injectPageData(builderId, locationId, pageData)` in MAIN world
+7. `_cf_injectPageData` calls `revex.put('https://backend.leadconnectorhq.com/funnels/funnel/page/{builderId}', { pageData, locationId, pageId, isPublished: false })`
+8. Builder iframe reloads — AI-generated native GHL elements appear immediately
 
-### Why This Works
-- Uses `revex.post()` with the **full URL** (`https://backend.leadconnectorhq.com/...`) — avoids the wrong-baseURL bug
-- GHL's own server handles the page data copy — no schema to construct
-- `activeTab` permission grants access to any active tab when user clicks the popup
+### Clone/Paste Flow (also available)
+1. User navigates to any GHL funnel page → clicks **"Copy Current GHL Page"**
+2. `background.js` extracts `funnelId + stepId` via MAIN-world script → stored in `chrome.storage.session` as `cf_copied_page`
+3. On builder → **"Paste GHL Page"** → `CF_PASTE_PAGE` uses `clone-funnel-step` to clone source → destination
+
+### Why Revex Inject Works Without API Key
+- `revexBackendService` is GHL's own authenticated axios instance in the Nuxt app
+- `_cf_injectPageData()` runs in MAIN world via `chrome.scripting.executeScript` → accesses revex directly
+- Same PUT endpoint as any API-key-based inject, but uses the user's own GHL session
 
 ### Files
-- `manifest.json` — Manifest V3; host_permissions for app.gohighlevel.com + replit.dev/.app
-- `popup.html/js` — Copy/Paste buttons + AI project library
-- `content.js` — Floating panel on GHL builder; Paste button via chrome.runtime.sendMessage
-- `bridge.js` — Minimal MAIN-world script; emits CONTEXT_DETECTED (URL detection only)
-- `background.js` — Service worker with CF_COPY_PAGE + CF_PASTE_PAGE handlers + inline MAIN-world functions
+- `manifest.json` — v2.7.0; host_permissions for app.gohighlevel.com + replit.dev/.app
+- `popup.html/js` — AI library (Load → cfReady) + Clone/Paste buttons
+- `content.js` — Floating panel: "Inject AI Page" (green) + "Paste GHL Page" (orange)
+- `bridge.js` — Minimal MAIN-world script; emits CONTEXT_DETECTED
+- `background.js` — CF_INJECT_AI_PAGE + CF_COPY_PAGE + CF_PASTE_PAGE handlers
 - Load unpacked from `chrome-extension/` folder in Chrome developer mode
 
 ## Colour Schemes (5)

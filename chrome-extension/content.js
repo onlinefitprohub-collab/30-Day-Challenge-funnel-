@@ -1,6 +1,6 @@
-// content.js v2.6.0 — Challenge Funnel in a Box
+// content.js v2.7.0 — Challenge Funnel in a Box
 // Runs on GHL pages (app.gohighlevel.com) — shows a floating panel
-// with "Paste into Builder" button backed by clone-funnel-step.
+// with "Inject AI Page" (revex PUT) and "Paste GHL Page" (clone-funnel-step) buttons.
 // Also runs on our app pages (*.replit.*) to handle CF_SAVE_PAGE.
 
 (function () {
@@ -134,6 +134,11 @@
     .btn-copy  { background: #0ea5e9; color: #fff; }
     .btn-copy:hover:not(:disabled)  { background: #0284c7; }
 
+    .btn-inject { background: #16a34a; color: #fff; }
+    .btn-inject:hover:not(:disabled) { background: #15803d; }
+    .btn-inject.ok  { background: #0e7490; }
+    .btn-inject.err { background: #dc2626; }
+
     .btn-paste { background: #f97316; color: #fff; }
     .btn-paste:hover:not(:disabled) { background: #ea580c; }
     .btn-paste.ok  { background: #16a34a; }
@@ -154,6 +159,20 @@
     .status.info { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
     .status.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
     .status.warn { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; display: block; }
+
+    /* AI inject card */
+    .ai-card {
+      font-size: 11px; border-radius: 8px; padding: 8px 10px; line-height: 1.55;
+    }
+    .ai-card.has-ai {
+      background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
+    }
+    .ai-card strong { font-weight: 700; display: block; margin-bottom: 2px; }
+
+    /* Separator */
+    .sep {
+      border: none; border-top: 1px solid #e2e8f0; margin: 4px 0;
+    }
 
     /* No-builder warning */
     .no-builder {
@@ -216,57 +235,125 @@
   /* ─── Render panel body ──────────────────────────────────────────────── */
   function updatePanel() {
     if (!shadow) return;
-    chrome.storage.session.get(["cf_copied_page"], (s) => {
-      const copied = s.cf_copied_page ?? null;
-      const body   = shadow.getElementById("body-content");
-      if (!body) return;
 
-      let copiedHtml = "";
-      if (copied?.funnelId && copied?.stepId) {
-        const ago = timeSince(copied.copiedAt);
-        const name = copied.pageName || "GHL Page";
-        copiedHtml = `
-          <div class="copied-card has-copy">
-            <strong>Copied: ${esc(name)}</strong>
-            Copied ${ago} — ready to paste into any builder page.
-          </div>
+    // Read both storage areas in parallel via nested callbacks
+    chrome.storage.local.get(["cfReady"], (ls) => {
+      chrome.storage.session.get(["cf_copied_page"], (ss) => {
+        const ready  = ls.cfReady      ?? null;
+        const copied = ss.cf_copied_page ?? null;
+        const body   = shadow.getElementById("body-content");
+        if (!body) return;
+
+        // ── AI inject section ───────────────────────────────────────────
+        const hasAI    = !!(ready?.pageData);
+        const canInject = hasAI && isBuilder;
+
+        const PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
+        const aiLabel = hasAI ? (PAGE_LABELS[ready.page] || ready.page || "AI Page") : "";
+
+        let aiHtml = "";
+        if (hasAI) {
+          aiHtml = `
+            <div class="ai-card has-ai">
+              <strong>AI Page Loaded: ${esc(aiLabel)}</strong>
+              "${esc(ready.challengeConcept || "Challenge Funnel")}"
+            </div>
+            <button class="btn btn-inject" id="inject-btn" ${!canInject ? "disabled" : ""}>
+              ${canInject ? "✦ Inject AI Page" : "✦ Inject AI Page (need builder tab)"}
+            </button>
+          `;
+        }
+
+        // ── Clone/paste section ─────────────────────────────────────────
+        const hasCopy  = !!(copied?.funnelId && copied?.stepId);
+        const canPaste = hasCopy && isBuilder;
+
+        let copyHtml = "";
+        if (hasCopy) {
+          const ago  = timeSince(copied.copiedAt);
+          const name = copied.pageName || "GHL Page";
+          copyHtml = `
+            <div class="copied-card has-copy">
+              <strong>Copied: ${esc(name)}</strong>
+              Copied ${ago} — ready to paste.
+            </div>
+            <button class="btn btn-paste" id="paste-btn" ${!canPaste ? "disabled" : ""}>
+              Paste GHL Page
+            </button>
+            <button class="btn-clear" id="clear-btn">Clear copied</button>
+          `;
+        } else if (!hasAI) {
+          copyHtml = `
+            <div class="copied-card no-copy">
+              <strong>No page loaded</strong>
+              Open the extension popup to load an AI page or copy a GHL page.
+            </div>
+          `;
+        }
+
+        // ── Builder warning ─────────────────────────────────────────────
+        const builderNote = !isBuilder && (hasAI || hasCopy)
+          ? `<div class="no-builder">Navigate to a <strong>/page-builder/</strong> URL to enable injection.</div>`
+          : "";
+
+        // ── Separator ───────────────────────────────────────────────────
+        const sep = (hasAI && hasCopy) ? `<hr class="sep">` : "";
+
+        body.innerHTML = `
+          ${aiHtml}
+          ${sep}
+          ${copyHtml}
+          ${builderNote}
+          <div class="status" id="status"></div>
         `;
-      } else {
-        copiedHtml = `
-          <div class="copied-card no-copy">
-            <strong>Nothing copied yet</strong>
-            Navigate to any GHL funnel page and click <strong>Copy GHL Page</strong> in the extension popup — then come back here.
-          </div>
-        `;
-      }
 
-      const hasCopy    = !!(copied?.funnelId && copied?.stepId);
-      const canPaste   = hasCopy && isBuilder;
-
-      const builderNote = !isBuilder
-        ? `<div class="no-builder">This doesn't look like a page-builder URL — navigate to <strong>/page-builder/...</strong> first.</div>`
-        : "";
-
-      body.innerHTML = `
-        ${copiedHtml}
-        ${builderNote}
-        <button class="btn btn-paste" id="paste-btn" ${!canPaste ? "disabled" : ""}>
-          Paste into Builder
-        </button>
-        ${hasCopy ? `<button class="btn-clear" id="clear-btn">Clear copied page</button>` : ""}
-        <div class="status" id="status"></div>
-      `;
-
-      if (canPaste) {
-        shadow.getElementById("paste-btn").addEventListener("click", doPaste);
-      }
-      const clearBtn = shadow.getElementById("clear-btn");
-      if (clearBtn) {
-        clearBtn.addEventListener("click", () => {
-          chrome.storage.session.remove("cf_copied_page", updatePanel);
-        });
-      }
+        if (canInject) {
+          shadow.getElementById("inject-btn").addEventListener("click", doInject);
+        }
+        if (canPaste) {
+          shadow.getElementById("paste-btn").addEventListener("click", doPaste);
+        }
+        const clearBtn = shadow.getElementById("clear-btn");
+        if (clearBtn) {
+          clearBtn.addEventListener("click", () => {
+            chrome.storage.session.remove("cf_copied_page", updatePanel);
+          });
+        }
+      });
     });
+  }
+
+  /* ─── Inject AI page action ─────────────────────────────────────────── */
+  let injecting = false;
+
+  async function doInject() {
+    if (injecting) return;
+    injecting = true;
+
+    const btn = shadow.getElementById("inject-btn");
+    if (btn) { btn.disabled = true; btn.textContent = "Injecting…"; }
+    clearStatus();
+
+    try {
+      const result = await new Promise((resolve) => {
+        chrome.runtime.sendMessage({ type: "CF_INJECT_AI_PAGE" }, resolve);
+      });
+
+      if (result?.ok) {
+        if (btn) { btn.textContent = "Injected!"; btn.classList.add("ok"); }
+        showStatus("info", "AI page injected! The builder is reloading — your native GHL elements will appear in a few seconds.");
+      } else {
+        const err = result?.error ?? "Unknown error";
+        if (btn) { btn.textContent = "Failed"; btn.classList.add("err"); }
+        showStatus("err", err.slice(0, 300));
+      }
+    } catch(e) {
+      if (btn) { btn.textContent = "Error"; btn.classList.add("err"); }
+      showStatus("err", `Error: ${e.message.slice(0, 200)}`);
+    } finally {
+      injecting = false;
+      setTimeout(updatePanel, 6000);
+    }
   }
 
   /* ─── Paste action ──────────────────────────────────────────────────── */
@@ -326,9 +413,10 @@
     return `${Math.floor(secs/86400)}d ago`;
   }
 
-  /* ─── Listen for storage changes (real-time copy status updates) ─────── */
+  /* ─── Listen for storage changes (real-time status updates) ─────── */
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "session" && changes.cf_copied_page) updatePanel();
+    if (area === "local"   && changes.cfReady)        updatePanel();
   });
 
   /* ─── Mount ─────────────────────────────────────────────────────────── */

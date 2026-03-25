@@ -720,7 +720,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     ));
     const confirmBtn = el(b, makeButton(
       "Confirm My Spot →", "next-step", "",
-      { backgroundColor: ss(s.primary), marginTop: ss("20px") },
+      { backgroundColor: ss(s.primary), marginTop: sv(20) },
     ));
     const calMicro = el(b, makeParagraph(
       "You'll receive a confirmation email immediately after booking.",

@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.6.0 — copy any GHL page, paste into builder.");
+    console.log("[CF Funnel] Installed v2.7.0 — inject AI pages directly via revex, no API key needed.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.6.0 — clone-funnel-step copy/paste.");
+    console.log("[CF Funnel] Updated to v2.7.0 — inject AI pages + clone-funnel-step copy/paste.");
   }
 
   if (reason === "install" || reason === "update") {
@@ -238,6 +238,67 @@ async function _cf_cloneFunnelStep(req) {
   }
 }
 
+/* Inject AI-generated pageData directly into a GHL builder page via revex (MAIN world).
+   Uses PUT /funnels/funnel/page/{builderId} — same endpoint GHL uses internally.
+   No API key required — runs with the user's own authenticated session. */
+async function _cf_injectPageData(builderId, locationId, pageData) {
+  try {
+    let revex = null;
+
+    // Try #app.__vue_app__ first
+    const appEl = document.querySelector("#app");
+    revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+
+    // Fallback: window.app entries
+    if (!revex) {
+      for (const ai of Object.values(window.app ?? {})) {
+        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+        if (r && typeof r.put === "function") { revex = r; break; }
+      }
+    }
+
+    if (!revex) {
+      return JSON.stringify({ ok: false, error: "revexBackendService not found — make sure the GHL builder is fully loaded" });
+    }
+
+    const payload = {
+      pageData,
+      locationId,
+      pageId:      builderId,
+      isPublished: false,
+    };
+
+    console.log("[CF] _cf_injectPageData: PUT to", builderId,
+      "sections:", pageData?.sections?.length ?? 0,
+      "rows:", Object.keys(pageData?.rows ?? {}).length,
+      "elements:", Object.keys(pageData?.elements ?? {}).length);
+
+    const response = await revex.put(
+      `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+      payload
+    );
+
+    const data   = response?.data ?? response;
+    const status = typeof response?.status === "number" ? response.status
+                 : typeof data?.status     === "number" ? data.status : 200;
+
+    if (status >= 400) {
+      return JSON.stringify({
+        ok:    false,
+        error: `HTTP ${status}: ${data?.message ?? data?.error ?? "server error"}`,
+        status,
+        raw:   JSON.stringify(data).slice(0, 300),
+      });
+    }
+
+    return JSON.stringify({ ok: true, status, raw: JSON.stringify(data).slice(0, 200) });
+  } catch(e) {
+    const status = e?.response?.status;
+    const errMsg = e?.response?.data?.message ?? String(e).slice(0, 140);
+    return JSON.stringify({ ok: false, error: `inject threw: ${errMsg}`, status });
+  }
+}
+
 /* Reload the GHL builder iframe to reflect cloned content. */
 function _cf_refreshBuilderIframe() {
   try {
@@ -442,6 +503,75 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         }
       } catch(err) {
         console.error("[CF] CF_PASTE_PAGE threw:", err);
+        sendResponse({ ok: false, error: String(err) });
+      }
+    })();
+    return true; // async
+  }
+
+  /* ── CF_INJECT_AI_PAGE ───────────────────────────────────────────────────
+   * Injects AI-generated GHL-native pageData into the active builder page.
+   * Reads cfReady.pageData from local storage, then calls revex.put() via
+   * _cf_injectPageData() injected into MAIN world. No API key required.
+   * The active tab MUST be app.gohighlevel.com/.../page-builder/...
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_INJECT_AI_PAGE") {
+    (async () => {
+      try {
+        // 1. Read the loaded AI page from local storage
+        const s     = await chrome.storage.local.get("cfReady");
+        const ready = s.cfReady;
+        if (!ready?.pageData) {
+          sendResponse({ ok: false, error: "No AI page loaded — open the extension popup, pick a page from the AI library and click Load, then try again." });
+          return;
+        }
+
+        // 2. Get the active tab (must be GHL builder)
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+
+        const tab = await chrome.tabs.get(tabId);
+        const url = tab.url ?? "";
+        const m   = url.match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+        if (!m) {
+          sendResponse({ ok: false, error: "Active tab is not a GHL page builder URL — navigate to the funnel page you want to inject into, then try again." });
+          return;
+        }
+        const [, locationId, builderId] = m;
+
+        // 3. Inject AI pageData via revex in MAIN world
+        console.log("[CF] CF_INJECT_AI_PAGE: injecting page=", ready.page, "→ builder=", builderId);
+
+        let injectResult = {};
+        try {
+          const res = await chrome.scripting.executeScript({
+            target: { tabId, allFrames: false },
+            world:  "MAIN",
+            func:   _cf_injectPageData,
+            args:   [builderId, locationId, ready.pageData],
+          });
+          injectResult = JSON.parse(res?.[0]?.result ?? "{}");
+        } catch(e) {
+          injectResult = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` };
+        }
+
+        if (injectResult.ok) {
+          console.log("[CF] inject ok:", injectResult.status ?? 200);
+          // 4. Refresh the builder iframe so new content renders
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId, allFrames: false },
+              world:  "MAIN",
+              func:   _cf_refreshBuilderIframe,
+            });
+          } catch(_) {}
+          sendResponse({ ok: true, page: ready.page, builderId, injectResult });
+        } else {
+          console.warn("[CF] CF_INJECT_AI_PAGE: failed", injectResult.error);
+          sendResponse({ ok: false, error: injectResult.error ?? "inject failed", injectResult });
+        }
+      } catch(err) {
+        console.error("[CF] CF_INJECT_AI_PAGE threw:", err);
         sendResponse({ ok: false, error: String(err) });
       }
     })();
