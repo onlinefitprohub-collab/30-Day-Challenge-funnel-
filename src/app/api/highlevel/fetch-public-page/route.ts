@@ -287,7 +287,12 @@ function tryParseNuxt3(html: string): Nuxt3ParseResult | null {
     ? pageData.popups
     : rawPopup != null ? [rawPopup] : [];
 
-  const fontsForPreview = PREVIEW_FONTS.map(f => `'${f}'`);
+  // Derive fontsForPreview from captured fontsToLoad when available, quoting
+  // each name to match the GHL "'Font Name'" format; fallback to defaults.
+  const previewSourceFonts = fontsToLoad.length >= 4
+    ? fontsToLoad.slice(0, 4)
+    : PREVIEW_FONTS;
+  const fontsForPreview = previewSourceFonts.map(f => `'${f}'`);
 
   const general: Record<string, unknown> = {
     general: {
