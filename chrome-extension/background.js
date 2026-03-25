@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.3 — CF_PING detection + GHL schema capture + inspector.");
+    console.log("[CF Funnel] Installed v2.9.4 — GHL Inspector now fetches real element tree from Firebase Storage.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.3 — CF_PING handler in content.js fixes extension detection in GHL Inspector.");
+    console.log("[CF Funnel] Updated to v2.9.4 — _cf_fetchFullPageData now follows pageDataDownloadUrl to get actual element tree.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -201,25 +201,53 @@ async function _cf_fetchFullPageData(builderId) {
       return JSON.stringify({ ok: false, error: "revexBackendService not found" });
     }
 
-    let data = null;
-    // Primary: /funnels/funnel/page/{id} — same route used by the PUT inject call
+    // Step 1: GET page metadata (contains pageDataDownloadUrl → Firebase Storage)
+    let metadata = null;
     try {
       const r1 = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
-      data = r1?.data ?? r1;
+      metadata = r1?.data ?? r1;
     } catch (e1) {
-      // Fallback: /funnels/page/{id} — the metadata endpoint
       try {
         const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
-        data = r2?.data ?? r2;
+        metadata = r2?.data ?? r2;
       } catch (e2) {
         return JSON.stringify({ ok: false, error: `both endpoints failed — primary: ${String(e1).slice(0, 80)}` });
       }
     }
 
-    if (!data) return JSON.stringify({ ok: false, error: "empty response from GHL" });
+    if (!metadata) return JSON.stringify({ ok: false, error: "empty response from GHL" });
 
-    // Deep-clone to guarantee serializability before passing back across worlds
-    return JSON.stringify({ ok: true, data: JSON.parse(JSON.stringify(data)) });
+    // Step 2: Follow pageDataDownloadUrl to get the REAL element tree from Firebase Storage.
+    // The GHL API only returns page metadata; the actual sections/rows/columns/elements
+    // are stored in Firebase Storage and downloaded via this public URL.
+    const downloadUrl = metadata.pageDataDownloadUrl ?? metadata.data?.pageDataDownloadUrl ?? null;
+    if (downloadUrl && typeof downloadUrl === "string") {
+      try {
+        const fbRes = await fetch(downloadUrl);
+        if (fbRes.ok) {
+          const elementTree = await fbRes.json();
+          return JSON.stringify({
+            ok:       true,
+            data:     JSON.parse(JSON.stringify(elementTree)),
+            source:   "firebase",
+            pageName: metadata.name ?? "",
+          });
+        }
+        // Firebase fetch failed (non-2xx) — fall through to metadata fallback
+      } catch (_fbErr) {
+        // Network error — fall through to metadata fallback
+      }
+    }
+
+    // Fallback: return metadata with a warning so the inspector can explain the situation
+    return JSON.stringify({
+      ok:      true,
+      data:    JSON.parse(JSON.stringify(metadata)),
+      source:  "metadata",
+      warning: downloadUrl
+        ? "Firebase download failed — showing page metadata instead of the element tree"
+        : "pageDataDownloadUrl not found in GHL response — showing page metadata instead of the element tree",
+    });
   } catch (e) {
     return JSON.stringify({ ok: false, error: `_cf_fetchFullPageData: ${String(e).slice(0, 140)}` });
   }
@@ -479,12 +507,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                     funnelId:   record.funnelId,
                     stepId:     record.stepId,
                     locationId: record.locationId,
-                    pageName:   record.pageName,
+                    pageName:   pdResult.pageName || record.pageName,
                     pageData:   pdResult.data,
+                    dataSource: pdResult.source  ?? "unknown",
+                    warning:    pdResult.warning  ?? null,
                     capturedAt: Date.now(),
                   },
                 });
-                console.log("[CF] CF_COPY_PAGE: full pageData captured for schema inspector (builderId:", builderId, ")");
+                console.log("[CF] CF_COPY_PAGE: pageData captured for inspector (source:", pdResult.source, ") builderId:", builderId);
               } else {
                 console.warn("[CF] CF_COPY_PAGE: pageData capture failed:", pdResult.error);
               }

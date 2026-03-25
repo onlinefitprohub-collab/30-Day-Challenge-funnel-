@@ -98,6 +98,8 @@ interface CapturedGHLPage {
   locationId: string;
   pageName:   string;
   pageData:   Record<string, unknown>;
+  dataSource: "firebase" | "metadata" | "unknown";
+  warning?:   string | null;
   capturedAt: number;
 }
 
@@ -281,21 +283,39 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       {/* ── Capture metadata ─────────────────────────────────────────────── */}
       {captured && (
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="border-b border-gray-100 bg-gray-50 px-5 py-2.5">
-            <p className="text-sm font-semibold text-gray-900">Captured GHL Page Identifiers</p>
+          <div className="border-b border-gray-100 bg-gray-50 px-5 py-2.5 flex items-center gap-3">
+            <p className="text-sm font-semibold text-gray-900 flex-1">Captured GHL Page</p>
+            {captured.dataSource === "firebase" && (
+              <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                ✓ Real element tree (Firebase)
+              </span>
+            )}
+            {captured.dataSource === "metadata" && (
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                ⚠ Page metadata only
+              </span>
+            )}
           </div>
-          <div className="p-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {([
-              ["Page Name",   captured.pageName   || "(builder page)"],
-              ["Funnel ID",   captured.funnelId],
-              ["Step ID",     captured.stepId],
-              ["Builder ID",  captured.builderId],
-            ] as [string, string][]).map(([label, value]) => (
-              <div key={label} className="rounded-lg border border-gray-100 bg-gray-50 p-2.5">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{label}</p>
-                <p className="mt-0.5 break-all font-mono text-xs text-gray-800">{value || "—"}</p>
+          <div className="p-5 space-y-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {([
+                ["Page Name",   captured.pageName   || "(builder page)"],
+                ["Funnel ID",   captured.funnelId],
+                ["Step ID",     captured.stepId],
+                ["Builder ID",  captured.builderId],
+              ] as [string, string][]).map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-gray-100 bg-gray-50 p-2.5">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{label}</p>
+                  <p className="mt-0.5 break-all font-mono text-xs text-gray-800">{value || "—"}</p>
+                </div>
+              ))}
+            </div>
+            {captured.warning && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-800">{captured.warning}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
