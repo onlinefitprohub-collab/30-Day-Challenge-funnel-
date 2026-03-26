@@ -1260,33 +1260,35 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             r = JSON.parse(res2?.[0]?.result ?? "{}");
           } catch(e) { r = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` }; }
 
-          /* ── Step C: Run Approach 3 (Pinia patch) in detected frame ─── */
-          if (!r.ok || r._a3pending) {
-            try {
-              const a3Res2 = await chrome.scripting.executeScript({
-                target: { tabId: tabId2, frameIds: [iframeFrameId2] },
-                world:  "MAIN",
-                func:   _cf_approach3PiniaInFrame,
-                args:   [builderId2, locId2, pageData],
-              });
-              const a3b = JSON.parse(a3Res2?.[0]?.result ?? "{}");
-              if (!r.diag) r.diag = {};
-              r.diag.approach3 = { ...(a3b.diag?.approach3 ?? {}), iframeFrameId: iframeFrameId2 };
-              if (!r.ok && a3b.ok) {
-                r.ok = true; r.method = a3b.method ?? "pinia";
+          /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ─ */
+          try {
+            const a3Res2 = await chrome.scripting.executeScript({
+              target: { tabId: tabId2, frameIds: [iframeFrameId2] },
+              world:  "MAIN",
+              func:   _cf_approach3PiniaInFrame,
+              args:   [builderId2, locId2, pageData],
+            });
+            const a3b = JSON.parse(a3Res2?.[0]?.result ?? "{}");
+            if (!r.diag) r.diag = {};
+            r.diag.approach3 = { ...(a3b.diag?.approach3 ?? {}), iframeFrameId: iframeFrameId2 };
+            const a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
+            if (a3b.ok) {
+              const a3Base2 = a3b.method ?? "pinia";
+              if (a2Wrote2) {
+                r.method = a3Base2 === "pinia-patched" ? "firebase+pinia-patched" : "firebase+pinia";
+              } else if (!r.ok) {
+                r.ok = true; r.method = a3Base2;
                 r.storeId = a3b.storeId; r.savedVia = a3b.savedVia; r.warning = a3b.warning;
-                delete r._a3pending;
               }
-            } catch (a3Err2) {
-              if (!r.diag) r.diag = {};
-              r.diag.approach3 = {
-                ...(r.diag.approach3 ?? {}),
-                iframeFrameId: iframeFrameId2,
-                iframeA3Error: String(a3Err2).slice(0, 80),
-              };
+              delete r._a3pending;
             }
-          } else {
-            if (r.diag?.approach3) r.diag.approach3.iframeFrameId = iframeFrameId2;
+          } catch (a3Err2) {
+            if (!r.diag) r.diag = {};
+            r.diag.approach3 = {
+              ...(r.diag.approach3 ?? {}),
+              iframeFrameId: iframeFrameId2,
+              iframeA3Error: String(a3Err2).slice(0, 80),
+            };
           }
 
           // Store full inject result so popup can show debug details
@@ -1489,41 +1491,45 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           injectResult = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` };
         }
 
-        /* ── Step C: Run Approach 3 (Pinia patch) in detected frame ─────── */
-        if (!injectResult.ok || injectResult._a3pending) {
-          try {
-            const a3Res = await chrome.scripting.executeScript({
-              target: { tabId, frameIds: [iframeFrameId] },
-              world:  "MAIN",
-              func:   _cf_approach3PiniaInFrame,
-              args:   [builderId, locationId, ready.pageData],
-            });
-            const a3 = JSON.parse(a3Res?.[0]?.result ?? "{}");
-            /* Merge A3 diag (with iframeFrameId) into main result */
-            if (!injectResult.diag) injectResult.diag = {};
-            injectResult.diag.approach3 = { ...(a3.diag?.approach3 ?? {}), iframeFrameId };
-            /* If A3 succeeded while earlier approaches didn't, elevate result */
-            if (!injectResult.ok && a3.ok) {
+        /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ── *
+         * Must run even when A2 succeeded so method can become firebase+pinia.  */
+        try {
+          const a3Res = await chrome.scripting.executeScript({
+            target: { tabId, frameIds: [iframeFrameId] },
+            world:  "MAIN",
+            func:   _cf_approach3PiniaInFrame,
+            args:   [builderId, locationId, ready.pageData],
+          });
+          const a3 = JSON.parse(a3Res?.[0]?.result ?? "{}");
+          /* Merge A3 diag (with iframeFrameId) */
+          if (!injectResult.diag) injectResult.diag = {};
+          injectResult.diag.approach3 = { ...(a3.diag?.approach3 ?? {}), iframeFrameId };
+          /* Compose combined method from A2 + A3 outcomes */
+          const a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
+          if (a3.ok) {
+            const a3Base = a3.method ?? "pinia"; /* "pinia" or "pinia-patched" */
+            if (a2Wrote) {
+              /* Both Firebase write AND Pinia patch succeeded */
+              injectResult.method = a3Base === "pinia-patched"
+                ? "firebase+pinia-patched"
+                : "firebase+pinia";
+            } else if (!injectResult.ok) {
+              /* Only Pinia succeeded — elevate result */
               injectResult.ok      = true;
-              injectResult.method  = a3.method ?? "pinia";
+              injectResult.method  = a3Base;
               injectResult.storeId = a3.storeId;
               injectResult.savedVia = a3.savedVia;
               injectResult.warning  = a3.warning;
-              delete injectResult._a3pending;
             }
-          } catch (a3Err) {
-            if (!injectResult.diag) injectResult.diag = {};
-            injectResult.diag.approach3 = {
-              ...(injectResult.diag.approach3 ?? {}),
-              iframeFrameId,
-              iframeA3Error: String(a3Err).slice(0, 80),
-            };
+            delete injectResult._a3pending;
           }
-        } else {
-          /* A0/1/2 already succeeded — still store iframeFrameId for diagnostics */
-          if (injectResult.diag?.approach3) {
-            injectResult.diag.approach3.iframeFrameId = iframeFrameId;
-          }
+        } catch (a3Err) {
+          if (!injectResult.diag) injectResult.diag = {};
+          injectResult.diag.approach3 = {
+            ...(injectResult.diag.approach3 ?? {}),
+            iframeFrameId,
+            iframeA3Error: String(a3Err).slice(0, 80),
+          };
         }
 
         // Store full inject result for popup debug display
