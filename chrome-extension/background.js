@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.10.0 — CF_COPY_PAGE metadata fallback + friendly FAB error messages.");
+    console.log("[CF Funnel] Installed v2.11.0 — Firebase Storage + Vue/Pinia builder state injection.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.10.0 — CF_COPY_PAGE metadata fallback + friendly FAB error messages.");
+    console.log("[CF Funnel] Updated to v2.11.0 — Firebase Storage + Vue/Pinia builder state injection.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -433,6 +433,274 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
   }
 }
 
+/* ─── _cf_injectViaBuilderSave ──────────────────────────────────────────────
+ * Tries three escalating approaches to write pageData into GHL's page store.
+ * Approach 1 — GHL-signed upload URL (pageDataUploadUrl in metadata)
+ * Approach 2 — Firebase Storage REST write with Firebase ID token
+ * Approach 3 — Vue/Pinia builder state mutation + trigger native save
+ * Each attempt is wrapped in try/catch and collects diagnostic info.
+ * Returns { ok, method, diag, error? } serialised as JSON.
+ * ─────────────────────────────────────────────────────────────────────────── */
+async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
+  const diag = { approach1: null, approach2: null, approach3: null };
+  try {
+    /* ── 0. Find revex for metadata fetch ───────────────────────────────── */
+    let revex = null;
+    const appEl = document.querySelector("#app");
+    revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    if (!revex) {
+      for (const ai of Object.values(window.app ?? {})) {
+        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+        if (r && typeof r.get === "function") { revex = r; break; }
+      }
+    }
+
+    /* ── 1. Fetch GHL page metadata (needed for approaches 1 and 2) ─────── */
+    let metadata = null;
+    if (revex) {
+      try {
+        const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+        metadata = r?.data ?? r ?? null;
+      } catch (_) {
+        try {
+          const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+          metadata = r2?.data ?? r2 ?? null;
+        } catch (_2) {}
+      }
+    }
+    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    const uploadUrl   = metadata?.pageDataUploadUrl   ?? null;
+    diag.metaOk = !!metadata;
+
+    /* ════════════════════════════════════════════════════════════════════════
+       APPROACH 1: GHL-signed upload URL
+       If GHL returns pageDataUploadUrl (a pre-signed PUT URL), write directly.
+       No auth headers required — GHL has already signed the URL.
+       ════════════════════════════════════════════════════════════════════════ */
+    if (uploadUrl && typeof uploadUrl === "string") {
+      try {
+        const res = await fetch(uploadUrl, {
+          method:  "PUT",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify(pageData),
+        });
+        if (res.ok) {
+          diag.approach1 = "success";
+          return JSON.stringify({ ok: true, method: "signed-upload-url", diag });
+        }
+        diag.approach1 = `HTTP ${res.status}`;
+      } catch (e1) {
+        diag.approach1 = `threw: ${String(e1).slice(0, 80)}`;
+      }
+    } else {
+      diag.approach1 = uploadUrl ? "uploadUrl invalid" : "no pageDataUploadUrl in metadata";
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       APPROACH 2: Firebase Storage REST write + Firebase ID token
+       Parse bucket + object path from pageDataDownloadUrl.
+       Extract the Firebase ID token from the Firebase app running in the page.
+       POST to firebase storage upload endpoint with Authorization: Firebase {token}.
+       ════════════════════════════════════════════════════════════════════════ */
+    if (downloadUrl && typeof downloadUrl === "string") {
+      const fbMatch = downloadUrl.match(
+        /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
+      );
+      if (fbMatch) {
+        const bucket      = decodeURIComponent(fbMatch[1]);
+        const encodedPath = fbMatch[2]; // keep URL-encoded; decode for name param
+        const objectPath  = decodeURIComponent(encodedPath);
+        let   idToken     = null;
+        const tokenDiag   = [];
+
+        /* Try Firebase v8 compat global */
+        try {
+          if (typeof firebase !== "undefined" && firebase.apps?.length) {
+            const user = firebase.auth().currentUser;
+            if (user) { idToken = await user.getIdToken(true); tokenDiag.push("v8-global"); }
+          }
+        } catch (te1) { tokenDiag.push(`v8-err:${String(te1).slice(0, 40)}`); }
+
+        /* Try Firebase apps attached to window properties */
+        if (!idToken) {
+          try {
+            for (const val of Object.values(window)) {
+              if (!val || typeof val !== "object") continue;
+              if (typeof val.auth === "function") {
+                const auth = val.auth();
+                if (auth?.currentUser) {
+                  idToken = await auth.currentUser.getIdToken(true);
+                  tokenDiag.push("window-prop-auth");
+                  break;
+                }
+              }
+            }
+          } catch (te2) { tokenDiag.push(`win-err:${String(te2).slice(0, 40)}`); }
+        }
+
+        /* Try Vue global properties ($auth, firebaseAuth, auth) */
+        if (!idToken) {
+          try {
+            const globals = appEl?.__vue_app__?.config?.globalProperties ?? {};
+            const authObj = globals.$auth ?? globals.firebaseAuth ?? globals.auth ?? null;
+            if (authObj?.currentUser) {
+              idToken = await authObj.currentUser.getIdToken(true);
+              tokenDiag.push("vue-globals");
+            }
+          } catch (te3) { tokenDiag.push(`vue-err:${String(te3).slice(0, 40)}`); }
+        }
+
+        /* Try window.__firebaseAuthUser__ or similar GHL-specific globals */
+        if (!idToken) {
+          try {
+            const authUser = window.__firebaseAuthUser__
+              ?? window._firebaseUser
+              ?? window.currentFirebaseUser
+              ?? null;
+            if (authUser?.getIdToken) {
+              idToken = await authUser.getIdToken(true);
+              tokenDiag.push("window-auth-user");
+            }
+          } catch (te4) { tokenDiag.push(`user-err:${String(te4).slice(0, 40)}`); }
+        }
+
+        diag.approach2 = { bucket, objectPath, tokenDiag, hasToken: !!idToken };
+
+        if (idToken) {
+          try {
+            /* Firebase Storage upload endpoint (creates/overwrites object) */
+            const uploadEp =
+              `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
+              `/o?uploadType=media&name=${encodeURIComponent(objectPath)}`;
+            const res = await fetch(uploadEp, {
+              method:  "POST",
+              headers: {
+                "Content-Type":  "application/json",
+                "Authorization": `Firebase ${idToken}`,
+              },
+              body: JSON.stringify(pageData),
+            });
+            if (res.ok) {
+              diag.approach2.result = "success";
+              return JSON.stringify({ ok: true, method: "firebase-rest", diag });
+            }
+            const errText = await res.text().catch(() => "");
+            diag.approach2.result = `HTTP ${res.status}: ${errText.slice(0, 100)}`;
+          } catch (e2) {
+            diag.approach2.result = `threw: ${String(e2).slice(0, 80)}`;
+          }
+        } else {
+          diag.approach2.result = "no Firebase auth token found";
+        }
+      } else {
+        diag.approach2 = "could not parse Firebase URL from downloadUrl";
+      }
+    } else {
+      diag.approach2 = "no pageDataDownloadUrl in metadata";
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       APPROACH 3: Vue/Pinia builder state mutation + trigger native save
+       GHL builder is Vue 3 + Pinia. Find the store holding page data, patch it,
+       then call the store's save action so GHL writes to Firebase via its own path.
+       ════════════════════════════════════════════════════════════════════════ */
+    const vueApp = appEl?.__vue_app__;
+    let pinia = null;
+    if (vueApp) {
+      const provides = vueApp._context?.provides ?? {};
+      /* Pinia symbol can be Symbol.for('pinia') or an internal symbol */
+      pinia = provides[Symbol.for("pinia")] ?? null;
+      if (!pinia || !(pinia._s instanceof Map)) {
+        /* Iterate provides looking for the Pinia instance (_s is a Map of stores) */
+        pinia = Object.values(provides).find(v => v && v._s instanceof Map) ?? null;
+      }
+    }
+
+    if (!pinia || !(pinia._s instanceof Map)) {
+      diag.approach3 = { result: "Pinia not found — GHL builder may not be fully loaded" };
+    } else {
+      const storeIds = [...pinia._s.keys()];
+      diag.approach3 = { storeCount: storeIds.length, storeIds: storeIds.slice(0, 20) };
+
+      let matched = null;
+      for (const [storeId, store] of pinia._s) {
+        const state = store.$state ?? {};
+        const keys  = Object.keys(state);
+        /* Look for stores whose state shape matches GHL pageData structure */
+        const hasPageStructure =
+          keys.includes("sections") ||
+          (keys.includes("rows") && keys.includes("elements")) ||
+          keys.includes("pageData") ||
+          (keys.includes("rows") && keys.includes("columns"));
+        if (hasPageStructure) { matched = [storeId, store]; break; }
+      }
+
+      if (!matched) {
+        diag.approach3.result = "no store with GHL page structure (sections/rows/elements) found";
+      } else {
+        const [storeId, store] = matched;
+        diag.approach3.matchedStore = storeId;
+        diag.approach3.stateKeys    = Object.keys(store.$state ?? {}).slice(0, 30);
+
+        /* Patch store state — triggers Vue reactivity */
+        try {
+          store.$patch(pageData);
+          diag.approach3.patched = true;
+        } catch (pe) {
+          diag.approach3.patchError = String(pe).slice(0, 80);
+        }
+
+        /* Try store save actions in order of likelihood */
+        const SAVE_ACTIONS = ["savePage", "savePageData", "save", "autoSave",
+                              "updatePage", "saveCurrentPage", "persistPage"];
+        let savedVia = null;
+        for (const action of SAVE_ACTIONS) {
+          if (typeof store[action] === "function") {
+            try {
+              await store[action]();
+              savedVia = action;
+              break;
+            } catch (se) {
+              diag.approach3[`${action}Err`] = String(se).slice(0, 60);
+            }
+          }
+        }
+        diag.approach3.savedVia = savedVia;
+
+        if (diag.approach3.patched || savedVia) {
+          return JSON.stringify({
+            ok:      !!savedVia,
+            method:  "pinia",
+            storeId,
+            savedVia,
+            diag,
+            warning: savedVia
+              ? null
+              : "Store was patched but no save action found — content visible but may not persist after reload",
+          });
+        }
+      }
+    }
+
+    /* All three approaches failed — return diagnostic summary */
+    const a1 = JSON.stringify(diag.approach1).slice(0, 80);
+    const a2 = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 120);
+    const a3 = JSON.stringify(diag.approach3?.result ?? diag.approach3?.savedVia ?? "not reached").slice(0, 120);
+    return JSON.stringify({
+      ok:     false,
+      method: "all-failed",
+      error:  `All injection approaches failed. GHL stores page content in Firebase Storage, not its REST API. Diag: A1=${a1} | A2=${a2} | A3=${a3}. Use the URL Inspector to fetch a real GHL page and clone it instead.`,
+      diag,
+    });
+  } catch (e) {
+    return JSON.stringify({
+      ok:    false,
+      error: `_cf_injectViaBuilderSave threw: ${String(e).slice(0, 180)}`,
+      diag,
+    });
+  }
+}
+
 /* Reload the GHL builder iframe to reflect cloned content. */
 function _cf_refreshBuilderIframe() {
   try {
@@ -649,10 +917,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           console.log("[CF] CF_PASTE_PAGE:", debugLabel, "→ builder", builderId2);
           let r = {};
           try {
+            // Try Firebase / Vue-builder injection approaches first
             const res2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, allFrames: false },
               world:  "MAIN",
-              func:   _cf_injectPageData,
+              func:   _cf_injectViaBuilderSave,
               args:   [builderId2, locId2, pageData],
             });
             r = JSON.parse(res2?.[0]?.result ?? "{}");
@@ -661,7 +930,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           await chrome.storage.local.set({ cf_last_inject: { ...r, builderId: builderId2, ts: Date.now() } });
           if (r.ok) {
             try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
-            sendResponse({ ok: true, builderId: builderId2, injectResult: r });
+            const method = r.method ?? "injected";
+            const toast = r.warning
+              ? `Content injected (${method}) — ${r.warning}`
+              : `Content injected via ${method} — builder is saving, allow a few seconds.`;
+            sendResponse({ ok: true, builderId: builderId2, injectResult: r, toast });
           } else {
             sendResponse({ ok: false, error: r.error ?? "inject failed", injectResult: r });
           }
@@ -821,7 +1094,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           }
         }
 
-        // 3. Inject AI pageData via revex in MAIN world
+        // 3. Inject AI pageData via Firebase / Vue-builder state approaches
         console.log("[CF] CF_INJECT_AI_PAGE: injecting page=", ready.page, "→ builder=", builderId);
 
         let injectResult = {};
@@ -829,7 +1102,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           const res = await chrome.scripting.executeScript({
             target: { tabId, allFrames: false },
             world:  "MAIN",
-            func:   _cf_injectPageData,
+            func:   _cf_injectViaBuilderSave,
             args:   [builderId, locationId, ready.pageData],
           });
           injectResult = JSON.parse(res?.[0]?.result ?? "{}");
@@ -841,7 +1114,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         await chrome.storage.local.set({ cf_last_inject: { ...injectResult, builderId, ts: Date.now() } });
 
         if (injectResult.ok) {
-          console.log("[CF] inject ok:", injectResult.status ?? 200);
+          console.log("[CF] inject ok method:", injectResult.method);
           // 4. Refresh the builder iframe so new content renders
           try {
             await chrome.scripting.executeScript({
@@ -850,7 +1123,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
               func:   _cf_refreshBuilderIframe,
             });
           } catch(_) {}
-          sendResponse({ ok: true, page: ready.page, builderId, injectResult });
+          const method = injectResult.method ?? "injected";
+          const toast  = injectResult.warning
+            ? `Injected (${method}) — ${injectResult.warning}`
+            : `Injected via ${method} — builder is saving, allow a few seconds.`;
+          sendResponse({ ok: true, page: ready.page, builderId, injectResult, toast });
         } else {
           console.warn("[CF] CF_INJECT_AI_PAGE: failed", injectResult.error);
           sendResponse({ ok: false, error: injectResult.error ?? "inject failed", injectResult });
