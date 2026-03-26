@@ -116,6 +116,16 @@ type AiPageId = (typeof AI_PAGES)[number]["id"];
 
 const CURRENT_EXT_VERSION = "2.9.7";
 
+function semverOlder(a: string, b: string): boolean {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] ?? 0) < (pb[i] ?? 0)) return true;
+    if ((pa[i] ?? 0) > (pb[i] ?? 0)) return false;
+  }
+  return false;
+}
+
 /* ── component ────────────────────────────────────────────────────────────── */
 
 export function GhlInspectorSection({ projectId }: { projectId: string }) {
@@ -364,12 +374,15 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
           </div>
           {extPresent === true  && <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">Extension active</span>}
           {extPresent === false && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">Extension not detected — re-download &amp; install</span>}
-          {extPresent === true && extVersion && extVersion !== CURRENT_EXT_VERSION && (
-            <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-              v{extVersion} — update to v{CURRENT_EXT_VERSION}
-            </span>
+          {extPresent === true && extVersion && semverOlder(extVersion, CURRENT_EXT_VERSION) && (
+            <a
+              href="/api/highlevel/extension-download"
+              className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+            >
+              v{extVersion} — update to v{CURRENT_EXT_VERSION} ↓
+            </a>
           )}
-          {extPresent === true && extVersion === CURRENT_EXT_VERSION && (
+          {extPresent === true && extVersion && !semverOlder(extVersion, CURRENT_EXT_VERSION) && (
             <span className="rounded-full bg-gray-50 border border-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-500">
               v{extVersion}
             </span>
@@ -458,39 +471,6 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      {/* ── Test AI Injection ────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-blue-200 bg-white overflow-hidden">
-        <div className="flex items-center border-b border-blue-100 bg-blue-50 px-5 py-2.5 gap-3">
-          <FlaskConical className="h-4 w-4 text-blue-600 shrink-0" />
-          <p className="text-sm font-semibold text-blue-900 flex-1">Test AI Injection</p>
-          <span className="text-xs text-blue-500">AI page:</span>
-          <select
-            value={aiPage}
-            onChange={e => setAiPage(e.target.value as AiPageId)}
-            className="rounded border border-blue-200 bg-white px-2 py-1 text-xs font-medium text-blue-800"
-          >
-            {AI_PAGES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-          </select>
-          <Button
-            onClick={loadAiAsCapture}
-            disabled={!aiData || aiLoading}
-            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 h-auto"
-          >
-            {aiLoading
-              ? <><RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />Loading…</>
-              : "Load into Inspector"
-            }
-          </Button>
-        </div>
-        <div className="px-5 py-3">
-          <p className="text-xs text-blue-700">
-            Load the AI-generated page directly into the Inspector below. Once loaded, the{" "}
-            <strong>Copy to GHL</strong> button will appear — use it to queue the page, then open
-            the extension and click <strong>Paste</strong> to inject it into the GHL builder.
-          </p>
-        </div>
-      </div>
-
       {/* ── Capture metadata ─────────────────────────────────────────────── */}
       {captured && (
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -576,7 +556,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <div className="flex items-center border-b border-gray-100 bg-gray-50 px-5 py-2.5 gap-3">
             <p className="text-sm font-semibold text-gray-900 flex-1">Schema Comparison</p>
-            <span className="text-xs text-gray-500">AI page to compare:</span>
+            <span className="text-xs text-gray-500">AI page:</span>
             <select
               value={aiPage}
               onChange={e => setAiPage(e.target.value as AiPageId)}
@@ -584,6 +564,17 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
             >
               {AI_PAGES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
+            <Button
+              onClick={loadAiAsCapture}
+              disabled={!aiData || aiLoading}
+              size="sm"
+              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 h-auto"
+            >
+              {aiLoading
+                ? <><RefreshCw className="h-3 w-3 animate-spin mr-1" />Loading…</>
+                : <><FlaskConical className="h-3 w-3 mr-1" />Test AI Injection</>
+              }
+            </Button>
           </div>
 
           <div className="p-5 space-y-5">
