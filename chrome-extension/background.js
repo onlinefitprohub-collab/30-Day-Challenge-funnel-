@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.14.0 — flat-array Firebase Storage format detection.");
+    console.log("[CF Funnel] Installed v2.15.0 — combined flat+structured write, auth-probe.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.14.0 — flat-array Firebase Storage format detection.");
+    console.log("[CF Funnel] Updated to v2.15.0 — combined flat+structured write, auth-probe.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -630,58 +630,70 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
 
         if (idToken) {
           try {
-            /* ── Step 0: Download existing page to detect Firebase Storage format ── *
-             * GHL may store page data as either:
-             *   A) Flat array — { elements: [section, row, col, el, ...] }  (Nuxt 3)
-             *   B) Structured dicts — { sections:[], rows:{}, columns:{}, elements:{} }
-             * We write our pageData in the same format the existing page uses so
-             * GHL's builder can read it correctly.                                   */
-            let storageFormat = "unknown";
-            let writePayload  = pageData;
+            /* ── Step 0: Probe existing page format (diagnostic only, with auth) ── *
+             * We probe with the Firebase token so GHL's Security Rules allow the read.
+             * The probe is purely diagnostic — we always write the combined format
+             * regardless of what the existing page contains.                         */
+            let storageFormat  = "skipped";
+            let existElemCount = 0;
             try {
-              const existRes = await fetch(downloadUrl, { signal: AbortSignal.timeout(6000) });
+              const existRes = await fetch(downloadUrl, {
+                headers: { "Authorization": `Firebase ${idToken}` },
+                signal:  AbortSignal.timeout(5000),
+              });
               if (existRes.ok) {
                 const existing = await existRes.json();
                 if (Array.isArray(existing.elements)) {
-                  storageFormat = "flat-array";
+                  storageFormat  = "flat-array";
+                  existElemCount = existing.elements.length;
                 } else if (existing.elements && typeof existing.elements === "object") {
-                  storageFormat = "structured-dict";
+                  storageFormat  = "structured-dict";
+                  existElemCount = Object.keys(existing.elements).length;
                 } else if (Array.isArray(existing.sections)) {
-                  storageFormat = "structured-dict";
+                  storageFormat = "structured-only";
                 } else {
-                  storageFormat = "unknown-keys:" + Object.keys(existing).join(",").slice(0, 60);
+                  storageFormat = "keys:" + Object.keys(existing).join(",").slice(0, 50);
                 }
               } else {
-                storageFormat = "exist-fetch-" + existRes.status;
+                storageFormat = "probe-" + existRes.status;
               }
-            } catch (fmtErr) {
-              storageFormat = "exist-err:" + String(fmtErr).slice(0, 50);
+            } catch (_fErr) {
+              storageFormat = "probe-err";
             }
-            diag.approach2.storageFormat = storageFormat;
 
-            /* ── Convert to flat-array format when the existing page uses it ───── *
-             * Our pageData uses structured dicts with { id, metaData:{...} } nodes.
-             * Flat-array format expects bare metaData content in one elements array. */
-            if (storageFormat === "flat-array") {
-              const flatNodes = [];
-              const pd = pageData;
-              if (Array.isArray(pd.sections)) {
-                for (const s of pd.sections) flatNodes.push(s.metaData ?? s);
-              }
-              for (const dict of [pd.rows, pd.columns, pd.elements]) {
-                if (dict && typeof dict === "object" && !Array.isArray(dict)) {
-                  for (const node of Object.values(dict)) flatNodes.push(node.metaData ?? node);
-                }
-              }
-              writePayload = {
-                fontsForPreview: pd.fontsForPreview,
-                general:         pd.general,
-                id:              pd.id,
-                pageStyles:      pd.pageStyles,
-                popups:          pd.popups ?? [],
-                elements:        flatNodes,
-              };
+            /* ── Step 1: Build flat elements array from our pageData (always) ────── *
+             * GHL's current builder uses a flat elements[] array where every node
+             * (section, row, column, leaf element) lives in one list identified by
+             * meta ("section"|"row"|"col"|<tagName>).  Our structured pageData uses
+             * { id, metaData:{...} } wrappers — we unwrap with .metaData ?? node.  */
+            const flatNodes = [];
+            const pd = pageData;
+            if (Array.isArray(pd.sections)) {
+              for (const s of pd.sections) flatNodes.push(s.metaData ?? s);
             }
+            for (const dict of [pd.rows, pd.columns, pd.elements]) {
+              if (dict && typeof dict === "object" && !Array.isArray(dict)) {
+                for (const n of Object.values(dict)) flatNodes.push(n.metaData ?? n);
+              }
+            }
+
+            /* ── Step 2: Combined payload — satisfies both GHL storage modes ─────── *
+             * sections[]  → GHL reads this for section container backgrounds.
+             * elements[]  → GHL reads this flat array to build the full content tree.
+             * Both are present so the builder works regardless of which path it takes.*/
+            const writePayload = {
+              fontsForPreview: pd.fontsForPreview,
+              general:         pd.general,
+              id:              pd.id,
+              pageStyles:      pd.pageStyles,
+              popups:          pd.popups ?? [],
+              sections:        pd.sections,
+              elements:        flatNodes,
+            };
+
+            diag.approach2.storageFormat  = storageFormat;
+            diag.approach2.existElemCount = existElemCount;
+            diag.approach2.nodeCount      = flatNodes.length;
 
             /* Firebase Storage upload endpoint (creates/overwrites object) */
             const uploadEp =
