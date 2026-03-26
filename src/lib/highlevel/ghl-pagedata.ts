@@ -258,7 +258,7 @@ function makeParagraph(text: string, styles: StyleMap, mobileStyles: StyleMap = 
     [],
     styles,
     mobileStyles,
-    { content: ss(text), typography: ss("var(--contentfont)"), nodeId: `c${id}`, visibility: ELEMENT_VISIBILITY },
+    { content: ss(text), nodeId: `c${id}`, visibility: ELEMENT_VISIBILITY },
   );
 }
 
@@ -577,18 +577,26 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   // ── 3. BENEFITS ───────────────────────────────────────────────────────────
   {
+    // Coach photo placeholder (left) + heading text (right)
+    const coachImg = el(b, makeImage({ width: 480 }));
+    const imgNote = el(b, makeParagraph(
+      "📸 Replace with your coach/before-after photo",
+      { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) },
+    ));
+    const imgCol = co(b, makeCol([coachImg, imgNote], 40, { padH: 24, valign: "middle" }));
+
     const eyebrow = el(b, makeParagraph(
       "What You'll Get",
-      { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
+      { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) },
     ));
     const h2 = el(b, makeHeadline(
       "Everything included in your free challenge",
       "h2",
-      { color: ss("#111827"), fontSize: sv(36), fontWeight: ss("800"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(48), maxWidth: sv(640), marginLeft: ss("auto"), marginRight: ss("auto") },
-      { fontSize: sv(24), paddingBottom: sv(32) },
+      { color: ss("#111827"), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(16), maxWidth: sv(520) },
+      { fontSize: sv(24), paddingBottom: sv(12) },
     ));
-    const headerCol = co(b, makeCol([eyebrow, h2], 100, { align: "center" }));
-    const headerRow = ro(b, makeRow([headerCol], 800));
+    const textCol = co(b, makeCol([eyebrow, h2], 60, { padH: 24, valign: "middle" }));
+    const headerRow = ro(b, makeRow([imgCol, textCol], 1100, 0));
 
     // Show all bullets (including any beyond the 4 shown in hero) in 3-column cards
     const allBullets = lp.bulletPoints.slice(0, 9);
