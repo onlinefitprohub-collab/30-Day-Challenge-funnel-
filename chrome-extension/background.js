@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.12.0 — version-specific guard, iframe msg fix, clipboard probe, cfReady fallback.");
+    console.log("[CF Funnel] Installed v2.12.1 — fix sender ref crash, fix FAB re-injection shadow DOM.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.12.0 — version-specific guard, iframe msg fix, clipboard probe, cfReady fallback.");
+    console.log("[CF Funnel] Updated to v2.12.1 — fix sender ref crash, fix FAB re-injection shadow DOM.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -823,7 +823,7 @@ function _cf_refreshBuilderIframe() {
    MESSAGE ROUTER
    ════════════════════════════════════════════════════════════════════════════ */
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const type = msg.type ?? msg.action;
 
   /* ── ping ── */
