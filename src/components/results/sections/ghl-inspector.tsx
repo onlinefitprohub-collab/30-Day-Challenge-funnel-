@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Microscope, Download, Copy, Check,
-  ChevronDown, ChevronRight, RefreshCw, AlertTriangle, Trash2, Clipboard,
+  ChevronDown, ChevronRight, RefreshCw, AlertTriangle, Trash2, Clipboard, FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -112,6 +112,10 @@ const AI_PAGES = [
 
 type AiPageId = (typeof AI_PAGES)[number]["id"];
 
+/* ── constants ────────────────────────────────────────────────────────────── */
+
+const CURRENT_EXT_VERSION = "2.9.6";
+
 /* ── component ────────────────────────────────────────────────────────────── */
 
 export function GhlInspectorSection({ projectId }: { projectId: string }) {
@@ -119,6 +123,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
   const [loading,     setLoading]     = useState(false);
   const [loadError,   setLoadError]   = useState<string | null>(null);
   const [extPresent,  setExtPresent]  = useState<boolean | null>(null);
+  const [extVersion,  setExtVersion]  = useState<string | null>(null);
 
   const [aiPage,    setAiPage]    = useState<AiPageId>("landing");
   const [aiData,    setAiData]    = useState<Record<string, unknown> | null>(null);
@@ -137,7 +142,11 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     const timeout = setTimeout(() => { if (extPresent === null) setExtPresent(false); }, 1500);
     function onMsg(evt: MessageEvent) {
       if (evt.source !== window) return;
-      if (evt.data?.source === "cf-ext") { setExtPresent(true); clearTimeout(timeout); }
+      if (evt.data?.source === "cf-ext") {
+        setExtPresent(true);
+        clearTimeout(timeout);
+        if (evt.data?.version) setExtVersion(evt.data.version as string);
+      }
     }
     window.addEventListener("message", onMsg);
     window.postMessage({ source: "cf-app", type: "CF_PING" }, "*");
@@ -303,6 +312,25 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
 
   useEffect(() => { loadAiData(aiPage); }, [aiPage, loadAiData]);
 
+  /* Load the current AI page as the "captured" slot for injection testing */
+  const loadAiAsCapture = useCallback(() => {
+    if (!aiData) return;
+    const label = AI_PAGES.find(p => p.id === aiPage)?.label ?? aiPage;
+    setCaptured({
+      builderId:  "",
+      funnelId:   "",
+      stepId:     "",
+      locationId: "",
+      pageName:   `AI: ${label}`,
+      pageData:   aiData,
+      dataSource: "url-parse",
+      warning:    "This is AI-generated page data loaded for injection testing — not a real captured GHL page.",
+      capturedAt: Date.now(),
+    });
+    setUrlCloneQueued(false);
+    setUrlCloneError(null);
+  }, [aiData, aiPage]);
+
   /* Derived stats */
   const ghlTypes  = captured?.pageData ? extractElementTypes(captured.pageData) : null;
   const aiTypes   = aiData             ? extractElementTypes(aiData)             : null;
@@ -336,6 +364,16 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
           </div>
           {extPresent === true  && <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">Extension active</span>}
           {extPresent === false && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">Extension not detected — re-download &amp; install</span>}
+          {extPresent === true && extVersion && extVersion !== CURRENT_EXT_VERSION && (
+            <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+              v{extVersion} — update to v{CURRENT_EXT_VERSION}
+            </span>
+          )}
+          {extPresent === true && extVersion === CURRENT_EXT_VERSION && (
+            <span className="rounded-full bg-gray-50 border border-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+              v{extVersion}
+            </span>
+          )}
         </div>
 
         <div className="p-5 space-y-4">
@@ -417,6 +455,39 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ── Test AI Injection ────────────────────────────────────────────── */}
+      <div className="rounded-xl border border-blue-200 bg-white overflow-hidden">
+        <div className="flex items-center border-b border-blue-100 bg-blue-50 px-5 py-2.5 gap-3">
+          <FlaskConical className="h-4 w-4 text-blue-600 shrink-0" />
+          <p className="text-sm font-semibold text-blue-900 flex-1">Test AI Injection</p>
+          <span className="text-xs text-blue-500">AI page:</span>
+          <select
+            value={aiPage}
+            onChange={e => setAiPage(e.target.value as AiPageId)}
+            className="rounded border border-blue-200 bg-white px-2 py-1 text-xs font-medium text-blue-800"
+          >
+            {AI_PAGES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+          <Button
+            onClick={loadAiAsCapture}
+            disabled={!aiData || aiLoading}
+            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 h-auto"
+          >
+            {aiLoading
+              ? <><RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />Loading…</>
+              : "Load into Inspector"
+            }
+          </Button>
+        </div>
+        <div className="px-5 py-3">
+          <p className="text-xs text-blue-700">
+            Load the AI-generated page directly into the Inspector below. Once loaded, the{" "}
+            <strong>Copy to GHL</strong> button will appear — use it to queue the page, then open
+            the extension and click <strong>Paste</strong> to inject it into the GHL builder.
+          </p>
         </div>
       </div>
 

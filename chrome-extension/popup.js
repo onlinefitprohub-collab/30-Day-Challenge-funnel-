@@ -1,4 +1,4 @@
-// popup.js v2.8.0 — Challenge Funnel Extension
+// popup.js v2.9.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -61,6 +61,15 @@ function refreshCopiedCard() {
       const ago   = timeSince(copied.copiedAt);
       card.className = "copied-card has";
       card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Saved ${ago} — click Paste to inject into the builder.`;
+      clearBtn.style.display = "";
+      pasteBtn.disabled      = false;
+
+    } else if (copied?.type === "url-clone" && copied?.pageData) {
+      // URL-captured GHL page or AI test page (revex inject path)
+      const name = copied.pageName || "Captured Page";
+      const ago  = timeSince(copied.copiedAt);
+      card.className = "copied-card has";
+      card.innerHTML = `<strong>Captured: ${esc(name)}</strong>Queued ${ago} — click Paste to inject into the builder.`;
       clearBtn.style.display = "";
       pasteBtn.disabled      = false;
 
