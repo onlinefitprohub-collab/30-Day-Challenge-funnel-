@@ -680,10 +680,41 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
 
             /* ── Step 1: Build structured-dict payload — wrapped dict entries ────────── *
              * GHL's own builder stores rows/columns/elements as { id, metaData:{} }
-             * wrapped nodes (confirmed: firstRowKeys=["id","metaData"]).
-             * We write pd.rows/pd.columns/pd.elements directly — no unwrapping.
-             * Sections stay as-is (array of { id, metaData:{} } — already working).  */
+             * wrapped nodes. pd.rows/pd.columns/pd.elements from the API may already be
+             * wrapped OR may be flat metaData content objects — we normalise here.        */
+
+            /* Normalises a dict value to { id, metaData: {...} } wrapper format.
+             * If the value already has a .metaData key it is passed through unchanged.
+             * If it is flat, wrap it: { id: key, metaData: { ...value, element:{...value} } } */
+            function wrapIfFlat(key, v) {
+              if (!v || typeof v !== "object") return v;
+              if (v.metaData && typeof v.metaData === "object") return v;
+              return { id: key, metaData: { ...v, element: { ...v } } };
+            }
+
             const pd = pageData;
+
+            /* Wrap rows/columns/elements if they are flat. Sections are already
+             * in { id, metaData:{} } format (they render correctly) — leave as-is. */
+            const wrappedRows = Object.fromEntries(
+              Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, wrapIfFlat(k, v)])
+            );
+            const wrappedCols = Object.fromEntries(
+              Object.entries(pd.columns ?? {}).map(([k, v]) => [k, wrapIfFlat(k, v)])
+            );
+            const wrappedEls = Object.fromEntries(
+              Object.entries(pd.elements ?? {}).map(([k, v]) => [k, wrapIfFlat(k, v)])
+            );
+
+            /* Pre-write diagnostics — captured AFTER wrapping, BEFORE the fetch */
+            const _firstWrappedRow = Object.values(wrappedRows)[0];
+            diag.approach2.preWriteRowKeys = _firstWrappedRow
+              ? Object.keys(_firstWrappedRow).slice(0, 8) : "rows-empty";
+            diag.approach2.preWriteSectionChildId =
+              pd.sections?.[0]?.metaData?.child?.[0]
+              ?? pd.sections?.[0]?.child?.[0]
+              ?? "none";
+
             const writePayload = {
               fontsForPreview: pd.fontsForPreview,
               general:         pd.general,
@@ -691,16 +722,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
               pageStyles:      pd.pageStyles,
               popups:          pd.popups ?? [],
               sections:        pd.sections,
-              rows:            pd.rows     ?? {},
-              columns:         pd.columns  ?? {},
-              elements:        pd.elements ?? {},
+              rows:            wrappedRows,
+              columns:         wrappedCols,
+              elements:        wrappedEls,
             };
 
             diag.approach2.storageFormat  = storageFormat;
             diag.approach2.existElemCount = existElemCount;
-            diag.approach2.nodeCount      = Object.keys(pd.rows    ?? {}).length
-              + Object.keys(pd.columns  ?? {}).length
-              + Object.keys(pd.elements ?? {}).length;
+            diag.approach2.nodeCount      = Object.keys(wrappedRows).length
+              + Object.keys(wrappedCols).length
+              + Object.keys(wrappedEls).length;
 
             /* Firebase Storage upload endpoint (creates/overwrites object) */
             const uploadEp =
@@ -722,6 +753,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                * Confirms the new file is readable and has our sections/rows counts.  */
               try {
                 const vrRes = await fetch(downloadUrl, {
+                  cache:   "no-store",
                   headers: { "Authorization": `Firebase ${idToken}` },
                   signal:  AbortSignal.timeout(5000),
                 });
@@ -774,23 +806,53 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
        GHL builder is Vue 3 + Pinia. Find the store holding page data, patch it,
        then call the store's save action so GHL writes to Firebase via its own path.
        ════════════════════════════════════════════════════════════════════════ */
-    const vueApp = appEl?.__vue_app__;
-    let pinia = null;
-    if (vueApp) {
-      const provides = vueApp._context?.provides ?? {};
-      /* Pinia symbol can be Symbol.for('pinia') or an internal symbol */
-      pinia = provides[Symbol.for("pinia")] ?? null;
-      if (!pinia || !(pinia._s instanceof Map)) {
-        /* Iterate provides looking for the Pinia instance (_s is a Map of stores) */
-        pinia = Object.values(provides).find(v => v && v._s instanceof Map) ?? null;
+    /* ── Locate Pinia: try top frame, then same-origin builder iframes ─────── */
+    function _findPiniaInVueApp(el) {
+      if (!el) return null;
+      const va = el.__vue_app__;
+      if (!va) return null;
+      const provides = va._context?.provides ?? {};
+      let p = provides[Symbol.for("pinia")] ?? null;
+      if (!p || !(p._s instanceof Map)) {
+        p = Object.values(provides).find(v => v && v._s instanceof Map) ?? null;
       }
+      return (p && p._s instanceof Map) ? p : null;
     }
 
+    const vueApp = appEl?.__vue_app__;
+    let pinia = _findPiniaInVueApp(appEl);
+    let piniaSource = "top-frame";
+
+    if (!pinia) {
+      /* Try builder iframes (same-origin — page-builder / funnel-builder) */
+      try {
+        const iframes = Array.from(document.querySelectorAll(
+          'iframe[name="funnel-builder"], iframe[src*="page-builder"], iframe[src*="funnel-builder"], iframe[src*="builder"]'
+        ));
+        for (const iframe of iframes) {
+          try {
+            const iDoc = iframe.contentDocument;
+            if (!iDoc) continue;
+            const iAppEl = iDoc.querySelector("#app") ?? iDoc.documentElement;
+            const p = _findPiniaInVueApp(iAppEl);
+            if (p) {
+              pinia = p;
+              piniaSource = `iframe[src="${(iframe.src || "").slice(0, 80)}"]`;
+              break;
+            }
+          } catch (_iframeErr) { /* cross-origin — skip */ }
+        }
+      } catch (_qsErr) {}
+    }
+
+    diag.approach3 = {};
+    diag.approach3.piniaSource = piniaSource;
+
     if (!pinia || !(pinia._s instanceof Map)) {
-      diag.approach3 = { result: "Pinia not found — GHL builder may not be fully loaded" };
+      diag.approach3.result = "Pinia not found — GHL builder may not be fully loaded";
     } else {
       const storeIds = [...pinia._s.keys()];
-      diag.approach3 = { storeCount: storeIds.length, storeIds: storeIds.slice(0, 20), candidates: [] };
+      diag.approach3 = { piniaSource, storeCount: storeIds.length, storeIds: storeIds.slice(0, 20), candidates: [] };
 
       /* ── Also probe Pinia stores for clipboard state ──────────────────────
          GHL's builder "copy section" stores data in a Pinia clipboard store.
