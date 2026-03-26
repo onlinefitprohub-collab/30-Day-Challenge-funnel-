@@ -277,7 +277,7 @@ async function showInjectDebug() {
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }
         if (d.approach3) {
-          lines.push(`A3 piniaSource: ${d.approach3.piniaSource ?? "?"}`);
+          lines.push(`A3 iframeFrameId: ${d.approach3.iframeFrameId ?? "?"} piniaSource: ${d.approach3.piniaSource ?? "?"}`);
           lines.push(`A3 stores found: ${JSON.stringify(d.approach3.candidates ?? []).slice(0, 200)}`);
           if (d.approach3.candidateDiag) {
             d.approach3.candidateDiag.forEach(cd => {
@@ -285,6 +285,7 @@ async function showInjectDebug() {
             });
           }
           lines.push(`A3 result: ${d.approach3.result ?? "?"}`);
+          if (d.approach3.iframeA3Error) lines.push(`A3 iframeErr: ${d.approach3.iframeA3Error}`);
         }
       } catch(_) { lines.push(`diag: ${JSON.stringify(inject.diag).slice(0, 300)}`); }
     }

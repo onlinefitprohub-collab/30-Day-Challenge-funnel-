@@ -802,190 +802,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
     }
 
     /* ════════════════════════════════════════════════════════════════════════
-       APPROACH 3: Vue/Pinia builder state mutation + trigger native save
-       GHL builder is Vue 3 + Pinia. Find the store holding page data, patch it,
-       then call the store's save action so GHL writes to Firebase via its own path.
+       APPROACH 3: Pinia state mutation is handled frame-targeted from the
+       background SW (_cf_approach3PiniaInFrame runs in the detected builder
+       frame). A placeholder diag entry is set here; the SW merges the real
+       A3 result (including iframeFrameId) into diag.approach3 after this
+       function returns.
        ════════════════════════════════════════════════════════════════════════ */
-    /* ── Locate Pinia: try top frame, then same-origin builder iframes ─────── */
-    function _findPiniaInVueApp(el) {
-      if (!el) return null;
-      const va = el.__vue_app__;
-      if (!va) return null;
-      const provides = va._context?.provides ?? {};
-      let p = provides[Symbol.for("pinia")] ?? null;
-      if (!p || !(p._s instanceof Map)) {
-        p = Object.values(provides).find(v => v && v._s instanceof Map) ?? null;
-      }
-      return (p && p._s instanceof Map) ? p : null;
-    }
+    diag.approach3 = { result: "pending-frame-targeted-run" };
 
-    const vueApp = appEl?.__vue_app__;
-    let pinia = _findPiniaInVueApp(appEl);
-    let piniaSource = "top-frame";
-
-    if (!pinia) {
-      /* Try builder iframes (same-origin — page-builder / funnel-builder) */
-      try {
-        const iframes = Array.from(document.querySelectorAll(
-          'iframe[name="funnel-builder"], iframe[src*="page-builder"], iframe[src*="funnel-builder"], iframe[src*="builder"]'
-        ));
-        for (const iframe of iframes) {
-          try {
-            const iDoc = iframe.contentDocument;
-            if (!iDoc) continue;
-            const iAppEl = iDoc.querySelector("#app") ?? iDoc.documentElement;
-            const p = _findPiniaInVueApp(iAppEl);
-            if (p) {
-              pinia = p;
-              piniaSource = `iframe[src="${(iframe.src || "").slice(0, 80)}"]`;
-              break;
-            }
-          } catch (_iframeErr) { /* cross-origin — skip */ }
-        }
-      } catch (_qsErr) {}
-    }
-
-    diag.approach3 = {};
-    diag.approach3.piniaSource = piniaSource;
-
-    if (!pinia || !(pinia._s instanceof Map)) {
-      diag.approach3.result = "Pinia not found — GHL builder may not be fully loaded";
-    } else {
-      const storeIds = [...pinia._s.keys()];
-      diag.approach3 = { piniaSource, storeCount: storeIds.length, storeIds: storeIds.slice(0, 20), candidates: [] };
-
-      /* ── Also probe Pinia stores for clipboard state ──────────────────────
-         GHL's builder "copy section" stores data in a Pinia clipboard store.
-         Writing to that store means GHL's own Ctrl+V paste will load our content
-         using its native mechanism — no Firebase write needed from our side.   */
-      const clipStoreDiag = [];
-      for (const [storeId, store] of pinia._s) {
-        const state    = store.$state ?? {};
-        const clipKeys = Object.keys(state).filter(k => /clipboard|copy|paste|buffer/i.test(k));
-        if (clipKeys.length === 0) continue;
-        const entry = { storeId, clipboardKeys: clipKeys, patched: false, pasteAttempted: false };
-        try {
-          /* Write our pageData to every clipboard-like key in this store */
-          const patch = {};
-          for (const ck of clipKeys) patch[ck] = pageData;
-          store.$patch(patch);
-          entry.patched = true;
-          /* Try common paste action names */
-          for (const pa of ["paste", "pasteSection", "applyClipboard", "doPaste", "pasteElement"]) {
-            if (typeof store[pa] === "function") {
-              try { await store[pa](); entry.pasteAttempted = pa; break; } catch(_) {}
-            }
-          }
-        } catch (ce) { entry.error = String(ce).slice(0, 60); }
-        clipStoreDiag.push(entry);
-      }
-      diag.approach3.clipboardStores = clipStoreDiag;
-
-      /* ── Identify all candidate stores with GHL page data structure ─────── */
-      const candidates = [];
-      for (const [storeId, store] of pinia._s) {
-        const state = store.$state ?? {};
-        const keys  = Object.keys(state);
-        /* Score by how many GHL page keys are present (more = better match) */
-        const hasSections  = keys.includes("sections");
-        const hasRows      = keys.includes("rows");
-        const hasElements  = keys.includes("elements");
-        const hasColumns   = keys.includes("columns");
-        const hasPageData  = keys.includes("pageData");
-        const score = (hasSections ? 3 : 0) + (hasRows ? 2 : 0) + (hasElements ? 2 : 0)
-                    + (hasColumns ? 1 : 0) + (hasPageData ? 1 : 0);
-        if (score > 0) candidates.push({ storeId, store, keys, score, hasPageData, hasSections });
-      }
-      /* Sort by score descending so best matches are tried first */
-      candidates.sort((a, b) => b.score - a.score);
-      diag.approach3.candidates = candidates.map(c => ({ storeId: c.storeId, score: c.score })).slice(0, 10);
-
-      if (candidates.length === 0) {
-        diag.approach3.result = "no store with GHL page structure (sections/rows/elements/pageData) found";
-      } else {
-        const SAVE_ACTIONS = ["savePage", "savePageData", "save", "autoSave",
-                              "updatePage", "saveCurrentPage", "persistPage"];
-        let successResult = null;
-        const candidateDiag = [];
-
-        /* Try each candidate until one both patches and saves successfully */
-        for (const { storeId, store, keys, hasPageData, hasSections } of candidates) {
-          const cd = { storeId, stateKeys: keys.slice(0, 20), patched: false, savedVia: null, errors: [] };
-
-          /* Apply patch — try both root-level and nested shapes */
-          try {
-            if (hasPageData && !hasSections) {
-              /* Store uses { pageData: { sections, rows, elements } } nesting */
-              store.$patch({ pageData });
-              cd.patchShape = "nested-pageData";
-            } else {
-              /* Store holds sections/rows/elements at root level */
-              store.$patch(pageData);
-              cd.patchShape = "root";
-            }
-            cd.patched = true;
-          } catch (pe) {
-            cd.patchError = String(pe).slice(0, 80);
-            candidateDiag.push(cd);
-            continue; // try next candidate
-          }
-
-          /* Try save actions */
-          for (const action of SAVE_ACTIONS) {
-            if (typeof store[action] === "function") {
-              try {
-                await store[action]();
-                cd.savedVia = action;
-                break;
-              } catch (se) {
-                cd.errors.push(`${action}:${String(se).slice(0, 50)}`);
-              }
-            }
-          }
-          candidateDiag.push(cd);
-
-          if (cd.savedVia) {
-            /* Success — store patched and native save triggered */
-            successResult = { storeId, savedVia: cd.savedVia, patchShape: cd.patchShape };
-            break;
-          }
-          /* No save action found on this store — continue to next candidate */
-        }
-
-        diag.approach3.candidateDiag = candidateDiag;
-
-        const fbWroteOk = diag.approach2?.fallThrough === true;
-        if (successResult) {
-          diag.approach3.result = "success";
-          return JSON.stringify({
-            ok:       true,
-            method:   fbWroteOk ? "firebase+pinia" : "pinia",
-            storeId:  successResult.storeId,
-            savedVia: successResult.savedVia,
-            patchShape: successResult.patchShape,
-            diag,
-          });
-        } else if (candidateDiag.some(c => c.patched)) {
-          /* Patched at least one store but no save action found.
-             Content is visible in the builder NOW (reactive state updated).
-             If Firebase also wrote (fallThrough=true), a reload will re-read
-             our stored data. Either way treat as success → trigger reload. */
-          const patchedStore = candidateDiag.find(c => c.patched);
-          diag.approach3.result = "patched-no-save";
-          return JSON.stringify({
-            ok:      true,
-            method:  fbWroteOk ? "firebase+pinia-patched" : "pinia-patched",
-            storeId: patchedStore?.storeId,
-            savedVia: null,
-            diag,
-            warning: `Content injected into builder (visible now). Firebase wrote=${fbWroteOk}. Click Save in GHL to persist permanently.`,
-          });
-        }
-      }
-    }
-
-    /* ── Approach 2 succeeded but Approach 3 found no Pinia store ─────────── *
-     * Firebase Storage is written correctly. GHL will read it on next reload.  */
+    /* ── Approach 2 succeeded — Firebase write confirmed ───────────────────── *
+     * GHL will read the new page data on next reload.                          */
     if (diag.approach2?.fallThrough === true) {
       return JSON.stringify({ ok: true, method: "firebase-write", diag });
     }
@@ -995,13 +821,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
        localStorage clipboard keys we wrote, the content will paste natively. */
     const a1 = JSON.stringify(diag.approach1).slice(0, 80);
     const a2 = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 120);
-    const a3 = JSON.stringify(diag.approach3?.result ?? diag.approach3?.savedVia ?? "not reached").slice(0, 120);
-    const clipStores = (diag.approach3?.clipboardStores ?? []).map(s => s.storeId).join(",") || "none";
+    const a3 = "frame-targeted-pending";
     return JSON.stringify({
       ok:      false,
       method:  "clipboard-ready",
+      _a3pending: true,
       warning: true,
-      error:   `Direct injection not confirmed, but content has been written to GHL's clipboard storage (${(diag.approach0?.keys ?? []).filter(k => k.includes(":ok")).length} localStorage keys + ${clipStores !== "none" ? "Pinia clipboard stores: " + clipStores : "no Pinia clipboard stores found"}). Press Ctrl+V in the GHL builder — GHL's own paste may load your content. Diag: A1=${a1} | A2=${a2} | A3=${a3}.`,
+      error:   `Approaches 0/1/2 incomplete; Approach 3 (Pinia) running in builder frame. Diag: A1=${a1} | A2=${a2} | A3=${a3}.`,
       diag,
     });
   } catch (e) {
@@ -1010,6 +836,185 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
       error: `_cf_injectViaBuilderSave threw: ${String(e).slice(0, 180)}`,
       diag,
     });
+  }
+}
+
+/* ─── _cf_probePinia ──────────────────────────────────────────────────────────
+   Probe injected into ALL frames with allFrames:true. Returns true if a live
+   Pinia instance with ≥1 store exists in this frame's Vue app.                */
+function _cf_probePinia() {
+  const tryEls = [
+    document.querySelector("#app"),
+    document.documentElement,
+    ...Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3),
+  ].filter(Boolean);
+  for (const el of tryEls) {
+    const va = el.__vue_app__;
+    if (!va) continue;
+    const provides = va._context?.provides ?? {};
+    const p = provides[Symbol.for("pinia")]
+      ?? Object.values(provides).find(v => v && v._s instanceof Map)
+      ?? null;
+    if (p && p._s instanceof Map && p._s.size > 0) return true;
+  }
+  return false;
+}
+
+/* ─── _cf_approach3PiniaInFrame ───────────────────────────────────────────────
+   Self-contained Approach 3 execution — injected into the DETECTED BUILDER
+   FRAME (top frame or builder iframe, as determined by the SW frame probe).
+   Finds the Pinia instance, patches the page-data store, and triggers a native
+   save. Returns a JSON-serialised result + diag.approach3 object.              */
+async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
+  const diag3 = {
+    piniaSource:    "frame-targeted",
+    storeCount:     0,
+    storeIds:       [],
+    candidates:     [],
+    clipboardStores: [],
+  };
+  try {
+    /* ── Find Pinia in THIS frame ─────────────────────────────────────────── */
+    const tryEls = [
+      document.querySelector("#app"),
+      document.documentElement,
+      ...Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3),
+    ].filter(Boolean);
+    let pinia = null;
+    for (const el of tryEls) {
+      const va = el.__vue_app__;
+      if (!va) continue;
+      const provides = va._context?.provides ?? {};
+      const p = provides[Symbol.for("pinia")]
+        ?? Object.values(provides).find(v => v && v._s instanceof Map)
+        ?? null;
+      if (p && p._s instanceof Map) { pinia = p; break; }
+    }
+
+    if (!pinia || !(pinia._s instanceof Map)) {
+      diag3.result = "Pinia not found in frame";
+      return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
+    }
+
+    const storeIds = [...pinia._s.keys()];
+    diag3.storeCount = storeIds.length;
+    diag3.storeIds   = storeIds.slice(0, 20);
+
+    /* ── Probe clipboard stores ──────────────────────────────────────────── */
+    const clipStoreDiag = [];
+    for (const [storeId, store] of pinia._s) {
+      const state    = store.$state ?? {};
+      const clipKeys = Object.keys(state).filter(k => /clipboard|copy|paste|buffer/i.test(k));
+      if (clipKeys.length === 0) continue;
+      const entry = { storeId, clipboardKeys: clipKeys, patched: false, pasteAttempted: false };
+      try {
+        const patch = {};
+        for (const ck of clipKeys) patch[ck] = pageData;
+        store.$patch(patch);
+        entry.patched = true;
+        for (const pa of ["paste", "pasteSection", "applyClipboard", "doPaste", "pasteElement"]) {
+          if (typeof store[pa] === "function") {
+            try { await store[pa](); entry.pasteAttempted = pa; break; } catch(_) {}
+          }
+        }
+      } catch (ce) { entry.error = String(ce).slice(0, 60); }
+      clipStoreDiag.push(entry);
+    }
+    diag3.clipboardStores = clipStoreDiag;
+
+    /* ── Identify candidate page-data stores ────────────────────────────── */
+    const candidates = [];
+    for (const [storeId, store] of pinia._s) {
+      const state = store.$state ?? {};
+      const keys  = Object.keys(state);
+      const hasSections = keys.includes("sections");
+      const hasRows     = keys.includes("rows");
+      const hasElements = keys.includes("elements");
+      const hasColumns  = keys.includes("columns");
+      const hasPageData = keys.includes("pageData");
+      const score = (hasSections ? 3 : 0) + (hasRows ? 2 : 0) + (hasElements ? 2 : 0)
+                  + (hasColumns ? 1 : 0) + (hasPageData ? 1 : 0);
+      if (score > 0) candidates.push({ storeId, store, keys, score, hasPageData, hasSections });
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    diag3.candidates = candidates.map(c => ({ storeId: c.storeId, score: c.score })).slice(0, 10);
+
+    if (candidates.length === 0) {
+      diag3.result = "no store with GHL page structure found";
+      return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
+    }
+
+    /* ── Patch each candidate + try save actions ─────────────────────────── */
+    const SAVE_ACTIONS = ["savePage", "savePageData", "save", "autoSave",
+                          "updatePage", "saveCurrentPage", "persistPage"];
+    let successResult = null;
+    const candidateDiag = [];
+
+    for (const { storeId, store, keys, hasPageData, hasSections } of candidates) {
+      const cd = { storeId, stateKeys: keys.slice(0, 20), patched: false, savedVia: null, errors: [] };
+      try {
+        if (hasPageData && !hasSections) {
+          store.$patch({ pageData });
+          cd.patchShape = "nested-pageData";
+        } else {
+          store.$patch(pageData);
+          cd.patchShape = "root";
+        }
+        cd.patched = true;
+      } catch (pe) {
+        cd.patchError = String(pe).slice(0, 80);
+        candidateDiag.push(cd);
+        continue;
+      }
+      for (const action of SAVE_ACTIONS) {
+        if (typeof store[action] === "function") {
+          try {
+            await store[action]();
+            cd.savedVia = action;
+            break;
+          } catch (se) {
+            cd.errors.push(`${action}:${String(se).slice(0, 50)}`);
+          }
+        }
+      }
+      candidateDiag.push(cd);
+      if (cd.savedVia) {
+        successResult = { storeId, savedVia: cd.savedVia, patchShape: cd.patchShape };
+        break;
+      }
+    }
+
+    diag3.candidateDiag = candidateDiag;
+
+    if (successResult) {
+      diag3.result = "success";
+      return JSON.stringify({
+        ok:         true,
+        method:     "pinia",
+        storeId:    successResult.storeId,
+        savedVia:   successResult.savedVia,
+        patchShape: successResult.patchShape,
+        diag:       { approach3: diag3 },
+      });
+    } else if (candidateDiag.some(c => c.patched)) {
+      const patchedStore = candidateDiag.find(c => c.patched);
+      diag3.result = "patched-no-save";
+      return JSON.stringify({
+        ok:      true,
+        method:  "pinia-patched",
+        storeId: patchedStore?.storeId,
+        savedVia: null,
+        diag:    { approach3: diag3 },
+        warning: "Content injected into builder (visible now). Click Save in GHL to persist permanently.",
+      });
+    }
+
+    diag3.result = "no candidate saved";
+    return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
+
+  } catch (e) {
+    diag3.result = `threw: ${String(e).slice(0, 180)}`;
+    return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
   }
 }
 
@@ -1230,9 +1235,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           }
           const [, locId2, , builderId2] = m2;
           console.log("[CF] CF_PASTE_PAGE:", debugLabel, "→ builder", builderId2);
+          /* ── Step A: Probe all frames to find which one has Pinia ──────── */
+          let iframeFrameId2 = 0;
+          try {
+            const probeRes2 = await chrome.scripting.executeScript({
+              target: { tabId: tabId2, allFrames: true },
+              world:  "MAIN",
+              func:   _cf_probePinia,
+            });
+            const builderFrame2 = probeRes2.find(r2 => r2.result === true && r2.frameId !== 0)
+              ?? probeRes2.find(r2 => r2.result === true);
+            if (builderFrame2) iframeFrameId2 = builderFrame2.frameId ?? 0;
+          } catch (_probeErr2) {}
+
+          /* ── Step B: Run approaches 0/1/2 in top frame ──────────────── */
           let r = {};
           try {
-            // Try Firebase / Vue-builder injection approaches first
             const res2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, allFrames: false },
               world:  "MAIN",
@@ -1241,6 +1259,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             });
             r = JSON.parse(res2?.[0]?.result ?? "{}");
           } catch(e) { r = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` }; }
+
+          /* ── Step C: Run Approach 3 (Pinia patch) in detected frame ─── */
+          if (!r.ok || r._a3pending) {
+            try {
+              const a3Res2 = await chrome.scripting.executeScript({
+                target: { tabId: tabId2, frameIds: [iframeFrameId2] },
+                world:  "MAIN",
+                func:   _cf_approach3PiniaInFrame,
+                args:   [builderId2, locId2, pageData],
+              });
+              const a3b = JSON.parse(a3Res2?.[0]?.result ?? "{}");
+              if (!r.diag) r.diag = {};
+              r.diag.approach3 = { ...(a3b.diag?.approach3 ?? {}), iframeFrameId: iframeFrameId2 };
+              if (!r.ok && a3b.ok) {
+                r.ok = true; r.method = a3b.method ?? "pinia";
+                r.storeId = a3b.storeId; r.savedVia = a3b.savedVia; r.warning = a3b.warning;
+                delete r._a3pending;
+              }
+            } catch (a3Err2) {
+              if (!r.diag) r.diag = {};
+              r.diag.approach3 = {
+                ...(r.diag.approach3 ?? {}),
+                iframeFrameId: iframeFrameId2,
+                iframeA3Error: String(a3Err2).slice(0, 80),
+              };
+            }
+          } else {
+            if (r.diag?.approach3) r.diag.approach3.iframeFrameId = iframeFrameId2;
+          }
+
           // Store full inject result so popup can show debug details
           await chrome.storage.local.set({ cf_last_inject: { ...r, builderId: builderId2, ts: Date.now() } });
           if (r.ok) {
@@ -1413,6 +1461,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // 3. Inject AI pageData via Firebase / Vue-builder state approaches
         console.log("[CF] CF_INJECT_AI_PAGE: injecting page=", ready.page, "→ builder=", builderId);
 
+        /* ── Step A: Probe all frames to find which one has Pinia ────────────── */
+        let iframeFrameId = 0;
+        try {
+          const probeRes = await chrome.scripting.executeScript({
+            target: { tabId, allFrames: true },
+            world:  "MAIN",
+            func:   _cf_probePinia,
+          });
+          /* Prefer a non-zero frameId (builder iframe) over the top frame (0) */
+          const builderFrame = probeRes.find(r => r.result === true && r.frameId !== 0)
+            ?? probeRes.find(r => r.result === true);
+          if (builderFrame) iframeFrameId = builderFrame.frameId ?? 0;
+        } catch (_probeErr) {}
+
+        /* ── Step B: Run approaches 0/1/2 in top frame ───────────────────── */
         let injectResult = {};
         try {
           const res = await chrome.scripting.executeScript({
@@ -1426,12 +1489,49 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           injectResult = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` };
         }
 
+        /* ── Step C: Run Approach 3 (Pinia patch) in detected frame ─────── */
+        if (!injectResult.ok || injectResult._a3pending) {
+          try {
+            const a3Res = await chrome.scripting.executeScript({
+              target: { tabId, frameIds: [iframeFrameId] },
+              world:  "MAIN",
+              func:   _cf_approach3PiniaInFrame,
+              args:   [builderId, locationId, ready.pageData],
+            });
+            const a3 = JSON.parse(a3Res?.[0]?.result ?? "{}");
+            /* Merge A3 diag (with iframeFrameId) into main result */
+            if (!injectResult.diag) injectResult.diag = {};
+            injectResult.diag.approach3 = { ...(a3.diag?.approach3 ?? {}), iframeFrameId };
+            /* If A3 succeeded while earlier approaches didn't, elevate result */
+            if (!injectResult.ok && a3.ok) {
+              injectResult.ok      = true;
+              injectResult.method  = a3.method ?? "pinia";
+              injectResult.storeId = a3.storeId;
+              injectResult.savedVia = a3.savedVia;
+              injectResult.warning  = a3.warning;
+              delete injectResult._a3pending;
+            }
+          } catch (a3Err) {
+            if (!injectResult.diag) injectResult.diag = {};
+            injectResult.diag.approach3 = {
+              ...(injectResult.diag.approach3 ?? {}),
+              iframeFrameId,
+              iframeA3Error: String(a3Err).slice(0, 80),
+            };
+          }
+        } else {
+          /* A0/1/2 already succeeded — still store iframeFrameId for diagnostics */
+          if (injectResult.diag?.approach3) {
+            injectResult.diag.approach3.iframeFrameId = iframeFrameId;
+          }
+        }
+
         // Store full inject result for popup debug display
         await chrome.storage.local.set({ cf_last_inject: { ...injectResult, builderId, ts: Date.now() } });
 
         if (injectResult.ok) {
           console.log("[CF] inject ok method:", injectResult.method);
-          // 4. Refresh the builder iframe so new content renders
+          // Refresh the builder iframe so new content renders
           try {
             await chrome.scripting.executeScript({
               target: { tabId, allFrames: false },
