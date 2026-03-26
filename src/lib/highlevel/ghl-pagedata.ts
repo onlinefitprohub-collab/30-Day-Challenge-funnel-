@@ -114,7 +114,8 @@ function ghlId(prefix: string): string {
 function sv(n: number, unit = "px"): SV { return { value: n, unit }; }
 function ss(s: string): SV { return { value: s }; }
 
-const VISIBILITY = { value: { hideMobile: false, hideDesktop: false } };
+const VISIBILITY         = { value: { hideMobile: false, hideDesktop: false } };
+const ELEMENT_VISIBILITY = { value: { hideMobile: "", hideDesktop: "" } };
 const SECTION_CLASS = {
   borders: { value: "noBorder" },
   borderRadius: { value: "radius0" },
@@ -141,7 +142,6 @@ function buildNode(
 ): GhlNode {
   const base: Record<string, unknown> = {
     id, _id: id, type, tagName, meta, title,
-    wrapper: {},
     child,
     extra: { visibility: VISIBILITY, ...extra },
     styles,
@@ -240,22 +240,47 @@ function makeHeadline(
   styles: StyleMap,
   mobileStyles: StyleMap = {},
 ): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-heading", "heading", "Headline",
+    id, "element", "c-heading", "heading", "Headline",
     [],
     styles,
     mobileStyles,
-    { tag: ss(tag), content: ss(text), typography: ss("var(--contentfont)") },
+    { text: { value: `<${tag}>${text}</${tag}>` }, nodeId: `c${id}`, visibility: ELEMENT_VISIBILITY },
+    { borders: { value: "noBorder" }, borderRadius: { value: "radius0" } },
   );
 }
 
 function makeParagraph(text: string, styles: StyleMap, mobileStyles: StyleMap = {}): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-paragraph", "paragraph", "Paragraph",
+    id, "element", "c-paragraph", "paragraph", "Paragraph",
     [],
     styles,
     mobileStyles,
-    { content: ss(text), typography: ss("var(--contentfont)") },
+    { content: ss(text), typography: ss("var(--contentfont)"), nodeId: `c${id}`, visibility: ELEMENT_VISIBILITY },
+  );
+}
+
+function makeSubHeading(htmlText: string, styles: StyleMap, mobileStyles: StyleMap = {}): GhlNode {
+  const id = ghlId("el");
+  return buildNode(
+    id, "element", "c-sub-heading", "sub-heading", "Sub Heading",
+    [],
+    styles,
+    mobileStyles,
+    {
+      text:        { value: htmlText },
+      nodeId:      `c${id}`,
+      customClass: { value: [] },
+      visibility:  ELEMENT_VISIBILITY,
+    },
+    {
+      boxShadow:    { value: "none" },
+      borders:      { value: "noBorder" },
+      borderRadius: { value: "radius0" },
+      radiusEdge:   { value: "none" },
+    },
   );
 }
 
@@ -266,8 +291,9 @@ function makeButton(
   styles: StyleMap = {},
   mobileStyles: StyleMap = {},
 ): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-button", "button", "Button",
+    id, "element", "c-button", "button", "Button",
     [],
     {
       backgroundColor: ss("#f97316"),
@@ -285,30 +311,67 @@ function makeButton(
       ...styles,
     },
     { width: sv(100, "%"), ...mobileStyles },
-    { content: ss(label), action: ss(action), url: ss(url), typography: ss("var(--contentfont)") },
+    { content: ss(label), action: ss(action), url: ss(url), typography: ss("var(--contentfont)"), nodeId: `c${id}`, visibility: ELEMENT_VISIBILITY },
   );
 }
 
 function makeForm(): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-form", "form", "Form",
+    id, "element", "c-form", "form", "Form",
     [], {}, {},
-    { formId: ss("") },
+    { formId: ss(""), nodeId: `c${id}`, visibility: ELEMENT_VISIBILITY },
   );
 }
 
-function makeDivider(color = "rgba(255,255,255,0.1)", marginV = 12): GhlNode {
+function makeImage(opts: { url?: string; width?: number } = {}): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-divider", "divider", "Divider",
+    id, "element", "c-image", "image", "Image",
     [],
-    { borderColor: ss(color), borderWidth: sv(1), marginTop: sv(marginV), marginBottom: sv(marginV) },
+    {},
+    {},
+    {
+      imageProperties: {
+        value: {
+          url:            opts.url ?? "",
+          width:          String(opts.width ?? 100),
+          redirectAction: "normal",
+          imageMeta:      {},
+        },
+      },
+      nodeId:       `c${id}`,
+      visitWebsite: "",
+      downloadFile: "",
+      visibility:   ELEMENT_VISIBILITY,
+    },
+    { borderRadius: { value: "radius0" } },
+  );
+}
+
+function makeDivider(): GhlNode {
+  const id = ghlId("el");
+  return buildNode(
+    id, "element", "c-divider", "divider", "Divider",
+    [],
+    {},
+    {},
+    { visibility: ELEMENT_VISIBILITY, nodeId: `c${id}` },
     {},
   );
 }
 
 function makeVideo(youtubeUrl: string, styles: StyleMap = {}): GhlNode {
+  const id = ghlId("el");
+  const videoId = youtubeUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1] ?? "";
+  const thumbnailURL = videoId
+    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+    : "";
+  const embedURL = videoId
+    ? `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=0`
+    : "";
   return buildNode(
-    ghlId("el"), "element", "c-video", "video", "Video",
+    id, "element", "c-video", "video", "Video",
     [],
     {
       width:        sv(100, "%"),
@@ -318,20 +381,30 @@ function makeVideo(youtubeUrl: string, styles: StyleMap = {}): GhlNode {
     },
     { width: sv(100, "%") },
     {
-      videoType:     ss("youtube"),
-      url:           ss(youtubeUrl),
-      autoplay:      { value: false },
-      loop:          { value: false },
-      muted:         { value: false },
-      controls:      { value: true },
-      aspectRatio:   ss("16:9"),
+      videoProperties: {
+        value: {
+          url:          youtubeUrl,
+          thumbnailURL,
+          autoplay:     0,
+          controls:     0,
+          type:         "youtube",
+          embedURL,
+        },
+      },
+      playBackControls: { value: {} },
+      leadVideoOptions: { value: {} },
+      checkStep:        { value: {} },
+      nodeId:           `c${id}`,
+      visibility:       ELEMENT_VISIBILITY,
     },
+    { borderRadius: { value: "radius0" }, borders: { value: "noBorder" } },
   );
 }
 
 function makeCountdown(endDate: string, styles: StyleMap = {}): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-countdown", "minute-timer", "Countdown Timer",
+    id, "element", "c-countdown", "minute-timer", "Countdown Timer",
     [],
     {
       textAlign:   ss("center"),
@@ -350,13 +423,16 @@ function makeCountdown(endDate: string, styles: StyleMap = {}): GhlNode {
       labelMinutes: ss("Minutes"),
       labelSeconds: ss("Seconds"),
       displayStyle: ss("block"),
+      nodeId:       `c${id}`,
+      visibility:   ELEMENT_VISIBILITY,
     },
   );
 }
 
 function makeBulletList(items: string[], primary: string, styles: StyleMap = {}): GhlNode {
+  const id = ghlId("el");
   return buildNode(
-    ghlId("el"), "element", "c-bullet-list", "bulletList", "Bullet List",
+    id, "element", "c-bullet-list", "bulletList", "Bullet List",
     [],
     {
       fontSize:        sv(16),
@@ -373,6 +449,8 @@ function makeBulletList(items: string[], primary: string, styles: StyleMap = {})
       iconColor:       ss(primary),
       iconSize:        ss("18px"),
       listItemSpacing: ss("10px"),
+      nodeId:          `c${id}`,
+      visibility:      ELEMENT_VISIBILITY,
     },
   );
 }
@@ -407,9 +485,8 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
       `🔥 Limited Spots — ${concept}`,
       { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") },
     ));
-    const h1 = el(b, makeHeadline(
-      lp.headlineOptions[0] ?? `Join the Free ${concept}`,
-      "h1",
+    const h1 = el(b, makeSubHeading(
+      `<h1>${lp.headlineOptions[0] ?? `Join the Free ${concept}`}</h1>`,
       { color: ss("#ffffff"), fontSize: sv(46), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
       { fontSize: sv(30), paddingBottom: sv(12) },
     ));
@@ -553,7 +630,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
       el(b, makeParagraph(f.answer, {
         color: ss("#6b7280"), fontSize: sv(15), lineHeight: ss("1.7"), paddingBottom: sv(4),
       })),
-      el(b, makeDivider("#e5e7eb", 4)),
+      el(b, makeDivider()),
     ]);
     const c = co(b, makeCol([heading, ...faqEls], 100, { padH: 0 }));
     const r = ro(b, makeRow([c], 680, 24));
@@ -768,7 +845,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
       }))
     );
     const leftCol = co(b, makeCol(
-      [whyLabel, ...whyItems, expectLabel, expectText, el(b, makeDivider("#e5e7eb", 16)), ...trustItems],
+      [whyLabel, ...whyItems, expectLabel, expectText, el(b, makeDivider()), ...trustItems],
       50, { padH: 24 },
     ));
 
