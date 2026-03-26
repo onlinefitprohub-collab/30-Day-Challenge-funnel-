@@ -98,7 +98,7 @@ interface CapturedGHLPage {
   locationId: string;
   pageName:   string;
   pageData:   Record<string, unknown>;
-  dataSource: "firebase" | "metadata" | "url-parse" | "url-parse-nuxt3" | "unknown";
+  dataSource: "firebase" | "metadata" | "url-parse" | "url-parse-nuxt3" | "ai" | "unknown";
   warning?:   string | null;
   capturedAt: number;
 }
@@ -489,6 +489,11 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
             {(captured.dataSource === "url-parse" || captured.dataSource === "url-parse-nuxt3") && (
               <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
                 ✓ Real element tree (URL fetch)
+              </span>
+            )}
+            {captured.dataSource === "ai" && (
+              <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                AI-generated page
               </span>
             )}
           </div>
