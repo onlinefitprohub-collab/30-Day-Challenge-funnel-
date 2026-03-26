@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.12.1 — fix sender ref crash, fix FAB re-injection shadow DOM.");
+    console.log("[CF Funnel] Installed v2.13.0 — IndexedDB token probe, firebase-write method.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.12.1 — fix sender ref crash, fix FAB re-injection shadow DOM.");
+    console.log("[CF Funnel] Updated to v2.13.0 — IndexedDB token probe, firebase-write method.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -592,6 +592,40 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
           } catch (te4) { tokenDiag.push(`user-err:${String(te4).slice(0, 40)}`); }
         }
 
+        /* Try Firebase SDK v9 — reads from IndexedDB firebaseLocalStorageDb.
+           Firebase v9 modular SDK does NOT store auth on window; it keeps the
+           auth record in IDB under a key matching /^firebase:authUser:/ with
+           shape: { stsTokenManager: { accessToken: "eyJh…" } }.
+           This is the correct source when all window-based probes return nothing. */
+        if (!idToken) {
+          try {
+            idToken = await new Promise((resolve) => {
+              const req = indexedDB.open("firebaseLocalStorageDb");
+              req.onerror = () => resolve(null);
+              req.onsuccess = (evt) => {
+                const db = evt.target.result;
+                if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
+                  db.close(); resolve(null); return;
+                }
+                const tx     = db.transaction("firebaseLocalStorage", "readonly");
+                const store  = tx.objectStore("firebaseLocalStorage");
+                const getAll = store.getAll();
+                getAll.onerror   = () => { db.close(); resolve(null); };
+                getAll.onsuccess = (e2) => {
+                  db.close();
+                  const records = e2.target.result ?? [];
+                  for (const rec of records) {
+                    const token = rec?.value?.stsTokenManager?.accessToken;
+                    if (token) { resolve(token); return; }
+                  }
+                  resolve(null);
+                };
+              };
+            });
+            if (idToken) tokenDiag.push("indexeddb-v9");
+          } catch (te5) { tokenDiag.push(`idb-err:${String(te5).slice(0, 40)}`); }
+        }
+
         diag.approach2 = { bucket, objectPath, tokenDiag, hasToken: !!idToken };
 
         if (idToken) {
@@ -610,7 +644,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
             });
             if (res.ok) {
               diag.approach2.result = "success";
-              return JSON.stringify({ ok: true, method: "firebase-rest", diag });
+              return JSON.stringify({ ok: true, method: "firebase-write", diag });
             }
             const errText = await res.text().catch(() => "");
             diag.approach2.result = `HTTP ${res.status}: ${errText.slice(0, 100)}`;
