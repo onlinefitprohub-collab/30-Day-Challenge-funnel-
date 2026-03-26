@@ -379,7 +379,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
               href="/api/highlevel/extension-download"
               className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-100 transition-colors"
             >
-              v{extVersion} — update to v{CURRENT_EXT_VERSION} ↓
+              Extension update available — re-download ↓
             </a>
           )}
           {extPresent === true && extVersion && !semverOlder(extVersion, CURRENT_EXT_VERSION) && (
