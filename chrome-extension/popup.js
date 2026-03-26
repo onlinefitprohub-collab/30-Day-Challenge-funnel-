@@ -1,4 +1,4 @@
-// popup.js v2.9.0 — Challenge Funnel Extension
+// popup.js v2.9.7 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -27,6 +27,7 @@ function initCopyPaste() {
   document.getElementById("copy-btn").addEventListener("click", doCopy);
   document.getElementById("paste-btn").addEventListener("click", doPaste);
   document.getElementById("clear-btn").addEventListener("click", doClear);
+  document.getElementById("debug-inject-btn").addEventListener("click", showInjectDebug);
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -129,13 +130,26 @@ async function doPaste() {
     if (result?.ok) {
       btn.textContent = "Pasted!";
       btn.className   = "btn btn-paste ok";
-      res.textContent = "Page pasted into the builder! The builder is reloading — switch to that tab to see your content.";
+      const ir = result.injectResult ?? {};
+      const methodNote = ir.method ? ` via ${ir.method}` : "";
+      res.textContent = `Page pasted into the builder${methodNote}! The builder is reloading — switch to that tab to see your content.`;
       res.className   = "paste-result ok";
+      // Show detailed debug info for successful inject
+      if (ir.raw || ir.status) {
+        res.textContent += `\n\nStatus: ${ir.status ?? "ok"} | Meta: ${ir.metaStatus ?? "-"}\n${(ir.raw ?? "").slice(0, 200)}`;
+      }
     } else {
       const err = result?.error ?? "Unknown error";
+      const ir  = result?.injectResult ?? {};
       btn.textContent = "Failed";
       btn.className   = "btn btn-paste err";
-      res.textContent = err.slice(0, 300);
+      // Show full error + raw GHL response for diagnosis
+      let detail = err.slice(0, 400);
+      if (ir.method || ir.status || ir.raw) {
+        detail += `\n\n— method: ${ir.method ?? "?"} | status: ${ir.status ?? "?"} | meta: ${ir.metaStatus ?? "?"}`;
+        if (ir.raw) detail += `\n— GHL raw: ${ir.raw.slice(0, 300)}`;
+      }
+      res.textContent = detail;
       res.className   = "paste-result err";
     }
   } catch(e) {
@@ -156,6 +170,34 @@ function doClear() {
   chrome.storage.session.remove("cf_copied_page", refreshCopiedCard);
   document.getElementById("copy-result").className  = "copy-result";
   document.getElementById("paste-result").className = "paste-result";
+}
+
+async function showInjectDebug() {
+  const div = document.getElementById("debug-inject-result");
+  const btn = document.getElementById("debug-inject-btn");
+  if (!div) return;
+  if (div.className.includes("err") || div.className.includes("ok")) {
+    // Toggle off
+    div.className = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Show last inject result";
+    return;
+  }
+  const s = await chrome.storage.local.get("cf_last_inject");
+  const d = s.cf_last_inject;
+  if (!d) {
+    div.textContent = "No inject result stored yet — try Paste first.";
+    div.className = "paste-result err";
+    btn.textContent = "Hide";
+    return;
+  }
+  const ts = d.ts ? new Date(d.ts).toLocaleTimeString() : "?";
+  let txt = `[${ts}] ok=${d.ok} | status=${d.status ?? "?"} | metaStatus=${d.metaStatus ?? "?"} | method=${d.method ?? "?"}\nbuilderId: ${d.builderId ?? "?"}\n`;
+  if (d.error) txt += `error: ${d.error}\n`;
+  if (d.raw)   txt += `raw: ${d.raw}`;
+  div.textContent = txt;
+  div.className = d.ok ? "paste-result ok" : "paste-result err";
+  btn.textContent = "Hide";
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

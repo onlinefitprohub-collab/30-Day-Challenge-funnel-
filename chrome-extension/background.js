@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.5 — GHL Inspector supports fetching from public/published GHL page URLs.");
+    console.log("[CF Funnel] Installed v2.9.7 — improved injection: fetches page metadata first, tries two endpoints, exposes full GHL error in popup debug.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.5 — CF_FETCH_URL_PAGE: paste any public GHL page URL into the inspector to capture its element tree.");
+    console.log("[CF Funnel] Updated to v2.9.7 — improved injection: fetches page metadata first, tries two endpoints, exposes full GHL error in popup debug.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -324,8 +324,11 @@ async function _cf_cloneFunnelStep(req) {
 }
 
 /* Inject AI-generated pageData directly into a GHL builder page via revex (MAIN world).
-   Uses PUT /funnels/funnel/page/{builderId} — same endpoint GHL uses internally.
-   No API key required — runs with the user's own authenticated session. */
+   Strategy:
+   1. GET /funnels/page/{id} to retrieve page metadata (name, funnelId, stepId, etc.)
+   2. PUT with full GHL-required fields: pageData + name + funnelId + stepId + locationId
+   3. Try /funnels/funnel/page/{id} first, then /funnels/page/{id} as fallback
+   Returns { ok, status, raw, method, error?, metaStatus? } serialised as JSON. */
 async function _cf_injectPageData(builderId, locationId, pageData) {
   try {
     let revex = null;
@@ -346,41 +349,87 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
       return JSON.stringify({ ok: false, error: "revexBackendService not found — make sure the GHL builder is fully loaded" });
     }
 
+    // Step 1: fetch page metadata so we can include name/funnelId/stepId in the PUT
+    let pageMeta = {};
+    let metaStatus = null;
+    try {
+      const metaResp = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+      pageMeta = metaResp?.data ?? metaResp ?? {};
+      metaStatus = metaResp?.status ?? 200;
+      console.log("[CF] _cf_injectPageData: meta fetched", JSON.stringify(pageMeta).slice(0, 200));
+    } catch(metaErr) {
+      console.warn("[CF] _cf_injectPageData: could not fetch page metadata:", metaErr?.message ?? String(metaErr).slice(0, 80));
+    }
+
     const payload = {
       pageData,
       locationId,
       pageId:      builderId,
-      isPublished: false,
+      isPublished: pageMeta.isPublished ?? false,
+      // Include metadata fields GHL may require for a valid PUT
+      ...(pageMeta.name     ? { name:     pageMeta.name     } : {}),
+      ...(pageMeta.funnelId ? { funnelId: pageMeta.funnelId } : {}),
+      ...(pageMeta.stepId   ? { stepId:   pageMeta.stepId   } : {}),
     };
 
     console.log("[CF] _cf_injectPageData: PUT to", builderId,
       "sections:", pageData?.sections?.length ?? 0,
       "rows:", Object.keys(pageData?.rows ?? {}).length,
-      "elements:", Object.keys(pageData?.elements ?? {}).length);
+      "elements:", Object.keys(pageData?.elements ?? {}).length,
+      "meta:", pageMeta.name, pageMeta.funnelId);
 
-    const response = await revex.put(
-      `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
-      payload
-    );
+    // Step 2: try primary endpoint /funnels/funnel/page/{id}
+    const tryPut = async (url) => {
+      try {
+        const resp = await revex.put(url, payload);
+        const data   = resp?.data ?? resp;
+        const status = typeof resp?.status === "number" ? resp.status
+                     : typeof data?.status === "number" ? data.status : 200;
+        return { data, status };
+      } catch(e) {
+        const status = e?.response?.status ?? null;
+        const data   = e?.response?.data ?? { message: String(e).slice(0, 200) };
+        return { data, status, threw: true };
+      }
+    };
 
-    const data   = response?.data ?? response;
-    const status = typeof response?.status === "number" ? response.status
-                 : typeof data?.status     === "number" ? data.status : 200;
+    let r = await tryPut(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+    let method = "funnel-page";
 
-    if (status >= 400) {
+    // Step 3: if primary fails (4xx or threw), try alternative endpoint
+    if (r.threw || (r.status !== null && r.status >= 400)) {
+      console.warn("[CF] _cf_injectPageData: primary endpoint failed (status", r.status, "), trying /funnels/page/");
+      const r2 = await tryPut(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+      if (!r2.threw && (r2.status === null || r2.status < 400)) {
+        r = r2;
+        method = "page";
+      } else {
+        // Both failed — return primary error with both details
+        return JSON.stringify({
+          ok:         false,
+          error:      `Both endpoints failed. Primary (${r.status ?? "threw"}): ${r.data?.message ?? r.data?.error ?? JSON.stringify(r.data).slice(0,100)}. Alt (${r2.status ?? "threw"}): ${r2.data?.message ?? r2.data?.error ?? JSON.stringify(r2.data).slice(0,80)}`,
+          status:     r.status,
+          metaStatus,
+          raw:        JSON.stringify({ primary: r.data, alt: r2.data }).slice(0, 500),
+          method:     "both-failed",
+        });
+      }
+    }
+
+    if (r.status !== null && r.status >= 400) {
       return JSON.stringify({
-        ok:    false,
-        error: `HTTP ${status}: ${data?.message ?? data?.error ?? "server error"}`,
-        status,
-        raw:   JSON.stringify(data).slice(0, 300),
+        ok:         false,
+        error:      `HTTP ${r.status}: ${r.data?.message ?? r.data?.error ?? "server error"}`,
+        status:     r.status,
+        metaStatus,
+        raw:        JSON.stringify(r.data).slice(0, 400),
+        method,
       });
     }
 
-    return JSON.stringify({ ok: true, status, raw: JSON.stringify(data).slice(0, 200) });
+    return JSON.stringify({ ok: true, status: r.status ?? 200, metaStatus, raw: JSON.stringify(r.data).slice(0, 300), method });
   } catch(e) {
-    const status = e?.response?.status;
-    const errMsg = e?.response?.data?.message ?? String(e).slice(0, 140);
-    return JSON.stringify({ ok: false, error: `inject threw: ${errMsg}`, status });
+    return JSON.stringify({ ok: false, error: `_cf_injectPageData threw: ${String(e).slice(0, 180)}` });
   }
 }
 
@@ -568,11 +617,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             });
             r = JSON.parse(res2?.[0]?.result ?? "{}");
           } catch(e) { r = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` }; }
+          // Store full inject result so popup can show debug details
+          await chrome.storage.local.set({ cf_last_inject: { ...r, builderId: builderId2, ts: Date.now() } });
           if (r.ok) {
             try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
             sendResponse({ ok: true, builderId: builderId2, injectResult: r });
           } else {
-            sendResponse({ ok: false, error: r.error ?? "inject failed" });
+            sendResponse({ ok: false, error: r.error ?? "inject failed", injectResult: r });
           }
         };
 
@@ -745,6 +796,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         } catch(e) {
           injectResult = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` };
         }
+
+        // Store full inject result for popup debug display
+        await chrome.storage.local.set({ cf_last_inject: { ...injectResult, builderId, ts: Date.now() } });
 
         if (injectResult.ok) {
           console.log("[CF] inject ok:", injectResult.status ?? 200);

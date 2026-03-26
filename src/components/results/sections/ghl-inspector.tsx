@@ -114,7 +114,7 @@ type AiPageId = (typeof AI_PAGES)[number]["id"];
 
 /* ── constants ────────────────────────────────────────────────────────────── */
 
-const CURRENT_EXT_VERSION = "2.9.6";
+const CURRENT_EXT_VERSION = "2.9.7";
 
 /* ── component ────────────────────────────────────────────────────────────── */
 
