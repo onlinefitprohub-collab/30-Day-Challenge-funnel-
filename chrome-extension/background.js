@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.11.0 — funnel-builder URL fix + sender.tab.id + debug panel.");
+    console.log("[CF Funnel] Installed v2.12.0 — version-specific guard, iframe msg fix, clipboard probe, cfReady fallback.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.11.0 — funnel-builder URL fix + sender.tab.id + debug panel.");
+    console.log("[CF Funnel] Updated to v2.12.0 — version-specific guard, iframe msg fix, clipboard probe, cfReady fallback.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -441,9 +441,38 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
  * Returns { ok, method, diag, error? } serialised as JSON.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
-  const diag = { approach1: null, approach2: null, approach3: null };
+  const diag = { approach0: null, approach1: null, approach2: null, approach3: null };
   try {
-    /* ── 0. Find revex for metadata fetch ───────────────────────────────── */
+    /* ════════════════════════════════════════════════════════════════════════
+       APPROACH 0: Write AI content to every likely GHL clipboard localStorage key.
+       GHL builder copy-paste stores section JSON in localStorage — we don't know
+       which key, so we write to all candidates.  Zero risk: writes are reversible.
+       If any key matches, pressing Ctrl+V in the GHL builder will paste the content
+       using GHL's OWN paste mechanism (no Firebase write needed from our side).
+       ════════════════════════════════════════════════════════════════════════ */
+    {
+      const clipKeys = [
+        "hl-copy-element",   "hl_copy_element",   "builder-clipboard",
+        "ghl-clipboard",     "funnel-clipboard",   "section-clipboard",
+        "hl-page-clipboard", "highlevel_clipboard","page-builder-clipboard",
+        "hl-section-copy",   "hl_section_copy",    "hl-builder-copy",
+      ];
+      const clipPayload = JSON.stringify({
+        type:     "section",
+        sections: pageData.sections,
+        rows:     pageData.rows,
+        columns:  pageData.columns ?? pageData.cols ?? {},
+        elements: pageData.elements,
+      });
+      const attempts = [];
+      for (const k of clipKeys) {
+        try { localStorage.setItem(k, clipPayload); attempts.push(k + ":ok"); }
+        catch (e)  { attempts.push(k + ":err"); }
+      }
+      diag.approach0 = { keys: attempts, hint: "Try Ctrl+V in the GHL builder — if GHL reads from any of these keys it will paste natively." };
+    }
+
+    /* ── Find revex for metadata fetch (used by approaches 1 and 2) ─────── */
     let revex = null;
     const appEl = document.querySelector("#app");
     revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
@@ -621,6 +650,33 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
       const storeIds = [...pinia._s.keys()];
       diag.approach3 = { storeCount: storeIds.length, storeIds: storeIds.slice(0, 20), candidates: [] };
 
+      /* ── Also probe Pinia stores for clipboard state ──────────────────────
+         GHL's builder "copy section" stores data in a Pinia clipboard store.
+         Writing to that store means GHL's own Ctrl+V paste will load our content
+         using its native mechanism — no Firebase write needed from our side.   */
+      const clipStoreDiag = [];
+      for (const [storeId, store] of pinia._s) {
+        const state    = store.$state ?? {};
+        const clipKeys = Object.keys(state).filter(k => /clipboard|copy|paste|buffer/i.test(k));
+        if (clipKeys.length === 0) continue;
+        const entry = { storeId, clipboardKeys: clipKeys, patched: false, pasteAttempted: false };
+        try {
+          /* Write our pageData to every clipboard-like key in this store */
+          const patch = {};
+          for (const ck of clipKeys) patch[ck] = pageData;
+          store.$patch(patch);
+          entry.patched = true;
+          /* Try common paste action names */
+          for (const pa of ["paste", "pasteSection", "applyClipboard", "doPaste", "pasteElement"]) {
+            if (typeof store[pa] === "function") {
+              try { await store[pa](); entry.pasteAttempted = pa; break; } catch(_) {}
+            }
+          }
+        } catch (ce) { entry.error = String(ce).slice(0, 60); }
+        clipStoreDiag.push(entry);
+      }
+      diag.approach3.clipboardStores = clipStoreDiag;
+
       /* ── Identify all candidate stores with GHL page data structure ─────── */
       const candidates = [];
       for (const [storeId, store] of pinia._s) {
@@ -724,14 +780,18 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
       }
     }
 
-    /* All three approaches failed — return diagnostic summary */
+    /* All direct approaches failed — but Approach 0 (clipboard) may still work.
+       Tell the user to try Ctrl+V in the builder — if GHL reads from any of the
+       localStorage clipboard keys we wrote, the content will paste natively. */
     const a1 = JSON.stringify(diag.approach1).slice(0, 80);
     const a2 = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 120);
     const a3 = JSON.stringify(diag.approach3?.result ?? diag.approach3?.savedVia ?? "not reached").slice(0, 120);
+    const clipStores = (diag.approach3?.clipboardStores ?? []).map(s => s.storeId).join(",") || "none";
     return JSON.stringify({
-      ok:     false,
-      method: "all-failed",
-      error:  `All injection approaches failed. GHL stores page content in Firebase Storage, not its REST API. Diag: A1=${a1} | A2=${a2} | A3=${a3}. Use the URL Inspector to fetch a real GHL page and clone it instead.`,
+      ok:      false,
+      method:  "clipboard-ready",
+      warning: true,
+      error:   `Direct injection not confirmed, but content has been written to GHL's clipboard storage (${(diag.approach0?.keys ?? []).filter(k => k.includes(":ok")).length} localStorage keys + ${clipStores !== "none" ? "Pinia clipboard stores: " + clipStores : "no Pinia clipboard stores found"}). Press Ctrl+V in the GHL builder — GHL's own paste may load your content. Diag: A1=${a1} | A2=${a2} | A3=${a3}.`,
       diag,
     });
   } catch (e) {

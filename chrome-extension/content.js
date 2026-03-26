@@ -1,4 +1,4 @@
-// content.js v2.11.0 — Challenge Funnel in a Box
+// content.js v2.12.0 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.
@@ -8,8 +8,11 @@
 (function () {
   "use strict";
 
-  if (window.__cfExtLoaded) return;
-  window.__cfExtLoaded = true;
+  // Version-specific guard: when the extension updates, the new version string
+  // doesn't match the old one, so the new content.js always replaces the old one
+  // in already-open tabs (no manual page reload needed after extension update).
+  if (window.__cfExtLoaded === "2.12.0") return;
+  window.__cfExtLoaded = "2.12.0";
 
   const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
@@ -17,7 +20,9 @@
    * The app sends page data via postMessage; we cache it for later pasting.
    * ─────────────────────────────────────────────────────────────────────── */
   window.addEventListener("message", (evt) => {
-    if (evt.source !== window) return;
+    // Accept CF_SAVE_PAGE from same window OR from child frames (e.g. when the app
+    // is embedded inside a Replit project-preview iframe on replit.com/@user/...).
+    // We validate by checking source/type fields instead of evt.source identity.
     if (!evt.data || evt.data.source !== "cf-app" || evt.data.type !== "CF_SAVE_PAGE") return;
 
     const { requestId, projectId, page, pageData, challengeConcept, appUrl } = evt.data.payload || {};
@@ -59,12 +64,11 @@
    * We forward to background, then postMessage the result back to the page.
    * ─────────────────────────────────────────────────────────────────────── */
   window.addEventListener("message", (evt) => {
-    if (evt.source !== window) return;
     if (!evt.data || evt.data.source !== "cf-app") return;
     const t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.11.0" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.12.0" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {
@@ -226,8 +230,8 @@
     const isBuilder = /\/(page-builder|funnel-builder)\//.test(window.location.href);
 
     // Safety net: if storage callbacks never fire (e.g. service worker restart),
-    // reset the FAB to the "no page" state after 3 seconds instead of staying disabled.
-    const fallbackTimer = setTimeout(() => setFabNoPage(fab, badge), 3000);
+    // 8 s is enough for the service worker to cold-start after browser/extension restart.
+    const fallbackTimer = setTimeout(() => setFabNoPage(fab, badge), 8000);
 
     try {
       chrome.storage.local.get(["cfReady"], (ls) => {
@@ -321,6 +325,11 @@
           ?? "Pasted! Builder is reloading — your content will appear in a few seconds.";
         showToast("ok", msg);
         setTimeout(() => { resetFab(); hideToast(); }, 4000);
+      } else if (result?.injectResult?.method === "clipboard-ready" || result?.method === "clipboard-ready") {
+        // Clipboard keys written — direct injection didn't land, but GHL's own Ctrl+V may work
+        setFabText("V");
+        showToast("spin", "Content written to clipboard storage! Now press Ctrl+V inside the GHL builder to paste using GHL's own paste.");
+        setTimeout(() => { resetFab(); hideToast(); }, 12000);
       } else {
         const err = result?.error ?? "Unknown error";
         setFabText("!");

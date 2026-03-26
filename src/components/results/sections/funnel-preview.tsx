@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Globe, ChevronRight, Star, Check, Calendar, ArrowRight, Shield, Clock, Users,
-  ExternalLink, Loader2, X,
+  ExternalLink, Loader2, X, Download,
 } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -636,6 +636,25 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
     booking:  <BookingPagePreview  data={data} scheme={scheme} />,
   };
 
+  async function handleDownloadJson() {
+    try {
+      const qs  = new URLSearchParams({ page: activePage, ...(projectId ? { projectId } : {}) });
+      const res = await fetch(`/api/highlevel/page-data?${qs}`);
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const json = await res.json() as { pageData: unknown };
+      if (!json.pageData) throw new Error("No page data");
+      const blob = new Blob([JSON.stringify(json.pageData, null, 2)], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `ghl-page-${activePage}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Download failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  }
+
   async function handleClone() {
     if (cloneStatus === "loading") return;
     setCloneStatus("loading");
@@ -720,20 +739,30 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         ))}
 
         <div className="ml-auto flex flex-col items-end gap-1">
-          <button
-            onClick={handleClone}
-            disabled={cloneStatus === "loading"}
-            className="flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          >
-            {cloneStatus === "loading" ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <ExternalLink className="h-3 w-3" />
-            )}
-            {cloneStatus === "loading" ? "Saving…" : "Clone to GHL"}
-          </button>
-          <p className="text-[10px] text-gray-400 text-right max-w-[220px] leading-snug">
-            Queues this AI page for the orange CF button in your GHL builder. Note: GHL doesn&apos;t support direct content injection — for best results, use a real GHL page captured via the URL Inspector.
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadJson}
+              className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+              title="Download this page's GHL JSON — import manually or inspect the schema"
+            >
+              <Download className="h-3 w-3" />
+              Download JSON
+            </button>
+            <button
+              onClick={handleClone}
+              disabled={cloneStatus === "loading"}
+              className="flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              {cloneStatus === "loading" ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <ExternalLink className="h-3 w-3" />
+              )}
+              {cloneStatus === "loading" ? "Saving…" : "Clone to GHL"}
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400 text-right max-w-[280px] leading-snug">
+            Clone to GHL queues this page for the orange CF button. Download JSON gives you the raw GHL element tree.
           </p>
         </div>
       </div>

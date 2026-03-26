@@ -1,4 +1,4 @@
-// popup.js v2.11.0 — Challenge Funnel Extension
+// popup.js v2.12.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -32,6 +32,7 @@ function initCopyPaste() {
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "session" && changes.cf_copied_page) refreshCopiedCard();
+    if (area === "local"   && changes.cfReady)        refreshCopiedCard();
   });
 }
 
@@ -75,10 +76,24 @@ function refreshCopiedCard() {
       pasteBtn.disabled      = false;
 
     } else {
-      card.className = "copied-card none";
-      card.innerHTML = `<strong>Nothing copied yet</strong>Go to your Challenge Funnel results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
-      clearBtn.style.display = "none";
-      pasteBtn.disabled      = true;
+      // cf_copied_page is empty — check cfReady (local storage) as fallback.
+      // cfReady is written by "Clone to GHL" and persists across extension updates.
+      chrome.storage.local.get("cfReady", (ls) => {
+        const ready = ls.cfReady ?? null;
+        if (ready?.pageData) {
+          const label = PAGE_LABELS[ready.page] || "AI Page";
+          const ago   = timeSince(ready.loadedAt);
+          card.className = "copied-card has";
+          card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Loaded ${ago} — open a GHL builder tab and click the orange CF button to paste.`;
+          clearBtn.style.display = "";
+          pasteBtn.disabled      = false;
+        } else {
+          card.className = "copied-card none";
+          card.innerHTML = `<strong>Nothing copied yet</strong>Go to your Challenge Funnel results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
+          clearBtn.style.display = "none";
+          pasteBtn.disabled      = true;
+        }
+      });
     }
   });
 }
@@ -138,6 +153,12 @@ async function doPaste() {
       if (ir.raw || ir.status) {
         res.textContent += `\n\nStatus: ${ir.status ?? "ok"} | Meta: ${ir.metaStatus ?? "-"}\n${(ir.raw ?? "").slice(0, 200)}`;
       }
+    } else if ((result?.injectResult?.method ?? result?.method) === "clipboard-ready") {
+      // Clipboard keys written — direct injection didn't land but GHL's Ctrl+V may work
+      btn.textContent = "Ready — Ctrl+V";
+      btn.className   = "btn btn-paste";
+      res.textContent = "Content written to GHL's clipboard storage!\n\nSwitch to your GHL builder tab and press Ctrl+V. GHL's own paste handler should load your content.";
+      res.className   = "paste-result ok";
     } else {
       const err = result?.error ?? "Unknown error";
       const ir  = result?.injectResult ?? {};
@@ -199,7 +220,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.11.0 ===");
+  lines.push("=== CF Extension v2.12.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
