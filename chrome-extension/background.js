@@ -557,9 +557,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                     stepId:     record.stepId,
                     locationId: record.locationId,
                     pageName:   pdResult.pageName || record.pageName,
-                    pageData:   pdResult.data,
+                    // Only store full element tree when source is firebase (real page data).
+                    // Metadata-source results contain IDs only — treat as metadata fallback.
+                    pageData:   pdResult.source === "firebase" ? pdResult.data : null,
                     dataSource: pdResult.source  ?? "unknown",
-                    warning:    pdResult.warning  ?? null,
+                    warning:    pdResult.source !== "firebase"
+                                  ? "Only page IDs available (element tree not from Firebase). Use the URL Inspector to capture full schema."
+                                  : (pdResult.warning ?? null),
                     capturedAt: Date.now(),
                   },
                 });
