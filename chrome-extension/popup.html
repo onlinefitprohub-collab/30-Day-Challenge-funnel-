@@ -100,8 +100,9 @@
       border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
       margin-top: 8px; display: none;
     }
-    .paste-result.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
-    .paste-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+    .paste-result.ok   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .paste-result.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+    .paste-result.info { background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b;  display: block; }
 
     /* ── Divider ── */
     .divider {
@@ -276,8 +277,8 @@
     <!-- Paste result message -->
     <div class="paste-result" id="paste-result"></div>
 
-    <!-- Debug: last inject result -->
-    <button class="btn-clear" id="debug-inject-btn" style="margin-top:4px;font-size:10px;">Show last inject result</button>
+    <!-- Debug: full state dump -->
+    <button class="btn-clear" id="debug-inject-btn" style="margin-top:4px;font-size:10px;">Debug Info</button>
     <div class="paste-result" id="debug-inject-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
   </div>
 

@@ -1,4 +1,4 @@
-// content.js v2.10.0 — Challenge Funnel in a Box
+// content.js v2.11.0 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.
@@ -64,7 +64,7 @@
     const t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.10.0" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.11.0" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {
@@ -223,7 +223,7 @@
     if (!fab || !badge) return;
 
     const PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
-    const isBuilder = /\/page-builder\//.test(window.location.href);
+    const isBuilder = /\/(page-builder|funnel-builder)\//.test(window.location.href);
 
     // Safety net: if storage callbacks never fire (e.g. service worker restart),
     // reset the FAB to the "no page" state after 3 seconds instead of staying disabled.
@@ -255,7 +255,7 @@
             const name = copied.pageName || "GHL Page";
             fab.title   = isBuilder
               ? `GHL Clone ready: ${name} — click to paste`
-              : `GHL Clone: ${name} — open a /page-builder/ tab to paste`;
+              : `GHL Clone: ${name} — open a GHL builder tab to paste`;
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show ghl";
@@ -264,7 +264,7 @@
             const name = copied.pageName || "Captured GHL Page";
             fab.title   = isBuilder
               ? `Captured: ${name} — click to paste`
-              : `Captured: ${name} — open a /page-builder/ tab to paste`;
+              : `Captured: ${name} — open a GHL builder tab to paste`;
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show";
@@ -274,7 +274,7 @@
             const label = PAGE_LABELS[pg] || "AI Page";
             fab.title   = isBuilder
               ? `AI Page Ready: ${label} — click to paste`
-              : `AI Page: ${label} — open a /page-builder/ tab to paste`;
+              : `AI Page: ${label} — open a GHL builder tab to paste`;
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show";
@@ -307,9 +307,13 @@
     showToast("spin", "Pasting page…");
 
     try {
-      const result = await new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: "CF_PASTE_PAGE" }, resolve);
-      });
+      const result = await Promise.race([
+        new Promise((resolve) => chrome.runtime.sendMessage({ type: "CF_PASTE_PAGE" }, resolve)),
+        new Promise((resolve) => setTimeout(
+          () => resolve({ ok: false, error: "Timed out (10s) — the extension took too long. Try reloading the GHL builder tab and clicking the CF button again." }),
+          10000
+        )),
+      ]);
 
       if (result?.ok) {
         setFabText("✓");

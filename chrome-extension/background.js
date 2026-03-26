@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.10.0 — Firebase Storage + Vue/Pinia builder state injection.");
+    console.log("[CF Funnel] Installed v2.11.0 — funnel-builder URL fix + sender.tab.id + debug panel.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.10.0 — Firebase Storage + Vue/Pinia builder state injection.");
+    console.log("[CF Funnel] Updated to v2.11.0 — funnel-builder URL fix + sender.tab.id + debug panel.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -806,9 +806,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         if (!info.ok) {
           const tab = await chrome.tabs.get(tabId);
           const url = tab.url ?? "";
-          const m   = url.match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+          const m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
           if (m) {
-            const [, locationId, builderId] = m;
+            const [, locationId, , builderId] = m;
             try {
               const res2 = await chrome.scripting.executeScript({
                 target: { tabId, allFrames: false },
@@ -828,7 +828,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
               info.error = (info.error ?? "") + ` | revex: ${String(e2).slice(0, 60)}`;
             }
           } else {
-            info.urlNote = "Not a /page-builder/ URL — funnelId/stepId must be in page JS";
+            info.urlNote = "Not a GHL builder URL — funnelId/stepId must be in page JS";
           }
         }
 
@@ -846,12 +846,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           sendResponse({ ok: true, record });
 
           // ── Also capture full pageData for schema inspection (non-blocking) ──
-          // Only works when the tab is a /page-builder/ URL (revex is accessible).
+          // Only works when the tab is a /page-builder/ or /funnel-builder/ URL (revex is accessible).
           try {
             const tab2 = await chrome.tabs.get(tabId);
-            const bm   = (tab2.url ?? "").match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+            const bm   = (tab2.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
             if (bm) {
-              const [, , builderId] = bm;
+              const [, , , builderId] = bm;
               const pdRes = await chrome.scripting.executeScript({
                 target: { tabId, allFrames: false },
                 world:  "MAIN",
@@ -902,9 +902,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             // Still persist metadata-only fallback so "Load Captured GHL Page" has something to show
             try {
               const bm2 = (await chrome.tabs.get(tabId).catch(() => ({ url: "" }))).url
-                .match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+                .match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
               if (bm2) {
-                const [, , builderId2] = bm2;
+                const [, , , builderId2] = bm2;
                 await chrome.storage.local.set({
                   capturedGHLPage: {
                     builderId:  builderId2,
@@ -936,7 +936,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   /* ── CF_PASTE_PAGE ────────────────────────────────────────────────────────
    * Clones the copied GHL page into the active builder tab.
    * Uses revexBackendService.post('/funnels/funnel/clone-funnel-step/').
-   * The active tab MUST be app.gohighlevel.com/.../page-builder/...
+   * The active tab MUST be app.gohighlevel.com/.../page-builder/... OR .../funnel-builder/...
    * ─────────────────────────────────────────────────────────────────────── */
   if (type === "CF_PASTE_PAGE") {
     (async () => {
@@ -945,17 +945,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         const stored = await chrome.storage.session.get("cf_copied_page");
         const src    = stored.cf_copied_page;
 
-        // ── Helper: run revex inject on the active builder tab ────────────
+        // ── Helper: run builder injection on the active GHL builder tab ──
         const doAIInject = async (pageData, debugLabel) => {
-          const tabId2 = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
-          if (!tabId2) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+          /* Use sender.tab.id (the tab that clicked the FAB) — more reliable
+             than chrome.tabs.query which can return the wrong window/tab. */
+          const tabId2 = sender.tab?.id ?? msg.tabId
+            ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+          if (!tabId2) { sendResponse({ ok: false, error: "Could not identify the GHL builder tab. Make sure you clicked the orange CF button inside the GHL builder." }); return; }
           const tab2 = await chrome.tabs.get(tabId2);
-          const m2   = (tab2.url ?? "").match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+          const m2   = (tab2.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
           if (!m2) {
-            sendResponse({ ok: false, error: "Active tab is not a GHL page builder URL — navigate to the page you want to paste into, then try again" });
+            sendResponse({ ok: false, error: `This tab is not a GHL builder page (URL: ${(tab2.url ?? "").slice(0, 80)}). Open a funnel page in the GHL builder, then click the orange CF button.` });
             return;
           }
-          const [, locId2, builderId2] = m2;
+          const [, locId2, , builderId2] = m2;
           console.log("[CF] CF_PASTE_PAGE:", debugLabel, "→ builder", builderId2);
           let r = {};
           try {
@@ -1003,17 +1006,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         // ── Route C: Real GHL clone (clone-funnel-step) ───────────────────
 
         // 2. Get the active tab (must be GHL builder)
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        const tabId = sender.tab?.id ?? msg.tabId
+          ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
         const tab = await chrome.tabs.get(tabId);
         const url = tab.url ?? "";
-        const m   = url.match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+        const m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
-          sendResponse({ ok: false, error: "Active tab is not a GHL page builder URL — navigate to the page you want to paste into, then try again" });
+          sendResponse({ ok: false, error: `This tab is not a GHL builder page (URL: ${url.slice(0, 80)}). Open a funnel page in the GHL builder, then try again.` });
           return;
         }
-        const [, locationId, builderId] = m;
+        const [, locationId, , builderId] = m;
 
         // 3. Get destination funnelId + stepId via revex
         let destInfo = {};
@@ -1087,7 +1091,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
    * Injects AI-generated GHL-native pageData into the active builder page.
    * Reads cfReady.pageData from local storage, then calls revex.put() via
    * _cf_injectPageData() injected into MAIN world. No API key required.
-   * The active tab MUST be app.gohighlevel.com/.../page-builder/...
+   * The active tab MUST be app.gohighlevel.com/.../page-builder/... OR .../funnel-builder/...
    * ─────────────────────────────────────────────────────────────────────── */
   if (type === "CF_INJECT_AI_PAGE") {
     (async () => {
@@ -1106,12 +1110,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
         const tab = await chrome.tabs.get(tabId);
         const url = tab.url ?? "";
-        const m   = url.match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+        const m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
-          sendResponse({ ok: false, error: "Active tab is not a GHL page builder URL — navigate to the funnel page you want to inject into, then try again." });
+          sendResponse({ ok: false, error: `This tab is not a GHL builder page (URL: ${url.slice(0, 80)}). Open a funnel page in the GHL builder, then try again.` });
           return;
         }
-        const [, locationId, builderId] = m;
+        const [, locationId, , builderId] = m;
 
         // 2b. Re-fetch fresh pageData from the server (avoids stale cached data)
         //     Uses the projectId + page stored in cfReady so we always inject latest AI output.

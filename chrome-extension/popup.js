@@ -1,4 +1,4 @@
-// popup.js v2.10.0 — Challenge Funnel Extension
+// popup.js v2.11.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -176,28 +176,84 @@ async function showInjectDebug() {
   const div = document.getElementById("debug-inject-result");
   const btn = document.getElementById("debug-inject-btn");
   if (!div) return;
-  if (div.className.includes("err") || div.className.includes("ok")) {
-    // Toggle off
+  if (div.className.includes("err") || div.className.includes("ok") || div.className.includes("info")) {
     div.className = "paste-result";
     div.textContent = "";
-    btn.textContent = "Show last inject result";
+    btn.textContent = "Debug Info";
     return;
   }
-  const s = await chrome.storage.local.get("cf_last_inject");
-  const d = s.cf_last_inject;
-  if (!d) {
-    div.textContent = "No inject result stored yet — try Paste first.";
-    div.className = "paste-result err";
-    btn.textContent = "Hide";
-    return;
-  }
-  const ts = d.ts ? new Date(d.ts).toLocaleTimeString() : "?";
-  let txt = `[${ts}] ok=${d.ok} | status=${d.status ?? "?"} | metaStatus=${d.metaStatus ?? "?"} | method=${d.method ?? "?"}\nbuilderId: ${d.builderId ?? "?"}\n`;
-  if (d.error) txt += `error: ${d.error}\n`;
-  if (d.raw)   txt += `raw: ${d.raw}`;
-  div.textContent = txt;
-  div.className = d.ok ? "paste-result ok" : "paste-result err";
+
   btn.textContent = "Hide";
+
+  const [ls, ss, tabs] = await Promise.all([
+    chrome.storage.local.get(["cf_last_inject", "cfReady"]),
+    chrome.storage.session.get("cf_copied_page"),
+    new Promise((r) => chrome.tabs.query({ active: true, currentWindow: true }, r)),
+  ]);
+
+  const inject = ls.cf_last_inject;
+  const ready  = ls.cfReady;
+  const copied = ss.cf_copied_page;
+  const tab    = tabs?.[0];
+
+  let lines = [];
+
+  /* ── Extension version ── */
+  lines.push("=== CF Extension v2.11.0 ===");
+
+  /* ── Active tab info ── */
+  const tabUrl = tab?.url ?? "(unknown)";
+  const isBuilder = /\/(page-builder|funnel-builder)\//.test(tabUrl);
+  lines.push(`\nActive tab: ${tabUrl.slice(0, 100)}`);
+  lines.push(`Builder tab: ${isBuilder ? "✓ YES" : "✗ NO — FAB will be disabled"}`);
+
+  /* ── Storage: queued page ── */
+  lines.push("\n--- Queued page (session storage) ---");
+  if (!copied) {
+    lines.push("Nothing queued. Click 'Clone to GHL' in the app first.");
+  } else {
+    lines.push(`type: ${copied.type ?? "?"}`);
+    lines.push(`page: ${copied.pageName || copied.page || "?"}`);
+    lines.push(`hasPageData: ${!!copied.pageData}`);
+    lines.push(`copiedAt: ${copied.copiedAt ? new Date(copied.copiedAt).toLocaleTimeString() : "?"}`);
+    if (copied.funnelId) lines.push(`funnelId: ${copied.funnelId}`);
+  }
+
+  /* ── Storage: cfReady ── */
+  lines.push("\n--- cfReady (local storage) ---");
+  if (!ready) {
+    lines.push("Empty.");
+  } else {
+    lines.push(`page: ${ready.page || "?"}`);
+    lines.push(`hasPageData: ${!!ready.pageData}`);
+    lines.push(`loadedAt: ${ready.loadedAt ? new Date(ready.loadedAt).toLocaleTimeString() : "?"}`);
+  }
+
+  /* ── Last inject result ── */
+  lines.push("\n--- Last inject result ---");
+  if (!inject) {
+    lines.push("No inject attempt yet.");
+  } else {
+    const ts = inject.ts ? new Date(inject.ts).toLocaleTimeString() : "?";
+    lines.push(`[${ts}] ok=${inject.ok} | method=${inject.method ?? "?"}`);
+    lines.push(`builderId: ${inject.builderId ?? "?"}`);
+    if (inject.savedVia) lines.push(`savedVia: ${inject.savedVia}`);
+    if (inject.error)   lines.push(`error: ${inject.error.slice(0, 300)}`);
+    if (inject.diag) {
+      try {
+        const d = typeof inject.diag === "string" ? JSON.parse(inject.diag) : inject.diag;
+        if (d.approach1) lines.push(`A1: ${JSON.stringify(d.approach1).slice(0, 120)}`);
+        if (d.approach2) lines.push(`A2: ${JSON.stringify(d.approach2).slice(0, 120)}`);
+        if (d.approach3) {
+          lines.push(`A3 stores found: ${JSON.stringify(d.approach3.candidates ?? []).slice(0, 200)}`);
+          lines.push(`A3 result: ${d.approach3.result ?? "?"}`);
+        }
+      } catch(_) { lines.push(`diag: ${JSON.stringify(inject.diag).slice(0, 200)}`); }
+    }
+  }
+
+  div.textContent = lines.join("\n");
+  div.className = inject?.ok ? "paste-result ok" : "paste-result info";
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
