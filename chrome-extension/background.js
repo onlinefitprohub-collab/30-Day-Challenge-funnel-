@@ -620,63 +620,106 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
       diag.approach3 = { result: "Pinia not found — GHL builder may not be fully loaded" };
     } else {
       const storeIds = [...pinia._s.keys()];
-      diag.approach3 = { storeCount: storeIds.length, storeIds: storeIds.slice(0, 20) };
+      diag.approach3 = { storeCount: storeIds.length, storeIds: storeIds.slice(0, 20), candidates: [] };
 
-      let matched = null;
+      /* ── Identify all candidate stores with GHL page data structure ─────── */
+      const candidates = [];
       for (const [storeId, store] of pinia._s) {
         const state = store.$state ?? {};
         const keys  = Object.keys(state);
-        /* Look for stores whose state shape matches GHL pageData structure */
-        const hasPageStructure =
-          keys.includes("sections") ||
-          (keys.includes("rows") && keys.includes("elements")) ||
-          keys.includes("pageData") ||
-          (keys.includes("rows") && keys.includes("columns"));
-        if (hasPageStructure) { matched = [storeId, store]; break; }
+        /* Score by how many GHL page keys are present (more = better match) */
+        const hasSections  = keys.includes("sections");
+        const hasRows      = keys.includes("rows");
+        const hasElements  = keys.includes("elements");
+        const hasColumns   = keys.includes("columns");
+        const hasPageData  = keys.includes("pageData");
+        const score = (hasSections ? 3 : 0) + (hasRows ? 2 : 0) + (hasElements ? 2 : 0)
+                    + (hasColumns ? 1 : 0) + (hasPageData ? 1 : 0);
+        if (score > 0) candidates.push({ storeId, store, keys, score, hasPageData, hasSections });
       }
+      /* Sort by score descending so best matches are tried first */
+      candidates.sort((a, b) => b.score - a.score);
+      diag.approach3.candidates = candidates.map(c => ({ storeId: c.storeId, score: c.score })).slice(0, 10);
 
-      if (!matched) {
-        diag.approach3.result = "no store with GHL page structure (sections/rows/elements) found";
+      if (candidates.length === 0) {
+        diag.approach3.result = "no store with GHL page structure (sections/rows/elements/pageData) found";
       } else {
-        const [storeId, store] = matched;
-        diag.approach3.matchedStore = storeId;
-        diag.approach3.stateKeys    = Object.keys(store.$state ?? {}).slice(0, 30);
-
-        /* Patch store state — triggers Vue reactivity */
-        try {
-          store.$patch(pageData);
-          diag.approach3.patched = true;
-        } catch (pe) {
-          diag.approach3.patchError = String(pe).slice(0, 80);
-        }
-
-        /* Try store save actions in order of likelihood */
         const SAVE_ACTIONS = ["savePage", "savePageData", "save", "autoSave",
                               "updatePage", "saveCurrentPage", "persistPage"];
-        let savedVia = null;
-        for (const action of SAVE_ACTIONS) {
-          if (typeof store[action] === "function") {
-            try {
-              await store[action]();
-              savedVia = action;
-              break;
-            } catch (se) {
-              diag.approach3[`${action}Err`] = String(se).slice(0, 60);
+        let successResult = null;
+        const candidateDiag = [];
+
+        /* Try each candidate until one both patches and saves successfully */
+        for (const { storeId, store, keys, hasPageData, hasSections } of candidates) {
+          const cd = { storeId, stateKeys: keys.slice(0, 20), patched: false, savedVia: null, errors: [] };
+
+          /* Apply patch — try both root-level and nested shapes */
+          try {
+            if (hasPageData && !hasSections) {
+              /* Store uses { pageData: { sections, rows, elements } } nesting */
+              store.$patch({ pageData });
+              cd.patchShape = "nested-pageData";
+            } else {
+              /* Store holds sections/rows/elements at root level */
+              store.$patch(pageData);
+              cd.patchShape = "root";
+            }
+            cd.patched = true;
+          } catch (pe) {
+            cd.patchError = String(pe).slice(0, 80);
+            candidateDiag.push(cd);
+            continue; // try next candidate
+          }
+
+          /* Try save actions */
+          for (const action of SAVE_ACTIONS) {
+            if (typeof store[action] === "function") {
+              try {
+                await store[action]();
+                cd.savedVia = action;
+                break;
+              } catch (se) {
+                cd.errors.push(`${action}:${String(se).slice(0, 50)}`);
+              }
             }
           }
-        }
-        diag.approach3.savedVia = savedVia;
+          candidateDiag.push(cd);
 
-        if (diag.approach3.patched || savedVia) {
+          if (cd.savedVia) {
+            /* Success — store patched and native save triggered */
+            successResult = { storeId, savedVia: cd.savedVia, patchShape: cd.patchShape };
+            break;
+          }
+          /* No save action found on this store — continue to next candidate */
+        }
+
+        diag.approach3.candidateDiag = candidateDiag;
+
+        if (successResult) {
+          diag.approach3.result = "success";
           return JSON.stringify({
-            ok:      !!savedVia,
+            ok:      true,
             method:  "pinia",
-            storeId,
-            savedVia,
+            storeId: successResult.storeId,
+            savedVia: successResult.savedVia,
+            patchShape: successResult.patchShape,
             diag,
-            warning: savedVia
-              ? null
-              : "Store was patched but no save action found — content visible but may not persist after reload",
+          });
+        } else if (candidateDiag.some(c => c.patched)) {
+          /* Patched at least one store but couldn't trigger save — partial success */
+          const patchedStore = candidateDiag.find(c => c.patched);
+          diag.approach3.result = "patched-no-save";
+          return JSON.stringify({
+            ok:      false,
+            method:  "pinia",
+            storeId: patchedStore?.storeId,
+            savedVia: null,
+            diag,
+            error:   `Store "${patchedStore?.storeId}" was patched but no save action was found (tried: ${SAVE_ACTIONS.join(", ")}). ` +
+                     `Diag: A1=${JSON.stringify(diag.approach1).slice(0,60)} | ` +
+                     `A2=${JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0,80)} | ` +
+                     `A3=patched-no-save. Content visible until reload but not persisted. ` +
+                     `Use the URL Inspector workflow for reliable injection.`,
           });
         }
       }
