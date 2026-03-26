@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.9 — fix: Inspector URL fetch now persists to extension storage.");
+    console.log("[CF Funnel] Installed v2.10.0 — CF_COPY_PAGE metadata fallback + friendly FAB error messages.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.9 — fix: Inspector URL fetch now persists to extension storage.");
+    console.log("[CF Funnel] Updated to v2.10.0 — CF_COPY_PAGE metadata fallback + friendly FAB error messages.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -404,10 +404,10 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
         r = r2;
         method = "page";
       } else {
-        // Both failed — return primary error with both details
+        // Both failed — return a clear, user-friendly explanation of the GHL limitation
         return JSON.stringify({
           ok:         false,
-          error:      `Both endpoints failed. Primary (${r.status ?? "threw"}): ${r.data?.message ?? r.data?.error ?? JSON.stringify(r.data).slice(0,100)}. Alt (${r2.status ?? "threw"}): ${r2.data?.message ?? r2.data?.error ?? JSON.stringify(r2.data).slice(0,80)}`,
+          error:      "GHL doesn't support direct content injection via its API — the page element tree is stored in Firebase Storage and can't be written this way. To get your AI content into GHL, use the URL Inspector tab: paste your GHL page builder URL, click Fetch, then use 'Clone to GHL' with a real GHL page open.",
           status:     r.status,
           metaStatus,
           raw:        JSON.stringify({ primary: r.data, alt: r2.data }).slice(0, 500),
@@ -419,7 +419,7 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
     if (r.status !== null && r.status >= 400) {
       return JSON.stringify({
         ok:         false,
-        error:      `HTTP ${r.status}: ${r.data?.message ?? r.data?.error ?? "server error"}`,
+        error:      "GHL doesn't support direct content injection via its API — the page element tree is stored in Firebase Storage and can't be written this way. To get your AI content into GHL, use the URL Inspector tab: paste your GHL page builder URL, click Fetch, then use 'Clone to GHL' with a real GHL page open.",
         status:     r.status,
         metaStatus,
         raw:        JSON.stringify(r.data).slice(0, 400),
@@ -565,7 +565,22 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                 });
                 console.log("[CF] CF_COPY_PAGE: pageData captured for inspector (source:", pdResult.source, ") builderId:", builderId);
               } else {
-                console.warn("[CF] CF_COPY_PAGE: pageData capture failed:", pdResult.error);
+                // Metadata fallback: always write capturedGHLPage even when element tree fetch fails.
+                // Inspector "Load Captured GHL Page" will show page name/IDs with a "metadata only" warning.
+                console.warn("[CF] CF_COPY_PAGE: pageData capture failed, writing metadata-only fallback:", pdResult.error);
+                await chrome.storage.local.set({
+                  capturedGHLPage: {
+                    builderId,
+                    funnelId:   record.funnelId,
+                    stepId:     record.stepId,
+                    locationId: record.locationId,
+                    pageName:   record.pageName || "(GHL builder page)",
+                    pageData:   null,
+                    dataSource: "metadata",
+                    warning:    "Element tree could not be fetched (Firebase/revex unavailable). Only page IDs are available. Use the URL Inspector to capture full schema.",
+                    capturedAt: Date.now(),
+                  },
+                });
               }
             }
           } catch (pdErr) {

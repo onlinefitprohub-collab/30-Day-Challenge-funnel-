@@ -719,18 +719,23 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
           </button>
         ))}
 
-        <button
-          onClick={handleClone}
-          disabled={cloneStatus === "loading"}
-          className="ml-auto flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          {cloneStatus === "loading" ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <ExternalLink className="h-3 w-3" />
-          )}
-          {cloneStatus === "loading" ? "Saving…" : "Clone to GHL"}
-        </button>
+        <div className="ml-auto flex flex-col items-end gap-1">
+          <button
+            onClick={handleClone}
+            disabled={cloneStatus === "loading"}
+            className="flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {cloneStatus === "loading" ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <ExternalLink className="h-3 w-3" />
+            )}
+            {cloneStatus === "loading" ? "Saving…" : "Clone to GHL"}
+          </button>
+          <p className="text-[10px] text-gray-400 text-right max-w-[220px] leading-snug">
+            Queues this AI page for the orange CF button in your GHL builder. For best results, use a real GHL page captured via the URL Inspector.
+          </p>
+        </div>
       </div>
 
       {/* Clone-to-GHL status strip */}
