@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.8 — fix: Load Captured GHL Page no longer overwritten by Clone to GHL.");
+    console.log("[CF Funnel] Installed v2.9.9 — fix: Inspector URL fetch now persists to extension storage.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.8 — fix: Load Captured GHL Page no longer overwritten by Clone to GHL.");
+    console.log("[CF Funnel] Updated to v2.9.9 — fix: Inspector URL fetch now persists to extension storage.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.

@@ -1,4 +1,4 @@
-// content.js v2.9.8 — Challenge Funnel in a Box
+// content.js v2.9.9 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.
@@ -64,7 +64,19 @@
     const t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.9.8" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.9.9" }, "*");
+    }
+
+    if (t === "CF_PERSIST_CAPTURED_GHL") {
+      const capturedPage = evt.data.payload;
+      if (capturedPage && typeof capturedPage === "object") {
+        chrome.storage.local.set({ capturedGHLPage: capturedPage }, () => {
+          window.postMessage(
+            { source: "cf-ext", type: "CF_PERSIST_CAPTURED_GHL_ACK", payload: { ok: true } },
+            "*"
+          );
+        });
+      }
     }
 
     if (t === "CF_GET_CAPTURED_GHL") {

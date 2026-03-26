@@ -114,7 +114,7 @@ type AiPageId = (typeof AI_PAGES)[number]["id"];
 
 /* ── constants ────────────────────────────────────────────────────────────── */
 
-const CURRENT_EXT_VERSION = "2.9.8";
+const CURRENT_EXT_VERSION = "2.9.9";
 
 function semverOlder(a: string, b: string): boolean {
   const pa = a.split(".").map(Number);
@@ -236,18 +236,23 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       };
 
       if (payload?.ok && payload.elementTree) {
-        setCaptured({
+        const capturedPage: CapturedGHLPage = {
           builderId:  "",
           funnelId:   payload.funnelId   ?? "",
           stepId:     payload.stepId     ?? "",
           locationId: payload.locationId ?? "",
           pageName:   payload.pageName || new URL(trimmed).pathname,
           pageData:   payload.elementTree,
-          dataSource: payload.source ?? "url-parse",
+          dataSource: (payload.source ?? "url-parse") as CapturedGHLPage["dataSource"],
           warning:    null,
           capturedAt: Date.now(),
-        } as CapturedGHLPage);
+        };
+        setCaptured(capturedPage);
         setLoadError(null);
+        window.postMessage(
+          { source: "cf-app", type: "CF_PERSIST_CAPTURED_GHL", payload: capturedPage },
+          "*"
+        );
       } else {
         setUrlError(payload?.error ?? "Could not extract page data from that URL.");
       }
