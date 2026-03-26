@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.13.0 — IndexedDB token probe, firebase-write method.");
+    console.log("[CF Funnel] Installed v2.14.0 — flat-array Firebase Storage format detection.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.13.0 — IndexedDB token probe, firebase-write method.");
+    console.log("[CF Funnel] Updated to v2.14.0 — flat-array Firebase Storage format detection.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -630,6 +630,59 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
 
         if (idToken) {
           try {
+            /* ── Step 0: Download existing page to detect Firebase Storage format ── *
+             * GHL may store page data as either:
+             *   A) Flat array — { elements: [section, row, col, el, ...] }  (Nuxt 3)
+             *   B) Structured dicts — { sections:[], rows:{}, columns:{}, elements:{} }
+             * We write our pageData in the same format the existing page uses so
+             * GHL's builder can read it correctly.                                   */
+            let storageFormat = "unknown";
+            let writePayload  = pageData;
+            try {
+              const existRes = await fetch(downloadUrl, { signal: AbortSignal.timeout(6000) });
+              if (existRes.ok) {
+                const existing = await existRes.json();
+                if (Array.isArray(existing.elements)) {
+                  storageFormat = "flat-array";
+                } else if (existing.elements && typeof existing.elements === "object") {
+                  storageFormat = "structured-dict";
+                } else if (Array.isArray(existing.sections)) {
+                  storageFormat = "structured-dict";
+                } else {
+                  storageFormat = "unknown-keys:" + Object.keys(existing).join(",").slice(0, 60);
+                }
+              } else {
+                storageFormat = "exist-fetch-" + existRes.status;
+              }
+            } catch (fmtErr) {
+              storageFormat = "exist-err:" + String(fmtErr).slice(0, 50);
+            }
+            diag.approach2.storageFormat = storageFormat;
+
+            /* ── Convert to flat-array format when the existing page uses it ───── *
+             * Our pageData uses structured dicts with { id, metaData:{...} } nodes.
+             * Flat-array format expects bare metaData content in one elements array. */
+            if (storageFormat === "flat-array") {
+              const flatNodes = [];
+              const pd = pageData;
+              if (Array.isArray(pd.sections)) {
+                for (const s of pd.sections) flatNodes.push(s.metaData ?? s);
+              }
+              for (const dict of [pd.rows, pd.columns, pd.elements]) {
+                if (dict && typeof dict === "object" && !Array.isArray(dict)) {
+                  for (const node of Object.values(dict)) flatNodes.push(node.metaData ?? node);
+                }
+              }
+              writePayload = {
+                fontsForPreview: pd.fontsForPreview,
+                general:         pd.general,
+                id:              pd.id,
+                pageStyles:      pd.pageStyles,
+                popups:          pd.popups ?? [],
+                elements:        flatNodes,
+              };
+            }
+
             /* Firebase Storage upload endpoint (creates/overwrites object) */
             const uploadEp =
               `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
@@ -640,7 +693,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                 "Content-Type":  "application/json",
                 "Authorization": `Firebase ${idToken}`,
               },
-              body: JSON.stringify(pageData),
+              body: JSON.stringify(writePayload),
             });
             diag.approach2.httpStatus = res.status;
             if (res.ok) {
