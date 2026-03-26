@@ -1,6 +1,7 @@
-// popup.js v2.7.0 — Challenge Funnel Extension
+// popup.js v2.8.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
+// Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
 
 const PAGES = ["landing", "optin", "thankyou", "booking"];
 const PAGE_LABELS = {
@@ -13,6 +14,7 @@ const PAGE_LABELS = {
 document.addEventListener("DOMContentLoaded", async () => {
   initCopyPaste();
   initLibrary();
+  initCapture();
 });
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -402,4 +404,53 @@ function timeSince(ts) {
   if (secs < 3600)  return `${Math.floor(secs/60)}m ago`;
   if (secs < 86400) return `${Math.floor(secs/3600)}h ago`;
   return `${Math.floor(secs/86400)}d ago`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CAPTURE — fetch any public GHL page URL → store schema for GHL Inspector
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function initCapture() {
+  const input  = document.getElementById("capture-url");
+  const btn    = document.getElementById("capture-btn");
+  const result = document.getElementById("capture-result");
+
+  // Pre-fill with the active tab URL if available
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const url = tabs?.[0]?.url ?? "";
+    if (url && url.startsWith("http")) input.value = url;
+  });
+
+  btn.addEventListener("click", async () => {
+    const url = input.value.trim();
+    if (!url) {
+      result.textContent = "Please enter a URL first.";
+      result.className = "capture-result err";
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = "Capturing…";
+    result.className = "capture-result";
+    result.textContent = "";
+
+    try {
+      const res = await sendMessage({ type: "CF_FETCH_URL_PAGE", url });
+
+      if (res?.ok) {
+        const name = res.pageName ? esc(res.pageName) : "the page";
+        result.innerHTML = `Schema captured for <strong>${name}</strong> — open the GHL Inspector in the app to inspect its element tree.`;
+        result.className = "capture-result ok";
+      } else {
+        result.textContent = res?.error ?? "Capture failed — unknown error.";
+        result.className = "capture-result err";
+      }
+    } catch (e) {
+      result.textContent = `Error: ${e.message}`;
+      result.className = "capture-result err";
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = "Capture";
+    }
+  });
 }

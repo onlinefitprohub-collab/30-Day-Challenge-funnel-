@@ -108,6 +108,31 @@
       border: none; border-top: 1px solid var(--border); margin: 0;
     }
 
+    /* ── Capture section ── */
+    .capture-url-row {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .capture-input {
+      flex: 1; border: 1px solid var(--border); border-radius: 7px;
+      padding: 7px 10px; font-size: 11px; color: var(--dark);
+      background: #f8fafc; outline: none;
+      min-width: 0;
+    }
+    .capture-input:focus { border-color: var(--blue); background: #fff; }
+    .btn-capture {
+      background: var(--blue); color: #fff; border: none; border-radius: 7px;
+      padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0; transition: background 0.15s;
+    }
+    .btn-capture:hover:not(:disabled) { background: #0284c7; }
+    .btn-capture:disabled { opacity: 0.45; cursor: not-allowed; }
+    .capture-result {
+      border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
+      margin-top: 8px; display: none;
+    }
+    .capture-result.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .capture-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+
     /* ── Empty state ── */
     .empty-state {
       background: #fff7ed; border: 1px solid #fed7aa;
@@ -334,6 +359,17 @@
       <div class="note" id="note"></div>
 
     </div>
+  </div>
+
+  <!-- ── CAPTURE SECTION (URL → schema inspector) ── -->
+  <div class="section" id="capture-section">
+    <div class="section-title">Capture any GHL page schema</div>
+    <div class="capture-url-row">
+      <input class="capture-input" id="capture-url" type="url"
+             placeholder="https://your-domain.com/funnel-page" />
+      <button class="btn-capture" id="capture-btn">Capture</button>
+    </div>
+    <div class="capture-result" id="capture-result"></div>
   </div>
 
   <script src="popup.js"></script>
