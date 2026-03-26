@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.9.7 — improved injection: fetches page metadata first, tries two endpoints, exposes full GHL error in popup debug.");
+    console.log("[CF Funnel] Installed v2.9.8 — fix: Load Captured GHL Page no longer overwritten by Clone to GHL.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.9.7 — improved injection: fetches page metadata first, tries two endpoints, exposes full GHL error in popup debug.");
+    console.log("[CF Funnel] Updated to v2.9.8 — fix: Load Captured GHL Page no longer overwritten by Clone to GHL.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.

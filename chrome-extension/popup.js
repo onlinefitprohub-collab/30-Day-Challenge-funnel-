@@ -1,4 +1,4 @@
-// popup.js v2.9.7 — Challenge Funnel Extension
+// popup.js v2.9.8 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
