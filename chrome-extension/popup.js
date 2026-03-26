@@ -1,4 +1,4 @@
-// popup.js v2.15.0 — Challenge Funnel Extension
+// popup.js v2.16.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -220,7 +220,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.15.0 ===");
+  lines.push("=== CF Extension v2.16.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -269,6 +269,7 @@ async function showInjectDebug() {
           lines.push(`A2 bucket: ${a2.bucket ?? "?"} hasToken=${a2.hasToken}`);
           lines.push(`A2 httpStatus: ${a2.httpStatus ?? "?"} | result: ${a2.result ?? "?"}`);
           lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"}`);
+          if (a2.firstRowKeys !== undefined) lines.push(`A2 firstRowKeys: ${JSON.stringify(a2.firstRowKeys)}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }

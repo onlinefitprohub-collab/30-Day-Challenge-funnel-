@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.15.0 — combined flat+structured write, auth-probe.");
+    console.log("[CF Funnel] Installed v2.16.0 — flat dict entries for rows/columns/elements, firstRowKeys diag.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.15.0 — combined flat+structured write, auth-probe.");
+    console.log("[CF Funnel] Updated to v2.16.0 — flat dict entries for rows/columns/elements, firstRowKeys diag.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -649,6 +649,11 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                 } else if (existing.elements && typeof existing.elements === "object") {
                   storageFormat  = "structured-dict";
                   existElemCount = Object.keys(existing.elements).length;
+                  /* Peek at first row entry's top-level keys to confirm flat vs wrapped */
+                  const firstRowVal = existing.rows && Object.values(existing.rows)[0];
+                  diag.approach2.firstRowKeys = firstRowVal
+                    ? Object.keys(firstRowVal).slice(0, 12)
+                    : "rows-empty";
                 } else if (Array.isArray(existing.sections)) {
                   storageFormat = "structured-only";
                 } else {
@@ -661,26 +666,28 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
               storageFormat = "probe-err";
             }
 
-            /* ── Step 1: Build flat elements array from our pageData (always) ────── *
-             * GHL's current builder uses a flat elements[] array where every node
-             * (section, row, column, leaf element) lives in one list identified by
-             * meta ("section"|"row"|"col"|<tagName>).  Our structured pageData uses
-             * { id, metaData:{...} } wrappers — we unwrap with .metaData ?? node.  */
-            const flatNodes = [];
-            const pd = pageData;
-            if (Array.isArray(pd.sections)) {
-              for (const s of pd.sections) flatNodes.push(s.metaData ?? s);
-            }
-            for (const dict of [pd.rows, pd.columns, pd.elements]) {
-              if (dict && typeof dict === "object" && !Array.isArray(dict)) {
-                for (const n of Object.values(dict)) flatNodes.push(n.metaData ?? n);
+            /* ── Step 1: Build structured-dict payload — flat dict entries ────────── *
+             * GHL's builder stores rows/columns/elements as dicts where each entry is
+             * a flat node (id, child, styles, ... — NO metaData wrapper).
+             * Our pageData wraps every node in { id, metaData:{...} }; unwrap for dicts.
+             * Sections stay wrapped — the sections[] array uses metaData (working).     */
+            function flatDict(dict) {
+              const out = {};
+              if (!dict || typeof dict !== "object") return out;
+              for (const [k, node] of Object.entries(dict)) {
+                out[k] = (node && node.metaData) ? node.metaData : node;
               }
+              return out;
             }
+            const pd = pageData;
 
-            /* ── Step 2: Combined payload — satisfies both GHL storage modes ─────── *
-             * sections[]  → GHL reads this for section container backgrounds.
-             * elements[]  → GHL reads this flat array to build the full content tree.
-             * Both are present so the builder works regardless of which path it takes.*/
+            /* ── Step 2: Structured-dict payload with flat dict entries ─────────────── *
+             * sections[]: keep { id, metaData:{} } wrapper — GHL reads .metaData here.
+             * rows{}  / columns{} / elements{}: flat metaData content, no outer wrapper.
+             * GHL reads rows["id"].child directly, not rows["id"].metaData.child.       */
+            const flatRows     = flatDict(pd.rows);
+            const flatColumns  = flatDict(pd.columns);
+            const flatElements = flatDict(pd.elements);
             const writePayload = {
               fontsForPreview: pd.fontsForPreview,
               general:         pd.general,
@@ -688,12 +695,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
               pageStyles:      pd.pageStyles,
               popups:          pd.popups ?? [],
               sections:        pd.sections,
-              elements:        flatNodes,
+              rows:            flatRows,
+              columns:         flatColumns,
+              elements:        flatElements,
             };
 
             diag.approach2.storageFormat  = storageFormat;
             diag.approach2.existElemCount = existElemCount;
-            diag.approach2.nodeCount      = flatNodes.length;
+            diag.approach2.nodeCount      = Object.keys(flatRows).length
+              + Object.keys(flatColumns).length
+              + Object.keys(flatElements).length;
 
             /* Firebase Storage upload endpoint (creates/overwrites object) */
             const uploadEp =
