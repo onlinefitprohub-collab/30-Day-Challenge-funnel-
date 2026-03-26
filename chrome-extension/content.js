@@ -44,7 +44,19 @@
       copiedAt:  Date.now(),
     };
 
-    chrome.storage.local.set({ cfReady: ready }, () => {
+    const capturedGHLPage = {
+      builderId:  "",
+      funnelId:   "",
+      stepId:     "",
+      locationId: "",
+      pageName:   PAGE_NAMES[page] || page || "AI Page",
+      pageData,
+      dataSource: "ai",
+      warning:    null,
+      capturedAt: Date.now(),
+    };
+
+    chrome.storage.local.set({ cfReady: ready, capturedGHLPage }, () => {
       chrome.storage.session.set({ cf_copied_page: sessionCopy }, () => {
         window.postMessage(
           { source: "cf-ext", type: "CF_SAVE_ACK", payload: { requestId, page, success: true } },

@@ -552,8 +552,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       )}
 
       {/* ── Schema comparison ────────────────────────────────────────────── */}
-      {captured && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <div className="flex items-center border-b border-gray-100 bg-gray-50 px-5 py-2.5 gap-3">
             <p className="text-sm font-semibold text-gray-900 flex-1">Schema Comparison</p>
             <span className="text-xs text-gray-500">AI page:</span>
@@ -578,6 +577,11 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
           </div>
 
           <div className="p-5 space-y-5">
+          {!captured ? (
+            <p className="text-xs text-gray-400 text-center py-4">
+              Load a GHL page above or click <strong className="text-blue-600">Test AI Injection</strong> to populate the comparison.
+            </p>
+          ) : (<>
 
             {/* Top-level keys */}
             <div>
@@ -737,9 +741,9 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
                 </div>
               )}
             </div>
+          </>)}
           </div>
         </div>
-      )}
 
       {/* ── Raw JSON ─────────────────────────────────────────────────────── */}
       {captured && (
