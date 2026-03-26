@@ -632,8 +632,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
           try {
             /* ── Step 0: Probe existing page format (diagnostic only, with auth) ── *
              * We probe with the Firebase token so GHL's Security Rules allow the read.
-             * The probe is purely diagnostic — we always write the combined format
-             * regardless of what the existing page contains.                         */
+             * The probe reveals the storage format and logs the first row's top-level
+             * keys (firstRowKeys) so we can verify flat vs metaData-wrapped entries.
+             * We always write structured-dict format with flat dict entries.          */
             let storageFormat  = "skipped";
             let existElemCount = 0;
             try {
@@ -673,9 +674,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
              * Sections stay wrapped — the sections[] array uses metaData (working).     */
             function flatDict(dict) {
               const out = {};
-              if (!dict || typeof dict !== "object") return out;
+              if (!dict || typeof dict !== "object" || Array.isArray(dict)) return out;
               for (const [k, node] of Object.entries(dict)) {
-                out[k] = (node && node.metaData) ? node.metaData : node;
+                out[k] = (node && typeof node === "object" && node.metaData) ? node.metaData : node;
               }
               return out;
             }
