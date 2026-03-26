@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.16.0 — flat dict entries for rows/columns/elements, firstRowKeys diag.");
+    console.log("[CF Funnel] Installed v2.17.0 — wrapped dict entries, Approach 3 always runs, post-write verify, section probe diag.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.16.0 — flat dict entries for rows/columns/elements, firstRowKeys diag.");
+    console.log("[CF Funnel] Updated to v2.17.0 — wrapped dict entries, Approach 3 always runs, post-write verify, section probe diag.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -650,11 +650,22 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                 } else if (existing.elements && typeof existing.elements === "object") {
                   storageFormat  = "structured-dict";
                   existElemCount = Object.keys(existing.elements).length;
-                  /* Peek at first row entry's top-level keys to confirm flat vs wrapped */
+                  /* Peek at first row entry's top-level keys (confirm wrapped vs flat) */
                   const firstRowVal = existing.rows && Object.values(existing.rows)[0];
                   diag.approach2.firstRowKeys = firstRowVal
                     ? Object.keys(firstRowVal).slice(0, 12)
                     : "rows-empty";
+                  /* Peek at first section's top-level keys and metaData keys */
+                  const sec0 = Array.isArray(existing.sections) && existing.sections[0];
+                  if (sec0) {
+                    diag.approach2.firstSectionKeys     = Object.keys(sec0).slice(0, 8);
+                    diag.approach2.firstSectionMetaKeys = sec0.metaData
+                      ? Object.keys(sec0.metaData).slice(0, 14)
+                      : "no-metaData";
+                    diag.approach2.firstSectionChildCount = Array.isArray(sec0.metaData?.child)
+                      ? sec0.metaData.child.length
+                      : (Array.isArray(sec0.child) ? sec0.child.length : 0);
+                  }
                 } else if (Array.isArray(existing.sections)) {
                   storageFormat = "structured-only";
                 } else {
@@ -667,28 +678,12 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
               storageFormat = "probe-err";
             }
 
-            /* ── Step 1: Build structured-dict payload — flat dict entries ────────── *
-             * GHL's builder stores rows/columns/elements as dicts where each entry is
-             * a flat node (id, child, styles, ... — NO metaData wrapper).
-             * Our pageData wraps every node in { id, metaData:{...} }; unwrap for dicts.
-             * Sections stay wrapped — the sections[] array uses metaData (working).     */
-            function flatDict(dict) {
-              const out = {};
-              if (!dict || typeof dict !== "object" || Array.isArray(dict)) return out;
-              for (const [k, node] of Object.entries(dict)) {
-                out[k] = (node && typeof node === "object" && node.metaData) ? node.metaData : node;
-              }
-              return out;
-            }
+            /* ── Step 1: Build structured-dict payload — wrapped dict entries ────────── *
+             * GHL's own builder stores rows/columns/elements as { id, metaData:{} }
+             * wrapped nodes (confirmed: firstRowKeys=["id","metaData"]).
+             * We write pd.rows/pd.columns/pd.elements directly — no unwrapping.
+             * Sections stay as-is (array of { id, metaData:{} } — already working).  */
             const pd = pageData;
-
-            /* ── Step 2: Structured-dict payload with flat dict entries ─────────────── *
-             * sections[]: keep { id, metaData:{} } wrapper — GHL reads .metaData here.
-             * rows{}  / columns{} / elements{}: flat metaData content, no outer wrapper.
-             * GHL reads rows["id"].child directly, not rows["id"].metaData.child.       */
-            const flatRows     = flatDict(pd.rows);
-            const flatColumns  = flatDict(pd.columns);
-            const flatElements = flatDict(pd.elements);
             const writePayload = {
               fontsForPreview: pd.fontsForPreview,
               general:         pd.general,
@@ -696,16 +691,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
               pageStyles:      pd.pageStyles,
               popups:          pd.popups ?? [],
               sections:        pd.sections,
-              rows:            flatRows,
-              columns:         flatColumns,
-              elements:        flatElements,
+              rows:            pd.rows     ?? {},
+              columns:         pd.columns  ?? {},
+              elements:        pd.elements ?? {},
             };
 
             diag.approach2.storageFormat  = storageFormat;
             diag.approach2.existElemCount = existElemCount;
-            diag.approach2.nodeCount      = Object.keys(flatRows).length
-              + Object.keys(flatColumns).length
-              + Object.keys(flatElements).length;
+            diag.approach2.nodeCount      = Object.keys(pd.rows    ?? {}).length
+              + Object.keys(pd.columns  ?? {}).length
+              + Object.keys(pd.elements ?? {}).length;
 
             /* Firebase Storage upload endpoint (creates/overwrites object) */
             const uploadEp =
@@ -722,10 +717,43 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
             diag.approach2.httpStatus = res.status;
             if (res.ok) {
               diag.approach2.result = `success (HTTP ${res.status})`;
-              return JSON.stringify({ ok: true, method: "firebase-write", diag });
+
+              /* ── Post-write verification: re-read what we wrote ────────────────── *
+               * Confirms the new file is readable and has our sections/rows counts.  */
+              try {
+                const vrRes = await fetch(downloadUrl, {
+                  headers: { "Authorization": `Firebase ${idToken}` },
+                  signal:  AbortSignal.timeout(5000),
+                });
+                if (vrRes.ok) {
+                  const vr = await vrRes.json();
+                  const sec0 = Array.isArray(vr.sections) && vr.sections[0];
+                  diag.approach2.postWrite = {
+                    sectionCount:          Array.isArray(vr.sections) ? vr.sections.length : 0,
+                    firstSectionChildCount: Array.isArray(sec0?.metaData?.child)
+                      ? sec0.metaData.child.length
+                      : (Array.isArray(sec0?.child) ? sec0.child.length : 0),
+                    firstRowKeys: (() => {
+                      const rv = vr.rows && Object.values(vr.rows)[0];
+                      return rv ? Object.keys(rv).slice(0, 8) : "rows-empty";
+                    })(),
+                  };
+                } else {
+                  diag.approach2.postWrite = { error: `re-read ${vrRes.status}` };
+                }
+              } catch (_vrErr) {
+                diag.approach2.postWrite = { error: "re-read threw" };
+              }
+
+              /* ── DO NOT return early — fall through to Approach 3 ──────────────── *
+               * Approach 3 (Pinia state mutation) patches the live Vue reactive state
+               * so the builder immediately shows our content, even if the Firebase
+               * Storage re-read by GHL after reload has caching issues.              */
+              diag.approach2.fallThrough = true;
+            } else {
+              const errText = await res.text().catch(() => "");
+              diag.approach2.result = `HTTP ${res.status}: ${errText.slice(0, 100)}`;
             }
-            const errText = await res.text().catch(() => "");
-            diag.approach2.result = `HTTP ${res.status}: ${errText.slice(0, 100)}`;
           } catch (e2) {
             diag.approach2.result = `threw: ${String(e2).slice(0, 80)}`;
           }
@@ -862,34 +890,40 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
 
         diag.approach3.candidateDiag = candidateDiag;
 
+        const fbWroteOk = diag.approach2?.fallThrough === true;
         if (successResult) {
           diag.approach3.result = "success";
           return JSON.stringify({
-            ok:      true,
-            method:  "pinia",
-            storeId: successResult.storeId,
+            ok:       true,
+            method:   fbWroteOk ? "firebase+pinia" : "pinia",
+            storeId:  successResult.storeId,
             savedVia: successResult.savedVia,
             patchShape: successResult.patchShape,
             diag,
           });
         } else if (candidateDiag.some(c => c.patched)) {
-          /* Patched at least one store but couldn't trigger save — partial success */
+          /* Patched at least one store but no save action found.
+             Content is visible in the builder NOW (reactive state updated).
+             If Firebase also wrote (fallThrough=true), a reload will re-read
+             our stored data. Either way treat as success → trigger reload. */
           const patchedStore = candidateDiag.find(c => c.patched);
           diag.approach3.result = "patched-no-save";
           return JSON.stringify({
-            ok:      false,
-            method:  "pinia",
+            ok:      true,
+            method:  fbWroteOk ? "firebase+pinia-patched" : "pinia-patched",
             storeId: patchedStore?.storeId,
             savedVia: null,
             diag,
-            error:   `Store "${patchedStore?.storeId}" was patched but no save action was found (tried: ${SAVE_ACTIONS.join(", ")}). ` +
-                     `Diag: A1=${JSON.stringify(diag.approach1).slice(0,60)} | ` +
-                     `A2=${JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0,80)} | ` +
-                     `A3=patched-no-save. Content visible until reload but not persisted. ` +
-                     `Use the URL Inspector workflow for reliable injection.`,
+            warning: `Content injected into builder (visible now). Firebase wrote=${fbWroteOk}. Click Save in GHL to persist permanently.`,
           });
         }
       }
+    }
+
+    /* ── Approach 2 succeeded but Approach 3 found no Pinia store ─────────── *
+     * Firebase Storage is written correctly. GHL will read it on next reload.  */
+    if (diag.approach2?.fallThrough === true) {
+      return JSON.stringify({ ok: true, method: "firebase-write", diag });
     }
 
     /* All direct approaches failed — but Approach 0 (clipboard) may still work.

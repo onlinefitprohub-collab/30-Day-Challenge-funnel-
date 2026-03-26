@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.16.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.16.0: Structured-dict Firebase write with flat dict entries — rows/columns/elements stored without metaData wrapper so GHL can read .child directly. No API key needed.",
+  "version": "2.17.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.17.0: Firebase write (wrapped entries) + Approach 3 Pinia state patch always runs + post-write verification + section probe diagnostics. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
