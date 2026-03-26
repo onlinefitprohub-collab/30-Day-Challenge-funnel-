@@ -323,11 +323,10 @@ async function _cf_cloneFunnelStep(req) {
   }
 }
 
-/* Inject AI-generated pageData directly into a GHL builder page via revex (MAIN world).
-   Strategy:
-   1. GET /funnels/page/{id} to retrieve page metadata (name, funnelId, stepId, etc.)
-   2. PUT with full GHL-required fields: pageData + name + funnelId + stepId + locationId
-   3. Try /funnels/funnel/page/{id} first, then /funnels/page/{id} as fallback
+/* LEGACY: Inject via revex.put() — kept for reference only.
+   This approach silently fails: GHL's PUT endpoint returns 200 but only updates
+   metadata; the element tree lives in Firebase Storage and is never written.
+   New injections use _cf_injectViaBuilderSave (below) instead.
    Returns { ok, status, raw, method, error?, metaStatus? } serialised as JSON. */
 async function _cf_injectPageData(builderId, locationId, pageData) {
   try {
