@@ -642,8 +642,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
               },
               body: JSON.stringify(pageData),
             });
+            diag.approach2.httpStatus = res.status;
             if (res.ok) {
-              diag.approach2.result = "success";
+              diag.approach2.result = `success (HTTP ${res.status})`;
               return JSON.stringify({ ok: true, method: "firebase-write", diag });
             }
             const errText = await res.text().catch(() => "");
