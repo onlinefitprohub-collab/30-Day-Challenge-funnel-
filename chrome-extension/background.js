@@ -634,7 +634,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
              * We probe with the Firebase token so GHL's Security Rules allow the read.
              * The probe reveals the storage format and logs the first row's top-level
              * keys (firstRowKeys) so we can verify flat vs metaData-wrapped entries.
-             * We always write structured-dict format with flat dict entries.          */
+             * We always write structured-dict format with wrapped { id, metaData:{} } entries. */
             let storageFormat  = "skipped";
             let existElemCount = 0;
             try {
@@ -729,6 +729,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                   const vr = await vrRes.json();
                   const sec0 = Array.isArray(vr.sections) && vr.sections[0];
                   diag.approach2.postWrite = {
+                    readOk:                true,
+                    httpStatus:            vrRes.status,
                     sectionCount:          Array.isArray(vr.sections) ? vr.sections.length : 0,
                     firstSectionChildCount: Array.isArray(sec0?.metaData?.child)
                       ? sec0.metaData.child.length
@@ -739,7 +741,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                     })(),
                   };
                 } else {
-                  diag.approach2.postWrite = { error: `re-read ${vrRes.status}` };
+                  diag.approach2.postWrite = { readOk: false, httpStatus: vrRes.status, error: `re-read ${vrRes.status}` };
                 }
               } catch (_vrErr) {
                 diag.approach2.postWrite = { error: "re-read threw" };

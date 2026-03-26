@@ -271,7 +271,7 @@ async function showInjectDebug() {
           lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"}`);
           if (a2.firstRowKeys !== undefined)      lines.push(`A2 firstRowKeys: ${JSON.stringify(a2.firstRowKeys)}`);
           if (a2.firstSectionMetaKeys !== undefined) lines.push(`A2 firstSec metaKeys: ${JSON.stringify(a2.firstSectionMetaKeys)} childN=${a2.firstSectionChildCount ?? "?"}`);
-          if (a2.postWrite !== undefined)          lines.push(`A2 postWrite: secs=${a2.postWrite.sectionCount ?? "?"} sec0.child=${a2.postWrite.firstSectionChildCount ?? "?"} rowKeys=${JSON.stringify(a2.postWrite.firstRowKeys ?? "?")}`);
+          if (a2.postWrite !== undefined)          lines.push(`A2 postWrite: ok=${a2.postWrite.readOk ?? "?"} http=${a2.postWrite.httpStatus ?? "?"} secs=${a2.postWrite.sectionCount ?? "?"} sec0.child=${a2.postWrite.firstSectionChildCount ?? "?"} rowKeys=${JSON.stringify(a2.postWrite.firstRowKeys ?? "?")}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }
