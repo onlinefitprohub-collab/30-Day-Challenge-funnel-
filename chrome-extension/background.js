@@ -585,6 +585,27 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             }
           } catch (pdErr) {
             console.warn("[CF] CF_COPY_PAGE: pageData capture threw:", String(pdErr).slice(0, 80));
+            // Still persist metadata-only fallback so "Load Captured GHL Page" has something to show
+            try {
+              const bm2 = (await chrome.tabs.get(tabId).catch(() => ({ url: "" }))).url
+                .match(/\/location\/([^/]+)\/page-builder\/([^/]+)/);
+              if (bm2) {
+                const [, , builderId2] = bm2;
+                await chrome.storage.local.set({
+                  capturedGHLPage: {
+                    builderId:  builderId2,
+                    funnelId:   record.funnelId,
+                    stepId:     record.stepId,
+                    locationId: record.locationId,
+                    pageName:   record.pageName || "(GHL builder page)",
+                    pageData:   null,
+                    dataSource: "metadata",
+                    warning:    "Element tree fetch threw an error. Only page IDs are available. Use the URL Inspector to capture full schema.",
+                    capturedAt: Date.now(),
+                  },
+                });
+              }
+            } catch (_) { /* ignore secondary fallback errors */ }
           }
         } else {
           console.warn("[CF] CF_COPY_PAGE: failed", info.error ?? info.log);

@@ -733,7 +733,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
             {cloneStatus === "loading" ? "Saving…" : "Clone to GHL"}
           </button>
           <p className="text-[10px] text-gray-400 text-right max-w-[220px] leading-snug">
-            Queues this AI page for the orange CF button in your GHL builder. For best results, use a real GHL page captured via the URL Inspector.
+            Queues this AI page for the orange CF button in your GHL builder. Note: GHL doesn&apos;t support direct content injection — for best results, use a real GHL page captured via the URL Inspector.
           </p>
         </div>
       </div>
