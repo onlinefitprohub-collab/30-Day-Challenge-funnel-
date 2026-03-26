@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.11.0 — Firebase Storage + Vue/Pinia builder state injection.");
+    console.log("[CF Funnel] Installed v2.10.0 — Firebase Storage + Vue/Pinia builder state injection.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.11.0 — Firebase Storage + Vue/Pinia builder state injection.");
+    console.log("[CF Funnel] Updated to v2.10.0 — Firebase Storage + Vue/Pinia builder state injection.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
