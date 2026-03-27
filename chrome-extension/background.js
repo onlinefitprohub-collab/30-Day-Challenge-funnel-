@@ -693,38 +693,54 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               storageFormat = "probe-err";
             }
 
-            /* ── Step 1: Build structured-dict payload — wrapped dict entries ────────── *
-             * GHL's own builder stores rows/columns/elements as { id, metaData:{} }
-             * wrapped nodes. pd.rows/pd.columns/pd.elements from the API may already be
-             * wrapped OR may be flat metaData content objects — we normalise here.        */
+            /* ── Step 1: Build structured-dict payload — flat top-level format ────────── *
+             * v2.32.0 FIX: Schema Diff (v2.31.0) confirmed native GHL Firebase stores
+             * rows/columns/elements as FLAT top-level objects (NO metaData wrapper).
+             * Native sec0.elements[0] keys: ["extra","meta","styles","child","id","tagName",
+             * "wrapper","class","title","type"] — flat, NO "metaData" key.
+             * Our v2.31.0 inject used { id, metaData:{} } wrapper format → MISMATCH.
+             * Fix: flattenForFirebase spreads metaData content to top-level, strips
+             * the self-referential `element` key, and sets id at top level.
+             * Sections keep their { id, metaData } wrapper (confirmed by roundtrip).  */
 
-            /* Normalises a dict value to { id, metaData: {...} } wrapper format.
-             * If the value already has a .metaData key it is passed through unchanged.
-             * If it is flat, wrap it: { id: key, metaData: { ...value, element:{...value} } } */
-            function wrapIfFlat(key, v) {
+            /* Flattens a dict value from { id, metaData:{...} } to top-level flat format.
+             * If the value is already flat (no metaData key), it is passed through as-is.
+             * Result: { id, _id, type, tagName, child, extra, styles, mobileStyles, class,
+             *           meta, title, wrapper } — matches native GHL Firebase row format.
+             * The `element` self-reference from buildNode() is stripped here.            */
+            function flattenForFirebase(key, v) {
               if (!v || typeof v !== "object") return v;
-              if (v.metaData && typeof v.metaData === "object") return v;
-              return { id: key, metaData: { ...v, element: { ...v } } };
+              if (v.metaData && typeof v.metaData === "object") {
+                /* Has a metaData wrapper — flatten: spread metaData to top level,
+                 * use top-level id, strip the circular self-reference `element` key. */
+                const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
+                return { id: v.id ?? key, ...metaWithoutSelfRef };
+              }
+              /* Already flat — pass through (no metaData wrapper present) */
+              return v;
             }
 
             const pd = pageData;
 
-            /* Wrap rows/columns/elements if they are flat. Sections are already
-             * in { id, metaData:{} } format (they render correctly) — leave as-is. */
+            /* Flatten rows/columns/elements from { id, metaData:{} } to top-level format.
+             * Sections keep their { id, metaData:{}, elements, ... } wrapper — leave as-is. */
             const wrappedRows = Object.fromEntries(
-              Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, wrapIfFlat(k, v)])
+              Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, flattenForFirebase(k, v)])
             );
             const wrappedCols = Object.fromEntries(
-              Object.entries(pd.columns ?? {}).map(([k, v]) => [k, wrapIfFlat(k, v)])
+              Object.entries(pd.columns ?? {}).map(([k, v]) => [k, flattenForFirebase(k, v)])
             );
             const wrappedEls = Object.fromEntries(
-              Object.entries(pd.elements ?? {}).map(([k, v]) => [k, wrapIfFlat(k, v)])
+              Object.entries(pd.elements ?? {}).map(([k, v]) => [k, flattenForFirebase(k, v)])
             );
 
-            /* Pre-write diagnostics — captured AFTER wrapping, BEFORE the fetch */
-            const _firstWrappedRow = Object.values(wrappedRows)[0];
-            diag.approach2.preWriteRowKeys = _firstWrappedRow
-              ? Object.keys(_firstWrappedRow).slice(0, 8) : "rows-empty";
+            /* Pre-write diagnostics — captured AFTER flattening, BEFORE the fetch.
+             * v2.32.0: preWriteRowHasMeta should be FALSE (flat = correct format). */
+            const _firstFlatRow = Object.values(wrappedRows)[0];
+            diag.approach2.preWriteRowKeys    = _firstFlatRow
+              ? Object.keys(_firstFlatRow).slice(0, 10) : "rows-empty";
+            diag.approach2.preWriteRowHasMeta = _firstFlatRow
+              ? ("metaData" in _firstFlatRow) : null;
             diag.approach2.preWriteSectionChildId =
               pd.sections?.[0]?.metaData?.child?.[0]
               ?? pd.sections?.[0]?.child?.[0]
@@ -732,19 +748,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
             /* GHL section top-level keys (confirmed by roundtrip v2.26.0 + v2.30.0):
              * ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
-             * v2.31.0: sections are built with shallow row elements (see comment below).       */
+             * v2.31.0: sections built with shallow row elements (flat rows, NOT nested tree).
+             * v2.32.0: shallow elements are now flat-format rows (no metaData wrapper),
+             *   so sec0.elements[0] keys match native ["extra","meta","styles","child",
+             *   "id","tagName","wrapper","class","title","type"].                             */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
-            /* v2.31.0 FIX: Roundtrip test (v2.30.0) proved real GHL sections ALWAYS carry
-             * a top-level `elements` key (sec0 hasElements: true, sec0 topKeys includes
-             * "elements"). Stripping it entirely (v2.29.2) caused GHL backend 500 on
-             * fetchPageData. The correct format is SHALLOW rows: section.elements =
-             * [wrappedRow, wrappedRow, ...] — flat row objects pulled from wrappedRows by
-             * the row IDs in section.metaData.child, with NO further col/element nesting
-             * (anyRowHasElements=false confirmed rows do not carry nested elements).
-             * Previous v2.27.0–v2.29.0 attempts used a deeply nested tree (finalize() output:
-             * row→col→element) which caused frontend hang — shallow rows are the fix. */
             const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
               const childRowIds     = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              /* Shallow flat rows — wrappedRows are now flat-format (no metaData wrapper)
+               * so section.elements will be [{id, _id, type, tagName, child, ...}, ...]
+               * matching native GHL Firebase section element format.                        */
               const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
               return {
                 id:         sec.id,
@@ -758,10 +771,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               };
             });
 
-            /* Diagnostic: rows written into section[0].elements (shallow format).
-             * v2.31.0: >0 = shallow row refs present ✓  |  0 = section has no child rows */
+            /* Diagnostics: rows written into section[0].elements (flat format).
+             * v2.32.0: firstSecEl0HasMeta should be FALSE (flat = no metaData wrapper). */
+            const _sec0El0 = sectionsWithContext[0]?.elements?.[0] ?? null;
             diag.approach2.firstSecElemCount  = sectionsWithContext[0]?.elements?.length ?? 0;
-            diag.approach2.firstSecElemFormat = "shallow-rows";
+            diag.approach2.firstSecEl0HasMeta = _sec0El0 ? ("metaData" in _sec0El0) : null;
+            diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 10) : "empty";
+            diag.approach2.firstSecElemFormat = "flat-rows-v2.32.0";
 
             /* Always write flat dicts — GHL backend requires rows/columns/elements to
              * exist for reference validation regardless of whether the page was blank. */
@@ -820,19 +836,51 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 diag.approach2.newFirebaseToken = "parse-err";
               }
 
-              /* ── Restore original download token via Firebase Storage PATCH ────── *
-               * Firebase Storage REST API generates a NEW downloadToken on every    *
-               * write. GHL's cached pageDataDownloadUrl has the OLD token → 400     *
-               * response → empty data → TypeError: o1.elements is not iterable.     *
-               * Fix: PATCH the object metadata to restore the original token so      *
-               * GHL's cached URL keeps working — no GHL backend update needed.      */
+              /* ── v2.32.0: metaUpdate is PRIMARY path ────────────────────────────── *
+               * ROOT CAUSE 2 FIX: patchToken restores the old Firebase download URL *
+               * so GHL backend serves its CACHED original data — inject invisible.  *
+               * metaUpdate instead calls the GHL backend PUT endpoint with the NEW  *
+               * download URL, forcing GHL to re-fetch our newly written file.       *
+               * Strategy: (A) always try metaUpdate first; (B) attempt patchToken   *
+               * only as a fallback for environments where metaUpdate is unavailable.*
+               * Result after inject + GHL reload: our AI page content is visible.   */
               const oldToken = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
               const metaEp   =
                 `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
                 `/o/${encodedPath}`;
+
+              /* ── (A) PRIMARY: metaUpdate — tell GHL backend about the new URL ──── */
+              let metaUpdateSucceeded = false;
+              if (revex && newFirebaseToken) {
+                const activeToken  = newFirebaseToken;
+                const baseUrl      = downloadUrl.replace(/\?.*$/, "");
+                const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
+                diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
+                const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
+                try {
+                  await revex.put(
+                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+                    updateBody
+                  );
+                  metaUpdateSucceeded = true;
+                  diag.approach2.metaUpdateStatus = `ok-primary-funnelId:${funnelIdFromPath.slice(0, 16)}`;
+                } catch (_u1) {
+                  diag.approach2.metaUpdateStatus = `failed: ${String(_u1).slice(0, 60)}`;
+                }
+              } else if (!revex) {
+                diag.approach2.metaUpdateStatus = "skipped-no-revex";
+              } else {
+                diag.approach2.metaUpdateStatus = "skipped-no-new-token";
+              }
+
+              /* ── (B) FALLBACK: patchToken — restore old Firebase token ───────── *
+               * Only run if metaUpdate failed (revex unavailable). When patchToken  *
+               * succeeds GHL's cached URL still works but serves CACHED data —      *
+               * inject may not be visible until Firebase CDN cache expires.         *
+               * Keep as fallback so at least the page doesn't 403-crash on reload. */
               let patchSucceeded = false;
-              if (oldToken) {
-                /* Format 1: nested metadata field — verify returned token matches */
+              if (!metaUpdateSucceeded && oldToken) {
+                /* Format 1: nested metadata field */
                 try {
                   const pr1 = await fetch(metaEp, {
                     method:  "PATCH",
@@ -847,7 +895,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     diag.approach2.patchTokenOk = tokenVerified;
                     if (tokenVerified) {
                       patchSucceeded = true;
-                      diag.approach2.patchToken = "ok-format1";
+                      diag.approach2.patchToken = "ok-format1-fallback";
                     } else {
                       diag.approach2.patchToken = `accepted-not-verified`;
                       diag.approach2.patchReturnedToken = returnedToken ? returnedToken.slice(0, 20) + "…" : "null";
@@ -865,13 +913,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     });
                     diag.approach2.patchStatus2 = pr2.status;
                     if (pr2.ok) {
-                      const pr2Body       = await pr2.json().catch(() => ({}));
+                      const pr2Body        = await pr2.json().catch(() => ({}));
                       const returnedToken2 = pr2Body.metadata?.downloadTokens ?? pr2Body.downloadTokens ?? null;
                       const tokenVerified2 = returnedToken2 === oldToken;
                       diag.approach2.patchTokenOk = tokenVerified2;
                       if (tokenVerified2) {
                         patchSucceeded = true;
-                        diag.approach2.patchToken = "ok-format2";
+                        diag.approach2.patchToken = "ok-format2-fallback";
                       } else {
                         diag.approach2.patchToken = `accepted-not-verified-f2`;
                         diag.approach2.patchReturnedToken = returnedToken2 ? returnedToken2.slice(0, 20) + "…" : "null";
@@ -882,27 +930,11 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
                 if (!patchSucceeded) {
                   diag.approach2.patchToken = "failed";
-                  /* Fallback: revex.put with funnelId from Firebase path */
-                  if (revex && newFirebaseToken) {
-                    const funnelIdFromPath = objectPath.split("/")[1] ?? "";
-                    const newPublicUrl     = downloadUrl.replace(/\?.*$/, "") + `?alt=media&token=${newFirebaseToken}`;
-                    diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
-                    const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
-                    try {
-                      await revex.put(
-                        `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
-                        updateBody
-                      );
-                      diag.approach2.metaUpdate = `ok-funnelId:${funnelIdFromPath.slice(0, 16)}`;
-                    } catch (_u3) {
-                      diag.approach2.metaUpdate = `failed: ${String(_u3).slice(0, 60)}`;
-                    }
-                  } else {
-                    diag.approach2.metaUpdate = "skipped";
-                  }
                 }
+              } else if (metaUpdateSucceeded) {
+                diag.approach2.patchToken = "skipped-metaUpdate-primary-ok";
               } else {
-                diag.approach2.patchToken = "no-old-token";
+                diag.approach2.patchToken = "skipped-no-old-token";
               }
 
               /* ── Post-write verification: re-read what we wrote ────────────────── *
@@ -921,6 +953,14 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   const referencedRow  = sec0ChildRowId ? (vr.rows?.[sec0ChildRowId] ?? null) : null;
                   const firstColId     = referencedRow?.metaData?.child?.[0] ?? null;
                   const referencedCol  = firstColId ? (vr.columns?.[firstColId] ?? null) : null;
+                  /* v2.32.0 post-write checks:
+                   * - sec0El0HasMeta: should be FALSE (flat format = no metaData key)
+                   * - firstRowHasMeta: should be FALSE (flat format)                  */
+                  const sec0El0 = Array.isArray(sec0?.elements) ? sec0.elements[0] : null;
+                  const firstRow = vr.rows && Object.values(vr.rows)[0];
+                  /* col ref: flat rows don't have metaData wrapper, so child is at top-level */
+                  const firstColIdFlat = referencedRow?.child?.[0] ?? referencedRow?.metaData?.child?.[0] ?? null;
+                  const referencedColFlat = firstColIdFlat ? (vr.columns?.[firstColIdFlat] ?? null) : null;
                   diag.approach2.postWrite = {
                     readOk:          true,
                     httpStatus:      vrRes.status,
@@ -932,18 +972,17 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     firstSectionChildCount: Array.isArray(sec0?.metaData?.child)
                       ? sec0.metaData.child.length
                       : (Array.isArray(sec0?.child) ? sec0.child.length : 0),
-                    /* Does the WRITTEN section have elements? Should be false after v2.29.2 fix. */
                     writtenSecHasElements: sec0 ? ("elements" in sec0) : null,
+                    /* v2.32.0: sec0El0HasMeta should be FALSE (flat format) */
+                    sec0El0HasMeta:  sec0El0 ? ("metaData" in sec0El0) : null,
+                    sec0El0Keys:     sec0El0 ? Object.keys(sec0El0).slice(0, 10) : "no-el0",
                     sec0ChildRowId:  sec0ChildRowId ?? "none",
                     rowRefOk:        !!referencedRow,
-                    firstRowMetaKeys: referencedRow?.metaData
-                      ? Object.keys(referencedRow.metaData).slice(0, 10) : "no-metaData",
-                    firstColId:      firstColId ?? "none",
-                    colRefOk:        !!referencedCol,
-                    firstRowKeys: (() => {
-                      const rv = vr.rows && Object.values(vr.rows)[0];
-                      return rv ? Object.keys(rv).slice(0, 8) : "rows-empty";
-                    })(),
+                    /* v2.32.0: flat row has no metaData wrapper */
+                    firstRowHasMeta: firstRow ? ("metaData" in firstRow) : null,
+                    firstRowKeys:    firstRow ? Object.keys(firstRow).slice(0, 10) : "rows-empty",
+                    firstColId:      firstColIdFlat ?? "none",
+                    colRefOk:        !!referencedColFlat,
                   };
                 } else {
                   diag.approach2.postWrite = { readOk: false, httpStatus: vrRes.status, error: `re-read ${vrRes.status}` };
@@ -1078,33 +1117,42 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
           a2b.bucketDiag = bucketDiag;
 
           if (idToken2B) {
-            /* ── Build write payload (mirrors approach 2 writePayload) ── */
+            /* ── Build write payload (mirrors approach 2 writePayload) ── *
+             * v2.32.0: use flattenForFirebase (same as approach 2).       */
             const pd2B = pageData;
-            function wrapIfFlat2B(key, v) {
+            function flattenForFirebase2B(key, v) {
               if (!v || typeof v !== "object") return v;
-              if (v.metaData && typeof v.metaData === "object") return v;
-              return { id: key, metaData: { ...v, element: { ...v } } };
+              if (v.metaData && typeof v.metaData === "object") {
+                const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
+                return { id: v.id ?? key, ...metaWithoutSelfRef };
+              }
+              return v;
             }
             const wrappedRows2B = Object.fromEntries(
-              Object.entries(pd2B.rows    ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
+              Object.entries(pd2B.rows    ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
             const wrappedCols2B = Object.fromEntries(
-              Object.entries(pd2B.columns ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
+              Object.entries(pd2B.columns ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
             const wrappedEls2B = Object.fromEntries(
-              Object.entries(pd2B.elements ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
+              Object.entries(pd2B.elements ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
-            /* Same strip as approach 2: omit the nested elements array finalize() added.
-             * GHL reconstructs the tree from section.metaData.child + flat dicts at runtime. */
-            const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => ({
-              id:         sec.id,
-              metaData:   sec.metaData,
-              sequence:   i,
-              pageId:     builderId,
-              funnelId:   funnelId2B,
-              locationId: locationId ?? "",
-              general:    {},
-            }));
+            /* v2.32.0: include shallow flat elements (mirrors approach 2 sectionsWithContext).
+             * Native GHL sections have `elements` key containing flat row objects.            */
+            const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => {
+              const childRowIds2B   = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              const shallowEls2B    = childRowIds2B.map(rowId => wrappedRows2B[rowId]).filter(Boolean);
+              return {
+                id:         sec.id,
+                metaData:   sec.metaData,
+                elements:   shallowEls2B,
+                sequence:   i,
+                pageId:     builderId,
+                funnelId:   funnelId2B,
+                locationId: locationId ?? "",
+                general:    {},
+              };
+            });
             /* Always write flat dicts — GHL backend validates row references against rows dict. */
             const writePayload2B = {
               fontsForPreview: pd2B.fontsForPreview,
@@ -2546,27 +2594,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const nativeResult = JSON.parse(execRes?.[0]?.result ?? "{}");
 
         /* Simulate our inject payload using the EXACT same transformation pipeline
-         * as the real CF_INJECT_AI_PAGE handler. Inline wrapIfFlat and sectionsWithContext
+         * as the real CF_INJECT_AI_PAGE handler. Inline flattenForFirebase and sectionsWithContext
          * construction so the diff reflects what we actually write to Firebase.           */
         const stored = await chrome.storage.local.get(["cfReady"]);
         const pd     = stored?.cfReady?.pageData ?? null;
 
         let injectSim = null;
         if (pd) {
-          /* ── Same wrapIfFlat as inject pipeline ── */
-          function _diff_wrapIfFlat(key, v) {
+          /* ── Same flattenForFirebase as inject pipeline (v2.32.0) ── *
+           * Spreads metaData content to top level, strips self-ref     *
+           * `element` key. Matches native GHL Firebase flat format.   */
+          function _diff_flattenForFirebase(key, v) {
             if (!v || typeof v !== "object") return v;
-            if (v.metaData && typeof v.metaData === "object") return v;
-            return { id: key, metaData: { ...v, element: { ...v } } };
+            if (v.metaData && typeof v.metaData === "object") {
+              const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
+              return { id: v.id ?? key, ...metaWithoutSelfRef };
+            }
+            return v;
           }
           const wrappedRows = Object.fromEntries(
-            Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, _diff_wrapIfFlat(k, v)])
+            Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
           const wrappedCols = Object.fromEntries(
-            Object.entries(pd.columns ?? {}).map(([k, v]) => [k, _diff_wrapIfFlat(k, v)])
+            Object.entries(pd.columns ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
           const wrappedEls = Object.fromEntries(
-            Object.entries(pd.elements ?? {}).map(([k, v]) => [k, _diff_wrapIfFlat(k, v)])
+            Object.entries(pd.elements ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
 
           /* ── Same sectionsWithContext as inject pipeline (shallow elements) ── */
@@ -2600,6 +2653,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             sec0El0HasElements:  shallowEls[0] ? ("elements" in shallowEls[0])                 : false,
             row0Keys:            row0 ? Object.keys(row0).slice(0, 10)                         : "none",
             row0HasElements:     row0 ? ("elements" in row0)                                   : false,
+            /* v2.32.0: flat format — row0 should have NO metaData key */
+            row0HasMeta:         row0 ? ("metaData" in row0)                                   : false,
             row0MetaKeys:        row0?.metaData ? Object.keys(row0.metaData).slice(0, 10)      : "none",
             col0Keys:            col0 ? Object.keys(col0).slice(0, 10)                         : "none",
             col0HasElements:     col0 ? ("elements" in col0)                                   : false,

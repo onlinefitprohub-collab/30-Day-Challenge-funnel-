@@ -1,4 +1,4 @@
-// popup.js v2.31.0 — Challenge Funnel Extension
+// popup.js v2.32.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -229,7 +229,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.31.0 ===");
+  lines.push("=== CF Extension v2.32.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -284,23 +284,28 @@ async function showInjectDebug() {
           }
           if (a2.firstSectionKeys !== undefined)     lines.push(`A2 firstSec topKeys: ${JSON.stringify(a2.firstSectionKeys)}`);
           if (a2.firstSectionMetaKeys !== undefined) lines.push(`A2 firstSec metaKeys: ${JSON.stringify(a2.firstSectionMetaKeys)} childN=${a2.firstSectionChildCount ?? "?"}`);
-          if (a2.preWriteRowKeys !== undefined)   lines.push(`A2 preWriteRowKeys: ${JSON.stringify(a2.preWriteRowKeys)} secChildId=${a2.preWriteSectionChildId ?? "?"}`);
+          if (a2.preWriteRowKeys !== undefined)   lines.push(`A2 preWriteRowKeys: ${JSON.stringify(a2.preWriteRowKeys)} preWriteRowHasMeta=${a2.preWriteRowHasMeta ?? "?"} (expect: false=flat ✓) secChildId=${a2.preWriteSectionChildId ?? "?"}`);
           if (a2.postWrite !== undefined) {
             const pw = a2.postWrite;
             lines.push(`A2 postWrite: ok=${pw.readOk ?? "?"} http=${pw.httpStatus ?? "?"} payloadId=${pw.payloadId ?? "?"}`);
             lines.push(`A2 postWrite counts: secs=${pw.sectionCount ?? "?"} rows=${pw.rowCount ?? "?"} cols=${pw.colCount ?? "?"} elems=${pw.elemCount ?? "?"}`);
             lines.push(`A2 postWrite ref: sec0ChildRow=${pw.sec0ChildRowId ?? "?"} rowRefOk=${pw.rowRefOk ?? "?"} colId=${pw.firstColId ?? "?"} colRefOk=${pw.colRefOk ?? "?"}`);
-            lines.push(`A2 postWrite firstRowMetaKeys=${JSON.stringify(pw.firstRowMetaKeys ?? "?")} firstRowKeys=${JSON.stringify(pw.firstRowKeys ?? "?")}`);
+            /* v2.32.0: flat row diagnostics — hasMeta should be false */
+            lines.push(`A2 postWrite firstRowHasMeta=${pw.firstRowHasMeta ?? "?"} (expect: false=flat ✓) firstRowKeys=${JSON.stringify(pw.firstRowKeys ?? "?")}`);
+            lines.push(`A2 postWrite sec0El0HasMeta=${pw.sec0El0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(pw.sec0El0Keys ?? "?")}`);
           }
-          /* v2.31.0 section elements diagnostic */
-          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} ← rows in section[0].elements written to Firebase (>0 = shallow rows present ✓) | format: ${a2.firstSecElemFormat ?? "unknown"}`);
+          /* v2.32.0 section elements diagnostic (flat format) */
+          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} format: ${a2.firstSecElemFormat ?? "unknown"} | sec0El0HasMeta=${a2.firstSecEl0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(a2.firstSecEl0Keys ?? "?")}`);
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
-          if (a2.patchToken !== undefined)       lines.push(`A2 patchToken: ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})  ← "ok-format1/2" + patchTokenOk=true = token CONFIRMED restored`);
-          if (a2.patchReturnedToken !== undefined) lines.push(`A2 patchReturnedToken: ${a2.patchReturnedToken} (mismatch!)`);
-
-          if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate (fallback): ${a2.metaUpdate}`);
+          /* v2.32.0: metaUpdate is PRIMARY — "ok-primary-*" means GHL will re-fetch new data */
+          if (a2.metaUpdateStatus !== undefined) lines.push(`A2 metaUpdateStatus (PRIMARY): ${a2.metaUpdateStatus}  ← ok-primary = GHL will re-fetch new data on reload`);
           if (a2.newPublicUrl !== undefined)     lines.push(`A2 newPublicUrl: ${a2.newPublicUrl}`);
+          /* patchToken is now FALLBACK only */
+          if (a2.patchToken !== undefined)       lines.push(`A2 patchToken (fallback): ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})`);
+          if (a2.patchReturnedToken !== undefined) lines.push(`A2 patchReturnedToken: ${a2.patchReturnedToken} (mismatch!)`);
+          /* legacy a2.metaUpdate field from old fallback path */
+          if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate (legacy-fallback): ${a2.metaUpdate}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }
@@ -424,7 +429,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.31.0 ===`);
+    lines.push(`=== Roundtrip Test v2.32.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
@@ -434,7 +439,7 @@ async function doRoundtripTest() {
     lines.push(`secs=${d.sectionCount} rows=${d.rowCount} cols=${d.colCount} elems=${d.elemCount}`);
     /* Schema probes */
     if (d.firstSecTopKeys !== undefined)  lines.push(`sec0 topKeys: ${JSON.stringify(d.firstSecTopKeys)}`);
-    if (d.firstSecHasElements !== undefined) lines.push(`sec0 hasElements: ${d.firstSecHasElements} ← true=sections store elements tree (v2.31.0: shallow rows are the fix)`);
+    if (d.firstSecHasElements !== undefined) lines.push(`sec0 hasElements: ${d.firstSecHasElements} ← true=sections store elements (v2.31: shallow rows; v2.32: flat format)`);
     if (d.sec0ElementsLength !== undefined) lines.push(`sec0 elements length: ${d.sec0ElementsLength}`);
     if (d.sec0Elements0Keys !== undefined) lines.push(`sec0.elements[0] keys: ${JSON.stringify(d.sec0Elements0Keys)} hasMeta=${d.sec0Elements0HasMeta} hasElements=${d.sec0Elements0HasElements} childType=${d.sec0Elements0ChildType}`);
     if (d.firstSecMetaKeys !== undefined) lines.push(`sec0 metaKeys: ${JSON.stringify(d.firstSecMetaKeys)}`);
@@ -513,7 +518,7 @@ async function doSchemaDiff() {
     const i   = res?.inject  ?? null;
     const lines = [];
 
-    lines.push(`=== Schema Diff v2.31.0 ===`);
+    lines.push(`=== Schema Diff v2.32.0 (flat format) ===`);
     lines.push(`Firebase read: ${res?.ok ? "ok" : "FAILED — " + (res?.error ?? "?")}`);
     lines.push(`Has queued page data: ${res?.hasPageData ? "yes" : "no (load a page via AI library first)"}`);
 
@@ -529,15 +534,15 @@ async function doSchemaDiff() {
     lines.push(`anyRow/Col/ElemHasElements: ${n.anyRowHasElements}/${n.anyColHasElements}/${n.anyElemHasElements}`);
 
     if (i) {
-      lines.push(`\n--- Our Inject (simulated, no write) ---`);
+      lines.push(`\n--- Our Inject (simulated, no write) [v2.32.0 flat format] ---`);
       lines.push(`secs=${i.sectionCount ?? "?"} rows=${i.rowCount ?? "?"} cols=${i.colCount ?? "?"} elems=${i.elemCount ?? "?"}`);
       lines.push(`sec0 keys:          ${JSON.stringify(i.sec0Keys ?? "?")}`);
       lines.push(`sec0 hasElements:   ${i.sec0HasElements}  |  elementsLen: ${i.sec0ElementsLen ?? "?"}`);
       lines.push(`sec0.el[0] keys:    ${JSON.stringify(i.sec0El0Keys ?? "?")}`);
       lines.push(`sec0.el[0] hasMeta: ${i.sec0El0HasMeta}  |  hasElements: ${i.sec0El0HasElements}`);
-      lines.push(`row0 keys (wrapped):${JSON.stringify(i.row0Keys ?? "?")}  |  hasElements: ${i.row0HasElements}`);
-      lines.push(`row0.metaData keys: ${JSON.stringify(i.row0MetaKeys ?? "?")}`);
-      lines.push(`col0 keys (wrapped):${JSON.stringify(i.col0Keys ?? "?")}  |  hasElements: ${i.col0HasElements}`);
+      lines.push(`row0 keys (flat):   ${JSON.stringify(i.row0Keys ?? "?")}  |  hasElements: ${i.row0HasElements}`);
+      lines.push(`row0 hasMeta:       ${i.row0HasMeta ?? "?"}  (expect: false)`);
+      lines.push(`col0 keys (flat):   ${JSON.stringify(i.col0Keys ?? "?")}  |  hasElements: ${i.col0HasElements}`);
 
       lines.push(`\n--- Diff (native vs inject pipeline output) ---`);
       const check = (label, a, b) => lines.push(`${label}: ${a === b ? "✓ MATCH" : "✗ MISMATCH  native=" + JSON.stringify(a) + "  inject=" + JSON.stringify(b)}`);
@@ -545,6 +550,7 @@ async function doSchemaDiff() {
       check("sec0.el[0] hasMeta",      n.sec0El0HasMeta,     i.sec0El0HasMeta);
       check("sec0.el[0] hasElements",  n.sec0El0HasElements, i.sec0El0HasElements);
       check("row0 hasElements",        n.row0HasElements,    i.row0HasElements);
+      check("row0 hasMeta",            n.row0HasMeta,        i.row0HasMeta);
       check("col0 hasElements",        n.col0HasElements,    i.col0HasElements);
     } else {
       lines.push(`\n--- Our Inject: no page loaded ---`);
