@@ -1543,6 +1543,37 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
   }
 }
 
+/* Inject a short-lived fetch interceptor into the GHL MAIN world.
+ * Captures 4xx/5xx responses from backend.leadconnectorhq.com, reads the
+ * body, then postMessages CF_GHL_BACKEND_ERROR for content.js to relay.
+ * Auto-removes after 20 seconds. This function is passed to executeScript
+ * so it must be self-contained.                                           */
+function _cf_injectFetchSniffer() {
+  if (window.__cfFetchSniffInstalled) return;
+  window.__cfFetchSniffInstalled = true;
+  var origFetch = window.fetch;
+  function cleanup() { window.fetch = origFetch; window.__cfFetchSniffInstalled = false; }
+  var sniffTimer = setTimeout(cleanup, 20000);
+  window.fetch = function() {
+    var args = Array.prototype.slice.call(arguments);
+    return origFetch.apply(this, args).then(function(response) {
+      var url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url ? args[0].url : "");
+      if ((url.indexOf("backend.leadconnectorhq.com") !== -1 || url.indexOf("leadconnecto") !== -1) &&
+          response.status >= 400) {
+        try {
+          var clone = response.clone();
+          clone.text().then(function(body) {
+            clearTimeout(sniffTimer); cleanup();
+            window.postMessage({ source: "cf-network-sniffer", type: "CF_GHL_BACKEND_ERROR",
+              status: response.status, url: url.slice(0, 120), body: body.slice(0, 500) }, "*");
+          });
+        } catch(_) {}
+      }
+      return response;
+    });
+  };
+}
+
 /* Reload the GHL builder iframe to reflect cloned content. */
 async function _cf_refreshBuilderIframe() {
   try {
@@ -2187,10 +2218,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           // Store full inject result so popup can show debug details
           await chrome.storage.local.set({ cf_last_inject: { ...r, builderId: builderId2, ts: Date.now() } });
           if (r.ok) {
-            /* Install a network sniffer on the NEXT page load so we can capture
-             * GHL's backend error body and JS errors after the builder reloads.
-             * Content script reads this flag on mount and injects the sniffer. */
-            try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2, cf_sniff_inject_ts: Date.now() }); } catch(_) {}
+            /* ── Diagnostic: signal inject-done to content script for o.off tracking ──
+             * Content.js tracks CF_INJECT_DONE to know when phase 1 (pre-inject) ends.
+             * This postMessage via executeScript crosses the MAIN→isolated boundary. */
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: tabId2, allFrames: false },
+                world:  "MAIN",
+                func:   function() { window.postMessage({ source: "cf-bridge", type: "CF_INJECT_DONE" }, "*"); },
+              });
+            } catch(_) {}
+
+            /* ── Diagnostic: fetch interceptor via executeScript BEFORE reload ──────
+             * Catches any immediate GHL backend fetch on the current SPA page.
+             * For post-hard-reload fetches, cf_sniff_pending arms the content script. */
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: tabId2, allFrames: false },
+                world:  "MAIN",
+                func:   _cf_injectFetchSniffer,
+              });
+            } catch(_) {}
+
+            /* Arm sniffer for NEXT page load (post-hard-reload fetches) */
+            try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2 }); } catch(_) {}
             try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
             const method = r.method ?? "injected";
             const toast = r.warning
@@ -2691,23 +2742,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
 
-  /* ── CF_OOFF_ERROR — forwarded from content script onerror sniffer ────────
-   * Only stored when the sender tab matches the tab we armed the sniffer for.
-   * ooffTs (from MAIN world) compared to cf_sniff_inject_ts to determine
-   * whether the error was pre-existing or caused by our inject.               */
+  /* ── CF_OOFF_ERROR — forwarded from content script two-phase onerror ──────
+   * preExisting is set by content.js: true if the error fired before
+   * CF_INJECT_DONE was received (i.e. before our Firebase write was done).
+   * Stored per-tab so popup shows only the active tab's data.               */
   if (type === "CF_OOFF_ERROR") {
     const senderTabId = sender?.tab?.id;
-    (() => {
-      chrome.storage.local.get(["cf_sniff_tab", "cf_sniff_inject_ts"], (d) => {
-        if (!senderTabId || d.cf_sniff_tab !== senderTabId) return;
-        const { msg: errMsg, src, line, ooffTs } = msg;
-        const injectTs = d.cf_sniff_inject_ts ?? 0;
-        const preExisting = ooffTs ? (ooffTs < injectTs) : false;
-        /* Key by tabId so popup can filter to the active tab only */
-        const storeKey = `cf_ooff_err_${senderTabId}`;
-        chrome.storage.local.set({ [storeKey]: { errMsg, src, line, preExisting, tabId: senderTabId, ts: Date.now() } });
-      });
-    })();
+    if (!senderTabId) return false;
+    const { msg: errMsg, src, line, preExisting } = msg;
+    const storeKey = `cf_ooff_err_${senderTabId}`;
+    chrome.storage.local.set({ [storeKey]: { errMsg, src, line, preExisting: !!preExisting, tabId: senderTabId, ts: Date.now() } });
     return false;
   }
 

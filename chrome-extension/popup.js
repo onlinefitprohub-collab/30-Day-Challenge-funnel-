@@ -339,25 +339,38 @@ async function showInjectDebug() {
     }
   }
 
-  /* ── GHL Diagnostic (network sniffer results from post-inject page load) ── */
+  /* ── GHL Diagnostic — always shown when inject result exists ────────────
+   * ghlBackendError: captured by fetch interceptor (executeScript + sniffer)
+   * oOffError: captured by bridge.js onerror (document_start, MAIN world)
+   * Section hasElements: from roundtrip + inject anatomy (approach2)       */
   const ghlErr  = tabId ? lsDiag[`cf_ghl_err_${tabId}`]  : undefined;
   const ooffErr = tabId ? lsDiag[`cf_ooff_err_${tabId}`] : undefined;
-  if (ghlErr || ooffErr) {
-    lines.push(`\n--- GHL Diagnostic (captured on last builder reload) ---`);
-    if (ghlErr) {
-      const age = ghlErr.ts ? `${Math.round((Date.now() - ghlErr.ts) / 1000)}s ago` : "?";
-      const stale = ghlErr.ts && (Date.now() - ghlErr.ts > 60000) ? " [stale >60s]" : "";
-      lines.push(`GHL backend error (${age}${stale}): HTTP ${ghlErr.status ?? "?"} from ${ghlErr.url ?? "?"}`);
-      lines.push(`GHL error body: ${(ghlErr.body ?? "").slice(0, 400)}`);
-    } else {
-      lines.push(`GHL backend error: none captured`);
+  if (inject) {
+    lines.push(`\n--- GHL Diagnostic ---`);
+    /* firstSecHasElements from inject diag (approach2) */
+    const approach2 = inject?.diag?.approach2;
+    if (approach2) {
+      const ex = approach2.existSecHasElements;
+      const wr = approach2.postWrite?.writtenSecHasElements;
+      if (ex !== undefined) lines.push(`ghlBackend sec hasElements (pre-write): ${ex}`);
+      if (wr !== undefined) lines.push(`ghlBackend sec hasElements (post-write): ${wr}`);
     }
+    /* GHL backend error body (fetch interceptor) */
+    if (ghlErr) {
+      const age   = ghlErr.ts ? `${Math.round((Date.now() - ghlErr.ts) / 1000)}s ago` : "?";
+      const stale = ghlErr.ts && (Date.now() - ghlErr.ts > 60000) ? " [stale >60s]" : "";
+      lines.push(`ghlBackendError (${age}${stale}): HTTP ${ghlErr.status ?? "?"} ${ghlErr.url ?? ""}`);
+      lines.push(`  body: ${(ghlErr.body ?? "").slice(0, 400)}`);
+    } else {
+      lines.push(`ghlBackendError: none captured`);
+    }
+    /* o.off two-phase classification (bridge.js document_start baseline) */
     if (ooffErr) {
-      const age2 = ooffErr.ts ? `${Math.round((Date.now() - ooffErr.ts) / 1000)}s ago` : "?";
+      const age2  = ooffErr.ts ? `${Math.round((Date.now() - ooffErr.ts) / 1000)}s ago` : "?";
       const stale2 = ooffErr.ts && (Date.now() - ooffErr.ts > 60000) ? " [stale >60s]" : "";
       const timing = ooffErr.preExisting
-        ? "pre-existing (fired before inject timestamp — not our fault)"
-        : "inject-triggered (fired after inject timestamp — our write caused it)";
+        ? "pre-existing (before inject — not our fault)"
+        : "inject-triggered (after inject — our write caused it)";
       lines.push(`oOffError (${age2}${stale2}): ${timing}`);
       lines.push(`  msg: "${(ooffErr.errMsg ?? "").slice(0, 100)}"`);
       lines.push(`  src: ${(ooffErr.src ?? "").slice(0, 120)} line ${ooffErr.line ?? "?"}`);

@@ -125,26 +125,54 @@
     }
   });
 
-  /* ─── Network sniffer relay (runs on GHL pages after inject) ───────────
-   * Background sets cf_sniff_pending=true before reloading the builder.
-   * On next page load, content script injects a MAIN-world script that:
-   *  • monkey-patches window.fetch to capture GHL backend 4xx/5xx bodies
-   *  • installs window.onerror to detect o.off / is-not-a-function errors
-   * The injected script postMessages back; we relay to the background SW.  */
+  /* ─── Blind-spot 3: Two-phase o.off tracking ────────────────────────────
+   * bridge.js (document_start, MAIN world) installs window.onerror before
+   * any GHL code runs and postMessages CF_OOFF_EVENT for each matching error.
+   * We track whether the error arrived BEFORE or AFTER CF_INJECT_DONE.
+   * CF_INJECT_DONE is postMessaged by background via executeScript after the
+   * inject is confirmed.                                                     */
+  let _cfInjectDone  = false;
+  let _cfOoffBefore  = null; // first o.off seen before inject
+  let _cfOoffAfter   = null; // first o.off seen after inject
+
+  /* ─── Network sniffer relay + bridge event relay ────────────────────────
+   * bridge (source:"cf-bridge"):   CF_OOFF_EVENT, CF_INJECT_DONE
+   * network sniffer (source:"cf-network-sniffer"): CF_GHL_BACKEND_ERROR     */
   window.addEventListener("message", (evt) => {
-    if (!evt.data || evt.data.source !== "cf-network-sniffer") return;
+    if (!evt.data) return;
     const d = evt.data;
-    if (d.type === "CF_GHL_BACKEND_ERROR") {
-      try {
-        chrome.runtime.sendMessage({ type: "CF_GHL_BACKEND_ERROR",
-          status: d.status, url: d.url, body: d.body });
-      } catch (_) {}
+
+    /* ── bridge.js events ── */
+    if (d.source === "cf-bridge") {
+      if (d.type === "CF_OOFF_EVENT") {
+        if (!_cfInjectDone && !_cfOoffBefore) {
+          _cfOoffBefore = { msg: d.msg, src: d.src, line: d.line, ts: d.ts };
+        } else if (_cfInjectDone && !_cfOoffAfter) {
+          _cfOoffAfter = { msg: d.msg, src: d.src, line: d.line, ts: d.ts };
+        }
+        /* Forward to background with pre-existing flag */
+        try {
+          chrome.runtime.sendMessage({
+            type: "CF_OOFF_ERROR",
+            msg: d.msg, src: d.src, line: d.line, ooffTs: d.ts,
+            preExisting: !_cfInjectDone,
+          });
+        } catch (_) {}
+      }
+      if (d.type === "CF_INJECT_DONE") {
+        _cfInjectDone = true;
+      }
+      return;
     }
-    if (d.type === "CF_OOFF_ERROR") {
-      try {
-        chrome.runtime.sendMessage({ type: "CF_OOFF_ERROR",
-          msg: d.msg, src: d.src, line: d.line, ooffTs: d.ooffTs });
-      } catch (_) {}
+
+    /* ── network sniffer events (fetch interceptor injected post-reload) ── */
+    if (d.source === "cf-network-sniffer") {
+      if (d.type === "CF_GHL_BACKEND_ERROR") {
+        try {
+          chrome.runtime.sendMessage({ type: "CF_GHL_BACKEND_ERROR",
+            status: d.status, url: d.url, body: d.body });
+        } catch (_) {}
+      }
     }
   });
 
