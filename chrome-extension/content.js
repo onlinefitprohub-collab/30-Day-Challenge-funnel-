@@ -167,24 +167,20 @@
   const CF_SNIFF_CODE = `(function(){
     if(window.__cfSniffInstalled)return;
     window.__cfSniffInstalled=true;
-    var pageReady=(document.readyState==='complete'||document.readyState==='interactive');
-    if(!pageReady) document.addEventListener('DOMContentLoaded',function(){pageReady=true;});
+    function cleanup(){window.fetch=origFetch;window.onerror=origOnError;window.__cfSniffInstalled=false;}
     var origOnError=window.onerror;
     window.onerror=function(msg,src,line,col,err){
       if(msg&&(msg.indexOf('o.off')!==-1||msg.indexOf('is not a function')!==-1)&&
          src&&src.indexOf('FunnelBuilderApp')!==-1){
         window.postMessage({source:'cf-network-sniffer',type:'CF_OOFF_ERROR',
           msg:String(msg).slice(0,200),src:String(src).slice(0,120),
-          line:line,pageReady:pageReady},'*');
+          line:line,ooffTs:Date.now()},'*');
       }
       if(origOnError)return origOnError.apply(this,arguments);
       return false;
     };
     var origFetch=window.fetch;
-    var sniffTimer=setTimeout(function(){
-      window.fetch=origFetch;window.onerror=origOnError;
-      window.__cfSniffInstalled=false;
-    },25000);
+    var sniffTimer=setTimeout(cleanup,60000);
     window.fetch=function(){
       var args=Array.prototype.slice.call(arguments);
       return origFetch.apply(this,args).then(function(response){
@@ -194,9 +190,7 @@
           try{
             var clone=response.clone();
             clone.text().then(function(body){
-              clearTimeout(sniffTimer);
-              window.fetch=origFetch;window.onerror=origOnError;
-              window.__cfSniffInstalled=false;
+              clearTimeout(sniffTimer);cleanup();
               window.postMessage({source:'cf-network-sniffer',type:'CF_GHL_BACKEND_ERROR',
                 status:response.status,url:url.slice(0,120),body:body.slice(0,500)},'*');
             });
@@ -218,11 +212,12 @@
 
   function checkAndInjectSniff() {
     try {
-      chrome.storage.local.get(["cf_sniff_pending"], (data) => {
-        if (data.cf_sniff_pending) {
-          chrome.storage.local.remove("cf_sniff_pending");
-          injectSniff();
-        }
+      /* Ask background whether THIS tab is the armed sniffer tab.
+       * Background clears the flag on first successful claim, so only
+       * the correct tab gets the sniffer even if multiple tabs load GHL. */
+      chrome.runtime.sendMessage({ type: "CF_SNIFF_CLAIM" }, (resp) => {
+        if (chrome.runtime.lastError) return;
+        if (resp && resp.claimed) injectSniff();
       });
     } catch (_) {}
   }

@@ -2190,7 +2190,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             /* Install a network sniffer on the NEXT page load so we can capture
              * GHL's backend error body and JS errors after the builder reloads.
              * Content script reads this flag on mount and injects the sniffer. */
-            try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2 }); } catch(_) {}
+            try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2, cf_sniff_inject_ts: Date.now() }); } catch(_) {}
             try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
             const method = r.method ?? "injected";
             const toast = r.warning
@@ -2656,19 +2656,55 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  /* ── CF_SNIFF_CLAIM — content script claims the sniffer for its tab ───────
+   * Returns {claimed: true} only if cf_sniff_pending is set AND sender.tab.id
+   * matches cf_sniff_tab. Clears the pending flag immediately to prevent a
+   * second tab from stealing the same sniffer session.                       */
+  if (type === "CF_SNIFF_CLAIM") {
+    const senderTabId = sender?.tab?.id;
+    chrome.storage.local.get(["cf_sniff_pending", "cf_sniff_tab"], (d) => {
+      if (d.cf_sniff_pending && senderTabId && d.cf_sniff_tab === senderTabId) {
+        chrome.storage.local.remove(["cf_sniff_pending"], () => {
+          sendResponse({ claimed: true });
+        });
+      } else {
+        sendResponse({ claimed: false });
+      }
+    });
+    return true; // async
+  }
+
   /* ── CF_GHL_BACKEND_ERROR — forwarded from content script network sniffer ──
-   * Stores the GHL backend error body so popup can display it in Debug Info.  */
+   * Only stored when the sender tab matches the tab we armed the sniffer for.
+   * After 60 s the record is stale; popup truncates display accordingly.    */
   if (type === "CF_GHL_BACKEND_ERROR") {
-    const { status, url, body, tabId } = msg;
-    chrome.storage.local.set({ cf_last_ghl_error: { status, url, body, tabId, ts: Date.now() } });
+    const senderTabId = sender?.tab?.id;
+    (() => {
+      chrome.storage.local.get(["cf_sniff_tab"], (d) => {
+        if (!senderTabId || d.cf_sniff_tab !== senderTabId) return;
+        const { status, url, body } = msg;
+        chrome.storage.local.set({ cf_last_ghl_error: { status, url, body, tabId: senderTabId, ts: Date.now() } });
+      });
+    })();
     return false;
   }
 
   /* ── CF_OOFF_ERROR — forwarded from content script onerror sniffer ────────
-   * Stores whether the o.off error was pre-existing (pre-page-ready) or not.  */
+   * Only stored when the sender tab matches the tab we armed the sniffer for.
+   * pageReady flag set BEFORE inject means pre-existing; set AFTER means
+   * inject-triggered. Background also sets cf_sniff_inject_ts at arm-time so
+   * the pre/post boundary is available for comparison.                        */
   if (type === "CF_OOFF_ERROR") {
-    const { msg: errMsg, src, line, pageReady, tabId } = msg;
-    chrome.storage.local.set({ cf_last_ooff_error: { errMsg, src, line, pageReady, tabId, ts: Date.now() } });
+    const senderTabId = sender?.tab?.id;
+    (() => {
+      chrome.storage.local.get(["cf_sniff_tab", "cf_sniff_inject_ts"], (d) => {
+        if (!senderTabId || d.cf_sniff_tab !== senderTabId) return;
+        const { msg: errMsg, src, line, ooffTs } = msg;
+        const injectTs = d.cf_sniff_inject_ts ?? 0;
+        const preExisting = ooffTs ? (ooffTs < injectTs) : false;
+        chrome.storage.local.set({ cf_last_ooff_error: { errMsg, src, line, preExisting, tabId: senderTabId, ts: Date.now() } });
+      });
+    })();
     return false;
   }
 

@@ -339,16 +339,21 @@ async function showInjectDebug() {
     lines.push(`\n--- GHL Diagnostic (captured on last builder reload) ---`);
     if (ghlErr) {
       const age = ghlErr.ts ? `${Math.round((Date.now() - ghlErr.ts) / 1000)}s ago` : "?";
-      lines.push(`GHL backend error (${age}): HTTP ${ghlErr.status ?? "?"} from ${ghlErr.url ?? "?"}`);
+      const stale = ghlErr.ts && (Date.now() - ghlErr.ts > 60000) ? " [stale >60s]" : "";
+      lines.push(`GHL backend error (${age}${stale}): HTTP ${ghlErr.status ?? "?"} from ${ghlErr.url ?? "?"}`);
       lines.push(`GHL error body: ${(ghlErr.body ?? "").slice(0, 400)}`);
     } else {
       lines.push(`GHL backend error: none captured`);
     }
     if (ooffErr) {
       const age2 = ooffErr.ts ? `${Math.round((Date.now() - ooffErr.ts) / 1000)}s ago` : "?";
-      const timing = ooffErr.pageReady ? "after-page-ready (inject-triggered)" : "before-page-ready (pre-existing)";
-      lines.push(`oOffError (${age2}): ${timing} — "${(ooffErr.errMsg ?? "").slice(0, 100)}"`);
-      lines.push(`oOffError src: ${(ooffErr.src ?? "").slice(0, 120)} line ${ooffErr.line ?? "?"}`);
+      const stale2 = ooffErr.ts && (Date.now() - ooffErr.ts > 60000) ? " [stale >60s]" : "";
+      const timing = ooffErr.preExisting
+        ? "pre-existing (fired before inject timestamp — not our fault)"
+        : "inject-triggered (fired after inject timestamp — our write caused it)";
+      lines.push(`oOffError (${age2}${stale2}): ${timing}`);
+      lines.push(`  msg: "${(ooffErr.errMsg ?? "").slice(0, 100)}"`);
+      lines.push(`  src: ${(ooffErr.src ?? "").slice(0, 120)} line ${ooffErr.line ?? "?"}`);
     } else {
       lines.push(`oOffError: none captured`);
     }
