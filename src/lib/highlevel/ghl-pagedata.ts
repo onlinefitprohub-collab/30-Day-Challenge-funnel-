@@ -29,6 +29,12 @@ type StyleMap = Record<string, SV>;
 export interface GhlNode {
   id: string;
   metaData: Record<string, unknown>;
+  elements?: GhlNode[];
+  sequence?: number;
+  pageId?: string;
+  funnelId?: string;
+  locationId?: string;
+  general?: Record<string, unknown>;
 }
 
 export interface GhlPageData {
@@ -462,6 +468,30 @@ function createBuilder(): Builder {
 }
 
 function finalize(b: Builder, schemeKey: string | undefined): GhlPageData {
+  /* Post-process: attach nested `elements` arrays at section → row → col → element level.
+   * GHL's new builder calls createNestedJsonFromSections which iterates section.elements
+   * (top-level, not inside metaData). Without this, section.elements = undefined → TypeError. */
+  for (const section of b.sections) {
+    const rowIds = (section.metaData.child as string[]) ?? [];
+    section.elements = rowIds.map((rowId) => {
+      const row = b.rows[rowId];
+      if (!row) return { id: rowId, metaData: {}, elements: [] };
+      const colIds = (row.metaData.child as string[]) ?? [];
+      row.elements = colIds.map((colId) => {
+        const col = b.columns[colId];
+        if (!col) return { id: colId, metaData: {}, elements: [] };
+        const elemIds = (col.metaData.child as string[]) ?? [];
+        col.elements = elemIds.map((elemId) => {
+          const elem = b.elements[elemId];
+          if (!elem) return { id: elemId, metaData: {}, elements: [] };
+          elem.elements = [];
+          return elem;
+        });
+        return col;
+      });
+      return row;
+    });
+  }
   return { ...buildEnvelope(schemeKey), ...b };
 }
 

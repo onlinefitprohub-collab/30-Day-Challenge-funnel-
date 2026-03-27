@@ -1,4 +1,4 @@
-// popup.js v2.26.0 — Challenge Funnel Extension
+// popup.js v2.27.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -221,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.26.0 ===");
+  lines.push("=== CF Extension v2.27.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -284,6 +284,8 @@ async function showInjectDebug() {
             lines.push(`A2 postWrite ref: sec0ChildRow=${pw.sec0ChildRowId ?? "?"} rowRefOk=${pw.rowRefOk ?? "?"} colId=${pw.firstColId ?? "?"} colRefOk=${pw.colRefOk ?? "?"}`);
             lines.push(`A2 postWrite firstRowMetaKeys=${JSON.stringify(pw.firstRowMetaKeys ?? "?")} firstRowKeys=${JSON.stringify(pw.firstRowKeys ?? "?")}`);
           }
+          /* v2.27.0 nested-format diagnostic */
+          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} ← rows nested in section[0].elements (>0 = nested format applied ✓)`);
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
           if (a2.patchToken !== undefined)       lines.push(`A2 patchToken: ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})  ← "ok-format1/2" + patchTokenOk=true = token CONFIRMED restored`);
@@ -353,7 +355,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.26.0 ===`);
+    lines.push(`=== Roundtrip Test v2.27.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
