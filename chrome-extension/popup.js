@@ -1,4 +1,4 @@
-// popup.js v2.29.2 — Challenge Funnel Extension
+// popup.js v2.30.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -208,7 +208,7 @@ async function showInjectDebug() {
   btn.textContent = "Hide";
 
   const [ls, ss, tabs] = await Promise.all([
-    chrome.storage.local.get(["cf_last_inject", "cfReady"]),
+    chrome.storage.local.get(["cf_last_inject", "cfReady", "cf_last_ghl_error", "cf_last_ooff_error"]),
     chrome.storage.session.get("cf_copied_page"),
     new Promise((r) => chrome.tabs.query({ active: true, currentWindow: true }, r)),
   ]);
@@ -221,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.29.2 ===");
+  lines.push("=== CF Extension v2.30.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -332,6 +332,28 @@ async function showInjectDebug() {
     }
   }
 
+  /* ── GHL Diagnostic (network sniffer results from post-inject page load) ── */
+  const ghlErr  = ls.cf_last_ghl_error;
+  const ooffErr = ls.cf_last_ooff_error;
+  if (ghlErr || ooffErr) {
+    lines.push(`\n--- GHL Diagnostic (captured on last builder reload) ---`);
+    if (ghlErr) {
+      const age = ghlErr.ts ? `${Math.round((Date.now() - ghlErr.ts) / 1000)}s ago` : "?";
+      lines.push(`GHL backend error (${age}): HTTP ${ghlErr.status ?? "?"} from ${ghlErr.url ?? "?"}`);
+      lines.push(`GHL error body: ${(ghlErr.body ?? "").slice(0, 400)}`);
+    } else {
+      lines.push(`GHL backend error: none captured`);
+    }
+    if (ooffErr) {
+      const age2 = ooffErr.ts ? `${Math.round((Date.now() - ooffErr.ts) / 1000)}s ago` : "?";
+      const timing = ooffErr.pageReady ? "after-page-ready (inject-triggered)" : "before-page-ready (pre-existing)";
+      lines.push(`oOffError (${age2}): ${timing} — "${(ooffErr.errMsg ?? "").slice(0, 100)}"`);
+      lines.push(`oOffError src: ${(ooffErr.src ?? "").slice(0, 120)} line ${ooffErr.line ?? "?"}`);
+    } else {
+      lines.push(`oOffError: none captured`);
+    }
+  }
+
   div.textContent = lines.join("\n");
   div.className = inject?.ok ? "paste-result ok" : "paste-result info";
 }
@@ -366,7 +388,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.29.2 ===`);
+    lines.push(`=== Roundtrip Test v2.30.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
@@ -376,6 +398,7 @@ async function doRoundtripTest() {
     lines.push(`secs=${d.sectionCount} rows=${d.rowCount} cols=${d.colCount} elems=${d.elemCount}`);
     /* Schema probes */
     if (d.firstSecTopKeys !== undefined)  lines.push(`sec0 topKeys: ${JSON.stringify(d.firstSecTopKeys)}`);
+    if (d.firstSecHasElements !== undefined) lines.push(`sec0 hasElements: ${d.firstSecHasElements} ← KEY: false=sections store no elements tree in Firebase (v2.29.2 theory confirmed if false)`);
     if (d.firstSecMetaKeys !== undefined) lines.push(`sec0 metaKeys: ${JSON.stringify(d.firstSecMetaKeys)}`);
     if (d.firstRowTopKeys !== undefined)  lines.push(`row0 topKeys: ${JSON.stringify(d.firstRowTopKeys)} hasElements=${d.firstRowHasElements}`);
     if (d.firstColTopKeys !== undefined)  lines.push(`col0 topKeys: ${JSON.stringify(d.firstColTopKeys)} hasElements=${d.firstColHasElements}`);

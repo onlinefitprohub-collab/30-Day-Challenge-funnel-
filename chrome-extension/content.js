@@ -1,4 +1,4 @@
-// content.js v2.28.0 — Challenge Funnel in a Box
+// content.js v2.30.0 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.
@@ -11,8 +11,8 @@
   // Version-specific guard: when the extension updates, the new version string
   // doesn't match the old one, so the new content.js always replaces the old one
   // in already-open tabs (no manual page reload needed after extension update).
-  if (window.__cfExtLoaded === "2.28.0") return;
-  window.__cfExtLoaded = "2.28.0";
+  if (window.__cfExtLoaded === "2.30.0") return;
+  window.__cfExtLoaded = "2.30.0";
 
   const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
@@ -68,7 +68,7 @@
     const t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.28.0" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.30.0" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {
@@ -125,6 +125,29 @@
     }
   });
 
+  /* ─── Network sniffer relay (runs on GHL pages after inject) ───────────
+   * Background sets cf_sniff_pending=true before reloading the builder.
+   * On next page load, content script injects a MAIN-world script that:
+   *  • monkey-patches window.fetch to capture GHL backend 4xx/5xx bodies
+   *  • installs window.onerror to detect o.off / is-not-a-function errors
+   * The injected script postMessages back; we relay to the background SW.  */
+  window.addEventListener("message", (evt) => {
+    if (!evt.data || evt.data.source !== "cf-network-sniffer") return;
+    const d = evt.data;
+    if (d.type === "CF_GHL_BACKEND_ERROR") {
+      try {
+        chrome.runtime.sendMessage({ type: "CF_GHL_BACKEND_ERROR",
+          status: d.status, url: d.url, body: d.body });
+      } catch (_) {}
+    }
+    if (d.type === "CF_OOFF_ERROR") {
+      try {
+        chrome.runtime.sendMessage({ type: "CF_OOFF_ERROR",
+          msg: d.msg, src: d.src, line: d.line, pageReady: d.pageReady });
+      } catch (_) {}
+    }
+  });
+
   /* ─── GHL-only from here on ──────────────────────────────────────────── */
   if (!IS_GHL) return;
 
@@ -135,6 +158,73 @@
     s.id  = "cf-bridge-script";
     s.src = chrome.runtime.getURL("bridge.js");
     (document.head || document.documentElement).appendChild(s);
+  }
+
+  /* ─── Network + JS-error sniffer (injected into MAIN world) ─────────── *
+   * Monkey-patches window.fetch to capture GHL backend 4xx/5xx bodies and
+   * installs window.onerror to detect o.off / is-not-a-function errors.
+   * Auto-removes after 25 seconds. Uses var/function for compatibility.   */
+  const CF_SNIFF_CODE = `(function(){
+    if(window.__cfSniffInstalled)return;
+    window.__cfSniffInstalled=true;
+    var pageReady=(document.readyState==='complete'||document.readyState==='interactive');
+    if(!pageReady) document.addEventListener('DOMContentLoaded',function(){pageReady=true;});
+    var origOnError=window.onerror;
+    window.onerror=function(msg,src,line,col,err){
+      if(msg&&(msg.indexOf('o.off')!==-1||msg.indexOf('is not a function')!==-1)&&
+         src&&src.indexOf('FunnelBuilderApp')!==-1){
+        window.postMessage({source:'cf-network-sniffer',type:'CF_OOFF_ERROR',
+          msg:String(msg).slice(0,200),src:String(src).slice(0,120),
+          line:line,pageReady:pageReady},'*');
+      }
+      if(origOnError)return origOnError.apply(this,arguments);
+      return false;
+    };
+    var origFetch=window.fetch;
+    var sniffTimer=setTimeout(function(){
+      window.fetch=origFetch;window.onerror=origOnError;
+      window.__cfSniffInstalled=false;
+    },25000);
+    window.fetch=function(){
+      var args=Array.prototype.slice.call(arguments);
+      return origFetch.apply(this,args).then(function(response){
+        var url=typeof args[0]==='string'?args[0]:(args[0]&&args[0].url?args[0].url:'');
+        if((url.indexOf('backend.leadconnectorhq.com')!==-1||
+            url.indexOf('leadconnecto')!==-1)&&response.status>=400){
+          try{
+            var clone=response.clone();
+            clone.text().then(function(body){
+              clearTimeout(sniffTimer);
+              window.fetch=origFetch;window.onerror=origOnError;
+              window.__cfSniffInstalled=false;
+              window.postMessage({source:'cf-network-sniffer',type:'CF_GHL_BACKEND_ERROR',
+                status:response.status,url:url.slice(0,120),body:body.slice(0,500)},'*');
+            });
+          }catch(e){}
+        }
+        return response;
+      });
+    };
+  })();`;
+
+  function injectSniff() {
+    if (document.getElementById("cf-sniff-script")) return;
+    const s = document.createElement("script");
+    s.id = "cf-sniff-script";
+    s.textContent = CF_SNIFF_CODE;
+    (document.head || document.documentElement).appendChild(s);
+    s.remove();
+  }
+
+  function checkAndInjectSniff() {
+    try {
+      chrome.storage.local.get(["cf_sniff_pending"], (data) => {
+        if (data.cf_sniff_pending) {
+          chrome.storage.local.remove("cf_sniff_pending");
+          injectSniff();
+        }
+      });
+    } catch (_) {}
   }
 
   const HOST_ID = "cf-fab-host";
@@ -374,6 +464,7 @@
     document.getElementById(HOST_ID)?.remove();
     injectBridge();
     buildFab();
+    checkAndInjectSniff();
   }
 
   if (document.readyState === "loading") {

@@ -678,6 +678,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     diag.approach2.firstSectionChildCount = Array.isArray(sec0.metaData?.child)
                       ? sec0.metaData.child.length
                       : (Array.isArray(sec0.child) ? sec0.child.length : 0);
+                    /* Does existing GHL section have an elements key? Confirms real GHL format. */
+                    diag.approach2.existSecHasElements = "elements" in sec0;
                   }
                 } else if (Array.isArray(existing.sections)) {
                   storageFormat = "structured-only";
@@ -926,6 +928,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     firstSectionChildCount: Array.isArray(sec0?.metaData?.child)
                       ? sec0.metaData.child.length
                       : (Array.isArray(sec0?.child) ? sec0.child.length : 0),
+                    /* Does the WRITTEN section have elements? Should be false after v2.29.2 fix. */
+                    writtenSecHasElements: sec0 ? ("elements" in sec0) : null,
                     sec0ChildRowId:  sec0ChildRowId ?? "none",
                     rowRefOk:        !!referencedRow,
                     firstRowMetaKeys: referencedRow?.metaData
@@ -1698,8 +1702,12 @@ async function _cf_roundtripFirebaseWrite(builderId) {
 
     /* First section */
     const firstSec = Array.isArray(existing.sections) && existing.sections[0];
-    diag.firstSecTopKeys  = firstSec ? Object.keys(firstSec).slice(0, 14) : "none";
-    diag.firstSecMetaKeys = firstSec?.metaData ? Object.keys(firstSec.metaData).slice(0, 14) : "none";
+    diag.firstSecTopKeys      = firstSec ? Object.keys(firstSec).slice(0, 14) : "none";
+    diag.firstSecMetaKeys     = firstSec?.metaData ? Object.keys(firstSec.metaData).slice(0, 14) : "none";
+    /* KEY diagnostic: does a REAL GHL section in Firebase carry an `elements` array?
+     * true  → sections store pre-built tree (elements arrays are expected in Firebase)
+     * false → sections store only metaData + child refs (GHL builds tree from flat dicts) */
+    diag.firstSecHasElements  = firstSec ? ("elements" in firstSec) : null;
 
     /* First row */
     const firstRow = existing.rows ? Object.values(existing.rows)[0] : null;
@@ -2179,6 +2187,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           // Store full inject result so popup can show debug details
           await chrome.storage.local.set({ cf_last_inject: { ...r, builderId: builderId2, ts: Date.now() } });
           if (r.ok) {
+            /* Install a network sniffer on the NEXT page load so we can capture
+             * GHL's backend error body and JS errors after the builder reloads.
+             * Content script reads this flag on mount and injects the sniffer. */
+            try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2 }); } catch(_) {}
             try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
             const method = r.method ?? "injected";
             const toast = r.warning
@@ -2642,6 +2654,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
     })();
     return true;
+  }
+
+  /* ── CF_GHL_BACKEND_ERROR — forwarded from content script network sniffer ──
+   * Stores the GHL backend error body so popup can display it in Debug Info.  */
+  if (type === "CF_GHL_BACKEND_ERROR") {
+    const { status, url, body, tabId } = msg;
+    chrome.storage.local.set({ cf_last_ghl_error: { status, url, body, tabId, ts: Date.now() } });
+    return false;
+  }
+
+  /* ── CF_OOFF_ERROR — forwarded from content script onerror sniffer ────────
+   * Stores whether the o.off error was pre-existing (pre-page-ready) or not.  */
+  if (type === "CF_OOFF_ERROR") {
+    const { msg: errMsg, src, line, pageReady, tabId } = msg;
+    chrome.storage.local.set({ cf_last_ooff_error: { errMsg, src, line, pageReady, tabId, ts: Date.now() } });
+    return false;
   }
 
   return false;
