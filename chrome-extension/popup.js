@@ -366,7 +366,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.28.0 ===`);
+    lines.push(`=== Roundtrip Test v2.29.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
