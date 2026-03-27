@@ -1138,8 +1138,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               } else {
                 a2b.metaPatch = "skipped-no-revex";
               }
-              /* Signal success — picked up by the check below */
-              diag.approach2b_ok = true;
+              /* Gate success on metadata patch — without registering the new URL
+                 in GHL metadata the builder cannot load the injected content.    */
+              if (a2b.metaPatch === "ok" || a2b.metaPatch === "ok-fallback") {
+                diag.approach2b_ok = true;
+              } else {
+                a2b.result = `firebase-write-ok-but-meta-patch-${a2b.metaPatch ?? "failed"}`;
+              }
             } else {
               const errTxt2B = await res2B.text().catch(() => "");
               a2b.result = `HTTP ${res2B.status}: ${errTxt2B.slice(0, 80)}`;
