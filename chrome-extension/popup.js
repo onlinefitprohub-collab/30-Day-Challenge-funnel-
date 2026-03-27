@@ -1,4 +1,4 @@
-// popup.js v2.23.0 — Challenge Funnel Extension
+// popup.js v2.24.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -28,6 +28,7 @@ function initCopyPaste() {
   document.getElementById("paste-btn").addEventListener("click", doPaste);
   document.getElementById("clear-btn").addEventListener("click", doClear);
   document.getElementById("debug-inject-btn").addEventListener("click", showInjectDebug);
+  document.getElementById("roundtrip-btn").addEventListener("click", doRoundtripTest);
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -220,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.23.0 ===");
+  lines.push("=== CF Extension v2.24.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -313,6 +314,73 @@ async function showInjectDebug() {
 
   div.textContent = lines.join("\n");
   div.className = inject?.ok ? "paste-result ok" : "paste-result info";
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ROUNDTRIP TEST
+   Read existing Firebase page data, deep-probe its structure, write back
+   unchanged, and display the key schema fields. Tells us whether the
+   TypeError: o1.elements is not iterable comes from our data or from the
+   write/reload mechanism.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+async function doRoundtripTest() {
+  const div = document.getElementById("roundtrip-result");
+  const btn = document.getElementById("roundtrip-btn");
+  if (!div) return;
+
+  // Toggle off if already showing
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Roundtrip Test (diagnostic)";
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Running…";
+  div.className   = "paste-result info";
+  div.textContent = "Reading + writing Firebase data…";
+
+  try {
+    const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
+    const d   = res?.diag ?? {};
+    const lines = [];
+    lines.push(`=== Roundtrip Test v2.24.0 ===`);
+    lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
+    if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
+    if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
+    lines.push(`metaOk=${d.metaOk} hasDownloadUrl=${d.hasDownloadUrl}`);
+    lines.push(`readOk=${d.readOk} payloadId=${d.payloadId ?? "?"}`);
+    lines.push(`topLevelKeys: ${JSON.stringify(d.topLevelKeys)}`);
+    lines.push(`secs=${d.sectionCount} rows=${d.rowCount} cols=${d.colCount} elems=${d.elemCount}`);
+    if (d.firstSecTopKeys !== undefined)  lines.push(`sec0 topKeys: ${JSON.stringify(d.firstSecTopKeys)}`);
+    if (d.firstSecMetaKeys !== undefined) lines.push(`sec0 metaKeys: ${JSON.stringify(d.firstSecMetaKeys)}`);
+    if (d.firstRowTopKeys !== undefined)  lines.push(`row0 topKeys: ${JSON.stringify(d.firstRowTopKeys)} hasElements=${d.firstRowHasElements}`);
+    if (d.firstColTopKeys !== undefined)  lines.push(`col0 topKeys: ${JSON.stringify(d.firstColTopKeys)} hasElements=${d.firstColHasElements}`);
+    if (d.firstColMetaKeys !== undefined) lines.push(`col0 metaKeys: ${JSON.stringify(d.firstColMetaKeys)}`);
+    if (d.firstColElemCopyKeys !== undefined) lines.push(`col0 metaData.element keys: ${JSON.stringify(d.firstColElemCopyKeys)}`);
+    if (d.firstElemTopKeys !== undefined) lines.push(`elem0 topKeys: ${JSON.stringify(d.firstElemTopKeys)} hasElements=${d.firstElemHasElements}`);
+    if (d.firstElemMetaKeys !== undefined) lines.push(`elem0 metaKeys: ${JSON.stringify(d.firstElemMetaKeys)} metaHasElems=${d.firstElemMetaHasElements}`);
+    if (d.firstElemElemCopyKeys !== undefined) lines.push(`elem0 metaData.element keys: ${JSON.stringify(d.firstElemElemCopyKeys)} hasElems=${d.firstElemElemCopyHasElems}`);
+    lines.push(`anyRowHasElements=${d.anyRowHasElements} anyColHasElements=${d.anyColHasElements} anyElemHasElements=${d.anyElemHasElements}`);
+    lines.push(`sectionsWithTopLevelElements=${d.sectionsWithTopLevelElements}`);
+    lines.push(`writeOk=${d.writeOk} writeStatus=${d.writeStatus ?? "?"}`);
+    if (d.writeError) lines.push(`writeError: ${d.writeError}`);
+    if (d.verifyStatus !== undefined) lines.push(`verify: status=${d.verifyStatus} secs=${d.verifySecCount} elems=${d.verifyElemCount} id=${d.verifyId}`);
+    lines.push(`\nNow RELOAD the GHL builder tab and check the console.`);
+    lines.push(`If TypeError still appears → cause is write/reload, not our format.`);
+    lines.push(`If TypeError disappears → cause is our AI data format.`);
+
+    div.textContent = lines.join("\n");
+    div.className   = res?.ok ? "paste-result ok" : "paste-result err";
+  } catch (e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Roundtrip Test (diagnostic)";
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

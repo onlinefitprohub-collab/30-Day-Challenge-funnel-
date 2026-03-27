@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.23.0 — revert dual-format sections (fix TypeError o1.elements), add Approach 4 to FAB path.");
+    console.log("[CF Funnel] Installed v2.24.0 — roundtrip test: probe GHL exact schema + write original data back unchanged.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.23.0 — revert dual-format sections (fix TypeError o1.elements), add Approach 4 to FAB path.");
+    console.log("[CF Funnel] Updated to v2.24.0 — roundtrip test: probe GHL exact schema + write original data back unchanged.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1227,6 +1227,206 @@ async function _cf_refreshBuilderIframe() {
   }
 }
 
+/* ─── _cf_roundtripFirebaseWrite ────────────────────────────────────────────
+ * Roundtrip diagnostic: read existing Firebase page data → deep probe its
+ * structure → write it BACK UNCHANGED → verify the re-read.
+ *
+ * Used to pinpoint whether "TypeError: o1.elements is not iterable" comes from:
+ *   A) our AI-generated data format, or
+ *   B) the Firebase write/reload mechanism itself
+ *
+ * If the error appears after roundtripping ORIGINAL data → cause is (B).
+ * If the error disappears → cause is (A) and we need to match the exact format.
+ * Also captures firstElemTopKeys/firstColTopKeys so we know GHL's exact schema.
+ *
+ * Returns { ok, diag } serialised as JSON.
+ * ─────────────────────────────────────────────────────────────────────────── */
+async function _cf_roundtripFirebaseWrite(builderId) {
+  const diag = {};
+  try {
+    /* 1. Find revexBackendService */
+    const appEl = document.querySelector("#app");
+    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    if (!revex) {
+      for (const ai of Object.values(window.app ?? {})) {
+        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+        if (r && typeof r.get === "function") { revex = r; break; }
+      }
+    }
+    if (!revex) return JSON.stringify({ ok: false, error: "revex not found — builder must be fully loaded", diag });
+
+    /* 2. Fetch GHL page metadata → downloadUrl */
+    let metadata = null;
+    try {
+      const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+      metadata = r?.data ?? r ?? null;
+    } catch (_) {
+      try {
+        const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+        metadata = r2?.data ?? r2 ?? null;
+      } catch (_2) {}
+    }
+    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    diag.metaOk       = !!metadata;
+    diag.hasDownloadUrl = !!downloadUrl;
+    if (!downloadUrl) return JSON.stringify({ ok: false, error: "no downloadUrl in GHL metadata", diag });
+
+    /* 3. Parse Firebase bucket + objectPath */
+    const fbMatch = downloadUrl.match(
+      /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
+    );
+    if (!fbMatch) return JSON.stringify({ ok: false, error: "could not parse Firebase URL", diag });
+    const bucket     = decodeURIComponent(fbMatch[1]);
+    const objectPath = decodeURIComponent(fbMatch[2]);
+    diag.bucket = bucket.slice(0, 60);
+
+    /* 4. Get Firebase auth token (same v8/IDB logic as Approach 2) */
+    let idToken = null;
+    const tokenDiag = [];
+    try {
+      if (typeof firebase !== "undefined" && firebase.apps?.length) {
+        const user = firebase.auth().currentUser;
+        if (user) { idToken = await user.getIdToken(true); tokenDiag.push("v8"); }
+      }
+    } catch (te1) { tokenDiag.push(`v8-err:${String(te1).slice(0, 30)}`); }
+    if (!idToken) {
+      try {
+        for (const val of Object.values(window)) {
+          if (!val || typeof val !== "object") continue;
+          if (typeof val.auth === "function") {
+            const auth = val.auth();
+            if (auth?.currentUser) { idToken = await auth.currentUser.getIdToken(true); tokenDiag.push("win-prop"); break; }
+          }
+        }
+      } catch (te2) { tokenDiag.push(`win-err:${String(te2).slice(0, 30)}`); }
+    }
+    if (!idToken) {
+      try {
+        idToken = await new Promise((resolve) => {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => resolve(null);
+          req.onsuccess = (evt) => {
+            const db = evt.target.result;
+            if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
+            const tx    = db.transaction("firebaseLocalStorage", "readonly");
+            const store = tx.objectStore("firebaseLocalStorage");
+            const getAll = store.getAll();
+            getAll.onerror   = () => { db.close(); resolve(null); };
+            getAll.onsuccess = (e2) => {
+              db.close();
+              for (const rec of (e2.target.result ?? [])) {
+                const token = rec?.value?.stsTokenManager?.accessToken;
+                if (token) { resolve(token); return; }
+              }
+              resolve(null);
+            };
+          };
+        });
+        if (idToken) tokenDiag.push("idb-v9");
+      } catch (te5) { tokenDiag.push(`idb-err:${String(te5).slice(0, 30)}`); }
+    }
+    diag.tokenDiag = tokenDiag;
+    if (!idToken) return JSON.stringify({ ok: false, error: "no Firebase auth token found", diag });
+
+    /* 5. Read EXISTING Firebase page data */
+    const readRes = await fetch(downloadUrl, {
+      headers: { "Authorization": `Firebase ${idToken}` },
+      signal:  AbortSignal.timeout(8000),
+    });
+    if (!readRes.ok) return JSON.stringify({ ok: false, error: `read failed HTTP ${readRes.status}`, diag });
+    const existing = await readRes.json();
+    diag.readOk = true;
+
+    /* 6. DEEP structural probes — capture GHL's own exact schema ─────────── */
+    diag.topLevelKeys   = Object.keys(existing).slice(0, 20);
+    diag.payloadId      = existing.id ?? "missing";
+    diag.sectionCount   = Array.isArray(existing.sections) ? existing.sections.length : "not-array";
+    diag.rowCount       = existing.rows     ? Object.keys(existing.rows).length     : 0;
+    diag.colCount       = existing.columns  ? Object.keys(existing.columns).length  : 0;
+    diag.elemCount      = existing.elements ? Object.keys(existing.elements).length : 0;
+
+    /* First section */
+    const firstSec = Array.isArray(existing.sections) && existing.sections[0];
+    diag.firstSecTopKeys  = firstSec ? Object.keys(firstSec).slice(0, 14) : "none";
+    diag.firstSecMetaKeys = firstSec?.metaData ? Object.keys(firstSec.metaData).slice(0, 14) : "none";
+
+    /* First row */
+    const firstRow = existing.rows ? Object.values(existing.rows)[0] : null;
+    diag.firstRowTopKeys      = firstRow ? Object.keys(firstRow).slice(0, 14)                         : "none";
+    diag.firstRowMetaKeys     = firstRow?.metaData ? Object.keys(firstRow.metaData).slice(0, 14)     : "none";
+    diag.firstRowHasElements  = firstRow ? ("elements" in firstRow)                                   : false;
+
+    /* First column — CRITICAL: does GHL put `elements` at top level on cols? */
+    const firstCol = existing.columns ? Object.values(existing.columns)[0] : null;
+    diag.firstColTopKeys          = firstCol ? Object.keys(firstCol).slice(0, 14)                       : "none";
+    diag.firstColMetaKeys         = firstCol?.metaData ? Object.keys(firstCol.metaData).slice(0, 14)   : "none";
+    diag.firstColHasElements      = firstCol ? ("elements" in firstCol)                                 : false;
+    diag.firstColElemCopyKeys     = firstCol?.metaData?.element
+      ? Object.keys(firstCol.metaData.element).slice(0, 14) : "none";
+
+    /* First element — CRITICAL: does GHL's own element have top-level `elements`? */
+    const firstElem = existing.elements ? Object.values(existing.elements)[0] : null;
+    diag.firstElemTopKeys          = firstElem ? Object.keys(firstElem).slice(0, 14)                       : "none";
+    diag.firstElemMetaKeys         = firstElem?.metaData ? Object.keys(firstElem.metaData).slice(0, 14)   : "none";
+    diag.firstElemHasElements      = firstElem ? ("elements" in firstElem)                                 : false;
+    diag.firstElemMetaHasElements  = firstElem?.metaData ? ("elements" in firstElem.metaData)             : false;
+    /* What's inside the .element nested copy in metaData? */
+    diag.firstElemElemCopyKeys     = firstElem?.metaData?.element
+      ? Object.keys(firstElem.metaData.element).slice(0, 14) : "none";
+    diag.firstElemElemCopyHasElems = firstElem?.metaData?.element
+      ? ("elements" in firstElem.metaData.element) : false;
+
+    /* Breadth check — do ANY rows/cols/elems have top-level `elements`? */
+    diag.anyRowHasElements  = existing.rows
+      ? Object.values(existing.rows).some(r => "elements" in r) : false;
+    diag.anyColHasElements  = existing.columns
+      ? Object.values(existing.columns).some(c => "elements" in c) : false;
+    diag.anyElemHasElements = existing.elements
+      ? Object.values(existing.elements).some(e => "elements" in e) : false;
+    diag.sectionsWithTopLevelElements = Array.isArray(existing.sections)
+      ? existing.sections.filter(s => "elements" in s).length : 0;
+
+    /* 7. Write the EXACT SAME DATA BACK — no modifications whatsoever ──────── */
+    const uploadEp =
+      `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
+      `/o?uploadType=media&name=${encodeURIComponent(objectPath)}`;
+    const writeRes = await fetch(uploadEp, {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Firebase ${idToken}`,
+      },
+      body: JSON.stringify(existing),
+    });
+    diag.writeStatus = writeRes.status;
+    diag.writeOk     = writeRes.ok;
+    if (!writeRes.ok) {
+      const errText = await writeRes.text().catch(() => "");
+      diag.writeError = errText.slice(0, 100);
+      return JSON.stringify({ ok: false, error: `write failed HTTP ${writeRes.status}`, diag });
+    }
+
+    /* 8. Verify re-read after short delay */
+    await new Promise(r => setTimeout(r, 600));
+    const vrRes = await fetch(downloadUrl, {
+      cache:   "no-store",
+      headers: { "Authorization": `Firebase ${idToken}` },
+      signal:  AbortSignal.timeout(5000),
+    });
+    diag.verifyStatus = vrRes.status;
+    if (vrRes.ok) {
+      const vd = await vrRes.json();
+      diag.verifyElemCount = vd.elements ? Object.keys(vd.elements).length : 0;
+      diag.verifySecCount  = Array.isArray(vd.sections) ? vd.sections.length : 0;
+      diag.verifyId        = vd.id ?? "missing";
+    }
+
+    return JSON.stringify({ ok: true, diag });
+  } catch (err) {
+    return JSON.stringify({ ok: false, error: String(err).slice(0, 160), diag });
+  }
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    MESSAGE ROUTER
    ════════════════════════════════════════════════════════════════════════════ */
@@ -1626,6 +1826,40 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
     })();
     return true; // async
+  }
+
+  /* ── CF_ROUNDTRIP_TEST ────────────────────────────────────────────────────
+   * Diagnostic: read existing Firebase data, deep-probe its structure, write
+   * it back UNCHANGED, verify re-read.  Tells us whether the TypeError comes
+   * from our data format vs the write/reload mechanism.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_ROUNDTRIP_TEST") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+
+        const tab = await chrome.tabs.get(tabId);
+        const m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        if (!m) {
+          sendResponse({ ok: false, error: `Not a GHL builder tab: ${(tab.url ?? "").slice(0, 80)}` });
+          return;
+        }
+        const [, , , builderId] = m;
+
+        const res = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   _cf_roundtripFirebaseWrite,
+          args:   [builderId],
+        });
+        const result = JSON.parse(res?.[0]?.result ?? "{}");
+        sendResponse(result);
+      } catch(err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
   }
 
   /* ── CF_INJECT_AI_PAGE ───────────────────────────────────────────────────
