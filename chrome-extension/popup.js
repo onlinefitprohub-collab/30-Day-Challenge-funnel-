@@ -1,4 +1,4 @@
-// popup.js v2.29.0 — Challenge Funnel Extension
+// popup.js v2.29.1 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -221,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.29.0 ===");
+  lines.push("=== CF Extension v2.29.1 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -269,7 +269,7 @@ async function showInjectDebug() {
           const a2 = d.approach2;
           lines.push(`A2 bucket: ${a2.bucket ?? "?"} hasToken=${a2.hasToken}`);
           lines.push(`A2 httpStatus: ${a2.httpStatus ?? "?"} | result: ${a2.result ?? "?"}`);
-          lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"} existingId=${a2.existingPayloadId ?? "?"}`);
+          lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} writeFormat: ${a2.writeFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"} existingId=${a2.existingPayloadId ?? "?"}`);
           if (a2.firstRowKeys !== undefined) {
             lines.push(`A2 firstRowKeys: ${JSON.stringify(a2.firstRowKeys)} | existRowMeta: ${JSON.stringify(a2.firstExistRowMetaKeys ?? "?")}`);
             lines.push(`A2 existRowDictKey=${a2.firstExistRowDictKey ?? "?"} idMatch=${a2.firstExistRowIdMatch ?? "?"}`);
@@ -366,7 +366,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.29.0 ===`);
+    lines.push(`=== Roundtrip Test v2.29.1 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);

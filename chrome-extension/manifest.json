@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.29.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.29.0: Fix inject on blank GHL pages (construct Firebase path when pageDataDownloadUrl is missing). No API key needed.",
+  "version": "2.29.1",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.29.1: Fix builder hang after inject — write nested-only format to match blank GHL page format. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

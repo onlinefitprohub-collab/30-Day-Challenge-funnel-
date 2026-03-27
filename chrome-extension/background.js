@@ -747,6 +747,14 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * Confirms that ghl-pagedata.ts finalize() built the nested tree.  */
             diag.approach2.firstSecElemCount = sectionsWithContext[0]?.elements?.length ?? 0;
 
+            /* Match the write format to the existing page format.
+             * For structured-only pages (blank/new GHL pages that only have sections
+             * with nested elements, no flat dict keys), writing flat rows/columns/elements
+             * dicts causes GHL's builder to hang on reload — it conflicts with the
+             * code path GHL initialised for the page format.
+             * For structured-dict pages (existing pages with flat dicts), keep flat
+             * dicts (which is what the roundtrip test confirmed works).             */
+            const useNestedOnly = (storageFormat === "structured-only");
             const writePayload = {
               fontsForPreview: pd.fontsForPreview,
               general:         pd.general,
@@ -754,12 +762,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               pageStyles:      pd.pageStyles,
               popups:          pd.popups ?? [],
               sections:        sectionsWithContext,
-              rows:            wrappedRows,
-              columns:         wrappedCols,
-              elements:        wrappedEls,
+              ...(!useNestedOnly ? {
+                rows:    wrappedRows,
+                columns: wrappedCols,
+                elements: wrappedEls,
+              } : {}),
             };
 
             diag.approach2.storageFormat  = storageFormat;
+            diag.approach2.writeFormat    = useNestedOnly ? "nested-only" : "structured-dict";
             diag.approach2.existElemCount = existElemCount;
             diag.approach2.nodeCount      = Object.keys(wrappedRows).length
               + Object.keys(wrappedCols).length
@@ -1081,6 +1092,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               locationId: locationId ?? "",
               general:    {},
             }));
+            /* Approach 2B always creates a NEW file (no existing format to check).
+             * Use nested-only format (no flat dicts) — matches what GHL writes for
+             * new pages and avoids the builder hang caused by format mismatch.    */
             const writePayload2B = {
               fontsForPreview: pd2B.fontsForPreview,
               general:         pd2B.general,
@@ -1088,10 +1102,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               pageStyles:      pd2B.pageStyles,
               popups:          pd2B.popups ?? [],
               sections:        sectionsCtx2B,
-              rows:            wrappedRows2B,
-              columns:         wrappedCols2B,
-              elements:        wrappedEls2B,
             };
+            a2b.writeFormat = "nested-only";
 
             /* ── POST to Firebase Storage REST API ───────────────────── */
             const constructedPath = `funnels/${funnelId2B}/${builderId}.json`;
