@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.22.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.22.0: Approach 4 Vuex2/Nuxt2 direct state mutation — finds GHL builder store module, patches rows/cols/elems live, forces re-render. No API key needed.",
+  "version": "2.23.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.23.0: Fix TypeError o1.elements-not-iterable (revert dual-format sections to pure {id,metaData}); add Approach 4 Vuex to FAB inject path. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
