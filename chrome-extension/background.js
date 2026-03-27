@@ -804,7 +804,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                 `/o/${encodedPath}`;
               let patchSucceeded = false;
               if (oldToken) {
-                /* Format 1: nested metadata field */
+                /* Format 1: nested metadata field — verify returned token matches */
                 try {
                   const pr1 = await fetch(metaEp, {
                     method:  "PATCH",
@@ -812,10 +812,22 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                     body:    JSON.stringify({ metadata: { downloadTokens: oldToken } }),
                   });
                   diag.approach2.patchStatus1 = pr1.status;
-                  if (pr1.ok) { patchSucceeded = true; diag.approach2.patchToken = "ok-format1"; }
+                  if (pr1.ok) {
+                    const pr1Body       = await pr1.json().catch(() => ({}));
+                    const returnedToken = pr1Body.metadata?.downloadTokens ?? pr1Body.downloadTokens ?? null;
+                    const tokenVerified = returnedToken === oldToken;
+                    diag.approach2.patchTokenOk = tokenVerified;
+                    if (tokenVerified) {
+                      patchSucceeded = true;
+                      diag.approach2.patchToken = "ok-format1";
+                    } else {
+                      diag.approach2.patchToken = `accepted-not-verified`;
+                      diag.approach2.patchReturnedToken = returnedToken ? returnedToken.slice(0, 20) + "…" : "null";
+                    }
+                  }
                 } catch (_p1) { diag.approach2.patchStatus1 = "err"; }
 
-                /* Format 2: top-level field, if format 1 failed */
+                /* Format 2: top-level field, if format 1 failed/unverified */
                 if (!patchSucceeded) {
                   try {
                     const pr2 = await fetch(metaEp, {
@@ -824,7 +836,19 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                       body:    JSON.stringify({ downloadTokens: oldToken }),
                     });
                     diag.approach2.patchStatus2 = pr2.status;
-                    if (pr2.ok) { patchSucceeded = true; diag.approach2.patchToken = "ok-format2"; }
+                    if (pr2.ok) {
+                      const pr2Body       = await pr2.json().catch(() => ({}));
+                      const returnedToken2 = pr2Body.metadata?.downloadTokens ?? pr2Body.downloadTokens ?? null;
+                      const tokenVerified2 = returnedToken2 === oldToken;
+                      diag.approach2.patchTokenOk = tokenVerified2;
+                      if (tokenVerified2) {
+                        patchSucceeded = true;
+                        diag.approach2.patchToken = "ok-format2";
+                      } else {
+                        diag.approach2.patchToken = `accepted-not-verified-f2`;
+                        diag.approach2.patchReturnedToken = returnedToken2 ? returnedToken2.slice(0, 20) + "…" : "null";
+                      }
+                    }
                   } catch (_p2) { diag.approach2.patchStatus2 = "err"; }
                 }
 
@@ -1521,7 +1545,7 @@ async function _cf_roundtripFirebaseWrite(builderId) {
       `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedPath}`;
     let patchSucceededR = false;
     if (oldTokenForPatch) {
-      /* Format 1: nested metadata field */
+      /* Format 1: nested metadata field — verify returned token matches */
       try {
         const pr1 = await fetch(metaEpR, {
           method:  "PATCH",
@@ -1529,10 +1553,22 @@ async function _cf_roundtripFirebaseWrite(builderId) {
           body:    JSON.stringify({ metadata: { downloadTokens: oldTokenForPatch } }),
         });
         diag.patchStatus1 = pr1.status;
-        if (pr1.ok) { patchSucceededR = true; diag.patchToken = "ok-format1"; }
+        if (pr1.ok) {
+          const pr1Body        = await pr1.json().catch(() => ({}));
+          const returnedTokenR = pr1Body.metadata?.downloadTokens ?? pr1Body.downloadTokens ?? null;
+          const tokenVerifiedR = returnedTokenR === oldTokenForPatch;
+          diag.patchTokenOk    = tokenVerifiedR;
+          if (tokenVerifiedR) {
+            patchSucceededR = true;
+            diag.patchToken = "ok-format1";
+          } else {
+            diag.patchToken         = "accepted-not-verified";
+            diag.patchReturnedToken = returnedTokenR ? returnedTokenR.slice(0, 20) + "…" : "null";
+          }
+        }
       } catch (_rp1) { diag.patchStatus1 = "err"; }
 
-      /* Format 2: top-level field, if format 1 failed */
+      /* Format 2: top-level field, if format 1 failed/unverified */
       if (!patchSucceededR) {
         try {
           const pr2 = await fetch(metaEpR, {
@@ -1541,7 +1577,19 @@ async function _cf_roundtripFirebaseWrite(builderId) {
             body:    JSON.stringify({ downloadTokens: oldTokenForPatch }),
           });
           diag.patchStatus2 = pr2.status;
-          if (pr2.ok) { patchSucceededR = true; diag.patchToken = "ok-format2"; }
+          if (pr2.ok) {
+            const pr2Body         = await pr2.json().catch(() => ({}));
+            const returnedToken2R = pr2Body.metadata?.downloadTokens ?? pr2Body.downloadTokens ?? null;
+            const tokenVerified2R = returnedToken2R === oldTokenForPatch;
+            diag.patchTokenOk     = tokenVerified2R;
+            if (tokenVerified2R) {
+              patchSucceededR = true;
+              diag.patchToken = "ok-format2";
+            } else {
+              diag.patchToken         = "accepted-not-verified-f2";
+              diag.patchReturnedToken = returnedToken2R ? returnedToken2R.slice(0, 20) + "…" : "null";
+            }
+          }
         } catch (_rp2) { diag.patchStatus2 = "err"; }
       }
 

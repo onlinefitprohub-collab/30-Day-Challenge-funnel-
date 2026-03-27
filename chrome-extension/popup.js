@@ -286,7 +286,9 @@ async function showInjectDebug() {
           }
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
-          if (a2.patchToken !== undefined)       lines.push(`A2 patchToken: ${a2.patchToken} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})  ← "ok-format1/2" = original token restored!`);
+          if (a2.patchToken !== undefined)       lines.push(`A2 patchToken: ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})  ← "ok-format1/2" + patchTokenOk=true = token CONFIRMED restored`);
+          if (a2.patchReturnedToken !== undefined) lines.push(`A2 patchReturnedToken: ${a2.patchReturnedToken} (mismatch!)`);
+
           if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate (fallback): ${a2.metaUpdate}`);
           if (a2.newPublicUrl !== undefined)     lines.push(`A2 newPublicUrl: ${a2.newPublicUrl}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
@@ -382,8 +384,9 @@ async function doRoundtripTest() {
     if (d.tokenChanged !== undefined) lines.push(`tokenChanged: ${d.tokenChanged}`);
     /* v2.26.0 PATCH to restore original token */
     if (d.patchStatus1 !== undefined || d.patchToken !== undefined) {
-      lines.push(`patchToken: ${d.patchToken ?? "?"} (s1=${d.patchStatus1 ?? "?"} s2=${d.patchStatus2 ?? "n/a"}) ← "ok-format1/2" = original token RESTORED, GHL URL valid again!`);
+      lines.push(`patchToken: ${d.patchToken ?? "?"} patchTokenOk=${d.patchTokenOk ?? "?"} (s1=${d.patchStatus1 ?? "?"} s2=${d.patchStatus2 ?? "n/a"}) ← "ok-format1/2" + patchTokenOk=true = token CONFIRMED restored!`);
     }
+    if (d.patchReturnedToken !== undefined) lines.push(`patchReturnedToken: ${d.patchReturnedToken} ← MISMATCH — token not actually restored!`);
     /* After-PATCH public read (simulates GHL read — should be 200 if patch worked) */
     if (d.publicReadAfterPatch !== undefined) lines.push(`publicRead AFTER patch (old token, no auth): ${JSON.stringify(d.publicReadAfterPatch)} ← 200=GHL can now read!`);
     /* Fallback metadata update */
