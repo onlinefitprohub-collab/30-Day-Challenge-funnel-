@@ -2545,34 +2545,69 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         const nativeResult = JSON.parse(execRes?.[0]?.result ?? "{}");
 
-        /* Read our inject page data for simulation */
+        /* Simulate our inject payload using the EXACT same transformation pipeline
+         * as the real CF_INJECT_AI_PAGE handler. Inline wrapIfFlat and sectionsWithContext
+         * construction so the diff reflects what we actually write to Firebase.           */
         const stored = await chrome.storage.local.get(["cfReady"]);
         const pd     = stored?.cfReady?.pageData ?? null;
 
         let injectSim = null;
         if (pd) {
-          const rows = pd.rows ?? {};
-          const sec0 = (pd.sections ?? [])[0];
-          if (sec0) {
-            const childRowIds     = Array.isArray(sec0.metaData?.child) ? sec0.metaData.child : [];
-            const shallowElements = childRowIds.map(id => rows[id]).filter(Boolean);
-            const firstRowId      = Object.keys(rows)[0];
-            const firstRow        = rows[firstRowId] ?? null;
-            injectSim = {
-              sec0Keys:            ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"],
-              sec0HasElements:     true,
-              sec0ElementsLen:     shallowElements.length,
-              sec0El0Keys:         shallowElements[0] ? Object.keys(shallowElements[0]).slice(0, 10) : "empty-array",
-              sec0El0HasMeta:      shallowElements[0] ? ("metaData" in shallowElements[0]) : false,
-              sec0El0HasElements:  shallowElements[0] ? ("elements" in shallowElements[0]) : false,
-              row0Keys:            firstRow ? Object.keys(firstRow).slice(0, 10) : "none",
-              row0HasElements:     firstRow ? ("elements" in firstRow) : false,
-              sectionCount:        (pd.sections ?? []).length,
-              rowCount:            Object.keys(pd.rows ?? {}).length,
-              colCount:            Object.keys(pd.columns ?? {}).length,
-              elemCount:           Object.keys(pd.elements ?? {}).length,
-            };
+          /* ── Same wrapIfFlat as inject pipeline ── */
+          function _diff_wrapIfFlat(key, v) {
+            if (!v || typeof v !== "object") return v;
+            if (v.metaData && typeof v.metaData === "object") return v;
+            return { id: key, metaData: { ...v, element: { ...v } } };
           }
+          const wrappedRows = Object.fromEntries(
+            Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, _diff_wrapIfFlat(k, v)])
+          );
+          const wrappedCols = Object.fromEntries(
+            Object.entries(pd.columns ?? {}).map(([k, v]) => [k, _diff_wrapIfFlat(k, v)])
+          );
+          const wrappedEls = Object.fromEntries(
+            Object.entries(pd.elements ?? {}).map(([k, v]) => [k, _diff_wrapIfFlat(k, v)])
+          );
+
+          /* ── Same sectionsWithContext as inject pipeline (shallow elements) ── */
+          const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
+            const childRowIds     = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+            const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
+            return {
+              id:         sec.id,
+              metaData:   sec.metaData,
+              elements:   shallowElements,
+              sequence:   i,
+              pageId:     "(builder-target)",
+              funnelId:   "(from-path)",
+              locationId: "",
+              general:    {},
+            };
+          });
+
+          /* ── Build the schema summary from real pipeline output ── */
+          const sec0        = sectionsWithContext[0] ?? null;
+          const shallowEls  = sec0?.elements ?? [];
+          const row0        = Object.values(wrappedRows)[0] ?? null;
+          const col0        = Object.values(wrappedCols)[0] ?? null;
+
+          injectSim = {
+            sec0Keys:            sec0 ? Object.keys(sec0)                                      : "none",
+            sec0HasElements:     sec0 ? ("elements" in sec0)                                   : false,
+            sec0ElementsLen:     shallowEls.length,
+            sec0El0Keys:         shallowEls[0] ? Object.keys(shallowEls[0]).slice(0, 10)       : "empty-array",
+            sec0El0HasMeta:      shallowEls[0] ? ("metaData" in shallowEls[0])                 : false,
+            sec0El0HasElements:  shallowEls[0] ? ("elements" in shallowEls[0])                 : false,
+            row0Keys:            row0 ? Object.keys(row0).slice(0, 10)                         : "none",
+            row0HasElements:     row0 ? ("elements" in row0)                                   : false,
+            row0MetaKeys:        row0?.metaData ? Object.keys(row0.metaData).slice(0, 10)      : "none",
+            col0Keys:            col0 ? Object.keys(col0).slice(0, 10)                         : "none",
+            col0HasElements:     col0 ? ("elements" in col0)                                   : false,
+            sectionCount:        sectionsWithContext.length,
+            rowCount:            Object.keys(wrappedRows).length,
+            colCount:            Object.keys(wrappedCols).length,
+            elemCount:           Object.keys(wrappedEls).length,
+          };
         }
 
         sendResponse({

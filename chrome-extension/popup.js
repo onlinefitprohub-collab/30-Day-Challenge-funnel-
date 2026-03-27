@@ -535,15 +535,17 @@ async function doSchemaDiff() {
       lines.push(`sec0 hasElements:   ${i.sec0HasElements}  |  elementsLen: ${i.sec0ElementsLen ?? "?"}`);
       lines.push(`sec0.el[0] keys:    ${JSON.stringify(i.sec0El0Keys ?? "?")}`);
       lines.push(`sec0.el[0] hasMeta: ${i.sec0El0HasMeta}  |  hasElements: ${i.sec0El0HasElements}`);
-      lines.push(`row0 keys (flat):   ${JSON.stringify(i.row0Keys ?? "?")}  |  hasElements: ${i.row0HasElements}`);
+      lines.push(`row0 keys (wrapped):${JSON.stringify(i.row0Keys ?? "?")}  |  hasElements: ${i.row0HasElements}`);
+      lines.push(`row0.metaData keys: ${JSON.stringify(i.row0MetaKeys ?? "?")}`);
+      lines.push(`col0 keys (wrapped):${JSON.stringify(i.col0Keys ?? "?")}  |  hasElements: ${i.col0HasElements}`);
 
-      lines.push(`\n--- Diff ---`);
+      lines.push(`\n--- Diff (native vs inject pipeline output) ---`);
       const check = (label, a, b) => lines.push(`${label}: ${a === b ? "✓ MATCH" : "✗ MISMATCH  native=" + JSON.stringify(a) + "  inject=" + JSON.stringify(b)}`);
       check("sec0 hasElements",        n.sec0HasElements,    i.sec0HasElements);
       check("sec0.el[0] hasMeta",      n.sec0El0HasMeta,     i.sec0El0HasMeta);
       check("sec0.el[0] hasElements",  n.sec0El0HasElements, i.sec0El0HasElements);
       check("row0 hasElements",        n.row0HasElements,    i.row0HasElements);
-      check("col0 hasElements",        n.col0HasElements,    false);
+      check("col0 hasElements",        n.col0HasElements,    i.col0HasElements);
     } else {
       lines.push(`\n--- Our Inject: no page loaded ---`);
       lines.push(`Open the AI library, load a page, then re-run Schema Diff.`);
