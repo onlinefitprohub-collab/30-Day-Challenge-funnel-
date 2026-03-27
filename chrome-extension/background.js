@@ -965,9 +965,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
     if (!diag.approach2?.fallThrough && !downloadUrl && metadata) {
       const a2b = { source: "constructed-path" };
       try {
-        const funnelId2B = metadata?.funnelId ?? metadata?.funnel_id ?? null;
-        a2b.funnelId     = funnelId2B ?? "missing";
-        a2b.metadataKeys = Object.keys(metadata ?? {}).slice(0, 15);
+        const funnelId2B  = metadata?.funnelId ?? metadata?.funnel_id ?? null;
+        a2b.funnelId      = funnelId2B ?? "missing";
+        a2b.metaFunnelId  = funnelId2B ?? null;
+        a2b.metadataKeys  = Object.keys(metadata ?? {}).slice(0, 15);
 
         if (funnelId2B) {
           /* ── Get Firebase auth token (same IDB logic as approach 2) ──── */
@@ -2377,13 +2378,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         } catch (_probeErr) {}
 
         /* ── Step B: Run approaches 0/1/2 in top frame ───────────────────── */
+        const { cf_cached_bucket: aiBkt = null } = await chrome.storage.local.get("cf_cached_bucket");
         let injectResult = {};
         try {
           const res = await chrome.scripting.executeScript({
             target: { tabId, allFrames: false },
             world:  "MAIN",
             func:   _cf_injectViaBuilderSave,
-            args:   [builderId, locationId, ready.pageData],
+            args:   [builderId, locationId, ready.pageData, aiBkt],
           });
           injectResult = JSON.parse(res?.[0]?.result ?? "{}");
         } catch(e) {

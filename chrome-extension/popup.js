@@ -299,7 +299,7 @@ async function showInjectDebug() {
         if (d.approach2b) {
           const a2b = d.approach2b;
           lines.push(`A2b result: ${a2b.result ?? "?"} httpStatus: ${a2b.httpStatus ?? "not-reached"}`);
-          lines.push(`A2b funnelId: ${a2b.funnelId ?? "?"} bucket: ${a2b.bucket ?? "?"}`);
+          lines.push(`A2b funnelId: ${a2b.funnelId ?? "?"} metaFunnelId: ${a2b.metaFunnelId ?? "null"} bucket: ${a2b.bucket ?? "?"}`);
           lines.push(`A2b bucketDiag: ${JSON.stringify(a2b.bucketDiag ?? [])} tokDiag: ${JSON.stringify(a2b.tokDiag ?? [])}`);
           if (a2b.path !== undefined)           lines.push(`A2b path: ${a2b.path}`);
           if (a2b.newDownloadUrl !== undefined) lines.push(`A2b newDownloadUrl: ${a2b.newDownloadUrl}`);
