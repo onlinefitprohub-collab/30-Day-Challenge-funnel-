@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.18.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.18.0: wrapIfFlat() normalises dict entries before Firebase write + postWrite cache-bust + Approach 3 iframe Pinia detection + pre-write row-key diagnostics. No API key needed.",
+  "version": "2.19.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.19.0: fix Firebase payload id=builderId (was random), deep postWrite diagnostics (rowCount/colCount/elemCount/rowRefOk/colRefOk/firstRowMetaKeys), existingPayloadId probe. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

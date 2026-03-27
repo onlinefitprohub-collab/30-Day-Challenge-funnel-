@@ -268,11 +268,17 @@ async function showInjectDebug() {
           const a2 = d.approach2;
           lines.push(`A2 bucket: ${a2.bucket ?? "?"} hasToken=${a2.hasToken}`);
           lines.push(`A2 httpStatus: ${a2.httpStatus ?? "?"} | result: ${a2.result ?? "?"}`);
-          lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"}`);
+          lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"} existingId=${a2.existingPayloadId ?? "?"}`);
           if (a2.firstRowKeys !== undefined)      lines.push(`A2 firstRowKeys: ${JSON.stringify(a2.firstRowKeys)}`);
           if (a2.firstSectionMetaKeys !== undefined) lines.push(`A2 firstSec metaKeys: ${JSON.stringify(a2.firstSectionMetaKeys)} childN=${a2.firstSectionChildCount ?? "?"}`);
           if (a2.preWriteRowKeys !== undefined)   lines.push(`A2 preWriteRowKeys: ${JSON.stringify(a2.preWriteRowKeys)} secChildId=${a2.preWriteSectionChildId ?? "?"}`);
-          if (a2.postWrite !== undefined)          lines.push(`A2 postWrite: ok=${a2.postWrite.readOk ?? "?"} http=${a2.postWrite.httpStatus ?? "?"} secs=${a2.postWrite.sectionCount ?? "?"} sec0.child=${a2.postWrite.firstSectionChildCount ?? "?"} rowKeys=${JSON.stringify(a2.postWrite.firstRowKeys ?? "?")}`);
+          if (a2.postWrite !== undefined) {
+            const pw = a2.postWrite;
+            lines.push(`A2 postWrite: ok=${pw.readOk ?? "?"} http=${pw.httpStatus ?? "?"} payloadId=${pw.payloadId ?? "?"}`);
+            lines.push(`A2 postWrite counts: secs=${pw.sectionCount ?? "?"} rows=${pw.rowCount ?? "?"} cols=${pw.colCount ?? "?"} elems=${pw.elemCount ?? "?"}`);
+            lines.push(`A2 postWrite ref: sec0ChildRow=${pw.sec0ChildRowId ?? "?"} rowRefOk=${pw.rowRefOk ?? "?"} colId=${pw.firstColId ?? "?"} colRefOk=${pw.colRefOk ?? "?"}`);
+            lines.push(`A2 postWrite firstRowMetaKeys=${JSON.stringify(pw.firstRowMetaKeys ?? "?")} firstRowKeys=${JSON.stringify(pw.firstRowKeys ?? "?")}`);
+          }
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }
