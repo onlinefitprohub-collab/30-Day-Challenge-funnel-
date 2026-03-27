@@ -1,4 +1,4 @@
-// popup.js v2.30.0 — Challenge Funnel Extension
+// popup.js v2.31.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -29,6 +29,7 @@ function initCopyPaste() {
   document.getElementById("clear-btn").addEventListener("click", doClear);
   document.getElementById("debug-inject-btn").addEventListener("click", showInjectDebug);
   document.getElementById("roundtrip-btn").addEventListener("click", doRoundtripTest);
+  document.getElementById("schema-diff-btn").addEventListener("click", doSchemaDiff);
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -228,7 +229,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.30.0 ===");
+  lines.push("=== CF Extension v2.31.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -291,8 +292,8 @@ async function showInjectDebug() {
             lines.push(`A2 postWrite ref: sec0ChildRow=${pw.sec0ChildRowId ?? "?"} rowRefOk=${pw.rowRefOk ?? "?"} colId=${pw.firstColId ?? "?"} colRefOk=${pw.colRefOk ?? "?"}`);
             lines.push(`A2 postWrite firstRowMetaKeys=${JSON.stringify(pw.firstRowMetaKeys ?? "?")} firstRowKeys=${JSON.stringify(pw.firstRowKeys ?? "?")}`);
           }
-          /* v2.27.0 nested-format diagnostic */
-          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} ← rows nested in section[0].elements (>0 = nested format applied ✓)`);
+          /* v2.31.0 section elements diagnostic */
+          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} ← rows in section[0].elements written to Firebase (>0 = shallow rows present ✓) | format: ${a2.firstSecElemFormat ?? "unknown"}`);
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
           if (a2.patchToken !== undefined)       lines.push(`A2 patchToken: ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})  ← "ok-format1/2" + patchTokenOk=true = token CONFIRMED restored`);
@@ -423,7 +424,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.30.0 ===`);
+    lines.push(`=== Roundtrip Test v2.31.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
@@ -433,7 +434,9 @@ async function doRoundtripTest() {
     lines.push(`secs=${d.sectionCount} rows=${d.rowCount} cols=${d.colCount} elems=${d.elemCount}`);
     /* Schema probes */
     if (d.firstSecTopKeys !== undefined)  lines.push(`sec0 topKeys: ${JSON.stringify(d.firstSecTopKeys)}`);
-    if (d.firstSecHasElements !== undefined) lines.push(`sec0 hasElements: ${d.firstSecHasElements} ← KEY: false=sections store no elements tree in Firebase (v2.29.2 theory confirmed if false)`);
+    if (d.firstSecHasElements !== undefined) lines.push(`sec0 hasElements: ${d.firstSecHasElements} ← true=sections store elements tree (v2.31.0: shallow rows are the fix)`);
+    if (d.sec0ElementsLength !== undefined) lines.push(`sec0 elements length: ${d.sec0ElementsLength}`);
+    if (d.sec0Elements0Keys !== undefined) lines.push(`sec0.elements[0] keys: ${JSON.stringify(d.sec0Elements0Keys)} hasMeta=${d.sec0Elements0HasMeta} hasElements=${d.sec0Elements0HasElements} childType=${d.sec0Elements0ChildType}`);
     if (d.firstSecMetaKeys !== undefined) lines.push(`sec0 metaKeys: ${JSON.stringify(d.firstSecMetaKeys)}`);
     if (d.firstRowTopKeys !== undefined)  lines.push(`row0 topKeys: ${JSON.stringify(d.firstRowTopKeys)} hasElements=${d.firstRowHasElements}`);
     if (d.firstColTopKeys !== undefined)  lines.push(`col0 topKeys: ${JSON.stringify(d.firstColTopKeys)} hasElements=${d.firstColHasElements}`);
@@ -478,6 +481,82 @@ async function doRoundtripTest() {
   } finally {
     btn.disabled    = false;
     btn.textContent = "Roundtrip Test (diagnostic)";
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCHEMA DIFF
+   Read-only comparison: GHL native Firebase structure vs our inject output.
+   No write — safe to run at any time on a GHL builder tab.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+async function doSchemaDiff() {
+  const div = document.getElementById("schema-diff-result");
+  const btn = document.getElementById("schema-diff-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className  = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Schema Diff (native vs inject)";
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Reading Firebase schema…";
+  div.className   = "paste-result info";
+  div.textContent = "Comparing GHL native vs inject format…";
+
+  try {
+    const res = await sendMessage({ type: "CF_SCHEMA_DIFF" });
+    const n   = res?.native  ?? {};
+    const i   = res?.inject  ?? null;
+    const lines = [];
+
+    lines.push(`=== Schema Diff v2.31.0 ===`);
+    lines.push(`Firebase read: ${res?.ok ? "ok" : "FAILED — " + (res?.error ?? "?")}`);
+    lines.push(`Has queued page data: ${res?.hasPageData ? "yes" : "no (load a page via AI library first)"}`);
+
+    lines.push(`\n--- GHL Native (what Firebase actually stores) ---`);
+    lines.push(`secs=${n.sectionCount ?? "?"} rows=${n.rowCount ?? "?"} cols=${n.colCount ?? "?"} elems=${n.elemCount ?? "?"}`);
+    lines.push(`sec0 keys:          ${JSON.stringify(n.sec0Keys ?? "?")}`);
+    lines.push(`sec0 hasElements:   ${n.sec0HasElements}  |  elementsLen: ${n.sec0ElementsLen ?? "?"}`);
+    lines.push(`sec0.el[0] keys:    ${JSON.stringify(n.sec0El0Keys ?? "?")}`);
+    lines.push(`sec0.el[0] hasMeta: ${n.sec0El0HasMeta}  |  hasElements: ${n.sec0El0HasElements}`);
+    lines.push(`row0 keys:          ${JSON.stringify(n.row0Keys ?? "?")}  |  hasElements: ${n.row0HasElements}`);
+    lines.push(`col0 keys:          ${JSON.stringify(n.col0Keys ?? "?")}  |  hasElements: ${n.col0HasElements}`);
+    lines.push(`elem0 keys:         ${JSON.stringify(n.elem0Keys ?? "?")}  |  hasElements: ${n.elem0HasElements}`);
+    lines.push(`anyRow/Col/ElemHasElements: ${n.anyRowHasElements}/${n.anyColHasElements}/${n.anyElemHasElements}`);
+
+    if (i) {
+      lines.push(`\n--- Our Inject (simulated, no write) ---`);
+      lines.push(`secs=${i.sectionCount ?? "?"} rows=${i.rowCount ?? "?"} cols=${i.colCount ?? "?"} elems=${i.elemCount ?? "?"}`);
+      lines.push(`sec0 keys:          ${JSON.stringify(i.sec0Keys ?? "?")}`);
+      lines.push(`sec0 hasElements:   ${i.sec0HasElements}  |  elementsLen: ${i.sec0ElementsLen ?? "?"}`);
+      lines.push(`sec0.el[0] keys:    ${JSON.stringify(i.sec0El0Keys ?? "?")}`);
+      lines.push(`sec0.el[0] hasMeta: ${i.sec0El0HasMeta}  |  hasElements: ${i.sec0El0HasElements}`);
+      lines.push(`row0 keys (flat):   ${JSON.stringify(i.row0Keys ?? "?")}  |  hasElements: ${i.row0HasElements}`);
+
+      lines.push(`\n--- Diff ---`);
+      const check = (label, a, b) => lines.push(`${label}: ${a === b ? "✓ MATCH" : "✗ MISMATCH  native=" + JSON.stringify(a) + "  inject=" + JSON.stringify(b)}`);
+      check("sec0 hasElements",        n.sec0HasElements,    i.sec0HasElements);
+      check("sec0.el[0] hasMeta",      n.sec0El0HasMeta,     i.sec0El0HasMeta);
+      check("sec0.el[0] hasElements",  n.sec0El0HasElements, i.sec0El0HasElements);
+      check("row0 hasElements",        n.row0HasElements,    i.row0HasElements);
+      check("col0 hasElements",        n.col0HasElements,    false);
+    } else {
+      lines.push(`\n--- Our Inject: no page loaded ---`);
+      lines.push(`Open the AI library, load a page, then re-run Schema Diff.`);
+    }
+
+    div.textContent = lines.join("\n");
+    div.className   = res?.ok ? "paste-result ok" : "paste-result err";
+  } catch (e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Schema Diff (native vs inject)";
   }
 }
 

@@ -730,34 +730,38 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               ?? pd.sections?.[0]?.child?.[0]
               ?? "none";
 
-            /* Confirmed from roundtrip (v2.26.0): GHL section top-level keys are:
+            /* GHL section top-level keys (confirmed by roundtrip v2.26.0 + v2.30.0):
              * ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
-             * v2.27.0 FIX: ghl-pagedata.ts finalize() now populates section.elements with the
-             * nested row → col → element tree. Here we also set the context fields that GHL
-             * stores per-section so createNestedJsonFromSections has everything it needs.      */
+             * v2.31.0: sections are built with shallow row elements (see comment below).       */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
-            /* Strip the nested `elements` array that finalize() added to each section.
-             * GHL's Firebase format stores sections as {id, metaData, sequence, pageId,
-             * funnelId, locationId, general} — NO top-level elements array.  GHL's builder
-             * reconstructs the nested row→col→element tree at runtime from section.metaData.child
-             * + the flat rows/columns/elements dicts.  Writing pre-built element trees causes
-             * the builder to hang (v2.29.0 bug: frontend processed both tree AND flat dicts).
-             * The flat dicts must always be included so GHL's backend can validate row
-             * references in section.metaData.child (omitting them caused backend 500 in v2.29.1). */
-            const sectionsWithContext = (pd.sections ?? []).map((sec, i) => ({
-              id:         sec.id,
-              metaData:   sec.metaData,
-              sequence:   i,
-              pageId:     builderId,
-              funnelId:   funnelIdFromPath,
-              locationId: "",
-              general:    {},
-            }));
+            /* v2.31.0 FIX: Roundtrip test (v2.30.0) proved real GHL sections ALWAYS carry
+             * a top-level `elements` key (sec0 hasElements: true, sec0 topKeys includes
+             * "elements"). Stripping it entirely (v2.29.2) caused GHL backend 500 on
+             * fetchPageData. The correct format is SHALLOW rows: section.elements =
+             * [wrappedRow, wrappedRow, ...] — flat row objects pulled from wrappedRows by
+             * the row IDs in section.metaData.child, with NO further col/element nesting
+             * (anyRowHasElements=false confirmed rows do not carry nested elements).
+             * Previous v2.27.0–v2.29.0 attempts used a deeply nested tree (finalize() output:
+             * row→col→element) which caused frontend hang — shallow rows are the fix. */
+            const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
+              const childRowIds     = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
+              return {
+                id:         sec.id,
+                metaData:   sec.metaData,
+                elements:   shallowElements,
+                sequence:   i,
+                pageId:     builderId,
+                funnelId:   funnelIdFromPath,
+                locationId: "",
+                general:    {},
+              };
+            });
 
-            /* Diagnostic: how many nested rows did finalize() build for section[0]?
-             * Reads from the original pd.sections (which still has elements arrays)
-             * to confirm finalize() worked — even though we strip them before writing. */
-            diag.approach2.firstSecElemCount = pd.sections?.[0]?.elements?.length ?? 0;
+            /* Diagnostic: rows written into section[0].elements (shallow format).
+             * v2.31.0: >0 = shallow row refs present ✓  |  0 = section has no child rows */
+            diag.approach2.firstSecElemCount  = sectionsWithContext[0]?.elements?.length ?? 0;
+            diag.approach2.firstSecElemFormat = "shallow-rows";
 
             /* Always write flat dicts — GHL backend requires rows/columns/elements to
              * exist for reference validation regardless of whether the page was blank. */
@@ -1613,6 +1617,107 @@ async function _cf_refreshBuilderIframe() {
   }
 }
 
+/* ─── _cf_readFirebaseSchema ─────────────────────────────────────────────────
+ * Lightweight read-only Firebase schema probe (no write).
+ * Used by CF_SCHEMA_DIFF to capture the GHL native data shape for comparison
+ * with what our inject pipeline would produce.
+ * ─────────────────────────────────────────────────────────────────────────── */
+async function _cf_readFirebaseSchema(builderId) {
+  const diag = {};
+  try {
+    const appEl = document.querySelector("#app");
+    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    if (!revex) {
+      for (const ai of Object.values(window.app ?? {})) {
+        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+        if (r && typeof r.get === "function") { revex = r; break; }
+      }
+    }
+    if (!revex) return JSON.stringify({ ok: false, error: "revex not found", diag });
+
+    let metadata = null;
+    try { const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`); metadata = r?.data ?? r ?? null; } catch (_) {}
+    if (!metadata) { try { const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`); metadata = r2?.data ?? r2 ?? null; } catch (_) {} }
+    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    diag.hasDownloadUrl = !!downloadUrl;
+    if (!downloadUrl) return JSON.stringify({ ok: false, error: "no downloadUrl in GHL metadata", diag });
+
+    const fbMatch = downloadUrl.match(/firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/);
+    if (!fbMatch) return JSON.stringify({ ok: false, error: "could not parse Firebase URL", diag });
+    const bucket = decodeURIComponent(fbMatch[1]);
+    diag.bucket = bucket.slice(0, 60);
+
+    let idToken = null;
+    try { if (typeof firebase !== "undefined" && firebase.apps?.length) { const u = firebase.auth().currentUser; if (u) idToken = await u.getIdToken(true); } } catch (_) {}
+    if (!idToken) {
+      try {
+        for (const val of Object.values(window)) {
+          if (!val || typeof val !== "object") continue;
+          if (typeof val.auth === "function") { const a = val.auth(); if (a?.currentUser) { idToken = await a.currentUser.getIdToken(true); break; } }
+        }
+      } catch (_) {}
+    }
+    if (!idToken) {
+      idToken = await new Promise(resolve => {
+        try {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => resolve(null);
+          req.onsuccess = evt => {
+            const db = evt.target.result;
+            if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
+            const getAll = db.transaction("firebaseLocalStorage","readonly").objectStore("firebaseLocalStorage").getAll();
+            getAll.onerror   = () => { db.close(); resolve(null); };
+            getAll.onsuccess = e2 => { db.close(); for (const rec of (e2.target.result ?? [])) { const t = rec?.value?.stsTokenManager?.accessToken; if (t) { resolve(t); return; } } resolve(null); };
+          };
+        } catch (_) { resolve(null); }
+      });
+    }
+    if (!idToken) return JSON.stringify({ ok: false, error: "no auth token", diag });
+
+    const readRes = await fetch(downloadUrl, { headers: { "Authorization": `Firebase ${idToken}` }, signal: AbortSignal.timeout(8000) });
+    if (!readRes.ok) return JSON.stringify({ ok: false, error: `read failed HTTP ${readRes.status}`, diag });
+    const existing = await readRes.json();
+    diag.readOk = true;
+
+    diag.topLevelKeys  = Object.keys(existing).slice(0, 20);
+    diag.sectionCount  = Array.isArray(existing.sections) ? existing.sections.length : 0;
+    diag.rowCount      = existing.rows     ? Object.keys(existing.rows).length     : 0;
+    diag.colCount      = existing.columns  ? Object.keys(existing.columns).length  : 0;
+    diag.elemCount     = existing.elements ? Object.keys(existing.elements).length : 0;
+
+    const sec0 = Array.isArray(existing.sections) ? existing.sections[0] : null;
+    diag.sec0Keys        = sec0 ? Object.keys(sec0).slice(0, 14) : "none";
+    diag.sec0HasElements = sec0 ? ("elements" in sec0) : null;
+    const _sArr = sec0 && Array.isArray(sec0.elements) ? sec0.elements : null;
+    diag.sec0ElementsLen = _sArr ? _sArr.length : (sec0 && "elements" in sec0 ? "non-array" : "key-missing");
+    const _s0e0 = _sArr?.[0] ?? null;
+    diag.sec0El0Keys        = _s0e0 ? Object.keys(_s0e0).slice(0, 10) : (_sArr?.length === 0 ? "empty-array" : "n/a");
+    diag.sec0El0HasMeta     = _s0e0 ? ("metaData" in _s0e0) : false;
+    diag.sec0El0HasElements = _s0e0 ? ("elements" in _s0e0) : false;
+
+    const row0 = existing.rows ? Object.values(existing.rows)[0] : null;
+    diag.row0Keys        = row0 ? Object.keys(row0).slice(0, 10)    : "none";
+    diag.row0HasElements = row0 ? ("elements" in row0)               : false;
+    diag.row0MetaKeys    = row0?.metaData ? Object.keys(row0.metaData).slice(0, 10) : "none";
+
+    const col0 = existing.columns ? Object.values(existing.columns)[0] : null;
+    diag.col0Keys        = col0 ? Object.keys(col0).slice(0, 10)    : "none";
+    diag.col0HasElements = col0 ? ("elements" in col0)               : false;
+
+    const elem0 = existing.elements ? Object.values(existing.elements)[0] : null;
+    diag.elem0Keys        = elem0 ? Object.keys(elem0).slice(0, 10)  : "none";
+    diag.elem0HasElements = elem0 ? ("elements" in elem0)            : false;
+
+    diag.anyRowHasElements  = existing.rows     ? Object.values(existing.rows).some(r    => "elements" in r)    : false;
+    diag.anyColHasElements  = existing.columns  ? Object.values(existing.columns).some(c => "elements" in c)    : false;
+    diag.anyElemHasElements = existing.elements ? Object.values(existing.elements).some(e => "elements" in e)   : false;
+
+    return JSON.stringify({ ok: true, diag });
+  } catch (err) {
+    return JSON.stringify({ ok: false, error: String(err).slice(0, 160), diag });
+  }
+}
+
 /* ─── _cf_roundtripFirebaseWrite ────────────────────────────────────────────
  * Roundtrip diagnostic: read existing Firebase page data → deep probe its
  * structure → write it BACK UNCHANGED → verify the re-read.
@@ -1739,6 +1844,25 @@ async function _cf_roundtripFirebaseWrite(builderId) {
      * true  → sections store pre-built tree (elements arrays are expected in Firebase)
      * false → sections store only metaData + child refs (GHL builds tree from flat dicts) */
     diag.firstSecHasElements  = firstSec ? ("elements" in firstSec) : null;
+
+    /* Deep probe: what does section[0].elements[0] actually look like?
+     * Critical for deciding whether elements are shallow rows, deep trees, or IDs.
+     * Only meaningful on pages with real content (non-empty sections).             */
+    const _sec0ElArr = firstSec && Array.isArray(firstSec.elements) ? firstSec.elements : null;
+    const _sec0El0   = _sec0ElArr?.[0] ?? null;
+    diag.sec0ElementsLength       = _sec0ElArr
+      ? _sec0ElArr.length
+      : (firstSec && "elements" in firstSec ? "non-array" : "key-missing");
+    diag.sec0Elements0Keys        = _sec0El0
+      ? Object.keys(_sec0El0).slice(0, 10)
+      : (_sec0ElArr?.length === 0 ? "empty-array" : "n/a");
+    diag.sec0Elements0HasMeta     = _sec0El0 ? ("metaData" in _sec0El0)   : false;
+    diag.sec0Elements0HasElements = _sec0El0 ? ("elements" in _sec0El0)   : false;
+    diag.sec0Elements0ChildType   = _sec0El0
+      ? (Array.isArray(_sec0El0?.metaData?.child)
+          ? `array[${_sec0El0.metaData.child.length}]`
+          : typeof (_sec0El0?.metaData?.child ?? null))
+      : "n/a";
 
     /* First row */
     const firstRow = existing.rows ? Object.values(existing.rows)[0] : null;
@@ -2386,6 +2510,78 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           chrome.storage.local.set({ cf_cached_bucket: result.diag.bucket }).catch(() => {});
         }
         sendResponse(result);
+      } catch(err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
+  }
+
+  /* ── CF_SCHEMA_DIFF ───────────────────────────────────────────────────────
+   * Dry-run comparison: reads GHL native Firebase schema THEN builds a
+   * simulation of our inject output — shows both side-by-side without
+   * writing anything. Helps pinpoint any remaining key/format mismatches.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_SCHEMA_DIFF") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+
+        const tab = await chrome.tabs.get(tabId);
+        const m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        if (!m) {
+          sendResponse({ ok: false, error: `Not a GHL builder tab: ${(tab.url ?? "").slice(0, 80)}` });
+          return;
+        }
+        const [, , , builderId] = m;
+
+        /* Read GHL native schema from Firebase (no write) */
+        const execRes = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   _cf_readFirebaseSchema,
+          args:   [builderId],
+        });
+        const nativeResult = JSON.parse(execRes?.[0]?.result ?? "{}");
+
+        /* Read our inject page data for simulation */
+        const stored = await chrome.storage.local.get(["cfReady"]);
+        const pd     = stored?.cfReady?.pageData ?? null;
+
+        let injectSim = null;
+        if (pd) {
+          const rows = pd.rows ?? {};
+          const sec0 = (pd.sections ?? [])[0];
+          if (sec0) {
+            const childRowIds     = Array.isArray(sec0.metaData?.child) ? sec0.metaData.child : [];
+            const shallowElements = childRowIds.map(id => rows[id]).filter(Boolean);
+            const firstRowId      = Object.keys(rows)[0];
+            const firstRow        = rows[firstRowId] ?? null;
+            injectSim = {
+              sec0Keys:            ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"],
+              sec0HasElements:     true,
+              sec0ElementsLen:     shallowElements.length,
+              sec0El0Keys:         shallowElements[0] ? Object.keys(shallowElements[0]).slice(0, 10) : "empty-array",
+              sec0El0HasMeta:      shallowElements[0] ? ("metaData" in shallowElements[0]) : false,
+              sec0El0HasElements:  shallowElements[0] ? ("elements" in shallowElements[0]) : false,
+              row0Keys:            firstRow ? Object.keys(firstRow).slice(0, 10) : "none",
+              row0HasElements:     firstRow ? ("elements" in firstRow) : false,
+              sectionCount:        (pd.sections ?? []).length,
+              rowCount:            Object.keys(pd.rows ?? {}).length,
+              colCount:            Object.keys(pd.columns ?? {}).length,
+              elemCount:           Object.keys(pd.elements ?? {}).length,
+            };
+          }
+        }
+
+        sendResponse({
+          ok:          nativeResult.ok,
+          error:       nativeResult.error,
+          native:      nativeResult.diag ?? {},
+          inject:      injectSim,
+          hasPageData: !!pd,
+        });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
       }
