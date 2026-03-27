@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.27.0 — fix GHL nested page format: sections.elements nested tree so createNestedJsonFromSections no longer throws TypeError.");
+    console.log("[CF Funnel] Installed v2.28.0 — fix gray FAB (popup writes cf_copied_page to session storage) + fix GHL 500 (finalize() no longer mutates flat map objects).");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.27.0 — fix GHL nested page format: sections.elements nested tree so createNestedJsonFromSections no longer throws TypeError.");
+    console.log("[CF Funnel] Updated to v2.28.0 — fix gray FAB (popup writes cf_copied_page to session storage) + fix GHL 500 (finalize() no longer mutates flat map objects).");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.

@@ -1,4 +1,4 @@
-// popup.js v2.27.0 — Challenge Funnel Extension
+// popup.js v2.28.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -221,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.27.0 ===");
+  lines.push("=== CF Extension v2.28.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -355,7 +355,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.27.0 ===`);
+    lines.push(`=== Roundtrip Test v2.28.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
@@ -619,11 +619,25 @@ async function loadPage(page, btn, cached) {
       chrome.storage.local.set({ cfReady: ready }, resolve);
     });
 
+    const sessionCopy = {
+      type:      "ai-inject",
+      page,
+      pageName:  PAGE_LABELS[page] || "AI Page",
+      pageData:  pdJson.pageData,
+      projectId: cached.projectId,
+      appUrl:    cached.appUrl,
+      copiedAt:  Date.now(),
+    };
+    await new Promise((resolve) => {
+      chrome.storage.session.set({ cf_copied_page: sessionCopy }, resolve);
+    });
+
     highlightCard(page);
     refreshLoadedBadge(ready);
+    refreshCopiedCard();
 
     showNote("info",
-      `${PAGE_LABELS[page]} is loaded!\n\nNow open that funnel page in the GHL builder — the extension panel will show an "Inject AI Page" button. Click it to inject the AI-generated content directly, no API key needed.`
+      `${PAGE_LABELS[page]} loaded! Switch to your GHL builder tab and click the orange CF button to inject.`
     );
   } catch (e) {
     showNote("err", `Could not load page data: ${e.message}`);

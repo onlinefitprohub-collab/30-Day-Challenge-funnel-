@@ -470,26 +470,31 @@ function createBuilder(): Builder {
 function finalize(b: Builder, schemeKey: string | undefined): GhlPageData {
   /* Post-process: attach nested `elements` arrays at section → row → col → element level.
    * GHL's new builder calls createNestedJsonFromSections which iterates section.elements
-   * (top-level, not inside metaData). Without this, section.elements = undefined → TypeError. */
+   * (top-level, not inside metaData). Without this, section.elements = undefined → TypeError.
+   *
+   * IMPORTANT: use object spread to create NEW objects for the nested tree rather than
+   * mutating the flat map entries in b.rows / b.columns / b.elements. If we mutate those
+   * objects in place, the top-level flat maps written to Firebase also end up containing
+   * deeply nested element trees — which GHL's backend cannot parse and returns HTTP 500.
+   * The flat maps must remain {id, metaData} only; only section.elements carries the tree. */
   for (const section of b.sections) {
     const rowIds = (section.metaData.child as string[]) ?? [];
     section.elements = rowIds.map((rowId) => {
       const row = b.rows[rowId];
       if (!row) return { id: rowId, metaData: {}, elements: [] };
       const colIds = (row.metaData.child as string[]) ?? [];
-      row.elements = colIds.map((colId) => {
+      const rowElements = colIds.map((colId) => {
         const col = b.columns[colId];
         if (!col) return { id: colId, metaData: {}, elements: [] };
         const elemIds = (col.metaData.child as string[]) ?? [];
-        col.elements = elemIds.map((elemId) => {
+        const colElements = elemIds.map((elemId) => {
           const elem = b.elements[elemId];
           if (!elem) return { id: elemId, metaData: {}, elements: [] };
-          elem.elements = [];
-          return elem;
+          return { ...elem, elements: [] };
         });
-        return col;
+        return { ...col, elements: colElements };
       });
-      return row;
+      return { ...row, elements: rowElements };
     });
   }
   return { ...buildEnvelope(schemeKey), ...b };
