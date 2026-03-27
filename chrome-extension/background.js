@@ -734,8 +734,17 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * nested row → col → element tree. Here we also set the context fields that GHL
              * stores per-section so createNestedJsonFromSections has everything it needs.      */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
+            /* Strip the nested `elements` array that finalize() added to each section.
+             * GHL's Firebase format stores sections as {id, metaData, sequence, pageId,
+             * funnelId, locationId, general} — NO top-level elements array.  GHL's builder
+             * reconstructs the nested row→col→element tree at runtime from section.metaData.child
+             * + the flat rows/columns/elements dicts.  Writing pre-built element trees causes
+             * the builder to hang (v2.29.0 bug: frontend processed both tree AND flat dicts).
+             * The flat dicts must always be included so GHL's backend can validate row
+             * references in section.metaData.child (omitting them caused backend 500 in v2.29.1). */
             const sectionsWithContext = (pd.sections ?? []).map((sec, i) => ({
-              ...sec,
+              id:         sec.id,
+              metaData:   sec.metaData,
               sequence:   i,
               pageId:     builderId,
               funnelId:   funnelIdFromPath,
@@ -743,18 +752,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               general:    {},
             }));
 
-            /* Diagnostic: how many nested rows does the first section have?
-             * Confirms that ghl-pagedata.ts finalize() built the nested tree.  */
-            diag.approach2.firstSecElemCount = sectionsWithContext[0]?.elements?.length ?? 0;
+            /* Diagnostic: how many nested rows did finalize() build for section[0]?
+             * Reads from the original pd.sections (which still has elements arrays)
+             * to confirm finalize() worked — even though we strip them before writing. */
+            diag.approach2.firstSecElemCount = pd.sections?.[0]?.elements?.length ?? 0;
 
-            /* Match the write format to the existing page format.
-             * For structured-only pages (blank/new GHL pages that only have sections
-             * with nested elements, no flat dict keys), writing flat rows/columns/elements
-             * dicts causes GHL's builder to hang on reload — it conflicts with the
-             * code path GHL initialised for the page format.
-             * For structured-dict pages (existing pages with flat dicts), keep flat
-             * dicts (which is what the roundtrip test confirmed works).             */
-            const useNestedOnly = (storageFormat === "structured-only");
+            /* Always write flat dicts — GHL backend requires rows/columns/elements to
+             * exist for reference validation regardless of whether the page was blank. */
             const writePayload = {
               fontsForPreview: pd.fontsForPreview,
               general:         pd.general,
@@ -762,15 +766,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               pageStyles:      pd.pageStyles,
               popups:          pd.popups ?? [],
               sections:        sectionsWithContext,
-              ...(!useNestedOnly ? {
-                rows:    wrappedRows,
-                columns: wrappedCols,
-                elements: wrappedEls,
-              } : {}),
+              rows:            wrappedRows,
+              columns:         wrappedCols,
+              elements:        wrappedEls,
             };
 
             diag.approach2.storageFormat  = storageFormat;
-            diag.approach2.writeFormat    = useNestedOnly ? "nested-only" : "structured-dict";
+            diag.approach2.writeFormat    = "structured-dict";
             diag.approach2.existElemCount = existElemCount;
             diag.approach2.nodeCount      = Object.keys(wrappedRows).length
               + Object.keys(wrappedCols).length
@@ -1084,17 +1086,18 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             const wrappedEls2B = Object.fromEntries(
               Object.entries(pd2B.elements ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
             );
+            /* Same strip as approach 2: omit the nested elements array finalize() added.
+             * GHL reconstructs the tree from section.metaData.child + flat dicts at runtime. */
             const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => ({
-              ...sec,
+              id:         sec.id,
+              metaData:   sec.metaData,
               sequence:   i,
               pageId:     builderId,
               funnelId:   funnelId2B,
               locationId: locationId ?? "",
               general:    {},
             }));
-            /* Approach 2B always creates a NEW file (no existing format to check).
-             * Use nested-only format (no flat dicts) — matches what GHL writes for
-             * new pages and avoids the builder hang caused by format mismatch.    */
+            /* Always write flat dicts — GHL backend validates row references against rows dict. */
             const writePayload2B = {
               fontsForPreview: pd2B.fontsForPreview,
               general:         pd2B.general,
@@ -1102,8 +1105,11 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               pageStyles:      pd2B.pageStyles,
               popups:          pd2B.popups ?? [],
               sections:        sectionsCtx2B,
+              rows:            wrappedRows2B,
+              columns:         wrappedCols2B,
+              elements:        wrappedEls2B,
             };
-            a2b.writeFormat = "nested-only";
+            a2b.writeFormat = "structured-dict";
 
             /* ── POST to Firebase Storage REST API ───────────────────── */
             const constructedPath = `funnels/${funnelId2B}/${builderId}.json`;
