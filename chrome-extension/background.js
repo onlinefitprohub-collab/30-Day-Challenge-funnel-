@@ -851,26 +851,50 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
               /* ── (A) PRIMARY: metaUpdate — tell GHL backend about the new URL ──── */
               let metaUpdateSucceeded = false;
-              if (revex && newFirebaseToken) {
-                const activeToken  = newFirebaseToken;
-                const baseUrl      = downloadUrl.replace(/\?.*$/, "");
-                const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
-                diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
-                const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
-                try {
-                  await revex.put(
-                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
-                    updateBody
-                  );
-                  metaUpdateSucceeded = true;
-                  diag.approach2.metaUpdateStatus = `ok-primary-funnelId:${funnelIdFromPath.slice(0, 16)}`;
-                } catch (_u1) {
-                  diag.approach2.metaUpdateStatus = `failed: ${String(_u1).slice(0, 60)}`;
+              if (revex) {
+                /* Determine the active Firebase token for the new URL:
+                 * Prefer the token from the upload response (newFirebaseToken).
+                 * If upload response didn't include a token, fall back to a metadata
+                 * GET to obtain the current token for the object we just wrote.    */
+                let activeToken = newFirebaseToken;
+                if (!activeToken) {
+                  try {
+                    const metaGetRes = await fetch(metaEp, {
+                      headers: { "Authorization": `Firebase ${idToken}` },
+                      signal:  AbortSignal.timeout(4000),
+                    });
+                    if (metaGetRes.ok) {
+                      const metaBody = await metaGetRes.json().catch(() => ({}));
+                      activeToken = metaBody.metadata?.downloadTokens ?? metaBody.downloadTokens ?? null;
+                      diag.approach2.metaGetTokenFallback = activeToken
+                        ? activeToken.slice(0, 20) + "…" : "none";
+                    } else {
+                      diag.approach2.metaGetTokenFallback = `http-${metaGetRes.status}`;
+                    }
+                  } catch (_metaGetErr) {
+                    diag.approach2.metaGetTokenFallback = "err";
+                  }
                 }
-              } else if (!revex) {
-                diag.approach2.metaUpdateStatus = "skipped-no-revex";
+                if (activeToken) {
+                  const baseUrl      = downloadUrl.replace(/\?.*$/, "");
+                  const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
+                  diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
+                  const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
+                  try {
+                    await revex.put(
+                      `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+                      updateBody
+                    );
+                    metaUpdateSucceeded = true;
+                    diag.approach2.metaUpdateStatus = `ok-primary-funnelId:${funnelIdFromPath.slice(0, 16)}`;
+                  } catch (_u1) {
+                    diag.approach2.metaUpdateStatus = `failed: ${String(_u1).slice(0, 60)}`;
+                  }
+                } else {
+                  diag.approach2.metaUpdateStatus = "skipped-no-token-after-fallback";
+                }
               } else {
-                diag.approach2.metaUpdateStatus = "skipped-no-new-token";
+                diag.approach2.metaUpdateStatus = "skipped-no-revex";
               }
 
               /* ── (B) FALLBACK: patchToken — restore old Firebase token ───────── *
