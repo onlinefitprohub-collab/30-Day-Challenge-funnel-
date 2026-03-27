@@ -1,4 +1,4 @@
-// popup.js v2.17.0 — Challenge Funnel Extension
+// popup.js v2.22.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -220,7 +220,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.17.0 ===");
+  lines.push("=== CF Extension v2.22.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -296,6 +296,16 @@ async function showInjectDebug() {
           }
           lines.push(`A3 result: ${d.approach3.result ?? "?"}`);
           if (d.approach3.iframeA3Error) lines.push(`A3 iframeErr: ${d.approach3.iframeA3Error}`);
+        }
+        if (d.approach4) {
+          const a4 = d.approach4;
+          lines.push(`A4 storeFound=${a4.storeFound ?? "?"} moduleKey=${a4.moduleKey ?? "none"}`);
+          if (a4.topStateKeys) lines.push(`A4 topStateKeys: ${JSON.stringify(a4.topStateKeys).slice(0, 120)}`);
+          if (a4.moduleDataKeys) lines.push(`A4 moduleDataKeys: ${JSON.stringify(a4.moduleDataKeys).slice(0, 120)}`);
+          if (a4.mutKeySample) lines.push(`A4 mutKeys: ${JSON.stringify(a4.mutKeySample).slice(0, 120)}`);
+          if (a4.patched) lines.push(`A4 patched: ${JSON.stringify(a4.patched)}`);
+          lines.push(`A4 result: ${a4.result ?? "ok"} forced=${a4.forced ?? "?"}`);
+          if (a4.iframeA4Error) lines.push(`A4 iframeErr: ${a4.iframeA4Error}`);
         }
       } catch(_) { lines.push(`diag: ${JSON.stringify(inject.diag).slice(0, 300)}`); }
     }

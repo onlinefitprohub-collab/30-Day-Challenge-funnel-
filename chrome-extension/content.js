@@ -1,4 +1,4 @@
-// content.js v2.21.0 — Challenge Funnel in a Box
+// content.js v2.22.0 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.
@@ -11,8 +11,8 @@
   // Version-specific guard: when the extension updates, the new version string
   // doesn't match the old one, so the new content.js always replaces the old one
   // in already-open tabs (no manual page reload needed after extension update).
-  if (window.__cfExtLoaded === "2.21.0") return;
-  window.__cfExtLoaded = "2.21.0";
+  if (window.__cfExtLoaded === "2.22.0") return;
+  window.__cfExtLoaded = "2.22.0";
 
   const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
@@ -68,7 +68,7 @@
     const t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.21.0" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.22.0" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {

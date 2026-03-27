@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.21.0 — dual-format sections, row dict key probe, firstSectionTopKeys probe.");
+    console.log("[CF Funnel] Installed v2.22.0 — Approach 4 Vuex2 direct state mutation, topStateKeys/moduleKey/mutKey probes.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.21.0 — dual-format sections, row dict key probe, firstSectionTopKeys probe.");
+    console.log("[CF Funnel] Updated to v2.22.0 — Approach 4 Vuex2 direct state mutation, topStateKeys/moduleKey/mutKey probes.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -903,6 +903,138 @@ function _cf_probePinia() {
   return false;
 }
 
+/* ─── _cf_approach4VuexInFrame ────────────────────────────────────────────────
+   Approach 4: Vue 2 / Nuxt 2 Vuex direct state mutation.
+   GHL's older builder (Nuxt 2) exposes its store via window.__nuxt__.$store.
+   We find the module containing rows/columns/elements and directly patch it,
+   then trigger a re-render. This bypasses the Firebase read path entirely so
+   the builder immediately shows our content without needing an iframe reload. */
+function _cf_approach4VuexInFrame(builderId, locationId, pageData) {
+  const diag4 = { source: "vuex-frame-targeted", storeFound: false };
+  try {
+    /* ── 1. Locate the Vuex store ────────────────────────────────────────── */
+    let store =
+      window.__nuxt__?.$store
+      ?? window.__vue_store__
+      ?? null;
+
+    /* Fallback: walk Vue 2 component tree from #app */
+    if (!store) {
+      const root = document.querySelector("#app")?.__vue__;
+      if (root) store = root.$store ?? root.$root?.$store ?? null;
+    }
+    /* Fallback: scan all Vue roots in DOM */
+    if (!store) {
+      for (const el of document.querySelectorAll("*")) {
+        const v = el.__vue__;
+        if (v && v.$store) { store = v.$store; break; }
+      }
+    }
+
+    if (!store) {
+      diag4.result = "no vuex store found";
+      return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+    }
+    diag4.storeFound = true;
+
+    /* ── 2. Identify state module containing builder data ───────────────── */
+    const state = store.state ?? {};
+    const topStateKeys = Object.keys(state).slice(0, 30);
+    diag4.topStateKeys = topStateKeys;
+
+    let moduleKey = null;
+    let mod = null;
+    for (const k of topStateKeys) {
+      const m = state[k];
+      if (m && typeof m === "object" && !Array.isArray(m)) {
+        const mk = Object.keys(m);
+        if (mk.includes("rows") || mk.includes("sections") || mk.includes("elements")) {
+          moduleKey = k;
+          mod = m;
+          break;
+        }
+      }
+    }
+
+    /* Fallback: look at root state directly */
+    if (!mod) {
+      const rootKeys = Object.keys(state);
+      if (rootKeys.includes("rows") || rootKeys.includes("sections")) {
+        moduleKey = "__root__";
+        mod = state;
+      }
+    }
+
+    if (!mod) {
+      diag4.result = "no state module with rows/sections/elements";
+      diag4.topStateKeys = topStateKeys;
+      return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+    }
+    diag4.moduleKey     = moduleKey;
+    diag4.moduleDataKeys = Object.keys(mod).slice(0, 20);
+
+    /* ── 3. Log available mutations for diagnosis ───────────────────────── */
+    const mutKeys = Object.keys(store._mutations ?? {});
+    diag4.mutKeySample = mutKeys.filter(k =>
+      /row|col|elem|section|page|node|builder/i.test(k)
+    ).slice(0, 20);
+
+    /* ── 4. Directly patch the state ─────────────────────────────────────── */
+    const rows     = pageData.rows     ?? {};
+    const columns  = pageData.columns  ?? {};
+    const elements = pageData.elements ?? {};
+    const sections = pageData.sections ?? [];
+
+    let patched = {};
+    if ("rows"     in mod) { mod.rows     = rows;     patched.rows     = Object.keys(rows).length; }
+    if ("columns"  in mod) { mod.columns  = columns;  patched.columns  = Object.keys(columns).length; }
+    if ("elements" in mod) { mod.elements = elements; patched.elements = Object.keys(elements).length; }
+    if ("sections" in mod && sections.length) {
+      mod.sections = sections;
+      patched.sections = sections.length;
+    }
+    diag4.patched = patched;
+
+    /* ── 5. Force Vue 2 re-render ────────────────────────────────────────── */
+    /* Try $forceUpdate on root Vue instance */
+    const tryRoots = [
+      window.__nuxt__,
+      document.querySelector("#app")?.__vue__,
+    ].filter(Boolean);
+    let forced = false;
+    for (const r of tryRoots) {
+      const root = r.$root ?? r;
+      if (root.$forceUpdate) { root.$forceUpdate(); forced = true; break; }
+    }
+    diag4.forced = forced;
+
+    /* ── 6. Also try committing known GHL mutations ──────────────────────── */
+    const tryCommit = (name, payload) => {
+      try { store.commit(name, payload); return true; } catch (_) { return false; }
+    };
+    const commitResults = {};
+    for (const mk of mutKeys) {
+      if (/setRows|SET_ROWS|setPageRows|setBuilderRows/i.test(mk)) {
+        commitResults[mk] = tryCommit(mk, rows);
+      }
+      if (/setElements|SET_ELEMENTS|setPageElements/i.test(mk)) {
+        commitResults[mk] = tryCommit(mk, elements);
+      }
+    }
+    diag4.commitResults = commitResults;
+
+    diag4.result = "patched";
+    return JSON.stringify({
+      ok:     true,
+      method: "vuex-direct",
+      diag:   { approach4: diag4 },
+    });
+  } catch (e) {
+    diag4.result = `threw: ${String(e).slice(0, 120)}`;
+    return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+  }
+}
+
 /* ─── _cf_approach3PiniaInFrame ───────────────────────────────────────────────
    Self-contained Approach 3 execution — injected into the DETECTED BUILDER
    FRAME (top frame or builder iframe, as determined by the SW frame probe).
@@ -1595,6 +1727,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             ...(injectResult.diag.approach3 ?? {}),
             iframeFrameId,
             iframeA3Error: String(a3Err).slice(0, 80),
+          };
+        }
+
+        /* ── Step D: Approach 4 — Vuex 2 / Nuxt 2 direct store mutation ──────── *
+         * Targets the builder iframe directly. If GHL uses Vuex (Vue 2/Nuxt 2)   *
+         * we find the state module with rows/sections and patch it, bypassing the *
+         * Firebase re-read entirely. No reload needed — content appears live.     */
+        try {
+          const a4Res = await chrome.scripting.executeScript({
+            target: { tabId, frameIds: [iframeFrameId] },
+            world:  "MAIN",
+            func:   _cf_approach4VuexInFrame,
+            args:   [builderId, locationId, ready.pageData],
+          });
+          const a4 = JSON.parse(a4Res?.[0]?.result ?? "{}");
+          if (!injectResult.diag) injectResult.diag = {};
+          injectResult.diag.approach4 = { ...(a4.diag?.approach4 ?? {}), iframeFrameId };
+          if (a4.ok) {
+            const a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
+            if (a2Wrote) {
+              injectResult.method = (injectResult.method ?? "firebase") + "+vuex";
+            } else if (!injectResult.ok) {
+              injectResult.ok     = true;
+              injectResult.method = "vuex-direct";
+            }
+          }
+        } catch (a4Err) {
+          if (!injectResult.diag) injectResult.diag = {};
+          injectResult.diag.approach4 = {
+            ...(injectResult.diag.approach4 ?? {}),
+            iframeFrameId,
+            iframeA4Error: String(a4Err).slice(0, 80),
           };
         }
 
