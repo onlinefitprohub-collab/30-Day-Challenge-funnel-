@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.25.0 — fix stale Firebase download token: extract new token from upload, update GHL metadata URL.");
+    console.log("[CF Funnel] Installed v2.26.0 — fix stale Firebase download token: PATCH object metadata to restore original token after write.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.25.0 — fix stale Firebase download token: extract new token from upload, update GHL metadata URL.");
+    console.log("[CF Funnel] Updated to v2.26.0 — fix stale Firebase download token: PATCH object metadata to restore original token after write.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -792,34 +792,65 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                 diag.approach2.newFirebaseToken = "parse-err";
               }
 
-              /* Build new public URL and update GHL metadata so GHL can read the file */
-              if (newFirebaseToken && revex) {
-                const newPublicUrl =
-                  `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
-                  `/o/${encodedPath}?alt=media&token=${newFirebaseToken}`;
-                diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
-                const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
+              /* ── Restore original download token via Firebase Storage PATCH ────── *
+               * Firebase Storage REST API generates a NEW downloadToken on every    *
+               * write. GHL's cached pageDataDownloadUrl has the OLD token → 400     *
+               * response → empty data → TypeError: o1.elements is not iterable.     *
+               * Fix: PATCH the object metadata to restore the original token so      *
+               * GHL's cached URL keeps working — no GHL backend update needed.      */
+              const oldToken = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+              const metaEp   =
+                `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
+                `/o/${encodedPath}`;
+              let patchSucceeded = false;
+              if (oldToken) {
+                /* Format 1: nested metadata field */
                 try {
-                  await revex.put(
-                    `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
-                    updateBody
-                  );
-                  diag.approach2.metaUpdate = "ok";
-                } catch (_u1) {
+                  const pr1 = await fetch(metaEp, {
+                    method:  "PATCH",
+                    headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
+                    body:    JSON.stringify({ metadata: { downloadTokens: oldToken } }),
+                  });
+                  diag.approach2.patchStatus1 = pr1.status;
+                  if (pr1.ok) { patchSucceeded = true; diag.approach2.patchToken = "ok-format1"; }
+                } catch (_p1) { diag.approach2.patchStatus1 = "err"; }
+
+                /* Format 2: top-level field, if format 1 failed */
+                if (!patchSucceeded) {
                   try {
-                    await revex.put(
-                      `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
-                      updateBody
-                    );
-                    diag.approach2.metaUpdate = "ok-v2";
-                  } catch (_u2) {
-                    diag.approach2.metaUpdate = `failed: ${String(_u2).slice(0, 60)}`;
+                    const pr2 = await fetch(metaEp, {
+                      method:  "PATCH",
+                      headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
+                      body:    JSON.stringify({ downloadTokens: oldToken }),
+                    });
+                    diag.approach2.patchStatus2 = pr2.status;
+                    if (pr2.ok) { patchSucceeded = true; diag.approach2.patchToken = "ok-format2"; }
+                  } catch (_p2) { diag.approach2.patchStatus2 = "err"; }
+                }
+
+                if (!patchSucceeded) {
+                  diag.approach2.patchToken = "failed";
+                  /* Fallback: revex.put with funnelId from Firebase path */
+                  if (revex && newFirebaseToken) {
+                    const funnelIdFromPath = objectPath.split("/")[1] ?? "";
+                    const newPublicUrl     = downloadUrl.replace(/\?.*$/, "") + `?alt=media&token=${newFirebaseToken}`;
+                    diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
+                    const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
+                    try {
+                      await revex.put(
+                        `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+                        updateBody
+                      );
+                      diag.approach2.metaUpdate = `ok-funnelId:${funnelIdFromPath.slice(0, 16)}`;
+                    } catch (_u3) {
+                      diag.approach2.metaUpdate = `failed: ${String(_u3).slice(0, 60)}`;
+                    }
+                  } else {
+                    diag.approach2.metaUpdate = "skipped";
                   }
                 }
               } else {
-                diag.approach2.metaUpdate = revex
-                  ? "skipped-no-new-token"
-                  : "skipped-no-revex";
+                diag.approach2.patchToken = "no-old-token";
               }
 
               /* ── Post-write verification: re-read what we wrote ────────────────── *
@@ -1445,8 +1476,11 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     } catch (_pb) { diag.publicReadBefore = { error: "timeout-or-cors" }; }
 
     /* 7. Write the EXACT SAME DATA BACK — no modifications whatsoever ──────── */
-    /* URL-encode the objectPath for the name param (must be encoded in the URL) */
-    const encodedPath = objectPath.split("/").map(encodeURIComponent).join("/");
+    /* encodedPath: single encodeURIComponent of full path → uses %2F between
+     * path components, which is what Firebase Storage REST API requires.
+     * NOTE: The old approach of .split("/").map(encodeURIComponent).join("/")
+     * was WRONG — it kept literal "/" separators → Firebase returned 400.     */
+    const encodedPath = encodeURIComponent(objectPath);
     const uploadEp =
       `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
       `/o?uploadType=media&name=${encodeURIComponent(objectPath)}`;
@@ -1466,62 +1500,80 @@ async function _cf_roundtripFirebaseWrite(builderId) {
       return JSON.stringify({ ok: false, error: `write failed HTTP ${writeRes.status}`, diag });
     }
 
-    /* 7b. Parse upload response → new Firebase download token
-     * Firebase Storage REST API returns { downloadTokens: "new-token" } on upload.
-     * If it generated a NEW token, the old pageDataDownloadUrl GHL has cached is
-     * now STALE → GHL gets 403/empty data → TypeError: o1.elements is not iterable.
-     * We must update GHL's backend metadata with the new public URL.              */
+    /* 7b. Parse upload response → check if new download token was generated */
     let newFirebaseToken = null;
-    let newPublicUrl     = null;
     try {
       const uploadRespJson = await writeRes.clone().json().catch(() => ({}));
-      newFirebaseToken = uploadRespJson.downloadTokens ?? null;
-      const oldToken   = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
-      diag.oldToken        = oldToken ? oldToken.slice(0, 20) + "…" : "none-in-url";
-      diag.newToken        = newFirebaseToken ? newFirebaseToken.slice(0, 20) + "…" : "none-in-resp";
-      diag.tokenChanged    = newFirebaseToken ? (newFirebaseToken !== oldToken) : false;
+      newFirebaseToken     = uploadRespJson.downloadTokens ?? null;
+      const oldTokenCheck  = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+      diag.oldToken     = oldTokenCheck ? oldTokenCheck.slice(0, 20) + "…" : "none-in-url";
+      diag.newToken     = newFirebaseToken ? newFirebaseToken.slice(0, 20) + "…" : "none-in-resp";
+      diag.tokenChanged = newFirebaseToken ? (newFirebaseToken !== oldTokenCheck) : false;
     } catch (_te) { diag.newToken = "parse-err"; }
 
-    /* 7c. Build new public URL with new token and test it */
-    if (newFirebaseToken) {
-      newPublicUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedPath}?alt=media&token=${newFirebaseToken}`;
+    /* 7c. PATCH Firebase metadata to restore original download token ──────────
+     * v2.26.0 FIX: After the upload, Firebase has a NEW downloadToken. GHL's
+     * cached pageDataDownloadUrl still has the OLD token → reads return 400.
+     * We PATCH the object metadata to restore the OLD token so GHL's cached
+     * URL stays valid — no GHL backend update needed.                          */
+    const oldTokenForPatch = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+    const metaEpR =
+      `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedPath}`;
+    let patchSucceededR = false;
+    if (oldTokenForPatch) {
+      /* Format 1: nested metadata field */
       try {
-        const pubAfter = await fetch(newPublicUrl, { signal: AbortSignal.timeout(4000) });
-        diag.publicReadAfterNewToken = { status: pubAfter.status, ok: pubAfter.ok };
-      } catch (_pa) { diag.publicReadAfterNewToken = { error: "timeout-or-cors" }; }
-    } else {
-      /* No new token — test old URL */
-      try {
-        const pubAfter2 = await fetch(downloadUrl, { signal: AbortSignal.timeout(4000) });
-        diag.publicReadAfterOldToken = { status: pubAfter2.status, ok: pubAfter2.ok };
-      } catch (_pa2) { diag.publicReadAfterOldToken = { error: "timeout-or-cors" }; }
-    }
+        const pr1 = await fetch(metaEpR, {
+          method:  "PATCH",
+          headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
+          body:    JSON.stringify({ metadata: { downloadTokens: oldTokenForPatch } }),
+        });
+        diag.patchStatus1 = pr1.status;
+        if (pr1.ok) { patchSucceededR = true; diag.patchToken = "ok-format1"; }
+      } catch (_rp1) { diag.patchStatus1 = "err"; }
 
-    /* 7d. Update GHL's page metadata with new download URL (if we have revex) */
-    if (newFirebaseToken && revex) {
-      diag.newPublicUrl = newPublicUrl.slice(0, 120);
-      const updateBody  = { ...existing, pageDataDownloadUrl: newPublicUrl };
-      // GHL metadata update — try both API endpoints
-      try {
-        await revex.put(
-          `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
-          updateBody
-        );
-        diag.metaUpdate = "ok";
-      } catch (_u1) {
+      /* Format 2: top-level field, if format 1 failed */
+      if (!patchSucceededR) {
         try {
-          await revex.put(
-            `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
-            updateBody
-          );
-          diag.metaUpdate = "ok-v2";
-        } catch (_u2) {
-          diag.metaUpdate = `failed: ${String(_u2).slice(0, 60)}`;
+          const pr2 = await fetch(metaEpR, {
+            method:  "PATCH",
+            headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
+            body:    JSON.stringify({ downloadTokens: oldTokenForPatch }),
+          });
+          diag.patchStatus2 = pr2.status;
+          if (pr2.ok) { patchSucceededR = true; diag.patchToken = "ok-format2"; }
+        } catch (_rp2) { diag.patchStatus2 = "err"; }
+      }
+
+      if (!patchSucceededR) {
+        diag.patchToken = "failed";
+        /* Fallback: revex.put with funnelId from Firebase path */
+        if (revex && newFirebaseToken) {
+          const funnelIdFromPath = objectPath.split("/")[1] ?? "";
+          const newPublicUrl = downloadUrl.replace(/\?.*$/, "") + `?alt=media&token=${newFirebaseToken}`;
+          diag.newPublicUrl = newPublicUrl.slice(0, 120);
+          try {
+            await revex.put(
+              `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+              { ...existing, pageDataDownloadUrl: newPublicUrl }
+            );
+            diag.metaUpdate = `ok-funnelId:${funnelIdFromPath.slice(0, 16)}`;
+          } catch (_ru) {
+            diag.metaUpdate = `failed: ${String(_ru).slice(0, 60)}`;
+          }
+        } else {
+          diag.metaUpdate = "skipped";
         }
       }
     } else {
-      diag.metaUpdate = newFirebaseToken ? "skipped-no-revex" : "skipped-no-token";
+      diag.patchToken = "no-old-token";
     }
+
+    /* 7d. Test if old download URL is now accessible again (after PATCH) */
+    try {
+      const pubAfter = await fetch(downloadUrl, { signal: AbortSignal.timeout(4000) });
+      diag.publicReadAfterPatch = { status: pubAfter.status, ok: pubAfter.ok };
+    } catch (_pa) { diag.publicReadAfterPatch = { error: "timeout-or-cors" }; }
 
     /* 8. Verify auth-read after write */
     await new Promise(r => setTimeout(r, 600));
