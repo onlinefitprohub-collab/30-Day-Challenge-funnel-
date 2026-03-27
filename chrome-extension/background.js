@@ -440,8 +440,8 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
  * Each attempt is wrapped in try/catch and collects diagnostic info.
  * Returns { ok, method, diag, error? } serialised as JSON.
  * ─────────────────────────────────────────────────────────────────────────── */
-async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
-  const diag = { approach0: null, approach1: null, approach2: null, approach3: null };
+async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedBucket) {
+  const diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null };
   try {
     /* ════════════════════════════════════════════════════════════════════════
        APPROACH 0: Write AI content to every likely GHL clipboard localStorage key.
@@ -954,6 +954,208 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
     }
 
     /* ════════════════════════════════════════════════════════════════════════
+       APPROACH 2B: Construct Firebase path when pageDataDownloadUrl is missing
+       GHL does not create a Firebase Storage file for blank/new pages until
+       the user saves real content for the first time. When metadata exists
+       but lacks pageDataDownloadUrl, we construct the known GHL path format
+       (funnels/{funnelId}/{builderId}.json), write our AI page data to it,
+       then PATCH GHL's metadata to register the new file URL so the builder
+       can reload with the injected content.
+       ════════════════════════════════════════════════════════════════════════ */
+    if (!diag.approach2?.fallThrough && !downloadUrl && metadata) {
+      const a2b = { source: "constructed-path" };
+      try {
+        const funnelId2B = metadata?.funnelId ?? metadata?.funnel_id ?? null;
+        a2b.funnelId     = funnelId2B ?? "missing";
+        a2b.metadataKeys = Object.keys(metadata ?? {}).slice(0, 15);
+
+        if (funnelId2B) {
+          /* ── Get Firebase auth token (same IDB logic as approach 2) ──── */
+          let idToken2B = null;
+          const tokDiag2B = [];
+          try {
+            if (typeof firebase !== "undefined" && firebase.apps?.length) {
+              const u = firebase.auth().currentUser;
+              if (u) { idToken2B = await u.getIdToken(true); tokDiag2B.push("v8"); }
+            }
+          } catch (_t1) {}
+          if (!idToken2B) {
+            try {
+              for (const val of Object.values(window)) {
+                if (!val || typeof val !== "object") continue;
+                if (typeof val.auth === "function") {
+                  const auth = val.auth();
+                  if (auth?.currentUser) {
+                    idToken2B = await auth.currentUser.getIdToken(true);
+                    tokDiag2B.push("win-prop"); break;
+                  }
+                }
+              }
+            } catch (te2b) { tokDiag2B.push(`win-err:${String(te2b).slice(0, 30)}`); }
+          }
+          if (!idToken2B) {
+            try {
+              idToken2B = await new Promise((resolve) => {
+                const req = indexedDB.open("firebaseLocalStorageDb");
+                req.onerror = () => resolve(null);
+                req.onsuccess = (evt) => {
+                  const db = evt.target.result;
+                  if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
+                  const tx     = db.transaction("firebaseLocalStorage", "readonly");
+                  const store  = tx.objectStore("firebaseLocalStorage");
+                  const getAll = store.getAll();
+                  getAll.onerror   = () => { db.close(); resolve(null); };
+                  getAll.onsuccess = (e2) => {
+                    db.close();
+                    for (const rec of (e2.target.result ?? [])) {
+                      const token = rec?.value?.stsTokenManager?.accessToken;
+                      if (token) { resolve(token); return; }
+                    }
+                    resolve(null);
+                  };
+                };
+              });
+              if (idToken2B) tokDiag2B.push("idb-v9");
+            } catch (te2c) { tokDiag2B.push(`idb-err:${String(te2c).slice(0, 30)}`); }
+          }
+          a2b.tokDiag = tokDiag2B;
+          a2b.hasToken = !!idToken2B;
+
+          /* ── Probe for Firebase storage bucket ──────────────────────── */
+          let bucketFinal = cachedBucket ?? null;
+          const bucketDiag = [];
+          if (bucketFinal) bucketDiag.push("sw-cached");
+          if (!bucketFinal) {
+            try {
+              if (typeof firebase !== "undefined" && firebase.apps?.length) {
+                bucketFinal = firebase.app().options?.storageBucket ?? null;
+                if (bucketFinal) bucketDiag.push("fb-v8-config");
+              }
+            } catch (_b1) {}
+          }
+          if (!bucketFinal) {
+            try {
+              const fa = window.__FIREBASE_APP__ ?? window._firebaseApp ?? null;
+              bucketFinal = fa?.options?.storageBucket ?? null;
+              if (bucketFinal) bucketDiag.push("window-fb-app");
+            } catch (_b2) {}
+          }
+          if (!bucketFinal) {
+            try {
+              const globs = appEl?.__vue_app__?.config?.globalProperties ?? {};
+              const fbApp = globs.$firebase ?? globs.firebase ?? globs.firebaseApp ?? null;
+              bucketFinal = fbApp?.options?.storageBucket ?? null;
+              if (bucketFinal) bucketDiag.push("vue-globals-fb");
+            } catch (_b3) {}
+          }
+          if (!bucketFinal) {
+            bucketFinal = "highlevel-backend.appspot.com";
+            bucketDiag.push("fallback-known");
+          }
+          a2b.bucket     = bucketFinal;
+          a2b.bucketDiag = bucketDiag;
+
+          if (idToken2B) {
+            /* ── Build write payload (mirrors approach 2 writePayload) ── */
+            const pd2B = pageData;
+            function wrapIfFlat2B(key, v) {
+              if (!v || typeof v !== "object") return v;
+              if (v.metaData && typeof v.metaData === "object") return v;
+              return { id: key, metaData: { ...v, element: { ...v } } };
+            }
+            const wrappedRows2B = Object.fromEntries(
+              Object.entries(pd2B.rows    ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
+            );
+            const wrappedCols2B = Object.fromEntries(
+              Object.entries(pd2B.columns ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
+            );
+            const wrappedEls2B = Object.fromEntries(
+              Object.entries(pd2B.elements ?? {}).map(([k, v]) => [k, wrapIfFlat2B(k, v)])
+            );
+            const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => ({
+              ...sec,
+              sequence:   i,
+              pageId:     builderId,
+              funnelId:   funnelId2B,
+              locationId: locationId ?? "",
+              general:    {},
+            }));
+            const writePayload2B = {
+              fontsForPreview: pd2B.fontsForPreview,
+              general:         pd2B.general,
+              id:              builderId,
+              pageStyles:      pd2B.pageStyles,
+              popups:          pd2B.popups ?? [],
+              sections:        sectionsCtx2B,
+              rows:            wrappedRows2B,
+              columns:         wrappedCols2B,
+              elements:        wrappedEls2B,
+            };
+
+            /* ── POST to Firebase Storage REST API ───────────────────── */
+            const constructedPath = `funnels/${funnelId2B}/${builderId}.json`;
+            a2b.path = constructedPath;
+            const uploadEp2B =
+              `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucketFinal)}` +
+              `/o?uploadType=media&name=${encodeURIComponent(constructedPath)}`;
+            const res2B = await fetch(uploadEp2B, {
+              method:  "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken2B}` },
+              body:    JSON.stringify(writePayload2B),
+              signal:  AbortSignal.timeout(12000),
+            });
+            a2b.httpStatus = res2B.status;
+            if (res2B.ok) {
+              a2b.result = "success";
+              /* ── Extract download token + patch GHL metadata ──────── */
+              const fbData2B = await res2B.json().catch(() => ({}));
+              const newTok2B = fbData2B.downloadTokens ?? "";
+              const encPath2B = encodeURIComponent(constructedPath);
+              const newUrl2B  =
+                `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucketFinal)}` +
+                `/o/${encPath2B}?alt=media&token=${newTok2B}`;
+              a2b.newDownloadUrl = newUrl2B.slice(0, 160);
+              if (revex) {
+                try {
+                  await revex.put(
+                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelId2B}/page/${builderId}`,
+                    { ...metadata, pageDataDownloadUrl: newUrl2B }
+                  );
+                  a2b.metaPatch = "ok";
+                } catch (pErr2B) {
+                  /* Fallback: try without funnelId in path */
+                  try {
+                    await revex.put(
+                      `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+                      { ...metadata, pageDataDownloadUrl: newUrl2B }
+                    );
+                    a2b.metaPatch = "ok-fallback";
+                  } catch (pErr2C) {
+                    a2b.metaPatch = `failed:${String(pErr2B).slice(0, 40)}|fb:${String(pErr2C).slice(0, 40)}`;
+                  }
+                }
+              } else {
+                a2b.metaPatch = "skipped-no-revex";
+              }
+              /* Signal success — picked up by the check below */
+              diag.approach2b_ok = true;
+            } else {
+              const errTxt2B = await res2B.text().catch(() => "");
+              a2b.result = `HTTP ${res2B.status}: ${errTxt2B.slice(0, 80)}`;
+            }
+          } else {
+            a2b.result = "no-firebase-token";
+          }
+        } else {
+          a2b.result = "no-funnelId-in-metadata";
+        }
+      } catch (e2B) {
+        a2b.result = `threw:${String(e2B).slice(0, 80)}`;
+      }
+      diag.approach2b = a2b;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════
        APPROACH 3: Pinia state mutation is handled frame-targeted from the
        background SW (_cf_approach3PiniaInFrame runs in the detected builder
        frame). A placeholder diag entry is set here; the SW merges the real
@@ -962,24 +1164,26 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
        ════════════════════════════════════════════════════════════════════════ */
     diag.approach3 = { result: "pending-frame-targeted-run" };
 
-    /* ── Approach 2 succeeded — Firebase write confirmed ───────────────────── *
-     * GHL will read the new page data on next reload.                          */
-    if (diag.approach2?.fallThrough === true) {
-      return JSON.stringify({ ok: true, method: "firebase-write", diag });
+    /* ── Approach 2 or 2B succeeded — Firebase write confirmed ───────────── *
+     * GHL will read the new page data on next reload.                         */
+    if (diag.approach2?.fallThrough === true || diag.approach2b_ok === true) {
+      const method = diag.approach2?.fallThrough ? "firebase-write" : "firebase-write-constructed";
+      return JSON.stringify({ ok: true, method, diag });
     }
 
     /* All direct approaches failed — but Approach 0 (clipboard) may still work.
        Tell the user to try Ctrl+V in the builder — if GHL reads from any of the
        localStorage clipboard keys we wrote, the content will paste natively. */
-    const a1 = JSON.stringify(diag.approach1).slice(0, 80);
-    const a2 = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 120);
-    const a3 = "frame-targeted-pending";
+    const a1  = JSON.stringify(diag.approach1).slice(0, 80);
+    const a2  = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 80);
+    const a2b = diag.approach2b ? `A2b=${diag.approach2b.result ?? "?"} http=${diag.approach2b.httpStatus ?? "?"}` : "A2b=skipped";
+    const a3  = "frame-targeted-pending";
     return JSON.stringify({
       ok:      false,
       method:  "clipboard-ready",
       _a3pending: true,
       warning: true,
-      error:   `Approaches 0/1/2 incomplete; Approach 3 (Pinia) running in builder frame. Diag: A1=${a1} | A2=${a2} | A3=${a3}.`,
+      error:   `Approaches 0/1/2/2B incomplete; Approach 3 (Pinia) running in builder frame. Diag: A1=${a1} | A2=${a2} | ${a2b} | A3=${a3}.`,
       diag,
     });
   } catch (e) {
@@ -1159,20 +1363,28 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
   };
   try {
     /* ── Find Pinia in THIS frame ─────────────────────────────────────────── */
-    const tryEls = [
-      document.querySelector("#app"),
-      document.documentElement,
-      ...Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3),
-    ].filter(Boolean);
+    /* Try window-level pinia first (sometimes GHL exposes it directly) */
     let pinia = null;
-    for (const el of tryEls) {
-      const va = el.__vue_app__;
-      if (!va) continue;
-      const provides = va._context?.provides ?? {};
-      const p = provides[Symbol.for("pinia")]
-        ?? Object.values(provides).find(v => v && v._s instanceof Map)
-        ?? null;
-      if (p && p._s instanceof Map) { pinia = p; break; }
+    try {
+      const wp = window._pinia ?? window.pinia ?? window.__pinia ?? null;
+      if (wp && wp._s instanceof Map) { pinia = wp; diag3.piniaSource = "window-global"; }
+    } catch (_wp) {}
+
+    if (!pinia) {
+      const tryEls = [
+        document.querySelector("#app"),
+        document.documentElement,
+        ...Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3),
+      ].filter(Boolean);
+      for (const el of tryEls) {
+        const va = el.__vue_app__;
+        if (!va) continue;
+        const provides = va._context?.provides ?? {};
+        const p = provides[Symbol.for("pinia")]
+          ?? Object.values(provides).find(v => v && v._s instanceof Map)
+          ?? null;
+        if (p && p._s instanceof Map) { pinia = p; break; }
+      }
     }
 
     if (!pinia || !(pinia._s instanceof Map)) {
@@ -1183,6 +1395,7 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
     const storeIds = [...pinia._s.keys()];
     diag3.storeCount = storeIds.length;
     diag3.storeIds   = storeIds.slice(0, 20);
+    diag3.allStoreIds = storeIds.slice(0, 30);
 
     /* ── Probe clipboard stores ──────────────────────────────────────────── */
     const clipStoreDiag = [];
@@ -1867,14 +2080,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             if (builderFrame2) iframeFrameId2 = builderFrame2.frameId ?? 0;
           } catch (_probeErr2) {}
 
-          /* ── Step B: Run approaches 0/1/2 in top frame ──────────────── */
+          /* ── Step B: Run approaches 0/1/2/2B in top frame ──────────── */
+          const { cf_cached_bucket: cachedBkt = null } = await chrome.storage.local.get("cf_cached_bucket");
           let r = {};
           try {
             const res2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, allFrames: false },
               world:  "MAIN",
               func:   _cf_injectViaBuilderSave,
-              args:   [builderId2, locId2, pageData],
+              args:   [builderId2, locId2, pageData, cachedBkt],
             });
             r = JSON.parse(res2?.[0]?.result ?? "{}");
           } catch(e) { r = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` }; }
@@ -2080,6 +2294,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           args:   [builderId],
         });
         const result = JSON.parse(res?.[0]?.result ?? "{}");
+        /* Cache bucket for future blank-page inject attempts (Approach 2B) */
+        if (result.diag?.bucket) {
+          chrome.storage.local.set({ cf_cached_bucket: result.diag.bucket }).catch(() => {});
+        }
         sendResponse(result);
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });

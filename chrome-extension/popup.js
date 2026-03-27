@@ -1,4 +1,4 @@
-// popup.js v2.28.0 — Challenge Funnel Extension
+// popup.js v2.29.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -221,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.28.0 ===");
+  lines.push("=== CF Extension v2.29.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -296,9 +296,20 @@ async function showInjectDebug() {
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }
+        if (d.approach2b) {
+          const a2b = d.approach2b;
+          lines.push(`A2b result: ${a2b.result ?? "?"} httpStatus: ${a2b.httpStatus ?? "not-reached"}`);
+          lines.push(`A2b funnelId: ${a2b.funnelId ?? "?"} bucket: ${a2b.bucket ?? "?"}`);
+          lines.push(`A2b bucketDiag: ${JSON.stringify(a2b.bucketDiag ?? [])} tokDiag: ${JSON.stringify(a2b.tokDiag ?? [])}`);
+          if (a2b.path !== undefined)           lines.push(`A2b path: ${a2b.path}`);
+          if (a2b.newDownloadUrl !== undefined) lines.push(`A2b newDownloadUrl: ${a2b.newDownloadUrl}`);
+          if (a2b.metaPatch !== undefined)      lines.push(`A2b metaPatch: ${a2b.metaPatch}`);
+          if (a2b.metadataKeys !== undefined)   lines.push(`A2b metadataKeys: ${JSON.stringify(a2b.metadataKeys)}`);
+        }
         if (d.approach3) {
           lines.push(`A3 iframeFrameId: ${d.approach3.iframeFrameId ?? "?"} piniaSource: ${d.approach3.piniaSource ?? "?"}`);
           lines.push(`A3 stores found: ${JSON.stringify(d.approach3.candidates ?? []).slice(0, 200)}`);
+          if (d.approach3.allStoreIds?.length > 0) lines.push(`A3 allStoreIds: ${JSON.stringify(d.approach3.allStoreIds).slice(0, 200)}`);
           if (d.approach3.candidateDiag) {
             d.approach3.candidateDiag.forEach(cd => {
               lines.push(`  A3 store=${cd.storeId} patched=${cd.patched} savedVia=${cd.savedVia ?? "none"} err=${(cd.errors ?? []).join("|").slice(0, 60)}`);
