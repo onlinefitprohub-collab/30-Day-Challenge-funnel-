@@ -207,16 +207,23 @@ async function showInjectDebug() {
 
   btn.textContent = "Hide";
 
-  const [ls, ss, tabs] = await Promise.all([
-    chrome.storage.local.get(["cf_last_inject", "cfReady", "cf_last_ghl_error", "cf_last_ooff_error"]),
+  const [lsBase, ss, tabs] = await Promise.all([
+    chrome.storage.local.get(["cf_last_inject", "cfReady"]),
     chrome.storage.session.get("cf_copied_page"),
     new Promise((r) => chrome.tabs.query({ active: true, currentWindow: true }, r)),
   ]);
 
+  const tab    = tabs?.[0];
+  const tabId  = tab?.id;
+
+  /* Fetch tab-keyed diagnostic records using the active tab's ID */
+  const diagKeys = tabId ? [`cf_ghl_err_${tabId}`, `cf_ooff_err_${tabId}`] : [];
+  const lsDiag   = diagKeys.length ? await new Promise((r) => chrome.storage.local.get(diagKeys, r)) : {};
+
+  const ls     = { ...lsBase, ...lsDiag };
   const inject = ls.cf_last_inject;
   const ready  = ls.cfReady;
   const copied = ss.cf_copied_page;
-  const tab    = tabs?.[0];
 
   let lines = [];
 
@@ -333,8 +340,8 @@ async function showInjectDebug() {
   }
 
   /* ── GHL Diagnostic (network sniffer results from post-inject page load) ── */
-  const ghlErr  = ls.cf_last_ghl_error;
-  const ooffErr = ls.cf_last_ooff_error;
+  const ghlErr  = tabId ? lsDiag[`cf_ghl_err_${tabId}`]  : undefined;
+  const ooffErr = tabId ? lsDiag[`cf_ooff_err_${tabId}`] : undefined;
   if (ghlErr || ooffErr) {
     lines.push(`\n--- GHL Diagnostic (captured on last builder reload) ---`);
     if (ghlErr) {

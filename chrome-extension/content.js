@@ -143,7 +143,7 @@
     if (d.type === "CF_OOFF_ERROR") {
       try {
         chrome.runtime.sendMessage({ type: "CF_OOFF_ERROR",
-          msg: d.msg, src: d.src, line: d.line, pageReady: d.pageReady });
+          msg: d.msg, src: d.src, line: d.line, ooffTs: d.ooffTs });
       } catch (_) {}
     }
   });

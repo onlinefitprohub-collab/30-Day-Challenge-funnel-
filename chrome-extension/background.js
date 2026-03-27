@@ -2683,7 +2683,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       chrome.storage.local.get(["cf_sniff_tab"], (d) => {
         if (!senderTabId || d.cf_sniff_tab !== senderTabId) return;
         const { status, url, body } = msg;
-        chrome.storage.local.set({ cf_last_ghl_error: { status, url, body, tabId: senderTabId, ts: Date.now() } });
+        /* Key by tabId so popup can filter to the active tab only */
+        const storeKey = `cf_ghl_err_${senderTabId}`;
+        chrome.storage.local.set({ [storeKey]: { status, url, body, tabId: senderTabId, ts: Date.now() } });
       });
     })();
     return false;
@@ -2691,9 +2693,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   /* ── CF_OOFF_ERROR — forwarded from content script onerror sniffer ────────
    * Only stored when the sender tab matches the tab we armed the sniffer for.
-   * pageReady flag set BEFORE inject means pre-existing; set AFTER means
-   * inject-triggered. Background also sets cf_sniff_inject_ts at arm-time so
-   * the pre/post boundary is available for comparison.                        */
+   * ooffTs (from MAIN world) compared to cf_sniff_inject_ts to determine
+   * whether the error was pre-existing or caused by our inject.               */
   if (type === "CF_OOFF_ERROR") {
     const senderTabId = sender?.tab?.id;
     (() => {
@@ -2702,7 +2703,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const { msg: errMsg, src, line, ooffTs } = msg;
         const injectTs = d.cf_sniff_inject_ts ?? 0;
         const preExisting = ooffTs ? (ooffTs < injectTs) : false;
-        chrome.storage.local.set({ cf_last_ooff_error: { errMsg, src, line, preExisting, tabId: senderTabId, ts: Date.now() } });
+        /* Key by tabId so popup can filter to the active tab only */
+        const storeKey = `cf_ooff_err_${senderTabId}`;
+        chrome.storage.local.set({ [storeKey]: { errMsg, src, line, preExisting, tabId: senderTabId, ts: Date.now() } });
       });
     })();
     return false;
