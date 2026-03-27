@@ -309,7 +309,7 @@ async function showInjectDebug() {
         if (d.approach3) {
           lines.push(`A3 iframeFrameId: ${d.approach3.iframeFrameId ?? "?"} piniaSource: ${d.approach3.piniaSource ?? "?"}`);
           lines.push(`A3 stores found: ${JSON.stringify(d.approach3.candidates ?? []).slice(0, 200)}`);
-          if (d.approach3.allStoreIds?.length > 0) lines.push(`A3 allStoreIds: ${JSON.stringify(d.approach3.allStoreIds).slice(0, 200)}`);
+          lines.push(`A3 allStoreIds: ${JSON.stringify(d.approach3.allStoreIds ?? []).slice(0, 200)}`);
           if (d.approach3.candidateDiag) {
             d.approach3.candidateDiag.forEach(cd => {
               lines.push(`  A3 store=${cd.storeId} patched=${cd.patched} savedVia=${cd.savedVia ?? "none"} err=${(cd.errors ?? []).join("|").slice(0, 60)}`);
