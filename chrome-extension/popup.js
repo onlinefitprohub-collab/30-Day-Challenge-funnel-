@@ -269,7 +269,11 @@ async function showInjectDebug() {
           lines.push(`A2 bucket: ${a2.bucket ?? "?"} hasToken=${a2.hasToken}`);
           lines.push(`A2 httpStatus: ${a2.httpStatus ?? "?"} | result: ${a2.result ?? "?"}`);
           lines.push(`A2 storageFormat: ${a2.storageFormat ?? "?"} existN=${a2.existElemCount ?? "?"} nodeCount=${a2.nodeCount ?? "?"} existingId=${a2.existingPayloadId ?? "?"}`);
-          if (a2.firstRowKeys !== undefined)      lines.push(`A2 firstRowKeys: ${JSON.stringify(a2.firstRowKeys)} | existRowMeta: ${JSON.stringify(a2.firstExistRowMetaKeys ?? "?")}`);
+          if (a2.firstRowKeys !== undefined) {
+            lines.push(`A2 firstRowKeys: ${JSON.stringify(a2.firstRowKeys)} | existRowMeta: ${JSON.stringify(a2.firstExistRowMetaKeys ?? "?")}`);
+            lines.push(`A2 existRowDictKey=${a2.firstExistRowDictKey ?? "?"} idMatch=${a2.firstExistRowIdMatch ?? "?"}`);
+          }
+          if (a2.firstSectionKeys !== undefined)     lines.push(`A2 firstSec topKeys: ${JSON.stringify(a2.firstSectionKeys)}`);
           if (a2.firstSectionMetaKeys !== undefined) lines.push(`A2 firstSec metaKeys: ${JSON.stringify(a2.firstSectionMetaKeys)} childN=${a2.firstSectionChildCount ?? "?"}`);
           if (a2.preWriteRowKeys !== undefined)   lines.push(`A2 preWriteRowKeys: ${JSON.stringify(a2.preWriteRowKeys)} secChildId=${a2.preWriteSectionChildId ?? "?"}`);
           if (a2.postWrite !== undefined) {

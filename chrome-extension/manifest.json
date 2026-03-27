@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.20.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.20.0: bust GHL SW cache (firebasestorage) before reload so builder sees fresh Firebase write; add firstExistRowMetaKeys probe to compare GHL row format vs ours. No API key needed.",
+  "version": "2.21.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.21.0: dual-format sections (flat+wrapped) so GHL reads child rows regardless of access path; add firstSectionTopKeys + firstExistRowDictKey/idMatch probes. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
