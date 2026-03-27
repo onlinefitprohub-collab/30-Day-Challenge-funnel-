@@ -208,27 +208,16 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
-  /* ─── Network + JS-error sniffer (injected into MAIN world) ─────────── *
-   * Monkey-patches window.fetch to capture GHL backend 4xx/5xx bodies and
-   * installs window.onerror to detect o.off / is-not-a-function errors.
-   * Auto-removes after 25 seconds. Uses var/function for compatibility.   */
+  /* ─── Post-reload fetch sniffer (injected into MAIN world via <script> tag) *
+   * Same logic as _cf_injectFetchSniffer in background.js — used after a hard *
+   * page reload where executeScript cannot reach the new document.            *
+   * onerror is handled by bridge.js (document_start); only fetch is patched.  */
   const CF_SNIFF_CODE = `(function(){
-    if(window.__cfSniffInstalled)return;
-    window.__cfSniffInstalled=true;
-    function cleanup(){window.fetch=origFetch;window.onerror=origOnError;window.__cfSniffInstalled=false;}
-    var origOnError=window.onerror;
-    window.onerror=function(msg,src,line,col,err){
-      if(msg&&(msg.indexOf('o.off')!==-1||msg.indexOf('is not a function')!==-1)&&
-         src&&src.indexOf('FunnelBuilderApp')!==-1){
-        window.postMessage({source:'cf-network-sniffer',type:'CF_OOFF_ERROR',
-          msg:String(msg).slice(0,200),src:String(src).slice(0,120),
-          line:line,ooffTs:Date.now()},'*');
-      }
-      if(origOnError)return origOnError.apply(this,arguments);
-      return false;
-    };
+    if(window.__cfFetchSniffInstalled)return;
+    window.__cfFetchSniffInstalled=true;
     var origFetch=window.fetch;
-    var sniffTimer=setTimeout(cleanup,60000);
+    function cleanup(){window.fetch=origFetch;window.__cfFetchSniffInstalled=false;}
+    var sniffTimer=setTimeout(cleanup,20000);
     window.fetch=function(){
       var args=Array.prototype.slice.call(arguments);
       return origFetch.apply(this,args).then(function(response){
