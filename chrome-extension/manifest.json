@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.24.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.24.0: Roundtrip test — reads existing Firebase data, probes exact GHL schema (elem/col/row top-level keys), writes back unchanged to isolate TypeError root cause. No API key needed.",
+  "version": "2.25.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.25.0: Fix stale Firebase download token — after each write, extract new token from upload response, update GHL backend metadata so GHL can read the written page. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

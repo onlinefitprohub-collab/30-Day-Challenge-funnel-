@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.24.0 — roundtrip test: probe GHL exact schema + write original data back unchanged.");
+    console.log("[CF Funnel] Installed v2.25.0 — fix stale Firebase download token: extract new token from upload, update GHL metadata URL.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.24.0 — roundtrip test: probe GHL exact schema + write original data back unchanged.");
+    console.log("[CF Funnel] Updated to v2.25.0 — fix stale Firebase download token: extract new token from upload, update GHL metadata URL.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -772,6 +772,56 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
             if (res.ok) {
               diag.approach2.result = `success (HTTP ${res.status})`;
 
+              /* ── Extract new Firebase download token from upload response ────────── *
+               * Firebase Storage REST API returns { downloadTokens: "…" } on upload.
+               * If it generated a NEW token, GHL's cached pageDataDownloadUrl (stored
+               * in its backend) is now STALE — GHL tries to GET from the old URL, gets
+               * 403/empty, and loadFunnelPage throws "TypeError: o1.elements is not
+               * iterable" on the empty data.  We fix this by updating GHL's metadata
+               * with the new public download URL so GHL can actually read our file.   */
+              let newFirebaseToken = null;
+              try {
+                const uploadResp = await res.clone().json().catch(() => ({}));
+                newFirebaseToken = uploadResp.downloadTokens ?? null;
+                const oldToken   = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+                diag.approach2.newFirebaseToken = newFirebaseToken
+                  ? newFirebaseToken.slice(0, 20) + "…" : "none-in-resp";
+                diag.approach2.tokenChanged = newFirebaseToken
+                  ? (newFirebaseToken !== oldToken) : false;
+              } catch (_tre) {
+                diag.approach2.newFirebaseToken = "parse-err";
+              }
+
+              /* Build new public URL and update GHL metadata so GHL can read the file */
+              if (newFirebaseToken && revex) {
+                const newPublicUrl =
+                  `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
+                  `/o/${encodedPath}?alt=media&token=${newFirebaseToken}`;
+                diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
+                const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
+                try {
+                  await revex.put(
+                    `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+                    updateBody
+                  );
+                  diag.approach2.metaUpdate = "ok";
+                } catch (_u1) {
+                  try {
+                    await revex.put(
+                      `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+                      updateBody
+                    );
+                    diag.approach2.metaUpdate = "ok-v2";
+                  } catch (_u2) {
+                    diag.approach2.metaUpdate = `failed: ${String(_u2).slice(0, 60)}`;
+                  }
+                }
+              } else {
+                diag.approach2.metaUpdate = revex
+                  ? "skipped-no-new-token"
+                  : "skipped-no-revex";
+              }
+
               /* ── Post-write verification: re-read what we wrote ────────────────── *
                * Confirms the new file is readable and has our sections/rows counts.  */
               try {
@@ -1386,7 +1436,17 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     diag.sectionsWithTopLevelElements = Array.isArray(existing.sections)
       ? existing.sections.filter(s => "elements" in s).length : 0;
 
+    /* 6b. Test if download URL is publicly accessible WITHOUT auth (as GHL reads it) */
+    try {
+      const pubBefore = await fetch(downloadUrl, {
+        signal: AbortSignal.timeout(4000),
+      });
+      diag.publicReadBefore = { status: pubBefore.status, ok: pubBefore.ok };
+    } catch (_pb) { diag.publicReadBefore = { error: "timeout-or-cors" }; }
+
     /* 7. Write the EXACT SAME DATA BACK — no modifications whatsoever ──────── */
+    /* URL-encode the objectPath for the name param (must be encoded in the URL) */
+    const encodedPath = objectPath.split("/").map(encodeURIComponent).join("/");
     const uploadEp =
       `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
       `/o?uploadType=media&name=${encodeURIComponent(objectPath)}`;
@@ -1406,7 +1466,64 @@ async function _cf_roundtripFirebaseWrite(builderId) {
       return JSON.stringify({ ok: false, error: `write failed HTTP ${writeRes.status}`, diag });
     }
 
-    /* 8. Verify re-read after short delay */
+    /* 7b. Parse upload response → new Firebase download token
+     * Firebase Storage REST API returns { downloadTokens: "new-token" } on upload.
+     * If it generated a NEW token, the old pageDataDownloadUrl GHL has cached is
+     * now STALE → GHL gets 403/empty data → TypeError: o1.elements is not iterable.
+     * We must update GHL's backend metadata with the new public URL.              */
+    let newFirebaseToken = null;
+    let newPublicUrl     = null;
+    try {
+      const uploadRespJson = await writeRes.clone().json().catch(() => ({}));
+      newFirebaseToken = uploadRespJson.downloadTokens ?? null;
+      const oldToken   = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+      diag.oldToken        = oldToken ? oldToken.slice(0, 20) + "…" : "none-in-url";
+      diag.newToken        = newFirebaseToken ? newFirebaseToken.slice(0, 20) + "…" : "none-in-resp";
+      diag.tokenChanged    = newFirebaseToken ? (newFirebaseToken !== oldToken) : false;
+    } catch (_te) { diag.newToken = "parse-err"; }
+
+    /* 7c. Build new public URL with new token and test it */
+    if (newFirebaseToken) {
+      newPublicUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedPath}?alt=media&token=${newFirebaseToken}`;
+      try {
+        const pubAfter = await fetch(newPublicUrl, { signal: AbortSignal.timeout(4000) });
+        diag.publicReadAfterNewToken = { status: pubAfter.status, ok: pubAfter.ok };
+      } catch (_pa) { diag.publicReadAfterNewToken = { error: "timeout-or-cors" }; }
+    } else {
+      /* No new token — test old URL */
+      try {
+        const pubAfter2 = await fetch(downloadUrl, { signal: AbortSignal.timeout(4000) });
+        diag.publicReadAfterOldToken = { status: pubAfter2.status, ok: pubAfter2.ok };
+      } catch (_pa2) { diag.publicReadAfterOldToken = { error: "timeout-or-cors" }; }
+    }
+
+    /* 7d. Update GHL's page metadata with new download URL (if we have revex) */
+    if (newFirebaseToken && revex) {
+      diag.newPublicUrl = newPublicUrl.slice(0, 120);
+      const updateBody  = { ...existing, pageDataDownloadUrl: newPublicUrl };
+      // GHL metadata update — try both API endpoints
+      try {
+        await revex.put(
+          `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+          updateBody
+        );
+        diag.metaUpdate = "ok";
+      } catch (_u1) {
+        try {
+          await revex.put(
+            `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+            updateBody
+          );
+          diag.metaUpdate = "ok-v2";
+        } catch (_u2) {
+          diag.metaUpdate = `failed: ${String(_u2).slice(0, 60)}`;
+        }
+      }
+    } else {
+      diag.metaUpdate = newFirebaseToken ? "skipped-no-revex" : "skipped-no-token";
+    }
+
+    /* 8. Verify auth-read after write */
     await new Promise(r => setTimeout(r, 600));
     const vrRes = await fetch(downloadUrl, {
       cache:   "no-store",

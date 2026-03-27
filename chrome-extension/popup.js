@@ -1,4 +1,4 @@
-// popup.js v2.24.0 — Challenge Funnel Extension
+// popup.js v2.25.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -221,7 +221,7 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.24.0 ===");
+  lines.push("=== CF Extension v2.25.0 ===");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -284,6 +284,10 @@ async function showInjectDebug() {
             lines.push(`A2 postWrite ref: sec0ChildRow=${pw.sec0ChildRowId ?? "?"} rowRefOk=${pw.rowRefOk ?? "?"} colId=${pw.firstColId ?? "?"} colRefOk=${pw.colRefOk ?? "?"}`);
             lines.push(`A2 postWrite firstRowMetaKeys=${JSON.stringify(pw.firstRowMetaKeys ?? "?")} firstRowKeys=${JSON.stringify(pw.firstRowKeys ?? "?")}`);
           }
+          /* v2.25.0 stale-token diagnostics */
+          if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
+          if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate: ${a2.metaUpdate}  ← "ok" = GHL URL refreshed`);
+          if (a2.newPublicUrl !== undefined)     lines.push(`A2 newPublicUrl: ${a2.newPublicUrl}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }
@@ -346,7 +350,7 @@ async function doRoundtripTest() {
     const res = await sendMessage({ type: "CF_ROUNDTRIP_TEST" });
     const d   = res?.diag ?? {};
     const lines = [];
-    lines.push(`=== Roundtrip Test v2.24.0 ===`);
+    lines.push(`=== Roundtrip Test v2.25.0 ===`);
     lines.push(`ok: ${res?.ok} ${res?.error ? "| error: " + res.error : ""}`);
     if (d.tokenDiag)   lines.push(`tokenDiag: ${JSON.stringify(d.tokenDiag)}`);
     if (d.bucket)      lines.push(`bucket: ${d.bucket}`);
@@ -354,6 +358,7 @@ async function doRoundtripTest() {
     lines.push(`readOk=${d.readOk} payloadId=${d.payloadId ?? "?"}`);
     lines.push(`topLevelKeys: ${JSON.stringify(d.topLevelKeys)}`);
     lines.push(`secs=${d.sectionCount} rows=${d.rowCount} cols=${d.colCount} elems=${d.elemCount}`);
+    /* Schema probes */
     if (d.firstSecTopKeys !== undefined)  lines.push(`sec0 topKeys: ${JSON.stringify(d.firstSecTopKeys)}`);
     if (d.firstSecMetaKeys !== undefined) lines.push(`sec0 metaKeys: ${JSON.stringify(d.firstSecMetaKeys)}`);
     if (d.firstRowTopKeys !== undefined)  lines.push(`row0 topKeys: ${JSON.stringify(d.firstRowTopKeys)} hasElements=${d.firstRowHasElements}`);
@@ -365,12 +370,26 @@ async function doRoundtripTest() {
     if (d.firstElemElemCopyKeys !== undefined) lines.push(`elem0 metaData.element keys: ${JSON.stringify(d.firstElemElemCopyKeys)} hasElems=${d.firstElemElemCopyHasElems}`);
     lines.push(`anyRowHasElements=${d.anyRowHasElements} anyColHasElements=${d.anyColHasElements} anyElemHasElements=${d.anyElemHasElements}`);
     lines.push(`sectionsWithTopLevelElements=${d.sectionsWithTopLevelElements}`);
+    /* Public URL test (no auth — simulates GHL read) */
+    if (d.publicReadBefore !== undefined) lines.push(`publicRead BEFORE write (no auth): ${JSON.stringify(d.publicReadBefore)}`);
+    /* Write */
     lines.push(`writeOk=${d.writeOk} writeStatus=${d.writeStatus ?? "?"}`);
     if (d.writeError) lines.push(`writeError: ${d.writeError}`);
-    if (d.verifyStatus !== undefined) lines.push(`verify: status=${d.verifyStatus} secs=${d.verifySecCount} elems=${d.verifyElemCount} id=${d.verifyId}`);
-    lines.push(`\nNow RELOAD the GHL builder tab and check the console.`);
-    lines.push(`If TypeError still appears → cause is write/reload, not our format.`);
-    lines.push(`If TypeError disappears → cause is our AI data format.`);
+    /* Token analysis — KEY for diagnosing stale-token bug */
+    if (d.oldToken !== undefined) lines.push(`oldToken: ${d.oldToken}`);
+    if (d.newToken !== undefined) lines.push(`newToken (from upload resp): ${d.newToken}`);
+    if (d.tokenChanged !== undefined) lines.push(`tokenChanged: ${d.tokenChanged} ← if true, GHL's cached URL is now stale!`);
+    if (d.publicReadAfterNewToken !== undefined) lines.push(`publicRead AFTER write (new token): ${JSON.stringify(d.publicReadAfterNewToken)}`);
+    if (d.publicReadAfterOldToken !== undefined) lines.push(`publicRead AFTER write (old token): ${JSON.stringify(d.publicReadAfterOldToken)}`);
+    /* GHL metadata update */
+    if (d.metaUpdate !== undefined) lines.push(`GHL metaUpdate: ${d.metaUpdate} ← "ok" means URL refreshed in GHL backend`);
+    if (d.newPublicUrl !== undefined) lines.push(`newPublicUrl: ${d.newPublicUrl}`);
+    /* Verify */
+    if (d.verifyStatus !== undefined) lines.push(`verify (auth read): status=${d.verifyStatus} secs=${d.verifySecCount} elems=${d.verifyElemCount} id=${d.verifyId}`);
+    lines.push(`\nNow RELOAD the GHL builder tab.`);
+    lines.push(`metaUpdate=ok + tokenChanged=true → stale-token was the bug. Check if TypeError is gone!`);
+    lines.push(`metaUpdate=failed → need a different metadata-update approach.`);
+    lines.push(`tokenChanged=false → token preserved, stale-URL is not the root cause.`);
 
     div.textContent = lines.join("\n");
     div.className   = res?.ok ? "paste-result ok" : "paste-result err";
