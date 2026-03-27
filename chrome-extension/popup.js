@@ -366,12 +366,22 @@ async function showInjectDebug() {
     }
     /* o.off two-phase classification (bridge.js document_start baseline) */
     if (ooffErr) {
-      const age2  = ooffErr.ts ? `${Math.round((Date.now() - ooffErr.ts) / 1000)}s ago` : "?";
+      const age2   = ooffErr.ts ? `${Math.round((Date.now() - ooffErr.ts) / 1000)}s ago` : "?";
       const stale2 = ooffErr.ts && (Date.now() - ooffErr.ts > 60000) ? " [stale >60s]" : "";
-      const timing = ooffErr.preExisting
-        ? "pre-existing (before inject — not our fault)"
-        : "inject-triggered (after inject — our write caused it)";
+      const before = ooffErr.seenBeforeInject;
+      const after  = ooffErr.seenAfterInject;
+      let timing;
+      if (before && !after) {
+        timing = "pre-existing (seen before inject only — not our fault)";
+      } else if (!before && after) {
+        timing = "inject-triggered (seen after inject only — our write caused it)";
+      } else if (before && after) {
+        timing = "both phases (pre-existing AND triggered by inject)";
+      } else {
+        timing = ooffErr.preExisting ? "pre-existing" : "inject-triggered";
+      }
       lines.push(`oOffError (${age2}${stale2}): ${timing}`);
+      lines.push(`  seenBefore=${before ?? "?"} seenAfter=${after ?? "?"}`);
       lines.push(`  msg: "${(ooffErr.errMsg ?? "").slice(0, 100)}"`);
       lines.push(`  src: ${(ooffErr.src ?? "").slice(0, 120)} line ${ooffErr.line ?? "?"}`);
     } else {

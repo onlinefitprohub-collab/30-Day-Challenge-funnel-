@@ -126,14 +126,50 @@
   });
 
   /* ─── Blind-spot 3: Two-phase o.off tracking ────────────────────────────
-   * bridge.js (document_start, MAIN world) installs window.onerror before
-   * any GHL code runs and postMessages CF_OOFF_EVENT for each matching error.
-   * We track whether the error arrived BEFORE or AFTER CF_INJECT_DONE.
-   * CF_INJECT_DONE is postMessaged by background via executeScript after the
-   * inject is confirmed.                                                     */
-  let _cfInjectDone  = false;
-  let _cfOoffBefore  = null; // first o.off seen before inject
-  let _cfOoffAfter   = null; // first o.off seen after inject
+   * bridge.js (document_start, MAIN world) installs window.onerror BEFORE
+   * any GHL code runs and buffers CF_OOFF_EVENT events in window.__cfOoffQueue.
+   * We drain that queue on startup (catching errors that fired before we were
+   * attached), then continue listening via postMessage for later ones.
+   * CF_INJECT_DONE is postMessaged by background (via executeScript) once the
+   * Firebase write succeeds. We use seenBeforeInject / seenAfterInject booleans
+   * so overwriting a later event cannot corrupt an earlier pre-existing record.  */
+  let _cfInjectDone      = false;
+  let _cfOoffSeenBefore  = false; // any o.off before inject
+  let _cfOoffSeenAfter   = false; // any o.off after inject
+  let _cfOoffFirstSample = null;  // first event ever (for display)
+
+  function _cfHandleOoffEvent(d) {
+    if (!_cfOoffFirstSample) {
+      _cfOoffFirstSample = { msg: d.msg, src: d.src, line: d.line };
+    }
+    if (!_cfInjectDone) {
+      _cfOoffSeenBefore = true;
+    } else {
+      _cfOoffSeenAfter = true;
+    }
+    /* Send structured update every time so background has current booleans */
+    try {
+      chrome.runtime.sendMessage({
+        type:            "CF_OOFF_ERROR",
+        msg:             d.msg,
+        src:             d.src,
+        line:            d.line,
+        seenBeforeInject: _cfOoffSeenBefore,
+        seenAfterInject:  _cfOoffSeenAfter,
+        /* preExisting: true if errors appeared ONLY before inject (not after) */
+        preExisting:     _cfOoffSeenBefore && !_cfOoffSeenAfter,
+      });
+    } catch (_) {}
+  }
+
+  /* Drain buffer of events that fired at document_start (before we were attached) */
+  try {
+    const queue = window.__cfOoffQueue;
+    if (Array.isArray(queue)) {
+      for (const ev of queue) _cfHandleOoffEvent(ev);
+      window.__cfOoffQueue = [];
+    }
+  } catch (_) {}
 
   /* ─── Network sniffer relay + bridge event relay ────────────────────────
    * bridge (source:"cf-bridge"):   CF_OOFF_EVENT, CF_INJECT_DONE
@@ -144,24 +180,8 @@
 
     /* ── bridge.js events ── */
     if (d.source === "cf-bridge") {
-      if (d.type === "CF_OOFF_EVENT") {
-        if (!_cfInjectDone && !_cfOoffBefore) {
-          _cfOoffBefore = { msg: d.msg, src: d.src, line: d.line, ts: d.ts };
-        } else if (_cfInjectDone && !_cfOoffAfter) {
-          _cfOoffAfter = { msg: d.msg, src: d.src, line: d.line, ts: d.ts };
-        }
-        /* Forward to background with pre-existing flag */
-        try {
-          chrome.runtime.sendMessage({
-            type: "CF_OOFF_ERROR",
-            msg: d.msg, src: d.src, line: d.line, ooffTs: d.ts,
-            preExisting: !_cfInjectDone,
-          });
-        } catch (_) {}
-      }
-      if (d.type === "CF_INJECT_DONE") {
-        _cfInjectDone = true;
-      }
+      if (d.type === "CF_OOFF_EVENT") _cfHandleOoffEvent(d);
+      if (d.type === "CF_INJECT_DONE") _cfInjectDone = true;
       return;
     }
 

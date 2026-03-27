@@ -2730,28 +2730,49 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
    * After 60 s the record is stale; popup truncates display accordingly.    */
   if (type === "CF_GHL_BACKEND_ERROR") {
     const senderTabId = sender?.tab?.id;
-    (() => {
-      chrome.storage.local.get(["cf_sniff_tab"], (d) => {
-        if (!senderTabId || d.cf_sniff_tab !== senderTabId) return;
-        const { status, url, body } = msg;
-        /* Key by tabId so popup can filter to the active tab only */
-        const storeKey = `cf_ghl_err_${senderTabId}`;
-        chrome.storage.local.set({ [storeKey]: { status, url, body, tabId: senderTabId, ts: Date.now() } });
-      });
-    })();
+    if (!senderTabId) return false;
+    const { status, url, body } = msg;
+    /* Stored per-tab; no cf_sniff_tab gate needed — sender.tab.id already
+     * ensures this is from the correct GHL tab. A 60s cleanup is scheduled
+     * by the CF_OOFF_ERROR handler; add a fallback here too.               */
+    const storeKey = `cf_ghl_err_${senderTabId}`;
+    chrome.storage.local.set({ [storeKey]: { status, url, body, tabId: senderTabId, ts: Date.now() } });
+    setTimeout(() => chrome.storage.local.remove(storeKey), 60000);
     return false;
   }
 
   /* ── CF_OOFF_ERROR — forwarded from content script two-phase onerror ──────
-   * preExisting is set by content.js: true if the error fired before
-   * CF_INJECT_DONE was received (i.e. before our Firebase write was done).
-   * Stored per-tab so popup shows only the active tab's data.               */
+   * seenBeforeInject / seenAfterInject are boolean flags set by content.js
+   * tracking which phase each error belongs to. preExisting is computed by
+   * content.js: true only if errors appeared before inject AND none after.
+   * The record is merged (using spread) so a later "seenAfterInject: true"
+   * update does not clobber the earlier "seenBeforeInject: true" entry.
+   * Stored per-tab. A 60s cleanup timer removes stale records.             */
   if (type === "CF_OOFF_ERROR") {
     const senderTabId = sender?.tab?.id;
     if (!senderTabId) return false;
-    const { msg: errMsg, src, line, preExisting } = msg;
+    const { msg: errMsg, src, line, seenBeforeInject, seenAfterInject, preExisting } = msg;
     const storeKey = `cf_ooff_err_${senderTabId}`;
-    chrome.storage.local.set({ [storeKey]: { errMsg, src, line, preExisting: !!preExisting, tabId: senderTabId, ts: Date.now() } });
+    /* Merge with existing to accumulate both boolean flags across multiple calls */
+    chrome.storage.local.get([storeKey], (existing) => {
+      const prev = existing[storeKey] ?? {};
+      const merged = {
+        ...prev,
+        errMsg: errMsg ?? prev.errMsg,
+        src:    src    ?? prev.src,
+        line:   line   ?? prev.line,
+        seenBeforeInject: !!(seenBeforeInject || prev.seenBeforeInject),
+        seenAfterInject:  !!(seenAfterInject  || prev.seenAfterInject),
+        tabId:  senderTabId,
+        ts:     prev.ts ?? Date.now(),
+      };
+      merged.preExisting = merged.seenBeforeInject && !merged.seenAfterInject;
+      chrome.storage.local.set({ [storeKey]: merged });
+    });
+    /* 60s TTL: remove stale diagnostic keys to avoid showing old data */
+    setTimeout(() => {
+      chrome.storage.local.remove([storeKey, `cf_ghl_err_${senderTabId}`]);
+    }, 60000);
     return false;
   }
 
