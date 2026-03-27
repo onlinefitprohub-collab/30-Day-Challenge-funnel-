@@ -652,11 +652,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData) {
                 } else if (existing.elements && typeof existing.elements === "object") {
                   storageFormat  = "structured-dict";
                   existElemCount = Object.keys(existing.elements).length;
-                  /* Peek at first row entry's top-level keys (confirm wrapped vs flat) */
+                  /* Peek at first row entry's top-level keys (confirm wrapped vs flat)
+                   * AND the inner metaData keys so we can compare GHL's own row
+                   * structure against what buildNode() generates.                       */
                   const firstRowVal = existing.rows && Object.values(existing.rows)[0];
                   diag.approach2.firstRowKeys = firstRowVal
                     ? Object.keys(firstRowVal).slice(0, 12)
                     : "rows-empty";
+                  diag.approach2.firstExistRowMetaKeys = firstRowVal?.metaData
+                    ? Object.keys(firstRowVal.metaData).slice(0, 14)
+                    : "no-metaData";
                   /* Peek at first section's top-level keys and metaData keys */
                   const sec0 = Array.isArray(existing.sections) && existing.sections[0];
                   if (sec0) {
@@ -1039,16 +1044,39 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
 }
 
 /* Reload the GHL builder iframe to reflect cloned content. */
-function _cf_refreshBuilderIframe() {
+async function _cf_refreshBuilderIframe() {
   try {
+    /* ── Step 1: bust GHL's service-worker cache for Firebase Storage ──────
+     * GHL registers a SW that caches Firebase Storage responses with a
+     * cache-first strategy.  A plain window.location.reload() makes the SW
+     * serve the old cached pageData, so our write is never seen by the
+     * builder.  We enumerate every SW cache and delete any entry whose URL
+     * contains "firebasestorage.googleapis.com" before reloading.          */
+    let cacheCleared = 0;
+    if (typeof caches !== "undefined") {
+      try {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          const c    = await caches.open(name);
+          const keys = await c.keys();
+          for (const req of keys) {
+            if (req.url.includes("firebasestorage.googleapis.com")) {
+              await c.delete(req);
+              cacheCleared++;
+            }
+          }
+        }
+      } catch(_) {}
+    }
+
+    /* ── Step 2: reload the builder ─────────────────────────────────────── */
     const iframe = document.querySelector('iframe[name="funnel-builder"]');
     if (!iframe) {
-      // Fallback: reload the whole page
       window.location.reload();
-      return JSON.stringify({ ok: true, method: "page-reload" });
+      return JSON.stringify({ ok: true, method: "cache-bust+page-reload", cacheCleared });
     }
     iframe.src = iframe.src;
-    return JSON.stringify({ ok: true, method: "iframe-reload", src: iframe.src.slice(0, 80) });
+    return JSON.stringify({ ok: true, method: "cache-bust+iframe-reload", cacheCleared, src: iframe.src.slice(0, 80) });
   } catch(e) {
     return JSON.stringify({ ok: false, error: String(e).slice(0, 100) });
   }
