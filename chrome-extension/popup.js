@@ -261,8 +261,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.37.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.37.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.38.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.38.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -328,7 +328,7 @@ async function showInjectDebug() {
             lines.push(`A2 postWrite sec0El0HasMeta=${pw.sec0El0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(pw.sec0El0Keys ?? "?")}`);
           }
           /* v2.32.0 section elements diagnostic (flat format) */
-          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} format: ${a2.firstSecElemFormat ?? "unknown"} | sec0El0HasMeta=${a2.firstSecEl0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(a2.firstSecEl0Keys ?? "?")}`);
+          if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} format: ${a2.firstSecElemFormat ?? "unknown"} | sec0El0HasMeta=${a2.firstSecEl0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0HasElement=${a2.firstSecEl0HasElement ?? "?"} (expect: true=v2.38 ✓) sec0El0Keys=${JSON.stringify(a2.firstSecEl0Keys ?? "?")}`);
           /* v2.33.0 empty dicts diagnostic */
           if (a2.writeEmptyDicts !== undefined)   lines.push(`A2 writeEmptyDicts: ${a2.writeEmptyDicts} writeFormat: ${a2.writeFormat ?? "?"} ← true = native format (rows/cols/elems={})`);
           /* v2.35.0 restored child diagnostic */

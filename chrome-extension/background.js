@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.37.0 — fix GHL hang: section.elements now contains full flat row→col→element tree; all child[] refs resolve in the same array.");
+    console.log("[CF Funnel] Installed v2.38.0 — fix GHL hang: keep `element` snapshot field in flat nodes (native GHL format); prior versions stripped it causing GHL renderer to stall.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.37.0 — fix GHL hang: section.elements now contains full flat row→col→element tree; all child[] refs resolve in the same array.");
+    console.log("[CF Funnel] Updated to v2.38.0 — fix GHL hang: keep `element` snapshot field in flat nodes (native GHL format); prior versions stripped it causing GHL renderer to stall.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -706,22 +706,25 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* Flattens a dict value from { id, metaData:{...} } to top-level flat format.
              * If the value is already flat (no metaData key), it is passed through as-is.
              * Result: { id, _id, type, tagName, child, extra, styles, mobileStyles, class,
-             *           meta, title, wrapper, customCss, tag, mobileWrapper, mobileExtra }
-             * — matches native GHL Firebase element field keys.
-             * The `element` self-reference from buildNode() is stripped here.
+             *           meta, title, wrapper, customCss, tag, mobileWrapper, mobileExtra,
+             *           element }
+             * — matches native GHL Firebase element field keys (incl. `element`).
              * v2.37.0: defaults for native fields not produced by AI generator are injected
-             * before the metaData spread so AI values always win if present.             */
+             *   before the metaData spread so AI values always win if present.
+             * v2.38.0 ROOT CAUSE FIX: keep `element` field from buildNode() snapshot.
+             *   Clone-baseline analysis shows native GHL flat elements have `element` key.
+             *   buildNode() sets base.element = { ...base } (snapshot, NOT circular) before
+             *   returning, so it is safe to JSON-serialize. GHL's renderer accesses
+             *   flatEl.element to get component data; stripping it caused GHL to hang.   */
             function flattenForFirebase(key, v) {
               if (!v || typeof v !== "object") return v;
               if (v.metaData && typeof v.metaData === "object") {
-                /* Has a metaData wrapper — flatten: spread metaData to top level,
-                 * use top-level id, strip the circular self-reference `element` key.
-                 * Defaults for native GHL fields come first so metaData values override. */
-                const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
+                /* v2.38.0: spread ALL of metaData including `element` snapshot.
+                 * Defaults for native GHL fields come first; metaData values override. */
                 return {
                   wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
                   id: v.id ?? key,
-                  ...metaWithoutSelfRef,
+                  ...v.metaData,
                 };
               }
               /* Already flat — pass through (no metaData wrapper present) */
@@ -803,9 +806,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * colRefOk = that col's first child elem IS in the elements array.  */
             const _sec0El0 = sectionsWithContext[0]?.elements?.[0] ?? null;
             diag.approach2.firstSecElemCount  = sectionsWithContext[0]?.elements?.length ?? 0;
-            diag.approach2.firstSecEl0HasMeta = _sec0El0 ? ("metaData" in _sec0El0) : null;
-            diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 12) : "empty";
-            diag.approach2.firstSecElemFormat  = "full-flat-tree-v2.37.0";
+            diag.approach2.firstSecEl0HasMeta    = _sec0El0 ? ("metaData" in _sec0El0) : null;
+            diag.approach2.firstSecEl0HasElement = _sec0El0 ? ("element" in _sec0El0) : null;
+            diag.approach2.firstSecEl0Keys       = _sec0El0 ? Object.keys(_sec0El0).slice(0, 14) : "empty";
+            diag.approach2.firstSecElemFormat  = "full-flat-tree-v2.38.0";
             diag.approach2.sec0MetaChildLen = (pd.sections?.[0]?.metaData?.child ?? []).length;
             /* rowRefOk / colRefOk: verify child IDs resolve in section.elements */
             (() => {
@@ -845,7 +849,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
             diag.approach2.writePayloadTopKeys = Object.keys(writePayload);
             diag.approach2.storageFormat   = storageFormat;
-            diag.approach2.writeFormat     = "spread-pd-v2.37.0";
+            diag.approach2.writeFormat     = "spread-pd-v2.38.0";
             diag.approach2.writeEmptyDicts = true;
             diag.approach2.existElemCount  = existElemCount;
             diag.approach2.nodeCount       = Object.keys(wrappedRows).length
@@ -2829,17 +2833,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         let injectSim = null;
         if (pd) {
-          /* ── Same flattenForFirebase as inject pipeline (v2.37.0) ── *
-           * Spreads metaData content to top level, strips self-ref     *
-           * `element` key, adds native field defaults.                 */
+          /* ── Same flattenForFirebase as inject pipeline (v2.38.0) ── *
+           * v2.38.0: keep `element` snapshot field (matches native GHL  *
+           * flat format); no longer stripping it as circular self-ref.  */
           function _diff_flattenForFirebase(key, v) {
             if (!v || typeof v !== "object") return v;
             if (v.metaData && typeof v.metaData === "object") {
-              const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
               return {
                 wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
                 id: v.id ?? key,
-                ...metaWithoutSelfRef,
+                ...v.metaData,
               };
             }
             return v;
@@ -2854,7 +2857,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             Object.entries(pd.elements ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
 
-          /* ── Same sectionsWithContext as inject pipeline (v2.37.0 full flat tree) ── */
+          /* ── Same sectionsWithContext as inject pipeline (v2.38.0 full flat tree + element field) ── */
           const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
             const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
             const flatElements = [];

@@ -1,0 +1,48 @@
+=== CF Extension v2.37.0 ===
+REMINDER: If version above is NOT 2.37.0, reload the extension in chrome://extensions then hard-refresh GHL.
+
+Active tab: https://app.gohighlevel.com/location/5jorVRA6PKGCAeTffHmA/page-builder/NaKUaWZ1OzCQYr3mx7PA
+Builder tab: ✓ YES
+
+--- Queued page (session storage) ---
+Nothing queued. Click 'Clone to GHL' in the app first.
+
+--- cfReady (local storage) ---
+page: landing
+hasPageData: true
+loadedAt: 13:45:28
+
+--- Last inject result ---
+[13:45:40] ok=true | method=firebase-write
+builderId: NaKUaWZ1OzCQYr3mx7PA
+A1: "no pageDataUploadUrl in metadata"
+A2 bucket: highlevel-backend.appspot.com hasToken=true
+A2 httpStatus: 200 | result: success (HTTP 200)
+A2 storageFormat: structured-only writeFormat: spread-pd-v2.37.0 existN=0 nodeCount=71 existingId=NaKUaWZ1OzCQYr3mx7PA
+A2 preWriteRowKeys: ["wrapper","class","customCss","tag","mobileWrapper","mobileExtra","id","_id","child","extra"] preWriteRowHasMeta=false (expect: false=flat ✓) secChildId=row-dxe2tn3l
+A2 postWrite: ok=true http=200 payloadId=NaKUaWZ1OzCQYr3mx7PA
+A2 postWrite counts: secs=5 rows=0 cols=0 elems=0
+A2 postWrite ref: sec0ChildRow=row-dxe2tn3l rowRefOk=false colId=none colRefOk=false
+A2 postWrite firstRowHasMeta=? (expect: false=flat ✓) firstRowKeys="rows-empty"
+A2 postWrite sec0El0HasMeta=false (expect: false=flat ✓) sec0El0Keys=["wrapper","class","customCss","tag","mobileWrapper","mobileExtra","id","_id","child","extra"]
+A2 firstSecElemCount: 13 format: full-flat-tree-v2.37.0 | sec0El0HasMeta=false (expect: false=flat ✓) sec0El0Keys=["wrapper","class","customCss","tag","mobileWrapper","mobileExtra","id","_id","child","extra","meta","mobileStyles"]
+A2 writeEmptyDicts: true writeFormat: spread-pd-v2.37.0 ← true = native format (rows/cols/elems={})
+A2 sec0MetaChildLen: 1 ← child KEPT (non-empty=native format ✓ if >0)
+A2 newFirebaseToken: a4e602c1-1c86-4050-b… tokenChanged=true
+A2 metaUpdateStatus (PRIMARY): all-failed: patch aKUaWZ1OzCQYr3mx7PA→404 | put aKUaWZ1OzCQYr3mx7PA→404 | patch /page/NaKUaWZ1OzCQYr3mx7PA→404 | put /page/NaKUaWZ1OzCQYr3mx7PA→404 | patch muGi/page/NaKUaWZ1OzCQYr3mx7PA→404 | put muGi/page/NaKUaWZ1OzCQYr3mx7PA→404  ← ok-primary = GHL will re-fetch new data on reload
+A2 metaUpdateAttempts: [{"ok":false,"status":404,"url":"aKUaWZ1OzCQYr3mx7PA","verb":"patch"},{"ok":false,"status":404,"url":"aKUaWZ1OzCQYr3mx7PA","verb":"put"},{"ok":false,"status":404,"url":"/page/NaKUaWZ1OzCQYr3mx7PA","verb":"patch"},{"ok":false,"status":404,"url":"/page/NaKUaWZ1OzCQYr3mx7PA","verb":"put"},{"ok":false,"status":404,"url":"/K8DywFrS0jVUYR31muGi/page/NaKUaWZ1OzCQYr3mx7PA","verb":"patch"},{"ok":false,"status":404,"url":"/K8DywFrS0jVUYR31muGi/page/NaKUaWZ1OzCQYr3mx7PA","verb":"put"}]
+A2 newPublicUrl: https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/funnel%2FK8DywFrS0jVUYR31muGi%2Fpage%2FNaKUa
+A2 patchToken (fallback): ok-format1-fallback patchTokenOk=true (s1=200 s2=n/a)
+A2 tokenDiag: ["win-err:SecurityError: Failed to read a named pr","indexeddb-v9"]
+A2 objectPath: funnel/K8DywFrS0jVUYR31muGi/page/NaKUaWZ1OzCQYr3mx7PA/page-data-457b71b2-20b3-4a
+A3 iframeFrameId: 0 piniaSource: frame-targeted
+A3 stores found: []
+A3 allStoreIds: []
+A3 result: Pinia not found in frame
+A4 storeFound=false moduleKey=none
+A4 result: no vuex store found forced=?
+
+--- GHL Diagnostic ---
+ghlBackend sec hasElements (post-write): true
+ghlBackendError: none captured
+oOffError: none captured
