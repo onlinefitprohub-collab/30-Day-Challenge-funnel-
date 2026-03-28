@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.38.0 — fix GHL hang: keep `element` snapshot field in flat nodes (native GHL format); prior versions stripped it causing GHL renderer to stall.");
+    console.log("[CF Funnel] Installed v2.44.0 — remove A5 sync/changes (confirmed not page-save endpoint); inject flow is A0→A1→A2→A2B→A3→A4 only.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.38.0 — fix GHL hang: keep `element` snapshot field in flat nodes (native GHL format); prior versions stripped it causing GHL renderer to stall.");
+    console.log("[CF Funnel] Updated to v2.44.0 — remove A5 sync/changes (confirmed not page-save endpoint); inject flow is A0→A1→A2→A2B→A3→A4 only.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -441,7 +441,7 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
  * Returns { ok, method, diag, error? } serialised as JSON.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedBucket) {
-  const diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null, approach5: null };
+  const diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null };
   try {
     /* ════════════════════════════════════════════════════════════════════════
        APPROACH 0: Write AI content to every likely GHL clipboard localStorage key.
@@ -499,115 +499,6 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
     const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
     const uploadUrl   = metadata?.pageDataUploadUrl   ?? null;
     diag.metaOk = !!metadata;
-
-    /* ════════════════════════════════════════════════════════════════════════
-       APPROACH 5 — DIAGNOSTIC ONLY (v2.42.0 demotion)
-       POST /funnels/builder/prebuilt-section/sync/changes
-       CONFIRMED NOT the page-save endpoint. Response {"prebuiltSectionTemplates":[]}
-       proves this is a template-library sync call only.  A 201 from this endpoint
-       does NOT persist page data — it just syncs section templates.
-       Kept here as a diagnostic probe to log the call result; it is NOT a
-       success indicator for page injection.  Real save endpoint is unknown;
-       bridge.js v2.9.0 captures 201 request bodies to reveal it.
-       ════════════════════════════════════════════════════════════════════════ */
-    /* ── v2.41.0: use var for outer + catch-block vars to avoid Chrome
-       strict-mode serialization issues with const inside catch/bare blocks. */
-    var a5 = { diagnostic: true, isPageSave: false };
-    try {
-      var a5LocId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? locationId ?? "";
-      a5.locationId = a5LocId;
-
-      if (!revex) {
-        a5.result = "skipped-no-revex";
-      } else {
-        /* Build flat sections payload (same flattenForFirebase logic as Approach 2).
-         * Sections keep metaData wrapper; rows/cols/elements are flat top-level objects. */
-        var _a5flat = function(key, v) {
-          if (!v || typeof v !== "object") return v;
-          if (v.metaData && typeof v.metaData === "object") {
-            return { wrapper: {}, "class": {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {}, id: v.id ?? key, ...v.metaData };
-          }
-          return v;
-        };
-        const pd5   = pageData;
-        const rows5 = Object.fromEntries(Object.entries(pd5.rows    ?? {}).map(([k, v]) => [k, _a5flat(k, v)]));
-        const cols5 = Object.fromEntries(Object.entries(pd5.columns ?? {}).map(([k, v]) => [k, _a5flat(k, v)]));
-        const els5  = Object.fromEntries(Object.entries(pd5.elements ?? {}).map(([k, v]) => [k, _a5flat(k, v)]));
-        const fId5  = metadata?.funnelId ?? "";
-        const secs5 = (pd5.sections ?? []).map(function(sec, si) {
-          const childRowIds5 = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-          const flatEls5 = [];
-          for (var ri = 0; ri < childRowIds5.length; ri++) {
-            var rowId = childRowIds5[ri];
-            var row = rows5[rowId]; if (!row) continue; flatEls5.push(row);
-            var colIds5 = Array.isArray(row.child) ? row.child : [];
-            for (var ci = 0; ci < colIds5.length; ci++) {
-              var colId = colIds5[ci];
-              var col = cols5[colId]; if (!col) continue; flatEls5.push(col);
-              var elmIds5 = Array.isArray(col.child) ? col.child : [];
-              for (var ei = 0; ei < elmIds5.length; ei++) {
-                var elm = els5[elmIds5[ei]]; if (elm) flatEls5.push(elm);
-              }
-            }
-          }
-          return { id: sec.id, metaData: { ...sec.metaData }, elements: flatEls5,
-                   sequence: si, pageId: builderId, funnelId: fId5,
-                   locationId: a5LocId, general: {} };
-        });
-        /* Bug 2 fix: write:true tells GHL to actually persist to Firebase.
-         * Bug 3 fix: id:builderId is LAST so no subsequent spread can overwrite it. */
-        const syncPageData = { ...pd5, sections: secs5, rows: {}, columns: {}, elements: {}, id: builderId };
-        const syncBody     = { pageData: syncPageData, locationId: a5LocId, pageId: builderId, write: true, isPublished: metadata?.isPublished ?? false };
-        const syncUrl      = "https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes";
-        const extraHdr     = { channel: "APP", source: "WEB_USER", version: "2021-07-28" };
-        a5.sectionCount  = secs5.length;
-        a5.sec0ElemCount = secs5[0]?.elements?.length ?? 0;
-
-        /* Primary: use revex (auto-adds Authorization) + extra GHL headers */
-        try {
-          const r5 = await revex.post(syncUrl, syncBody, { headers: extraHdr });
-          const d5 = r5?.data ?? {};
-          a5.http        = r5?.status ?? 200;
-          a5.ok          = a5.http === 201 || a5.http === 200;
-          a5.traceId     = d5?.traceId ?? null;
-          a5.prebuiltCnt = (d5?.prebuiltSectionTemplates ?? []).length;
-          a5.result      = "ok-revex http=" + a5.http + (a5.traceId ? " traceId=" + a5.traceId.slice(0, 12) : "");
-        } catch (errR5) {
-          /* var avoids const-in-catch issues on strict-mode injection */
-          var st5 = errR5?.response?.status ?? "err";
-          a5.revexError = st5 + ": " + String(errR5?.message ?? errR5).slice(0, 60);
-          var bearerTok = revex?.defaults?.headers?.common?.Authorization
-            ?? revex?.defaults?.headers?.Authorization
-            ?? null;
-          a5.hasBearerTok = !!bearerTok;
-          if (bearerTok) {
-            try {
-              var authVal = typeof bearerTok === "string" ? bearerTok : ("Bearer " + bearerTok);
-              var rawR5 = await fetch(syncUrl, {
-                method:  "POST",
-                headers: { "Content-Type": "application/json", "Authorization": authVal, ...extraHdr },
-                body:    JSON.stringify(syncBody),
-                signal:  AbortSignal.timeout(10000),
-              });
-              var rawD5 = await rawR5.json().catch(function() { return {}; });
-              a5.rawHttp     = rawR5.status;
-              a5.ok          = rawR5.ok;
-              a5.traceId     = rawD5?.traceId ?? null;
-              a5.prebuiltCnt = (rawD5?.prebuiltSectionTemplates ?? []).length;
-              a5.result      = (rawR5.ok ? "ok" : "fail") + "-rawfetch http=" + rawR5.status;
-            } catch (errRf5) {
-              a5.rawFetchError = String(errRf5).slice(0, 60);
-              a5.result        = "rawfetch-threw";
-            }
-          } else {
-            a5.result = "revex-failed-" + st5 + " no-bearer-tok-available";
-          }
-        }
-      }
-    } catch (e5) {
-      a5.result = "threw: " + String(e5).slice(0, 80);
-    }
-    diag.approach5 = a5;
 
     /* ════════════════════════════════════════════════════════════════════════
        APPROACH 1: GHL-signed upload URL
