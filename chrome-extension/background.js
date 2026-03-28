@@ -779,8 +779,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 10) : "empty";
             diag.approach2.firstSecElemFormat = "flat-rows-v2.32.0";
 
-            /* Always write flat dicts — GHL backend requires rows/columns/elements to
-             * exist for reference validation regardless of whether the page was blank. */
+            /* v2.33.0: Write EMPTY flat dicts to match native GHL Firebase format.
+             * Critical new finding (v2.33.0): native GHL page roundtrip shows
+             * secs=11 rows=0 cols=0 elems=0 — the NATIVE page has NO flat dict entries.
+             * All row/col/elem data lives inside section.elements (the shallow flat rows).
+             * Our v2.29.1 failure (500) was caused by missing section.elements, NOT by
+             * missing flat dicts. We never tested: sections WITH elements + empty dicts.
+             * This combination matches native format exactly.                             */
             const writePayload = {
               fontsForPreview: pd.fontsForPreview,
               general:         pd.general,
@@ -788,15 +793,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               pageStyles:      pd.pageStyles,
               popups:          pd.popups ?? [],
               sections:        sectionsWithContext,
-              rows:            wrappedRows,
-              columns:         wrappedCols,
-              elements:        wrappedEls,
+              rows:            {},
+              columns:         {},
+              elements:        {},
             };
 
-            diag.approach2.storageFormat  = storageFormat;
-            diag.approach2.writeFormat    = "structured-dict";
-            diag.approach2.existElemCount = existElemCount;
-            diag.approach2.nodeCount      = Object.keys(wrappedRows).length
+            diag.approach2.storageFormat   = storageFormat;
+            diag.approach2.writeFormat     = "sections-with-empty-dicts-v2.33.0";
+            diag.approach2.writeEmptyDicts = true;
+            diag.approach2.existElemCount  = existElemCount;
+            diag.approach2.nodeCount       = Object.keys(wrappedRows).length
               + Object.keys(wrappedCols).length
               + Object.keys(wrappedEls).length;
 
@@ -879,12 +885,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   const baseUrl      = downloadUrl.replace(/\?.*$/, "");
                   const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
                   diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
+                  /* v2.33.0: expose full PUT endpoint for debugging 404s */
+                  const metaUpdateEndpoint =
+                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`;
+                  diag.approach2.metaUpdateEndpoint = metaUpdateEndpoint.slice(0, 120);
                   const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
                   try {
-                    await revex.put(
-                      `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
-                      updateBody
-                    );
+                    await revex.put(metaUpdateEndpoint, updateBody);
                     metaUpdateSucceeded = true;
                     diag.approach2.metaUpdateStatus = `ok-primary-funnelId:${funnelIdFromPath.slice(0, 16)}`;
                   } catch (_u1) {
@@ -1177,7 +1184,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 general:    {},
               };
             });
-            /* Always write flat dicts — GHL backend validates row references against rows dict. */
+            /* v2.33.0: Empty flat dicts — mirrors native GHL Firebase format.
+             * Native roundtrip shows rows=0 cols=0 elems=0. All element data lives in
+             * section.elements (shallow flat rows). Empty dicts match native format.   */
             const writePayload2B = {
               fontsForPreview: pd2B.fontsForPreview,
               general:         pd2B.general,
@@ -1185,11 +1194,12 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               pageStyles:      pd2B.pageStyles,
               popups:          pd2B.popups ?? [],
               sections:        sectionsCtx2B,
-              rows:            wrappedRows2B,
-              columns:         wrappedCols2B,
-              elements:        wrappedEls2B,
+              rows:            {},
+              columns:         {},
+              elements:        {},
             };
-            a2b.writeFormat = "structured-dict";
+            a2b.writeFormat     = "sections-with-empty-dicts-v2.33.0";
+            a2b.writeEmptyDicts = true;
 
             /* ── POST to Firebase Storage REST API ───────────────────── */
             const constructedPath = `funnels/${funnelId2B}/${builderId}.json`;

@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.32.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.32.0: Flatten metaData wrapper to native GHL format + metaUpdate primary path for Firebase re-fetch. No API key needed.",
+  "version": "2.33.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.33.0: Empty flat dicts (rows/cols/elems={}) match native GHL Firebase format. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

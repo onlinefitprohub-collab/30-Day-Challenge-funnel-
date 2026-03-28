@@ -229,7 +229,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.32.0 ===");
+  lines.push("=== CF Extension v2.33.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.33.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -296,11 +297,14 @@ async function showInjectDebug() {
           }
           /* v2.32.0 section elements diagnostic (flat format) */
           if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} format: ${a2.firstSecElemFormat ?? "unknown"} | sec0El0HasMeta=${a2.firstSecEl0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(a2.firstSecEl0Keys ?? "?")}`);
+          /* v2.33.0 empty dicts diagnostic */
+          if (a2.writeEmptyDicts !== undefined)   lines.push(`A2 writeEmptyDicts: ${a2.writeEmptyDicts} writeFormat: ${a2.writeFormat ?? "?"} ← true = native format (rows/cols/elems={})`);
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
           /* v2.32.0: metaUpdate is PRIMARY — "ok-primary-*" means GHL will re-fetch new data */
-          if (a2.metaUpdateStatus !== undefined) lines.push(`A2 metaUpdateStatus (PRIMARY): ${a2.metaUpdateStatus}  ← ok-primary = GHL will re-fetch new data on reload`);
-          if (a2.newPublicUrl !== undefined)     lines.push(`A2 newPublicUrl: ${a2.newPublicUrl}`);
+          if (a2.metaUpdateStatus !== undefined)    lines.push(`A2 metaUpdateStatus (PRIMARY): ${a2.metaUpdateStatus}  ← ok-primary = GHL will re-fetch new data on reload`);
+          if (a2.metaUpdateEndpoint !== undefined)  lines.push(`A2 metaUpdateEndpoint: ${a2.metaUpdateEndpoint}`);
+          if (a2.newPublicUrl !== undefined)         lines.push(`A2 newPublicUrl: ${a2.newPublicUrl}`);
           /* patchToken is now FALLBACK only */
           if (a2.patchToken !== undefined)       lines.push(`A2 patchToken (fallback): ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})`);
           if (a2.patchReturnedToken !== undefined) lines.push(`A2 patchReturnedToken: ${a2.patchReturnedToken} (mismatch!)`);
@@ -315,6 +319,8 @@ async function showInjectDebug() {
           lines.push(`A2b funnelId: ${a2b.funnelId ?? "?"} metaFunnelId: ${a2b.metaFunnelId ?? "null"} bucket: ${a2b.bucket ?? "?"}`);
           lines.push(`A2b bucketDiag: ${JSON.stringify(a2b.bucketDiag ?? [])} tokDiag: ${JSON.stringify(a2b.tokDiag ?? [])}`);
           if (a2b.path !== undefined)           lines.push(`A2b path: ${a2b.path}`);
+          /* v2.33.0 empty dicts diagnostic for 2B */
+          if (a2b.writeEmptyDicts !== undefined) lines.push(`A2b writeEmptyDicts: ${a2b.writeEmptyDicts} writeFormat: ${a2b.writeFormat ?? "?"}`);
           if (a2b.newDownloadUrl !== undefined) lines.push(`A2b newDownloadUrl: ${a2b.newDownloadUrl}`);
           if (a2b.metaPatch !== undefined)      lines.push(`A2b metaPatch: ${a2b.metaPatch}`);
           if (a2b.metadataKeys !== undefined)   lines.push(`A2b metadataKeys: ${JSON.stringify(a2b.metadataKeys)}`);
