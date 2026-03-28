@@ -615,10 +615,8 @@ async function doApiLog() {
     } else {
       log.forEach((e, idx) => {
         const t = new Date(e.ts).toISOString().slice(11, 23);
-        lines.push(`\n[${idx + 1}] ${e.method} ${String(e.url).slice(0, 100)}`);
-        lines.push(`    time=${t} status=${e.status}`);
-        if (e.req) lines.push(`    req: ${String(e.req).slice(0, 150)}`);
-        lines.push(`    res: ${String(e.body ?? "").slice(0, 300)}`);
+        const body = String(e.body ?? "").slice(0, 200);
+        lines.push(`[${idx + 1}] ${e.method} ${String(e.url).slice(0, 90)} → ${e.status} | ${t} | ${body}`);
       });
     }
     div.textContent = lines.join("\n");

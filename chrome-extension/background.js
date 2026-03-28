@@ -919,6 +919,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                       } catch (_uN) {
                         const st = _uN?.response?.status ?? "err";
                         metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), verb, status: st, ok: false });
+                        /* Only fall through to PUT if PATCH got a routing error (404/405).
+                         * Any other status (400, 422, 500) means the URL was reached —
+                         * trying PUT would be redundant and mask the real error. */
+                        if (verb === "patch" && st !== 404 && st !== 405) break;
                       }
                     }
                   }
