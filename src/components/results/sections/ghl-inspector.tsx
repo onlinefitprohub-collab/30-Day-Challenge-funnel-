@@ -885,23 +885,33 @@ function keyDiffText(label: string, aLabel: string, bLabel: string, aKeys: strin
   return lines.join("\n");
 }
 
-function CopyBtn({ text, title }: { text: string; title?: string }) {
+function CopyBtn({ text, title, label }: { text: string; title?: string; label?: string }) {
   const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
   const handleCopy = () => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
+      setFailed(false);
       setTimeout(() => setCopied(false), 1500);
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn("[CF Inspector] Clipboard write failed:", err);
+      setFailed(true);
+      setTimeout(() => setFailed(false), 2000);
+    });
   };
   return (
     <button
       onClick={handleCopy}
       title={title ?? "Copy to clipboard"}
-      className="ml-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+      className={`ml-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+        failed ? "text-red-500" : "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+      }`}
     >
       {copied
-        ? <><Check className="h-3 w-3 text-green-500" />Copied</>
-        : <><Copy className="h-3 w-3" />Copy</>
+        ? <><Check className="h-3 w-3 text-green-500" />{label ? `${label} copied` : "Copied"}</>
+        : failed
+        ? <><Copy className="h-3 w-3" />Failed</>
+        : <><Copy className="h-3 w-3" />{label ?? "Copy"}</>
       }
     </button>
   );
@@ -1060,7 +1070,7 @@ function CloneBaselinePanel({
           </p>
         </div>
         {cloneBaseline && diag && (
-          <CopyBtn text={allDiffText} title="Copy all diff sections as text" />
+          <CopyBtn text={allDiffText} title="Copy all diff sections as text" label="Copy all debug" />
         )}
         {cloneBaseline && (
           <button
