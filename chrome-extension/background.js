@@ -501,18 +501,18 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
     diag.metaOk = !!metadata;
 
     /* ════════════════════════════════════════════════════════════════════════
-       APPROACH 5: GHL native sync endpoint (discovered via network capture)
+       APPROACH 5 — DIAGNOSTIC ONLY (v2.42.0 demotion)
        POST /funnels/builder/prebuilt-section/sync/changes
-       This is the EXACT endpoint GHL's own builder calls when saving a page.
-       Captured by intercepting live network traffic (v2.40.0 research).
-       Payload: { pageData, locationId, pageId, write: true, isPublished: false }
-       Success = HTTP 201 { prebuiltSectionTemplates: [], traceId: "..." }
-       write:true (v2.41.0) tells GHL to actually persist data to Firebase.
-       Firebase write (A2) also runs as a direct fallback for persistence.
+       CONFIRMED NOT the page-save endpoint. Response {"prebuiltSectionTemplates":[]}
+       proves this is a template-library sync call only.  A 201 from this endpoint
+       does NOT persist page data — it just syncs section templates.
+       Kept here as a diagnostic probe to log the call result; it is NOT a
+       success indicator for page injection.  Real save endpoint is unknown;
+       bridge.js v2.9.0 captures 201 request bodies to reveal it.
        ════════════════════════════════════════════════════════════════════════ */
     /* ── v2.41.0: use var for outer + catch-block vars to avoid Chrome
        strict-mode serialization issues with const inside catch/bare blocks. */
-    var a5 = {};
+    var a5 = { diagnostic: true, isPageSave: false };
     try {
       var a5LocId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? locationId ?? "";
       a5.locationId = a5LocId;

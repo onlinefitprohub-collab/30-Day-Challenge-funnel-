@@ -261,8 +261,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.41.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.41.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.42.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.42.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -630,9 +630,10 @@ async function doSchemaDiff() {
 }
 
 /* ─── doApiLog ──────────────────────────────────────────────────────────────
- * Fetch window.__cfApiLog from the GHL tab (captured by bridge.js v2.8.0).
- * Shows GHL API calls including the 500 fetchPageData response body.
- * Also reveals save-page and clone-page API formats (verb + endpoint + body).
+ * Fetch window.__cfApiLog from the GHL tab (captured by bridge.js v2.9.0).
+ * Shows GHL API calls with full request bodies for 201 responses.
+ * v2.42.0: 201 entries highlighted with ★ and req body shown on own line.
+ * Goal: expose full URL + request body of GHL's real page-save endpoint.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function doApiLog() {
   const div = document.getElementById("api-log-result");
@@ -642,7 +643,7 @@ async function doApiLog() {
   if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
     div.className  = "paste-result";
     div.textContent = "";
-    btn.textContent = "Show GHL API Log (500 body)";
+    btn.textContent = "Show GHL API Log";
     hideCopyBtn("api-log-copy");
     return;
   }
@@ -655,17 +656,40 @@ async function doApiLog() {
   try {
     const res = await sendMessage({ type: "CF_GET_API_LOG" });
     const log = (res?.log ?? []).slice().reverse();
+    const cnt201 = log.filter(e => e.is201 || e.status === 201).length;
     const lines = [];
-    lines.push(`=== GHL API Log (${log.length} entries, newest first) ===`);
+    lines.push(`=== GHL API Log (${log.length} entries, ${cnt201} with 201, newest first) ===`);
+    lines.push(`★ = 201 response — these are the save-endpoint candidates.`);
+    lines.push(`For each ★ entry: COPY full URL + REQ BODY to find the real page-save call.`);
+    lines.push(`─────────────────────────────────────────────────────────`);
     if (log.length === 0) {
       lines.push("No entries captured yet.");
-      lines.push("Bridge.js intercepts /funnels/ API calls on *.leadconnectorhq.com.");
-      lines.push("Try: inject a page → reload the GHL builder → click this button.");
+      lines.push("Bridge.js v2.9.0 intercepts /funnels/ and /builder/ calls.");
+      lines.push("Steps: open GHL builder → do a native Save → click this button.");
     } else {
       log.forEach((e, idx) => {
-        const t = new Date(e.ts).toISOString().slice(11, 23);
-        const body = String(e.body ?? "").slice(0, 200);
-        lines.push(`[${idx + 1}] ${e.method} ${String(e.url).slice(0, 90)} → ${e.status} | ${t} | ${body}`);
+        const t    = new Date(e.ts).toISOString().slice(11, 23);
+        const mark = (e.is201 || e.status === 201) ? "★ 201" : String(e.status);
+        const url  = String(e.url ?? "").slice(0, 120);
+        lines.push(`[${idx + 1}] ${mark} | ${e.method} ${url} | ${t}`);
+        if (e.is201 || e.status === 201) {
+          /* Show response body on its own line */
+          const respBody = String(e.body ?? "").slice(0, 300);
+          lines.push(`    RESP: ${respBody}`);
+          /* Show full request body — this is what we need to capture */
+          const reqBody = String(e.req ?? "").trim();
+          if (reqBody) {
+            lines.push(`    REQ (${reqBody.length} chars): ${reqBody.slice(0, 1200)}`);
+            if (reqBody.length > 1200) lines.push(`    ... (${reqBody.length - 1200} more chars — copy raw log to see all)`);
+          } else {
+            lines.push(`    REQ: (none — GET or body not captured)`);
+          }
+          lines.push(`    ─────────────────────────────────────────────────────`);
+        } else {
+          /* Non-201: show response body inline, req body only if short */
+          const respSnip = String(e.body ?? "").slice(0, 120);
+          lines.push(`    ${respSnip}`);
+        }
       });
     }
     div.textContent = lines.join("\n");
@@ -677,7 +701,7 @@ async function doApiLog() {
     showCopyBtn("api-log-copy");
   } finally {
     btn.disabled    = false;
-    btn.textContent = "Show GHL API Log (500 body)";
+    btn.textContent = "Show GHL API Log";
   }
 }
 

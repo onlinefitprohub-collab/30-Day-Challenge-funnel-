@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.41.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.41.0: Fix SyntaxError + write:true + id-last in sync payload. No API key needed.",
+  "version": "2.42.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.42.0: Capture 201 req bodies (bridge v2.9.0), demote A5 to diagnostic. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

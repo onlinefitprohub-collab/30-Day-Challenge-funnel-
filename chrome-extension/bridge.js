@@ -1,7 +1,8 @@
-// bridge.js v2.8.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.9.0 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
+// v2.9.0: Capture full request body for 201 responses (intelligence-gather for real save endpoint).
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
@@ -50,12 +51,13 @@
   window.addEventListener("popstate",  () => checkUrl(window.location.href));
   window.addEventListener("hashchange", () => checkUrl(window.location.href));
 
-  /* ─── GHL API interceptor (v2.8.0) ──────────────────────────────────────── *
+  /* ─── GHL API interceptor (v2.9.0) ──────────────────────────────────────── *
    * Captures GHL backend API calls (fetch + XHR) at MAIN world level.         *
-   * Stores last 20 entries in window.__cfApiLog.                               *
-   * Filter: *.leadconnectorhq.com/funnels/* only (skip Firebase storage).     *
-   * Used by CF_GET_API_LOG (background.js) to surface 500 error bodies,       *
-   * page-save API format, and clone API endpoints in the popup.               */
+   * Stores last 30 entries in window.__cfApiLog.                               *
+   * Filter: *.leadconnectorhq.com/funnels/* or /builder/* paths.              *
+   * v2.9.0: 201 responses get full request body (up to 6000 chars) and larger *
+   * response body capture (1200 chars) to expose the real page-save endpoint. *
+   * Each entry: { ts, method, url, req, status, body, is201? }                */
   (function installApiInterceptor() {
     if (window.__cfApiInterceptorInstalled) return;
     window.__cfApiInterceptorInstalled = true;
@@ -65,35 +67,42 @@
       if (!url) return false;
       var s = String(url);
       if (s.indexOf("firebasestorage.googleapis.com") !== -1) return false;
-      return s.indexOf("leadconnectorhq.com") !== -1 && s.indexOf("/funnels") !== -1;
+      if (s.indexOf("leadconnectorhq.com") === -1) return false;
+      return s.indexOf("/funnels") !== -1 || s.indexOf("/builder") !== -1;
     }
 
     function pushLog(entry) {
       window.__cfApiLog.push(entry);
-      if (window.__cfApiLog.length > 20) window.__cfApiLog.shift();
+      if (window.__cfApiLog.length > 30) window.__cfApiLog.shift();
     }
 
     /* ── Fetch interceptor ── */
     var origFetch = window.fetch;
     window.fetch = function(input, init) {
       var url = (input && typeof input === "object" && input.url) ? input.url : String(input);
-      /* When input is a Request object its .method takes priority over init.method */
       var method = (init && init.method) ? init.method.toUpperCase()
                  : (input && typeof input === "object" && input.method) ? input.method.toUpperCase()
                  : "GET";
-      var reqBody = (init && init.body) ? String(init.body).slice(0, 400) : "";
+      /* Capture full reqBody string now — we'll slice to appropriate length after
+         we know the response status code (201 gets full body, others get 400 chars). */
+      var reqBodyFull = (init && init.body) ? String(init.body) : "";
       if (!shouldCapture(url)) return origFetch.apply(this, arguments);
       var ts = Date.now();
       return origFetch.apply(this, arguments).then(function(resp) {
+        var is201 = resp.status === 201;
+        var reqSlice = is201 ? reqBodyFull.slice(0, 6000) : reqBodyFull.slice(0, 400);
+        var bodyLimit = is201 ? 1200 : 500;
         var cloned = resp.clone();
         cloned.text().then(function(body) {
-          pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBody, status: resp.status, body: body.slice(0, 500) });
+          var entry = { ts: ts, method: method, url: url.slice(0, 200), req: reqSlice, status: resp.status, body: body.slice(0, bodyLimit) };
+          if (is201) entry.is201 = true;
+          pushLog(entry);
         }).catch(function() {
-          pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBody, status: resp.status, body: "(read-err)" });
+          pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqSlice, status: resp.status, body: "(read-err)" });
         });
         return resp;
       }).catch(function(err) {
-        pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBody, status: "net-err", body: String(err).slice(0, 200) });
+        pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBodyFull.slice(0, 400), status: "net-err", body: String(err).slice(0, 200) });
         throw err;
       });
     };
@@ -113,9 +122,15 @@
       xhr.send = function(body) {
         if (shouldCapture(_url)) {
           var _ts = Date.now();
-          var _req = body ? String(body).slice(0, 400) : "";
+          /* Store full body string — slice after response */
+          var _reqFull = body ? String(body) : "";
           xhr.addEventListener("loadend", function() {
-            pushLog({ ts: _ts, method: _method, url: _url.slice(0, 200), req: _req, status: xhr.status, body: String(xhr.responseText || "").slice(0, 500) });
+            var is201 = xhr.status === 201;
+            var _reqSlice = is201 ? _reqFull.slice(0, 6000) : _reqFull.slice(0, 400);
+            var _bodyLimit = is201 ? 1200 : 500;
+            var entry = { ts: _ts, method: _method, url: _url.slice(0, 200), req: _reqSlice, status: xhr.status, body: String(xhr.responseText || "").slice(0, _bodyLimit) };
+            if (is201) entry.is201 = true;
+            pushLog(entry);
           });
         }
         return _origSend.apply(xhr, arguments);
