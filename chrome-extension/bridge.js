@@ -77,7 +77,10 @@
     var origFetch = window.fetch;
     window.fetch = function(input, init) {
       var url = (input && typeof input === "object" && input.url) ? input.url : String(input);
-      var method = (init && init.method) ? init.method.toUpperCase() : "GET";
+      /* When input is a Request object its .method takes priority over init.method */
+      var method = (init && init.method) ? init.method.toUpperCase()
+                 : (input && typeof input === "object" && input.method) ? input.method.toUpperCase()
+                 : "GET";
       var reqBody = (init && init.body) ? String(init.body).slice(0, 400) : "";
       if (!shouldCapture(url)) return origFetch.apply(this, arguments);
       var ts = Date.now();
