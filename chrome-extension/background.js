@@ -759,9 +759,14 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * so section.elements will be [{id, _id, type, tagName, child, ...}, ...]
                * matching native GHL Firebase section element format.                        */
               const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
+              /* v2.34.0: empty metaData.child to prevent backend 500.
+               * With rows={} empty, any child IDs in metaData.child have no matching dict
+               * entry. GHL backend may validate these refs and throw 500.
+               * Native GHL pages have empty flat dicts AND work fine — their child array
+               * is likely [] too. Section.elements is the rendering source of truth.     */
               return {
                 id:         sec.id,
-                metaData:   sec.metaData,
+                metaData:   { ...sec.metaData, child: [] },
                 elements:   shallowElements,
                 sequence:   i,
                 pageId:     builderId,
@@ -777,7 +782,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             diag.approach2.firstSecElemCount  = sectionsWithContext[0]?.elements?.length ?? 0;
             diag.approach2.firstSecEl0HasMeta = _sec0El0 ? ("metaData" in _sec0El0) : null;
             diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 10) : "empty";
-            diag.approach2.firstSecElemFormat = "flat-rows-v2.32.0";
+            diag.approach2.firstSecElemFormat  = "flat-rows-v2.32.0";
+            /* v2.34.0: confirm metaData.child was emptied */
+            diag.approach2.sec0MetaChildEmptied = true;
+            diag.approach2.sec0MetaChildOrigLen  = (pd.sections?.[0]?.metaData?.child ?? []).length;
 
             /* v2.33.0: Write EMPTY flat dicts to match native GHL Firebase format.
              * Critical new finding (v2.33.0): native GHL page roundtrip shows
@@ -885,17 +893,34 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   const baseUrl      = downloadUrl.replace(/\?.*$/, "");
                   const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
                   diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
-                  /* v2.33.0: expose full PUT endpoint for debugging 404s */
-                  const metaUpdateEndpoint =
-                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`;
-                  diag.approach2.metaUpdateEndpoint = metaUpdateEndpoint.slice(0, 120);
                   const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
-                  try {
-                    await revex.put(metaUpdateEndpoint, updateBody);
-                    metaUpdateSucceeded = true;
-                    diag.approach2.metaUpdateStatus = `ok-primary-funnelId:${funnelIdFromPath.slice(0, 16)}`;
-                  } catch (_u1) {
-                    diag.approach2.metaUpdateStatus = `failed: ${String(_u1).slice(0, 60)}`;
+                  /* v2.34.0: try multiple endpoint patterns in order — stop at first success.
+                   * v2.33.0 used only /funnels/funnel/{fid}/page/{pid} → 404 every time.
+                   * Correct GET that works: /funnels/page/{pid} (no funnelId).
+                   * Log all attempts as metaUpdateAttempts for debugging.              */
+                  const metaUpdateUrls = [
+                    `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+                    `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+                  ];
+                  const metaUpdateAttempts = [];
+                  diag.approach2.metaUpdateAttempts = metaUpdateAttempts;
+                  for (const metaUpdateUrl of metaUpdateUrls) {
+                    try {
+                      await revex.put(metaUpdateUrl, updateBody);
+                      metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), status: 200, ok: true });
+                      metaUpdateSucceeded = true;
+                      diag.approach2.metaUpdateStatus = `ok-primary-url:${metaUpdateUrl.slice(50, 90)}`;
+                      diag.approach2.metaUpdateEndpoint = metaUpdateUrl.slice(0, 120);
+                      break;
+                    } catch (_uN) {
+                      const st = _uN?.response?.status ?? "err";
+                      metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), status: st, ok: false });
+                    }
+                  }
+                  if (!metaUpdateSucceeded) {
+                    diag.approach2.metaUpdateStatus =
+                      `all-failed: ${metaUpdateAttempts.map(a => `${a.url.slice(-30)}→${a.status}`).join(" | ")}`;
                   }
                 } else {
                   diag.approach2.metaUpdateStatus = "skipped-no-token-after-fallback";
@@ -1173,9 +1198,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => {
               const childRowIds2B   = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
               const shallowEls2B    = childRowIds2B.map(rowId => wrappedRows2B[rowId]).filter(Boolean);
+              /* v2.34.0: empty metaData.child — mirrors Approach 2 fix */
               return {
                 id:         sec.id,
-                metaData:   sec.metaData,
+                metaData:   { ...sec.metaData, child: [] },
                 elements:   shallowEls2B,
                 sequence:   i,
                 pageId:     builderId,
@@ -1926,6 +1952,12 @@ async function _cf_roundtripFirebaseWrite(builderId) {
      * true  → sections store pre-built tree (elements arrays are expected in Firebase)
      * false → sections store only metaData + child refs (GHL builds tree from flat dicts) */
     diag.firstSecHasElements  = firstSec ? ("elements" in firstSec) : null;
+    /* v2.34.0: capture native sec0.metaData.child — is it empty or populated?
+     * If empty [], it confirms GHL uses elements array only and child refs are not needed.
+     * If populated, it tells us what IDs are expected (even though rows dict is empty).  */
+    const _sec0Child = Array.isArray(firstSec?.metaData?.child) ? firstSec.metaData.child : null;
+    diag.sec0MetaChildLen    = _sec0Child !== null ? _sec0Child.length : "no-array";
+    diag.sec0MetaChildSample = _sec0Child ? _sec0Child.slice(0, 2) : "none";
 
     /* Deep probe: what does section[0].elements[0] actually look like?
      * Critical for deciding whether elements are shallow rows, deep trees, or IDs.
@@ -2693,9 +2725,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             col0Keys:            col0 ? Object.keys(col0).slice(0, 10)                         : "none",
             col0HasElements:     col0 ? ("elements" in col0)                                   : false,
             sectionCount:        sectionsWithContext.length,
-            rowCount:            Object.keys(wrappedRows).length,
-            colCount:            Object.keys(wrappedCols).length,
-            elemCount:           Object.keys(wrappedEls).length,
+            /* v2.33.0+: inject writes empty dicts — report 0 to match native GHL format */
+            rowCount:            0,
+            colCount:            0,
+            elemCount:           0,
+            /* v2.34.0: inject empties metaData.child — report 0 to match expected native */
+            sec0MetaChildLen:    0,
           };
         }
 

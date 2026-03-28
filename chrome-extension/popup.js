@@ -229,8 +229,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.33.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.33.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.34.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.34.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -299,11 +299,15 @@ async function showInjectDebug() {
           if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} format: ${a2.firstSecElemFormat ?? "unknown"} | sec0El0HasMeta=${a2.firstSecEl0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(a2.firstSecEl0Keys ?? "?")}`);
           /* v2.33.0 empty dicts diagnostic */
           if (a2.writeEmptyDicts !== undefined)   lines.push(`A2 writeEmptyDicts: ${a2.writeEmptyDicts} writeFormat: ${a2.writeFormat ?? "?"} ← true = native format (rows/cols/elems={})`);
+          /* v2.34.0 empty child diagnostic */
+          if (a2.sec0MetaChildEmptied !== undefined) lines.push(`A2 sec0MetaChildEmptied: ${a2.sec0MetaChildEmptied} origLen=${a2.sec0MetaChildOrigLen ?? "?"} ← true = child=[] prevents backend 500`);
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
           /* v2.32.0: metaUpdate is PRIMARY — "ok-primary-*" means GHL will re-fetch new data */
           if (a2.metaUpdateStatus !== undefined)    lines.push(`A2 metaUpdateStatus (PRIMARY): ${a2.metaUpdateStatus}  ← ok-primary = GHL will re-fetch new data on reload`);
           if (a2.metaUpdateEndpoint !== undefined)  lines.push(`A2 metaUpdateEndpoint: ${a2.metaUpdateEndpoint}`);
+          /* v2.34.0: multiple URL attempts logged */
+          if (a2.metaUpdateAttempts !== undefined)  lines.push(`A2 metaUpdateAttempts: ${JSON.stringify(a2.metaUpdateAttempts)}`);
           if (a2.newPublicUrl !== undefined)         lines.push(`A2 newPublicUrl: ${a2.newPublicUrl}`);
           /* patchToken is now FALLBACK only */
           if (a2.patchToken !== undefined)       lines.push(`A2 patchToken (fallback): ${a2.patchToken} patchTokenOk=${a2.patchTokenOk ?? "?"} (s1=${a2.patchStatus1 ?? "?"} s2=${a2.patchStatus2 ?? "n/a"})`);
@@ -447,6 +451,8 @@ async function doRoundtripTest() {
     if (d.firstSecTopKeys !== undefined)  lines.push(`sec0 topKeys: ${JSON.stringify(d.firstSecTopKeys)}`);
     if (d.firstSecHasElements !== undefined) lines.push(`sec0 hasElements: ${d.firstSecHasElements} ← true=sections store elements (v2.31: shallow rows; v2.32: flat format)`);
     if (d.sec0ElementsLength !== undefined) lines.push(`sec0 elements length: ${d.sec0ElementsLength}`);
+    /* v2.34.0: native sec0.metaData.child — is it empty or populated? */
+    if (d.sec0MetaChildLen !== undefined)    lines.push(`sec0 metaData.child len: ${d.sec0MetaChildLen} sample: ${JSON.stringify(d.sec0MetaChildSample ?? [])} ← 0=native uses empty child ✓`);
     if (d.sec0Elements0Keys !== undefined) lines.push(`sec0.elements[0] keys: ${JSON.stringify(d.sec0Elements0Keys)} hasMeta=${d.sec0Elements0HasMeta} hasElements=${d.sec0Elements0HasElements} childType=${d.sec0Elements0ChildType}`);
     if (d.firstSecMetaKeys !== undefined) lines.push(`sec0 metaKeys: ${JSON.stringify(d.firstSecMetaKeys)}`);
     if (d.firstRowTopKeys !== undefined)  lines.push(`row0 topKeys: ${JSON.stringify(d.firstRowTopKeys)} hasElements=${d.firstRowHasElements}`);
