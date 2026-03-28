@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.44.0 — remove A5 sync/changes (confirmed not page-save endpoint); inject flow is A0→A1→A2→A2B→A3→A4 only.");
+    console.log("[CF Funnel] Installed v2.45.0 — revert A2 to v2.17.0-style populated dicts + wrapped format; inject flow is A0→A1→A2→A2B→A3→A4 only.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.44.0 — remove A5 sync/changes (confirmed not page-save endpoint); inject flow is A0→A1→A2→A2B→A3→A4 only.");
+    console.log("[CF Funnel] Updated to v2.45.0 — revert A2 to v2.17.0-style populated dicts + wrapped format; inject flow is A0→A1→A2→A2B→A3→A4 only.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -693,108 +693,43 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               storageFormat = "probe-err";
             }
 
-            /* ── Step 1: Build structured-dict payload — flat top-level format ────────── *
-             * v2.32.0 FIX: Schema Diff (v2.31.0) confirmed native GHL Firebase stores
-             * rows/columns/elements as FLAT top-level objects (NO metaData wrapper).
-             * Native sec0.elements[0] keys: ["extra","meta","styles","child","id","tagName",
-             * "wrapper","class","title","type"] — flat, NO "metaData" key.
-             * Our v2.31.0 inject used { id, metaData:{} } wrapper format → MISMATCH.
-             * Fix: flattenForFirebase spreads metaData content to top-level, strips
-             * the self-referential `element` key, and sets id at top level.
-             * Sections keep their { id, metaData } wrapper (confirmed by roundtrip).  */
-
-            /* Flattens a dict value from { id, metaData:{...} } to top-level flat format.
-             * If the value is already flat (no metaData key), it is passed through as-is.
-             * Result: { id, _id, type, tagName, child, extra, styles, mobileStyles, class,
-             *           meta, title, wrapper, customCss, tag, mobileWrapper, mobileExtra,
-             *           element }
-             * — matches native GHL Firebase element field keys (incl. `element`).
-             * v2.37.0: defaults for native fields not produced by AI generator are injected
-             *   before the metaData spread so AI values always win if present.
-             * v2.38.0 ROOT CAUSE FIX: keep `element` field from buildNode() snapshot.
-             *   Clone-baseline analysis shows native GHL flat elements have `element` key.
-             *   buildNode() sets base.element = { ...base } (snapshot, NOT circular) before
-             *   returning, so it is safe to JSON-serialize. GHL's renderer accesses
-             *   flatEl.element to get component data; stripping it caused GHL to hang.   */
-            function flattenForFirebase(key, v) {
-              if (!v || typeof v !== "object") return v;
-              if (v.metaData && typeof v.metaData === "object") {
-                /* v2.38.0: spread ALL of metaData including `element` snapshot.
-                 * Defaults for native GHL fields come first; metaData values override. */
-                return {
-                  wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
-                  id: v.id ?? key,
-                  ...v.metaData,
-                };
-              }
-              /* Already flat — pass through (no metaData wrapper present) */
-              return v;
-            }
+            /* ── Step 1: Build structured-dict payload — v2.17.0-style wrapped format ──── *
+             * v2.45.0 REVERT: go back to the format that worked in v2.17.0.
+             * v2.17.0 successfully rendered sections (rows=7, cols=17, elems=47).
+             * rows/columns/elements are written in their ORIGINAL { id, metaData:{...} }
+             * wrapper format — NOT flattened. Flat dicts are populated, NOT empty {}.
+             * sections do NOT carry a section.elements array — element data lives in the
+             * populated rows/columns/elements flat dicts.
+             * History of what went wrong:
+             *   v2.32.0 introduced flattenForFirebase → broke row format to flat keys
+             *   v2.33.0 changed dicts to empty {} → rows=0,cols=0,elems=0 (wrong)        */
 
             const pd = pageData;
 
-            /* Flatten rows/columns/elements from { id, metaData:{} } to top-level format.
-             * Sections keep their { id, metaData:{}, elements, ... } wrapper — leave as-is. */
-            const wrappedRows = Object.fromEntries(
-              Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, flattenForFirebase(k, v)])
-            );
-            const wrappedCols = Object.fromEntries(
-              Object.entries(pd.columns ?? {}).map(([k, v]) => [k, flattenForFirebase(k, v)])
-            );
-            const wrappedEls = Object.fromEntries(
-              Object.entries(pd.elements ?? {}).map(([k, v]) => [k, flattenForFirebase(k, v)])
-            );
-
-            /* Pre-write diagnostics — captured AFTER flattening, BEFORE the fetch.
-             * v2.32.0: preWriteRowHasMeta should be FALSE (flat = correct format). */
-            const _firstFlatRow = Object.values(wrappedRows)[0];
-            diag.approach2.preWriteRowKeys    = _firstFlatRow
-              ? Object.keys(_firstFlatRow).slice(0, 10) : "rows-empty";
-            diag.approach2.preWriteRowHasMeta = _firstFlatRow
-              ? ("metaData" in _firstFlatRow) : null;
+            /* Pre-write diagnostics — sample from raw pd.rows (wrapped format).
+             * v2.45.0: preWriteRowHasMeta should be TRUE ({ id, metaData:{} } wrapper). */
+            const _firstRawRow = Object.values(pd.rows ?? {})[0];
+            diag.approach2.preWriteRowKeys    = _firstRawRow
+              ? Object.keys(_firstRawRow).slice(0, 10) : "rows-empty";
+            diag.approach2.preWriteRowHasMeta = _firstRawRow
+              ? ("metaData" in _firstRawRow) : null;
             diag.approach2.preWriteSectionChildId =
               pd.sections?.[0]?.metaData?.child?.[0]
               ?? pd.sections?.[0]?.child?.[0]
               ?? "none";
 
-            /* GHL section top-level keys (confirmed by roundtrip v2.26.0 + v2.30.0):
-             * ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
-             * v2.37.0 ROOT CAUSE FIX: section.elements must be a FULLY FLAT array of ALL
-             * nodes in the row→col→element tree. Every node's `child` array must reference
-             * other entries in the SAME section.elements array. Prior versions only wrote
-             * the top-level rows — each row's child cols were dead references → GHL hangs.
-             * Native GHL sec[0] with 2 rows has 14 elements: 2 rows + cols + leaf elements.
-             * Fix: traverse wrappedRows → wrappedCols → wrappedEls and push ALL nodes.    */
+            /* v2.45.0: sections do NOT carry a section.elements array.
+             * Element data lives in the populated rows/columns/elements flat dicts.
+             * metaData.child references row IDs which resolve in the rows dict.
+             * Section top-level keys: ["id","metaData","sequence","pageId","funnelId","locationId","general"] */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
             /* v2.39.0: extract locationId from the GHL tab URL for metaUpdate patterns.
              * Tab URL format: https://app.gohighlevel.com/location/{locationId}/page-builder/{pageId} */
             const tabLocationId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
             const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
-              const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-              /* v2.37.0: build full flat element tree for this section.
-               * Push: row, then each of its cols, then each col's leaf elements.
-               * All child references resolve within this same array → GHL renders OK. */
-              const flatElements = [];
-              for (const rowId of childRowIds) {
-                const row = wrappedRows[rowId];
-                if (!row) continue;
-                flatElements.push(row);
-                const colIds = Array.isArray(row.child) ? row.child : [];
-                for (const colId of colIds) {
-                  const col = wrappedCols[colId];
-                  if (!col) continue;
-                  flatElements.push(col);
-                  const elemIds = Array.isArray(col.child) ? col.child : [];
-                  for (const elemId of elemIds) {
-                    const elem = wrappedEls[elemId];
-                    if (elem) flatElements.push(elem);
-                  }
-                }
-              }
               return {
                 id:         sec.id,
                 metaData:   { ...sec.metaData },
-                elements:   flatElements,
                 sequence:   i,
                 pageId:     builderId,
                 funnelId:   funnelIdFromPath,
@@ -830,35 +765,28 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               diag.approach2.firstElemId = firstElemId ?? "none";
             })();
 
-            /* v2.33.0: Write EMPTY flat dicts to match native GHL Firebase format.
-             * Critical new finding (v2.33.0): native GHL page roundtrip shows
-             * secs=11 rows=0 cols=0 elems=0 — the NATIVE page has NO flat dict entries.
-             * All row/col/elem data lives inside section.elements (the shallow flat rows).
-             * Our v2.29.1 failure (500) was caused by missing section.elements, NOT by
-             * missing flat dicts. We never tested: sections WITH elements + empty dicts.
-             * This combination matches native format exactly.                             */
-            /* v2.36.0: spread full pd so no fields are silently omitted.
-             * pd now includes settings:{}, trackingCode:"", popupsList:[]
-             * (generated by AI generator buildEnvelope). Override id and
-             * structural arrays so the correct live values win.             */
-            /* Bug 3 fix (v2.41.0): id:builderId is LAST so ...pd can never overwrite it. */
+            /* v2.45.0: Write POPULATED flat dicts — reverting to v2.17.0 working format.
+             * rows/columns/elements are written as-is from pageData in { id, metaData:{} }
+             * wrapper format. sections do NOT have a section.elements array.
+             * v2.36.0: spread full pd so no fields are silently omitted (settings, trackingCode, popupsList).
+             * Bug 3 fix (v2.41.0): id:builderId is LAST so ...pd can never overwrite it. */
             const writePayload = {
               ...pd,
               sections: sectionsWithContext,
-              rows:     {},
-              columns:  {},
-              elements: {},
+              rows:     pd.rows     ?? {},
+              columns:  pd.columns  ?? {},
+              elements: pd.elements ?? {},
               id:       builderId,
             };
 
             diag.approach2.writePayloadTopKeys = Object.keys(writePayload);
             diag.approach2.storageFormat   = storageFormat;
-            diag.approach2.writeFormat     = "spread-pd-v2.38.0";
-            diag.approach2.writeEmptyDicts = true;
+            diag.approach2.writeFormat     = "v2.17.0-style-wrapped-populated-v2.45.0";
+            diag.approach2.writeEmptyDicts = false;
             diag.approach2.existElemCount  = existElemCount;
-            diag.approach2.nodeCount       = Object.keys(wrappedRows).length
-              + Object.keys(wrappedCols).length
-              + Object.keys(wrappedEls).length;
+            diag.approach2.nodeCount       = Object.keys(pd.rows     ?? {}).length
+              + Object.keys(pd.columns  ?? {}).length
+              + Object.keys(pd.elements ?? {}).length;
 
             /* Firebase Storage upload endpoint (creates/overwrites object) */
             const uploadEp =
