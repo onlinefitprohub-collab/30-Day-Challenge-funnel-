@@ -706,15 +706,23 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* Flattens a dict value from { id, metaData:{...} } to top-level flat format.
              * If the value is already flat (no metaData key), it is passed through as-is.
              * Result: { id, _id, type, tagName, child, extra, styles, mobileStyles, class,
-             *           meta, title, wrapper } — matches native GHL Firebase row format.
-             * The `element` self-reference from buildNode() is stripped here.            */
+             *           meta, title, wrapper, customCss, tag, mobileWrapper, mobileExtra }
+             * — matches native GHL Firebase element field keys.
+             * The `element` self-reference from buildNode() is stripped here.
+             * v2.37.0: defaults for native fields not produced by AI generator are injected
+             * before the metaData spread so AI values always win if present.             */
             function flattenForFirebase(key, v) {
               if (!v || typeof v !== "object") return v;
               if (v.metaData && typeof v.metaData === "object") {
                 /* Has a metaData wrapper — flatten: spread metaData to top level,
-                 * use top-level id, strip the circular self-reference `element` key. */
+                 * use top-level id, strip the circular self-reference `element` key.
+                 * Defaults for native GHL fields come first so metaData values override. */
                 const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
-                return { id: v.id ?? key, ...metaWithoutSelfRef };
+                return {
+                  wrapper: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
+                  id: v.id ?? key,
+                  ...metaWithoutSelfRef,
+                };
               }
               /* Already flat — pass through (no metaData wrapper present) */
               return v;
@@ -748,27 +756,39 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
             /* GHL section top-level keys (confirmed by roundtrip v2.26.0 + v2.30.0):
              * ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
-             * v2.31.0: sections built with shallow row elements (flat rows, NOT nested tree).
-             * v2.32.0: shallow elements are now flat-format rows (no metaData wrapper),
-             *   so sec0.elements[0] keys match native ["extra","meta","styles","child",
-             *   "id","tagName","wrapper","class","title","type"].                             */
+             * v2.37.0 ROOT CAUSE FIX: section.elements must be a FULLY FLAT array of ALL
+             * nodes in the row→col→element tree. Every node's `child` array must reference
+             * other entries in the SAME section.elements array. Prior versions only wrote
+             * the top-level rows — each row's child cols were dead references → GHL hangs.
+             * Native GHL sec[0] with 2 rows has 14 elements: 2 rows + cols + leaf elements.
+             * Fix: traverse wrappedRows → wrappedCols → wrappedEls and push ALL nodes.    */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
             const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
-              const childRowIds     = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-              /* Shallow flat rows — wrappedRows are now flat-format (no metaData wrapper)
-               * so section.elements will be [{id, _id, type, tagName, child, ...}, ...]
-               * matching native GHL Firebase section element format.                        */
-              const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
-              /* v2.35.0: RESTORE metaData.child to original (non-empty).
-               * v2.34.0 hypothesis (empty child prevents 500) was WRONG.
-               * Roundtrip confirmed native sec0.metaData.child is NON-EMPTY
-               * ["row-cpgo2YBghqa","row-89A9TNcuqm"] — native always has child IDs.
-               * Emptying child was the likely cause of the backend 500.
-               * Restore full spread to keep original child array from AI sections. */
+              const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              /* v2.37.0: build full flat element tree for this section.
+               * Push: row, then each of its cols, then each col's leaf elements.
+               * All child references resolve within this same array → GHL renders OK. */
+              const flatElements = [];
+              for (const rowId of childRowIds) {
+                const row = wrappedRows[rowId];
+                if (!row) continue;
+                flatElements.push(row);
+                const colIds = Array.isArray(row.child) ? row.child : [];
+                for (const colId of colIds) {
+                  const col = wrappedCols[colId];
+                  if (!col) continue;
+                  flatElements.push(col);
+                  const elemIds = Array.isArray(col.child) ? col.child : [];
+                  for (const elemId of elemIds) {
+                    const elem = wrappedEls[elemId];
+                    if (elem) flatElements.push(elem);
+                  }
+                }
+              }
               return {
                 id:         sec.id,
                 metaData:   { ...sec.metaData },
-                elements:   shallowElements,
+                elements:   flatElements,
                 sequence:   i,
                 pageId:     builderId,
                 funnelId:   funnelIdFromPath,
@@ -777,15 +797,31 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               };
             });
 
-            /* Diagnostics: rows written into section[0].elements (flat format).
-             * v2.32.0: firstSecEl0HasMeta should be FALSE (flat = no metaData wrapper). */
+            /* Diagnostics: full flat tree written into section[0].elements.
+             * v2.37.0: firstSecElemCount should be >> 1 (rows+cols+leaves).
+             * rowRefOk = first row's first child col IS in the elements array.
+             * colRefOk = that col's first child elem IS in the elements array.  */
             const _sec0El0 = sectionsWithContext[0]?.elements?.[0] ?? null;
             diag.approach2.firstSecElemCount  = sectionsWithContext[0]?.elements?.length ?? 0;
             diag.approach2.firstSecEl0HasMeta = _sec0El0 ? ("metaData" in _sec0El0) : null;
-            diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 10) : "empty";
-            diag.approach2.firstSecElemFormat  = "flat-rows-v2.32.0";
-            /* v2.35.0: log kept child length (original, non-empty) */
+            diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 12) : "empty";
+            diag.approach2.firstSecElemFormat  = "full-flat-tree-v2.37.0";
             diag.approach2.sec0MetaChildLen = (pd.sections?.[0]?.metaData?.child ?? []).length;
+            /* rowRefOk / colRefOk: verify child IDs resolve in section.elements */
+            (() => {
+              const sec0Elems = sectionsWithContext[0]?.elements ?? [];
+              const sec0ElemIds = new Set(sec0Elems.map(e => e.id));
+              const firstRow = sec0Elems[0];
+              const firstColId = firstRow && Array.isArray(firstRow.child) ? firstRow.child[0] : null;
+              const rowRefOk = firstColId ? sec0ElemIds.has(firstColId) : null;
+              const firstCol = firstColId ? sec0Elems.find(e => e.id === firstColId) : null;
+              const firstElemId = firstCol && Array.isArray(firstCol.child) ? firstCol.child[0] : null;
+              const colRefOk = firstElemId ? sec0ElemIds.has(firstElemId) : null;
+              diag.approach2.rowRefOk  = rowRefOk;
+              diag.approach2.colRefOk  = colRefOk;
+              diag.approach2.firstColId = firstColId ?? "none";
+              diag.approach2.firstElemId = firstElemId ?? "none";
+            })();
 
             /* v2.33.0: Write EMPTY flat dicts to match native GHL Firebase format.
              * Critical new finding (v2.33.0): native GHL page roundtrip shows
@@ -809,7 +845,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
             diag.approach2.writePayloadTopKeys = Object.keys(writePayload);
             diag.approach2.storageFormat   = storageFormat;
-            diag.approach2.writeFormat     = "spread-pd-v2.36.0";
+            diag.approach2.writeFormat     = "spread-pd-v2.37.0";
             diag.approach2.writeEmptyDicts = true;
             diag.approach2.existElemCount  = existElemCount;
             diag.approach2.nodeCount       = Object.keys(wrappedRows).length
@@ -1186,11 +1222,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* ── Build write payload (mirrors approach 2 writePayload) ── *
              * v2.32.0: use flattenForFirebase (same as approach 2).       */
             const pd2B = pageData;
+            /* v2.37.0: same flattenForFirebase fix as approach 2 — add native field defaults. */
             function flattenForFirebase2B(key, v) {
               if (!v || typeof v !== "object") return v;
               if (v.metaData && typeof v.metaData === "object") {
                 const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
-                return { id: v.id ?? key, ...metaWithoutSelfRef };
+                return {
+                  wrapper: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
+                  id: v.id ?? key,
+                  ...metaWithoutSelfRef,
+                };
               }
               return v;
             }
@@ -1203,16 +1244,31 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             const wrappedEls2B = Object.fromEntries(
               Object.entries(pd2B.elements ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
-            /* v2.32.0: include shallow flat elements (mirrors approach 2 sectionsWithContext).
-             * Native GHL sections have `elements` key containing flat row objects.            */
+            /* v2.37.0: full flat element tree — mirrors approach 2 sectionsWithContext fix.
+             * Push row + its cols + each col's leaf elements into one flat section.elements. */
             const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => {
-              const childRowIds2B   = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-              const shallowEls2B    = childRowIds2B.map(rowId => wrappedRows2B[rowId]).filter(Boolean);
-              /* v2.35.0: keep original metaData.child (non-empty) — mirrors Approach 2 fix */
+              const childRowIds2B = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              const flatEls2B = [];
+              for (const rowId of childRowIds2B) {
+                const row = wrappedRows2B[rowId];
+                if (!row) continue;
+                flatEls2B.push(row);
+                const colIds = Array.isArray(row.child) ? row.child : [];
+                for (const colId of colIds) {
+                  const col = wrappedCols2B[colId];
+                  if (!col) continue;
+                  flatEls2B.push(col);
+                  const elemIds = Array.isArray(col.child) ? col.child : [];
+                  for (const elemId of elemIds) {
+                    const elem = wrappedEls2B[elemId];
+                    if (elem) flatEls2B.push(elem);
+                  }
+                }
+              }
               return {
                 id:         sec.id,
                 metaData:   { ...sec.metaData },
-                elements:   shallowEls2B,
+                elements:   flatEls2B,
                 sequence:   i,
                 pageId:     builderId,
                 funnelId:   funnelId2B,
@@ -2773,14 +2829,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         let injectSim = null;
         if (pd) {
-          /* ── Same flattenForFirebase as inject pipeline (v2.32.0) ── *
+          /* ── Same flattenForFirebase as inject pipeline (v2.37.0) ── *
            * Spreads metaData content to top level, strips self-ref     *
-           * `element` key. Matches native GHL Firebase flat format.   */
+           * `element` key, adds native field defaults.                 */
           function _diff_flattenForFirebase(key, v) {
             if (!v || typeof v !== "object") return v;
             if (v.metaData && typeof v.metaData === "object") {
               const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
-              return { id: v.id ?? key, ...metaWithoutSelfRef };
+              return {
+                wrapper: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
+                id: v.id ?? key,
+                ...metaWithoutSelfRef,
+              };
             }
             return v;
           }
@@ -2794,14 +2854,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             Object.entries(pd.elements ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
 
-          /* ── Same sectionsWithContext as inject pipeline (shallow elements) ── */
+          /* ── Same sectionsWithContext as inject pipeline (v2.37.0 full flat tree) ── */
           const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
-            const childRowIds     = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-            const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
+            const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+            const flatElements = [];
+            for (const rowId of childRowIds) {
+              const row = wrappedRows[rowId];
+              if (!row) continue;
+              flatElements.push(row);
+              const colIds = Array.isArray(row.child) ? row.child : [];
+              for (const colId of colIds) {
+                const col = wrappedCols[colId];
+                if (!col) continue;
+                flatElements.push(col);
+                const elemIds = Array.isArray(col.child) ? col.child : [];
+                for (const elemId of elemIds) {
+                  const elem = wrappedEls[elemId];
+                  if (elem) flatElements.push(elem);
+                }
+              }
+            }
             return {
               id:         sec.id,
               metaData:   { ...sec.metaData },
-              elements:   shallowElements,
+              elements:   flatElements,
               sequence:   i,
               pageId:     "(builder-target)",
               funnelId:   "(from-path)",

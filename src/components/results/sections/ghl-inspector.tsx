@@ -142,7 +142,7 @@ type AiPageId = (typeof AI_PAGES)[number]["id"];
 
 /* ── constants ────────────────────────────────────────────────────────────── */
 
-const CURRENT_EXT_VERSION = "2.36.0";
+const CURRENT_EXT_VERSION = "2.37.0";
 
 function semverOlder(a: string, b: string): boolean {
   const pa = a.split(".").map(Number);
@@ -875,12 +875,45 @@ function keyDiff(a: string[], b: string[]) {
   };
 }
 
+function keyDiffText(label: string, aLabel: string, bLabel: string, aKeys: string[], bKeys: string[]): string {
+  const { onlyA, onlyB, inBoth } = keyDiff(aKeys, bKeys);
+  const lines = [`=== ${label} ===`];
+  if (onlyA.length > 0)  lines.push(`Only in ${aLabel}: ${onlyA.join(", ")}`);
+  if (onlyB.length > 0)  lines.push(`Only in ${bLabel}: ${onlyB.join(", ")}`);
+  if (inBoth.length > 0) lines.push(`In both: ${inBoth.join(", ")}`);
+  if (onlyA.length === 0 && onlyB.length === 0) lines.push("✓ Keys match perfectly");
+  return lines.join("\n");
+}
+
+function CopyBtn({ text, title }: { text: string; title?: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      title={title ?? "Copy to clipboard"}
+      className="ml-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+    >
+      {copied
+        ? <><Check className="h-3 w-3 text-green-500" />Copied</>
+        : <><Copy className="h-3 w-3" />Copy</>
+      }
+    </button>
+  );
+}
+
 function KeyDiffTable({
-  aLabel, bLabel, aKeys, bKeys,
-}: { aLabel: string; bLabel: string; aKeys: string[]; bKeys: string[] }) {
+  aLabel, bLabel, aKeys, bKeys, label,
+}: { aLabel: string; bLabel: string; aKeys: string[]; bKeys: string[]; label?: string }) {
   const { onlyA, onlyB, inBoth } = keyDiff(aKeys, bKeys);
   const allKeys = [...new Set([...aKeys, ...bKeys])].sort();
   if (allKeys.length === 0) return <p className="text-xs text-gray-400 italic">No keys</p>;
+  const copyText = label ? keyDiffText(label, aLabel, bLabel, aKeys, bKeys) : keyDiffText("Key diff", aLabel, bLabel, aKeys, bKeys);
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200">
       <table className="w-full text-xs">
@@ -889,6 +922,9 @@ function KeyDiffTable({
             <th className="px-3 py-2 font-semibold text-gray-700">Key</th>
             <th className="px-3 py-2 text-center font-semibold text-green-700">{aLabel}</th>
             <th className="px-3 py-2 text-center font-semibold text-blue-700">{bLabel}</th>
+            <th className="px-3 py-2 text-right">
+              <CopyBtn text={copyText} title="Copy diff as text" />
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -901,6 +937,7 @@ function KeyDiffTable({
                 <td className="px-3 py-1.5 font-mono text-gray-700">{k}</td>
                 <td className="px-3 py-1.5 text-center">{inA ? <span className="text-green-600 font-bold">✓</span> : <span className="text-gray-300">—</span>}</td>
                 <td className="px-3 py-1.5 text-center">{inB ? <span className="text-blue-600 font-bold">✓</span> : <span className="text-gray-300">—</span>}</td>
+                <td />
               </tr>
             );
           })}
@@ -966,6 +1003,52 @@ function CloneBaselinePanel({
   const diag = cloneBaseline?.diag;
   const maxSecs = Math.max((diag?.sectionCount ?? 0), aiSectionElemCounts.length);
 
+  /* Build "copy all" text for the entire diff */
+  const allDiffText = (() => {
+    if (!diag) return "";
+    const lines: string[] = [`Clone vs AI Deep Diff — ${new Date(cloneBaseline!.capturedAt).toISOString()}`];
+    lines.push(`Page: ${cloneBaseline!.builderId ?? "unknown"} | AI: ${aiPage}`);
+    lines.push("");
+    lines.push(keyDiffText("Top-level keys", "Clone", `AI (${aiPage})`, diag.topLevelKeys, aiTopLevelKeys));
+    lines.push("");
+    const secLines = [`=== Section & element counts ===`];
+    secLines.push(`Clone sections: ${diag.sectionCount} | AI sections: ${aiSectionElemCounts.length}`);
+    Array.from({ length: maxSecs }).forEach((_, i) => {
+      const cN = diag.sectionElemCounts[i] ?? "—";
+      const cC = diag.sectionMetaChildLengths?.[i] ?? "—";
+      const aiN = aiSectionElemCounts[i] ?? "—";
+      secLines.push(`sec[${i}]: Clone=${cN} (metaChild=${cC}) AI=${aiN}`);
+    });
+    lines.push(secLines.join("\n"));
+    lines.push("");
+    lines.push(keyDiffText("sec[0] element field keys", "Clone sec[0]", "AI sec[0]", diag.sec0ElemFieldKeys, aiSec0ElemFieldKeys));
+    lines.push("");
+    lines.push(keyDiffText("rows[0] top-level keys", "Clone", "AI", diag.row0Keys, aiRow0Keys));
+    lines.push("");
+    lines.push(keyDiffText("rows[0].metaData keys", "Clone", "AI", diag.row0MetaKeys, aiRow0MetaKeys));
+    lines.push("");
+    lines.push(keyDiffText("columns[0] top-level keys", "Clone", "AI", diag.col0Keys, aiCol0Keys));
+    lines.push("");
+    lines.push(keyDiffText("elements[0] top-level keys", "Clone", "AI", diag.elem0Keys, aiElem0Keys));
+    lines.push("");
+    lines.push(keyDiffText("elements[0].metaData keys", "Clone", "AI", diag.elem0MetaKeys, aiElem0MetaKeys));
+    return lines.join("\n");
+  })();
+
+  /* Section count table copy text */
+  const sectionCountCopyText = (() => {
+    if (!diag) return "";
+    const lines = ["=== Section & element counts ==="];
+    lines.push(`Clone sections: ${diag.sectionCount} | AI sections: ${aiSectionElemCounts.length}`);
+    Array.from({ length: maxSecs }).forEach((_, i) => {
+      const cN = diag.sectionElemCounts[i] ?? "—";
+      const cC = diag.sectionMetaChildLengths?.[i] ?? "—";
+      const aiN = aiSectionElemCounts[i] ?? "—";
+      lines.push(`sec[${i}]: Clone=${cN} (metaChild=${cC}) AI=${aiN}`);
+    });
+    return lines.join("\n");
+  })();
+
   return (
     <div className="rounded-xl border border-emerald-200 bg-white overflow-hidden">
       {/* Header */}
@@ -976,6 +1059,9 @@ function CloneBaselinePanel({
             Capture a native GHL page as a "gold standard" baseline, then compare its exact Firebase structure against our AI output field-by-field
           </p>
         </div>
+        {cloneBaseline && diag && (
+          <CopyBtn text={allDiffText} title="Copy all diff sections as text" />
+        )}
         {cloneBaseline && (
           <button
             onClick={onClear}
@@ -1032,6 +1118,7 @@ function CloneBaselinePanel({
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
               : <KeyDiffTable
+                  label="Top-level keys"
                   aLabel="Clone"
                   bLabel={`AI (${aiPage})`}
                   aKeys={diag.topLevelKeys}
@@ -1054,6 +1141,7 @@ function CloneBaselinePanel({
                     <th className="px-3 py-2 text-right font-semibold text-green-700">Clone metaChild</th>
                     <th className="px-3 py-2 text-right font-semibold text-blue-700">AI elements</th>
                     <th className="px-3 py-2 text-right font-semibold text-gray-500">Match?</th>
+                    <th className="px-3 py-2 text-right"><CopyBtn text={sectionCountCopyText} title="Copy counts as text" /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -1070,6 +1158,7 @@ function CloneBaselinePanel({
                         : <span className="text-amber-500 font-bold">≠</span>
                       )}
                     </td>
+                    <td />
                   </tr>
                   {Array.from({ length: maxSecs }).map((_, i) => {
                     const cloneN = diag.sectionElemCounts[i] ?? null;
@@ -1091,6 +1180,7 @@ function CloneBaselinePanel({
                               : <span className="text-amber-500 font-bold">≠</span>
                           )}
                         </td>
+                        <td />
                       </tr>
                     );
                   })}
@@ -1107,6 +1197,7 @@ function CloneBaselinePanel({
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
               : <KeyDiffTable
+                  label="sec[0] element field keys"
                   aLabel="Clone sec[0]"
                   bLabel={`AI sec[0]`}
                   aKeys={diag.sec0ElemFieldKeys}
@@ -1122,7 +1213,7 @@ function CloneBaselinePanel({
             </p>
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
-              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.row0Keys} bKeys={aiRow0Keys} />
+              : <KeyDiffTable label="rows[0] top-level keys" aLabel="Clone" bLabel="AI" aKeys={diag.row0Keys} bKeys={aiRow0Keys} />
             }
           </div>
 
@@ -1133,7 +1224,7 @@ function CloneBaselinePanel({
             </p>
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
-              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.row0MetaKeys} bKeys={aiRow0MetaKeys} />
+              : <KeyDiffTable label="rows[0].metaData keys" aLabel="Clone" bLabel="AI" aKeys={diag.row0MetaKeys} bKeys={aiRow0MetaKeys} />
             }
           </div>
 
@@ -1144,7 +1235,7 @@ function CloneBaselinePanel({
             </p>
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
-              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.col0Keys} bKeys={aiCol0Keys} />
+              : <KeyDiffTable label="columns[0] top-level keys" aLabel="Clone" bLabel="AI" aKeys={diag.col0Keys} bKeys={aiCol0Keys} />
             }
           </div>
 
@@ -1155,7 +1246,7 @@ function CloneBaselinePanel({
             </p>
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
-              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.elem0Keys} bKeys={aiElem0Keys} />
+              : <KeyDiffTable label="elements[0] top-level keys" aLabel="Clone" bLabel="AI" aKeys={diag.elem0Keys} bKeys={aiElem0Keys} />
             }
           </div>
 
@@ -1166,7 +1257,7 @@ function CloneBaselinePanel({
             </p>
             {aiLoading
               ? <p className="text-xs text-gray-400">Loading AI data…</p>
-              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.elem0MetaKeys} bKeys={aiElem0MetaKeys} />
+              : <KeyDiffTable label="elements[0].metaData keys" aLabel="Clone" bLabel="AI" aKeys={diag.elem0MetaKeys} bKeys={aiElem0MetaKeys} />
             }
           </div>
 
