@@ -261,8 +261,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.39.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.39.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.40.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.40.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -350,6 +350,14 @@ async function showInjectDebug() {
           if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate (legacy-fallback): ${a2.metaUpdate}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
+        }
+        /* v2.40.0 — Approach 5: GHL native sync endpoint */
+        if (d.approach5) {
+          const a5 = d.approach5;
+          lines.push(`A5 syncChanges: result=${a5.result ?? "?"} ok=${a5.ok ?? "?"} http=${a5.http ?? a5.rawHttp ?? "?"} locationId=${a5.locationId ?? "?"} secs=${a5.sectionCount ?? "?"} sec0Elems=${a5.sec0ElemCount ?? "?"}`);
+          if (a5.traceId)      lines.push(`A5 traceId: ${a5.traceId}`);
+          if (a5.revexError)   lines.push(`A5 revexError: ${a5.revexError} hasBearerTok=${a5.hasBearerTok ?? "?"}`);
+          if (a5.rawFetchError) lines.push(`A5 rawFetchError: ${a5.rawFetchError}`);
         }
         if (d.approach2b) {
           const a2b = d.approach2b;
