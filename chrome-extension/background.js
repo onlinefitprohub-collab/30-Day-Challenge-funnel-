@@ -766,6 +766,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * Native GHL sec[0] with 2 rows has 14 elements: 2 rows + cols + leaf elements.
              * Fix: traverse wrappedRows → wrappedCols → wrappedEls and push ALL nodes.    */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
+            /* v2.39.0: extract locationId from the GHL tab URL for metaUpdate patterns.
+             * Tab URL format: https://app.gohighlevel.com/location/{locationId}/page-builder/{pageId} */
+            const tabLocationId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
             const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
               const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
               /* v2.37.0: build full flat element tree for this section.
@@ -942,7 +945,21 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                    * Try order: /funnels/page/{pid} → /funnels/funnel/page/{pid} → /funnels/funnel/{fid}/page/{pid}
                    * Verb order per URL: PATCH → PUT (PUT as fallback on 404/405)
                    * Log all attempts as metaUpdateAttempts for debugging.              */
-                  const metaUpdateUrls = [
+                  diag.approach2.tabLocationId = tabLocationId || "(not-found-in-url)";
+                  /* v2.39.0: 6 URL patterns — location-ID patterns first (most specific),
+                   * then existing patterns as fallback. Each tried PATCH→PUT.
+                   * locationId extracted from window.location.href (tab URL).              */
+                  const metaUpdateUrls = tabLocationId ? [
+                    /* Location-ID patterns (new in v2.39.0) */
+                    `https://backend.leadconnectorhq.com/locations/${tabLocationId}/funnels/page/${builderId}`,
+                    `https://backend.leadconnectorhq.com/funnels/page/${builderId}?locationId=${tabLocationId}`,
+                    `https://backend.leadconnectorhq.com/funnels/${funnelIdFromPath}/page/${builderId}?locationId=${tabLocationId}`,
+                    /* Existing patterns (fallback) */
+                    `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+                    `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+                  ] : [
+                    /* No locationId — use existing 3 patterns only */
                     `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
                     `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
                     `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
@@ -1226,15 +1243,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* ── Build write payload (mirrors approach 2 writePayload) ── *
              * v2.32.0: use flattenForFirebase (same as approach 2).       */
             const pd2B = pageData;
-            /* v2.37.0: same flattenForFirebase fix as approach 2 — add native field defaults. */
+            /* v2.38.0: same flattenForFirebase fix as approach 2 — keep `element` snapshot field.
+             * (This was missed in v2.37.0 — only approach 2 was fixed then.) */
             function flattenForFirebase2B(key, v) {
               if (!v || typeof v !== "object") return v;
               if (v.metaData && typeof v.metaData === "object") {
-                const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
                 return {
                   wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
                   id: v.id ?? key,
-                  ...metaWithoutSelfRef,
+                  ...v.metaData,
                 };
               }
               return v;
@@ -1321,30 +1338,49 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 `/o/${encPath2B}?alt=media&token=${newTok2B}`;
               a2b.newDownloadUrl = newUrl2B.slice(0, 160);
               if (revex) {
-                try {
-                  await revex.put(
-                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelId2B}/page/${builderId}`,
-                    { ...metadata, pageDataDownloadUrl: newUrl2B }
-                  );
-                  a2b.metaPatch = "ok";
-                } catch (pErr2B) {
-                  /* Fallback: try without funnelId in path */
-                  try {
-                    await revex.put(
-                      `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
-                      { ...metadata, pageDataDownloadUrl: newUrl2B }
-                    );
-                    a2b.metaPatch = "ok-fallback";
-                  } catch (pErr2C) {
-                    a2b.metaPatch = `failed:${String(pErr2B).slice(0, 40)}|fb:${String(pErr2C).slice(0, 40)}`;
+                /* v2.39.0: same 6-pattern PATCH→PUT retry as approach 2.
+                 * locationId extracted from window.location.href (same tab URL). */
+                const tabLocId2B = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
+                a2b.tabLocationId = tabLocId2B || "(not-found)";
+                const metaUrls2B = tabLocId2B ? [
+                  `https://backend.leadconnectorhq.com/locations/${tabLocId2B}/funnels/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}?locationId=${tabLocId2B}`,
+                  `https://backend.leadconnectorhq.com/funnels/${funnelId2B}/page/${builderId}?locationId=${tabLocId2B}`,
+                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/funnel/${funnelId2B}/page/${builderId}`,
+                ] : [
+                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/funnel/${funnelId2B}/page/${builderId}`,
+                ];
+                const patchAttempts2B = [];
+                let patchOk2B = false;
+                outer2B: for (const mu of metaUrls2B) {
+                  for (const verb of ["patch", "put"]) {
+                    try {
+                      await revex[verb](mu, { ...metadata, pageDataDownloadUrl: newUrl2B });
+                      patchAttempts2B.push({ url: mu.slice(50), verb, status: 200, ok: true });
+                      patchOk2B = true;
+                      a2b.metaPatch = `ok-verb:${verb} url:${mu.slice(50, 90)}`;
+                      break outer2B;
+                    } catch (_pe) {
+                      const st = _pe?.response?.status ?? "err";
+                      patchAttempts2B.push({ url: mu.slice(50), verb, status: st, ok: false });
+                      if (verb === "patch" && st !== 404 && st !== 405) break;
+                    }
                   }
+                }
+                a2b.patchAttempts = patchAttempts2B;
+                if (!patchOk2B) {
+                  a2b.metaPatch = `all-failed: ${patchAttempts2B.map(a => `${a.verb}→${a.status}`).join(" | ")}`;
                 }
               } else {
                 a2b.metaPatch = "skipped-no-revex";
               }
               /* Gate success on metadata patch — without registering the new URL
                  in GHL metadata the builder cannot load the injected content.    */
-              if (a2b.metaPatch === "ok" || a2b.metaPatch === "ok-fallback") {
+              if (patchOk2B) {
                 diag.approach2b_ok = true;
               } else {
                 a2b.result = `firebase-write-ok-but-meta-patch-${a2b.metaPatch ?? "failed"}`;

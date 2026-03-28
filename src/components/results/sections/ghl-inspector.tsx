@@ -142,7 +142,7 @@ type AiPageId = (typeof AI_PAGES)[number]["id"];
 
 /* ── constants ────────────────────────────────────────────────────────────── */
 
-const CURRENT_EXT_VERSION = "2.38.0";
+const CURRENT_EXT_VERSION = "2.39.0";
 
 function semverOlder(a: string, b: string): boolean {
   const pa = a.split(".").map(Number);
