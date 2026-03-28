@@ -1735,6 +1735,102 @@ async function _cf_refreshBuilderIframe() {
   }
 }
 
+/* ─── _cf_captureCloneBaseline ───────────────────────────────────────────────
+ * Reads the FULL Firebase page data for the current GHL builder page and
+ * returns it verbatim along with structural summary stats.
+ * Used by CF_CAPTURE_CLONE_BASELINE to store a "gold-standard" clone so we can
+ * deep-diff it against our AI-generated output and find every schema mismatch.
+ * ─────────────────────────────────────────────────────────────────────────── */
+async function _cf_captureCloneBaseline(builderId) {
+  const diag = {};
+  try {
+    const appEl = document.querySelector("#app");
+    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    if (!revex) {
+      for (const ai of Object.values(window.app ?? {})) {
+        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+        if (r && typeof r.get === "function") { revex = r; break; }
+      }
+    }
+    if (!revex) return JSON.stringify({ ok: false, error: "revex not found — builder must be fully loaded" });
+
+    let metadata = null;
+    try { const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`); metadata = r?.data ?? r ?? null; } catch (_) {}
+    if (!metadata) { try { const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`); metadata = r2?.data ?? r2 ?? null; } catch (_) {} }
+    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    if (!downloadUrl) return JSON.stringify({ ok: false, error: "no downloadUrl in GHL metadata", diag });
+
+    const fbMatch = downloadUrl.match(/firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/);
+    if (!fbMatch) return JSON.stringify({ ok: false, error: "could not parse Firebase URL", diag });
+    const bucket = decodeURIComponent(fbMatch[1]);
+    diag.bucket = bucket.slice(0, 60);
+
+    let idToken = null;
+    try { if (typeof firebase !== "undefined" && firebase.apps?.length) { const u = firebase.auth().currentUser; if (u) idToken = await u.getIdToken(true); } } catch (_) {}
+    if (!idToken) {
+      try {
+        for (const val of Object.values(window)) {
+          if (!val || typeof val !== "object") continue;
+          if (typeof val.auth === "function") { const a = val.auth(); if (a?.currentUser) { idToken = await a.currentUser.getIdToken(true); break; } }
+        }
+      } catch (_) {}
+    }
+    if (!idToken) {
+      idToken = await new Promise(resolve => {
+        try {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => resolve(null);
+          req.onsuccess = evt => {
+            const db = evt.target.result;
+            if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
+            const getAll = db.transaction("firebaseLocalStorage","readonly").objectStore("firebaseLocalStorage").getAll();
+            getAll.onerror   = () => { db.close(); resolve(null); };
+            getAll.onsuccess = e2 => { db.close(); for (const rec of (e2.target.result ?? [])) { const t = rec?.value?.stsTokenManager?.accessToken; if (t) { resolve(t); return; } } resolve(null); };
+          };
+        } catch (_) { resolve(null); }
+      });
+    }
+    if (!idToken) return JSON.stringify({ ok: false, error: "no auth token", diag });
+
+    const readRes = await fetch(downloadUrl, { headers: { "Authorization": `Firebase ${idToken}` }, signal: AbortSignal.timeout(8000) });
+    if (!readRes.ok) return JSON.stringify({ ok: false, error: `read failed HTTP ${readRes.status}`, diag });
+    const fullData = await readRes.json();
+
+    /* Build structural summary for popup display */
+    const secs = Array.isArray(fullData.sections) ? fullData.sections : [];
+    diag.topLevelKeys       = Object.keys(fullData);
+    diag.sectionCount       = secs.length;
+    diag.rowCount           = fullData.rows     ? Object.keys(fullData.rows).length     : 0;
+    diag.colCount           = fullData.columns  ? Object.keys(fullData.columns).length  : 0;
+    diag.elemCount          = fullData.elements ? Object.keys(fullData.elements).length : 0;
+    diag.sectionElemCounts  = secs.map(s => Array.isArray(s.elements) ? s.elements.length : 0);
+    diag.sectionMetaChildLengths = secs.map(s => Array.isArray(s.metaData?.child) ? s.metaData.child.length : 0);
+
+    const sec0      = secs[0] ?? null;
+    diag.sec0Keys   = sec0 ? Object.keys(sec0) : [];
+    const sec0Elems = sec0 && Array.isArray(sec0.elements) ? sec0.elements : [];
+    diag.sec0ElemCount      = sec0Elems.length;
+    diag.sec0ElemFieldKeys  = sec0Elems.length > 0 ? [...new Set(sec0Elems.flatMap(e => Object.keys(e)))] : [];
+    diag.sec0MetaChildLen   = Array.isArray(sec0?.metaData?.child) ? sec0.metaData.child.length : 0;
+
+    const row0 = fullData.rows ? Object.values(fullData.rows)[0] : null;
+    diag.row0Keys    = row0 ? Object.keys(row0).slice(0, 12)       : [];
+    diag.row0MetaKeys= row0?.metaData ? Object.keys(row0.metaData).slice(0, 12) : [];
+
+    const col0 = fullData.columns ? Object.values(fullData.columns)[0] : null;
+    diag.col0Keys    = col0 ? Object.keys(col0).slice(0, 12)       : [];
+    diag.col0MetaKeys= col0?.metaData ? Object.keys(col0.metaData).slice(0, 12) : [];
+
+    const elem0 = fullData.elements ? Object.values(fullData.elements)[0] : null;
+    diag.elem0Keys   = elem0 ? Object.keys(elem0).slice(0, 12)     : [];
+    diag.elem0MetaKeys = elem0?.metaData ? Object.keys(elem0.metaData).slice(0, 12) : [];
+
+    return JSON.stringify({ ok: true, fullData, diag, capturedAt: Date.now(), builderId });
+  } catch (err) {
+    return JSON.stringify({ ok: false, error: String(err).slice(0, 200), diag });
+  }
+}
+
 /* ─── _cf_readFirebaseSchema ─────────────────────────────────────────────────
  * Lightweight read-only Firebase schema probe (no write).
  * Used by CF_SCHEMA_DIFF to capture the GHL native data shape for comparison
@@ -3113,6 +3209,72 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
    * The record is merged (using spread) so a later "seenAfterInject: true"
    * update does not clobber the earlier "seenBeforeInject: true" entry.
    * Stored per-tab. A 60s cleanup timer removes stale records.             */
+  /* ── CF_CAPTURE_CLONE_BASELINE ────────────────────────────────────────────
+   * Reads the FULL Firebase data from the currently open GHL builder tab and
+   * stores it as cf_clone_baseline in chrome.storage.local.
+   * The web app (GHL Inspector) can then load it via CF_GET_CLONE_BASELINE and
+   * deep-diff it against our AI-generated page to pinpoint every mismatch.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_CAPTURE_CLONE_BASELINE") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+
+        const tab = await chrome.tabs.get(tabId);
+        const m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        if (!m) {
+          sendResponse({ ok: false, error: `Not a GHL builder tab: ${(tab.url ?? "").slice(0, 80)}` });
+          return;
+        }
+        const [, , , builderId] = m;
+
+        const execRes = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   _cf_captureCloneBaseline,
+          args:   [builderId],
+        });
+        const result = JSON.parse(execRes?.[0]?.result ?? "{}");
+
+        if (result.ok && result.fullData) {
+          const baseline = {
+            builderId,
+            tabUrl:     (tab.url ?? "").slice(0, 120),
+            fullData:   result.fullData,
+            diag:       result.diag,
+            capturedAt: result.capturedAt ?? Date.now(),
+          };
+          await chrome.storage.local.set({ cf_clone_baseline: baseline });
+          sendResponse({ ok: true, diag: result.diag });
+        } else {
+          sendResponse({ ok: false, error: result.error ?? "unknown", diag: result.diag ?? {} });
+        }
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
+  }
+
+  /* ── CF_GET_CLONE_BASELINE ────────────────────────────────────────────────
+   * Returns the stored clone baseline (fullData + diag + metadata).
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_GET_CLONE_BASELINE") {
+    chrome.storage.local.get("cf_clone_baseline", (s) => {
+      sendResponse({ ok: true, baseline: s.cf_clone_baseline ?? null });
+    });
+    return true;
+  }
+
+  /* ── CF_CLEAR_CLONE_BASELINE ─────────────────────────────────────────────
+   * Clears the stored clone baseline.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_CLEAR_CLONE_BASELINE") {
+    chrome.storage.local.remove("cf_clone_baseline", () => sendResponse({ ok: true }));
+    return true;
+  }
+
   /* ── CF_GET_API_LOG ───────────────────────────────────────────────────────
    * Returns window.__cfApiLog from the active GHL tab (captured by bridge.js).
    * Shows GHL API calls including the 500 fetchPageData response body.

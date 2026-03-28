@@ -96,6 +96,19 @@
       chrome.runtime.sendMessage({ type: "CF_CLEAR_CAPTURED_GHL" });
     }
 
+    if (t === "CF_GET_CLONE_BASELINE") {
+      chrome.runtime.sendMessage({ type: "CF_GET_CLONE_BASELINE" }, (result) => {
+        window.postMessage(
+          { source: "cf-ext", type: "CF_CLONE_BASELINE_DATA", payload: result ?? { ok: false, baseline: null } },
+          "*"
+        );
+      });
+    }
+
+    if (t === "CF_CLEAR_CLONE_BASELINE") {
+      chrome.runtime.sendMessage({ type: "CF_CLEAR_CLONE_BASELINE" });
+    }
+
     if (t === "CF_FETCH_URL_PAGE") {
       chrome.runtime.sendMessage({ type: "CF_FETCH_URL_PAGE", url: evt.data.url }, (result) => {
         window.postMessage(

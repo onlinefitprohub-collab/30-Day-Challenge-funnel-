@@ -31,6 +31,7 @@ function initCopyPaste() {
   document.getElementById("roundtrip-btn").addEventListener("click", doRoundtripTest);
   document.getElementById("schema-diff-btn").addEventListener("click", doSchemaDiff);
   document.getElementById("api-log-btn").addEventListener("click", doApiLog);
+  document.getElementById("capture-clone-baseline-btn").addEventListener("click", doCaptureCloneBaseline);
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -627,6 +628,60 @@ async function doApiLog() {
   } finally {
     btn.disabled    = false;
     btn.textContent = "Show GHL API Log (500 body)";
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CAPTURE CLONE BASELINE
+   Reads the FULL Firebase data of the currently open cloned GHL page and
+   stores it in chrome.storage.local for deep-diff in the GHL Inspector web UI.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+async function doCaptureCloneBaseline() {
+  const div = document.getElementById("capture-clone-baseline-result");
+  const btn = document.getElementById("capture-clone-baseline-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className   = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Capture Clone Baseline (for deep diff)";
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Capturing…";
+  div.className   = "paste-result info";
+  div.textContent = "Reading Firebase data from current builder page…";
+
+  try {
+    const res = await sendMessage({ type: "CF_CAPTURE_CLONE_BASELINE" });
+    if (res?.ok) {
+      const d = res.diag ?? {};
+      const lines = [];
+      lines.push(`✓ Clone baseline captured & stored!`);
+      lines.push(`secs=${d.sectionCount}  rows=${d.rowCount}  cols=${d.colCount}  elems=${d.elemCount}`);
+      lines.push(`topLevelKeys: ${JSON.stringify(d.topLevelKeys ?? [])}`);
+      lines.push(`elemsPerSection: ${JSON.stringify(d.sectionElemCounts ?? [])}`);
+      lines.push(`metaChildLen/sec: ${JSON.stringify(d.sectionMetaChildLengths ?? [])}`);
+      lines.push(`sec0 keys: ${JSON.stringify(d.sec0Keys ?? [])}`);
+      lines.push(`sec0 elem field keys: ${JSON.stringify(d.sec0ElemFieldKeys ?? [])}`);
+      lines.push(`row0 keys: ${JSON.stringify(d.row0Keys ?? [])}  metaKeys: ${JSON.stringify(d.row0MetaKeys ?? [])}`);
+      lines.push(`col0 keys: ${JSON.stringify(d.col0Keys ?? [])}  metaKeys: ${JSON.stringify(d.col0MetaKeys ?? [])}`);
+      lines.push(`elem0 keys: ${JSON.stringify(d.elem0Keys ?? [])}  metaKeys: ${JSON.stringify(d.elem0MetaKeys ?? [])}`);
+      lines.push(`\nNow open the GHL Inspector in the web app and click "Load Clone Baseline" to see the deep diff.`);
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result ok";
+    } else {
+      div.textContent = `Error: ${res?.error ?? "unknown"}\n${JSON.stringify(res?.diag ?? {}, null, 2)}`;
+      div.className   = "paste-result err";
+    }
+  } catch (e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Capture Clone Baseline (for deep diff)";
   }
 }
 

@@ -103,6 +103,34 @@ interface CapturedGHLPage {
   capturedAt: number;
 }
 
+interface CloneBaselineDiag {
+  topLevelKeys:            string[];
+  sectionCount:            number;
+  rowCount:                number;
+  colCount:                number;
+  elemCount:               number;
+  sectionElemCounts:       number[];
+  sectionMetaChildLengths: number[];
+  sec0Keys:                string[];
+  sec0ElemCount:           number;
+  sec0ElemFieldKeys:       string[];
+  sec0MetaChildLen:        number;
+  row0Keys:                string[];
+  row0MetaKeys:            string[];
+  col0Keys:                string[];
+  col0MetaKeys:            string[];
+  elem0Keys:               string[];
+  elem0MetaKeys:           string[];
+}
+
+interface CloneBaseline {
+  builderId:  string;
+  tabUrl:     string;
+  fullData:   Record<string, unknown>;
+  diag:       CloneBaselineDiag;
+  capturedAt: number;
+}
+
 const AI_PAGES = [
   { id: "landing",  label: "Landing Page"   },
   { id: "optin",    label: "Opt-In Form"    },
@@ -146,6 +174,10 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
   const [urlCloneSending, setUrlCloneSending] = useState(false);
   const [urlCloneQueued,  setUrlCloneQueued]  = useState(false);
   const [urlCloneError,   setUrlCloneError]   = useState<string | null>(null);
+
+  const [cloneBaseline,        setCloneBaseline]        = useState<CloneBaseline | null>(null);
+  const [cloneBaselineLoading, setCloneBaselineLoading] = useState(false);
+  const [cloneBaselineError,   setCloneBaselineError]   = useState<string | null>(null);
 
   /* Detect extension on mount */
   useEffect(() => {
@@ -345,6 +377,45 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     setUrlCloneQueued(false);
     setUrlCloneError(null);
   }, [aiData, aiPage]);
+
+  /* Load clone baseline from extension (stored by "Capture Clone Baseline" popup button) */
+  const loadCloneBaseline = useCallback(() => {
+    setCloneBaselineLoading(true);
+    setCloneBaselineError(null);
+
+    const timeout = setTimeout(() => {
+      window.removeEventListener("message", onMsg);
+      setCloneBaselineLoading(false);
+      setCloneBaselineError("Extension not responding. Make sure the CF extension is installed and this page is allowed.");
+      setExtPresent(false);
+    }, 4000);
+
+    function onMsg(evt: MessageEvent) {
+      if (evt.source !== window) return;
+      if (evt.data?.source !== "cf-ext" || evt.data?.type !== "CF_CLONE_BASELINE_DATA") return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", onMsg);
+      const payload = evt.data.payload as { ok: boolean; baseline: CloneBaseline | null };
+      setExtPresent(true);
+      if (payload?.baseline) {
+        setCloneBaseline(payload.baseline);
+      } else {
+        setCloneBaselineError(
+          'No clone baseline captured yet. Open a NATIVE GHL funnel page in the Page Builder (a real page — not an AI-injected one), then click the extension icon → "Capture Clone Baseline (for deep diff)". Then come back and click Load again.'
+        );
+      }
+      setCloneBaselineLoading(false);
+    }
+
+    window.addEventListener("message", onMsg);
+    window.postMessage({ source: "cf-app", type: "CF_GET_CLONE_BASELINE" }, "*");
+  }, []);
+
+  function clearCloneBaseline() {
+    setCloneBaseline(null);
+    setCloneBaselineError(null);
+    window.postMessage({ source: "cf-app", type: "CF_CLEAR_CLONE_BASELINE" }, "*");
+  }
 
   /* Derived stats */
   const ghlTypes  = captured?.pageData ? extractElementTypes(captured.pageData) : null;
@@ -778,6 +849,332 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
           </div>
         </div>
       )}
+
+      {/* ── Clone Baseline Deep Diff ────────────────────────────────────── */}
+      <CloneBaselinePanel
+        cloneBaseline={cloneBaseline}
+        cloneBaselineLoading={cloneBaselineLoading}
+        cloneBaselineError={cloneBaselineError}
+        aiData={aiData}
+        aiPage={aiPage}
+        aiLoading={aiLoading}
+        onLoad={loadCloneBaseline}
+        onClear={clearCloneBaseline}
+      />
+    </div>
+  );
+}
+
+/* ── CloneBaselinePanel ────────────────────────────────────────────────────── */
+
+function keyDiff(a: string[], b: string[]) {
+  return {
+    onlyA:  a.filter(k => !b.includes(k)),
+    onlyB:  b.filter(k => !a.includes(k)),
+    inBoth: a.filter(k => b.includes(k)),
+  };
+}
+
+function KeyDiffTable({
+  aLabel, bLabel, aKeys, bKeys,
+}: { aLabel: string; bLabel: string; aKeys: string[]; bKeys: string[] }) {
+  const { onlyA, onlyB, inBoth } = keyDiff(aKeys, bKeys);
+  const allKeys = [...new Set([...aKeys, ...bKeys])].sort();
+  if (allKeys.length === 0) return <p className="text-xs text-gray-400 italic">No keys</p>;
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-gray-200 bg-gray-50 text-left">
+            <th className="px-3 py-2 font-semibold text-gray-700">Key</th>
+            <th className="px-3 py-2 text-center font-semibold text-green-700">{aLabel}</th>
+            <th className="px-3 py-2 text-center font-semibold text-blue-700">{bLabel}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {allKeys.map(k => {
+            const inA = aKeys.includes(k);
+            const inB = bKeys.includes(k);
+            const rowCls = !inA ? "bg-blue-50" : !inB ? "bg-amber-50" : "";
+            return (
+              <tr key={k} className={rowCls}>
+                <td className="px-3 py-1.5 font-mono text-gray-700">{k}</td>
+                <td className="px-3 py-1.5 text-center">{inA ? <span className="text-green-600 font-bold">✓</span> : <span className="text-gray-300">—</span>}</td>
+                <td className="px-3 py-1.5 text-center">{inB ? <span className="text-blue-600 font-bold">✓</span> : <span className="text-gray-300">—</span>}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {(onlyA.length > 0 || onlyB.length > 0) && (
+        <div className="border-t border-gray-200 bg-amber-50 px-3 py-2 text-[10px]">
+          {onlyA.length > 0 && <p className="text-amber-800"><span className="font-bold">Only in {aLabel}:</span> {onlyA.join(", ")}</p>}
+          {onlyB.length > 0 && <p className="text-blue-800 mt-0.5"><span className="font-bold">Only in {bLabel}:</span> {onlyB.join(", ")}</p>}
+        </div>
+      )}
+      {onlyA.length === 0 && onlyB.length === 0 && (
+        <div className="border-t border-gray-200 bg-green-50 px-3 py-2 text-[10px] text-green-800 font-medium">
+          ✓ Keys match perfectly
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface CloneBaselinePanelProps {
+  cloneBaseline:        CloneBaseline | null;
+  cloneBaselineLoading: boolean;
+  cloneBaselineError:   string | null;
+  aiData:               Record<string, unknown> | null;
+  aiPage:               string;
+  aiLoading:            boolean;
+  onLoad:               () => void;
+  onClear:              () => void;
+}
+
+function CloneBaselinePanel({
+  cloneBaseline, cloneBaselineLoading, cloneBaselineError,
+  aiData, aiPage, aiLoading, onLoad, onClear,
+}: CloneBaselinePanelProps) {
+
+  /* Derive AI structural stats from aiData for comparison */
+  const aiSections = Array.isArray(aiData?.sections) ? (aiData!.sections as unknown[]) : [];
+  const aiSectionElemCounts = aiSections.map(s =>
+    Array.isArray((s as Record<string,unknown>).elements)
+      ? ((s as Record<string,unknown>).elements as unknown[]).length
+      : 0
+  );
+  const aiTopLevelKeys = aiData ? Object.keys(aiData) : [];
+  const aiSec0 = aiSections[0] as Record<string,unknown> | undefined;
+  const aiSec0Elems = Array.isArray(aiSec0?.elements) ? (aiSec0!.elements as Record<string,unknown>[]) : [];
+  const aiSec0ElemFieldKeys = aiSec0Elems.length > 0
+    ? [...new Set(aiSec0Elems.flatMap(e => Object.keys(e)))]
+    : [];
+  const aiRows    = aiData?.rows    as Record<string,unknown> | undefined;
+  const aiCols    = aiData?.columns as Record<string,unknown> | undefined;
+  const aiElems   = aiData?.elements as Record<string,unknown> | undefined;
+  const aiRow0    = aiRows  ? Object.values(aiRows)[0]  as Record<string,unknown> | undefined : undefined;
+  const aiCol0    = aiCols  ? Object.values(aiCols)[0]  as Record<string,unknown> | undefined : undefined;
+  const aiElem0   = aiElems ? Object.values(aiElems)[0] as Record<string,unknown> | undefined : undefined;
+  const aiRow0Keys     = aiRow0  ? Object.keys(aiRow0)                       : [];
+  const aiRow0MetaKeys = aiRow0?.metaData ? Object.keys(aiRow0.metaData as object) : [];
+  const aiCol0Keys     = aiCol0  ? Object.keys(aiCol0)                       : [];
+  const aiCol0MetaKeys = aiCol0?.metaData ? Object.keys(aiCol0.metaData as object) : [];
+  const aiElem0Keys    = aiElem0 ? Object.keys(aiElem0)                      : [];
+  const aiElem0MetaKeys= aiElem0?.metaData ? Object.keys(aiElem0.metaData as object): [];
+
+  const diag = cloneBaseline?.diag;
+  const maxSecs = Math.max((diag?.sectionCount ?? 0), aiSectionElemCounts.length);
+
+  return (
+    <div className="rounded-xl border border-emerald-200 bg-white overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-emerald-100 bg-emerald-50 px-5 py-3">
+        <div className="flex-1">
+          <p className="font-semibold text-gray-900 text-sm">Clone vs AI Deep Diff</p>
+          <p className="text-xs text-emerald-700">
+            Capture a native GHL page as a "gold standard" baseline, then compare its exact Firebase structure against our AI output field-by-field
+          </p>
+        </div>
+        {cloneBaseline && (
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Clear
+          </button>
+        )}
+      </div>
+
+      <div className="p-5 space-y-4">
+        {/* How to use */}
+        <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800">
+          <p className="font-semibold mb-1">How to use</p>
+          <ol className="list-decimal list-inside space-y-0.5 text-emerald-700">
+            <li>Open a <strong>native GHL funnel page</strong> in the Page Builder (a real cloned or original page — not one we injected)</li>
+            <li>Click the extension icon → <strong>Capture Clone Baseline (for deep diff)</strong></li>
+            <li>Return here and click <strong>Load Clone Baseline</strong></li>
+            <li>The diff below will show you every field that differs between the native page and our AI output</li>
+          </ol>
+        </div>
+
+        {/* Load button */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button onClick={onLoad} disabled={cloneBaselineLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            {cloneBaselineLoading
+              ? <><RefreshCw className="h-4 w-4 animate-spin mr-1.5" />Loading…</>
+              : <><Download className="h-4 w-4 mr-1.5" />Load Clone Baseline</>
+            }
+          </Button>
+          {cloneBaseline && (
+            <span className="text-xs text-gray-500">
+              Captured {new Date(cloneBaseline.capturedAt).toLocaleTimeString()} ·{" "}
+              {cloneBaseline.builderId?.slice(0, 16) || "unknown page"}
+            </span>
+          )}
+        </div>
+
+        {cloneBaselineError && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-800">{cloneBaselineError}</p>
+          </div>
+        )}
+
+        {/* ── Diff panels — only shown when baseline is loaded ── */}
+        {cloneBaseline && diag && (<>
+
+          {/* Top-level key diff */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              Top-level keys in pageData — Clone (native) vs AI ({aiPage})
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable
+                  aLabel="Clone"
+                  bLabel={`AI (${aiPage})`}
+                  aKeys={diag.topLevelKeys}
+                  bKeys={aiTopLevelKeys}
+                />
+            }
+          </div>
+
+          {/* Section + element count comparison */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              Section &amp; element counts
+            </p>
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-left">
+                    <th className="px-3 py-2 font-semibold text-gray-700">Section</th>
+                    <th className="px-3 py-2 text-right font-semibold text-green-700">Clone elements</th>
+                    <th className="px-3 py-2 text-right font-semibold text-green-700">Clone metaChild</th>
+                    <th className="px-3 py-2 text-right font-semibold text-blue-700">AI elements</th>
+                    <th className="px-3 py-2 text-right font-semibold text-gray-500">Match?</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-1.5 font-mono font-semibold text-gray-700">Total sections</td>
+                    <td className="px-3 py-1.5 text-right text-green-700 font-semibold">{diag.sectionCount}</td>
+                    <td className="px-3 py-1.5 text-right text-gray-400">—</td>
+                    <td className="px-3 py-1.5 text-right text-blue-700 font-semibold">
+                      {aiLoading ? "…" : aiSectionElemCounts.length}
+                    </td>
+                    <td className="px-3 py-1.5 text-right">
+                      {!aiLoading && (diag.sectionCount === aiSectionElemCounts.length
+                        ? <span className="text-green-600 font-bold">✓</span>
+                        : <span className="text-amber-500 font-bold">≠</span>
+                      )}
+                    </td>
+                  </tr>
+                  {Array.from({ length: maxSecs }).map((_, i) => {
+                    const cloneN = diag.sectionElemCounts[i] ?? null;
+                    const cloneC = diag.sectionMetaChildLengths?.[i] ?? null;
+                    const aiN    = aiSectionElemCounts[i] ?? null;
+                    const match  = cloneN !== null && aiN !== null && cloneN === aiN;
+                    return (
+                      <tr key={i} className={!match && cloneN !== null && aiN !== null ? "bg-amber-50" : ""}>
+                        <td className="px-3 py-1.5 font-mono text-gray-500">sec[{i}]</td>
+                        <td className="px-3 py-1.5 text-right text-green-700">{cloneN ?? <span className="text-gray-300">—</span>}</td>
+                        <td className="px-3 py-1.5 text-right text-gray-500 text-[10px]">{cloneC ?? "—"}</td>
+                        <td className="px-3 py-1.5 text-right text-blue-700">
+                          {aiLoading ? "…" : aiN ?? <span className="text-gray-300">—</span>}
+                        </td>
+                        <td className="px-3 py-1.5 text-right">
+                          {!aiLoading && cloneN !== null && aiN !== null && (
+                            match
+                              ? <span className="text-green-600 font-bold">✓</span>
+                              : <span className="text-amber-500 font-bold">≠</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 0 element field keys */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              sec[0] element field keys (keys that each element object inside sec[0].elements has)
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable
+                  aLabel="Clone sec[0]"
+                  bLabel={`AI sec[0]`}
+                  aKeys={diag.sec0ElemFieldKeys}
+                  bKeys={aiSec0ElemFieldKeys}
+                />
+            }
+          </div>
+
+          {/* Row0 keys */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              rows[0] top-level keys
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.row0Keys} bKeys={aiRow0Keys} />
+            }
+          </div>
+
+          {/* Row0 metaData keys */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              rows[0].metaData keys
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.row0MetaKeys} bKeys={aiRow0MetaKeys} />
+            }
+          </div>
+
+          {/* Col0 keys */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              columns[0] top-level keys
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.col0Keys} bKeys={aiCol0Keys} />
+            }
+          </div>
+
+          {/* Elem0 keys */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              elements[0] top-level keys
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.elem0Keys} bKeys={aiElem0Keys} />
+            }
+          </div>
+
+          {/* Elem0 metaData keys */}
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              elements[0].metaData keys
+            </p>
+            {aiLoading
+              ? <p className="text-xs text-gray-400">Loading AI data…</p>
+              : <KeyDiffTable aLabel="Clone" bLabel="AI" aKeys={diag.elem0MetaKeys} bKeys={aiElem0MetaKeys} />
+            }
+          </div>
+
+          {/* Raw baseline JSON */}
+          <JsonBlock data={cloneBaseline.fullData} title="Raw Clone Baseline Firebase JSON" />
+
+        </>)}
+      </div>
     </div>
   );
 }
