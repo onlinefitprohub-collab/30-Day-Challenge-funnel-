@@ -1337,6 +1337,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucketFinal)}` +
                 `/o/${encPath2B}?alt=media&token=${newTok2B}`;
               a2b.newDownloadUrl = newUrl2B.slice(0, 160);
+              /* v2.39.0: declare patchOk2B BEFORE the revex block so it's in scope
+               * for the success gate check below (outside if/else). */
+              let patchOk2B = false;
               if (revex) {
                 /* v2.39.0: same 6-pattern PATCH→PUT retry as approach 2.
                  * locationId extracted from window.location.href (same tab URL). */
@@ -1355,7 +1358,6 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   `https://backend.leadconnectorhq.com/funnels/funnel/${funnelId2B}/page/${builderId}`,
                 ];
                 const patchAttempts2B = [];
-                let patchOk2B = false;
                 outer2B: for (const mu of metaUrls2B) {
                   for (const verb of ["patch", "put"]) {
                     try {
