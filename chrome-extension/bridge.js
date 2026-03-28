@@ -1,8 +1,9 @@
-// bridge.js v2.9.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.10.0 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
-// v2.9.0: Capture full request body for 201 responses (intelligence-gather for real save endpoint).
+// v2.9.0: Capture full request body for 201 responses.
+// v2.10.0: Capture ALL POST/PUT/PATCH (any domain) so same-origin gohighlevel.com saves are caught.
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
@@ -51,24 +52,44 @@
   window.addEventListener("popstate",  () => checkUrl(window.location.href));
   window.addEventListener("hashchange", () => checkUrl(window.location.href));
 
-  /* ─── GHL API interceptor (v2.9.0) ──────────────────────────────────────── *
+  /* ─── GHL API interceptor (v2.10.0) ─────────────────────────────────────── *
    * Captures GHL backend API calls (fetch + XHR) at MAIN world level.         *
    * Stores last 30 entries in window.__cfApiLog.                               *
-   * Filter: *.leadconnectorhq.com/funnels/* or /builder/* paths.              *
-   * v2.9.0: 201 responses get full request body (up to 6000 chars) and larger *
-   * response body capture (1200 chars) to expose the real page-save endpoint. *
+   * v2.10.0 WIDENED FILTER:                                                   *
+   *   POST/PUT/PATCH: captured from ANY domain (catches same-origin            *
+   *     app.gohighlevel.com saves which our v2.9.0 filter missed).             *
+   *   GET/HEAD: still restricted to leadconnectorhq.com to avoid log noise.   *
+   * 201 responses: full req body (6000 chars), resp body (1200 chars).        *
    * Each entry: { ts, method, url, req, status, body, is201? }                */
   (function installApiInterceptor() {
     if (window.__cfApiInterceptorInstalled) return;
     window.__cfApiInterceptorInstalled = true;
     window.__cfApiLog = window.__cfApiLog || [];
 
-    function shouldCapture(url) {
+    /* Noise-list: domains we never want even for POST/PUT/PATCH */
+    var SKIP_DOMAINS = [
+      "firebasestorage.googleapis.com",
+      "analytics.google.com", "googletagmanager.com",
+      "segment.io", "cdn.segment.com",
+      "mixpanel.com", "sentry.io", "ingest.sentry.io",
+      "hotjar.com", "intercom.io", "intercomcdn.com",
+      "doubleclick.net", "facebook.com", "fbcdn.net",
+    ];
+
+    function shouldCapture(url, method) {
       if (!url) return false;
       var s = String(url);
-      if (s.indexOf("firebasestorage.googleapis.com") !== -1) return false;
-      if (s.indexOf("leadconnectorhq.com") === -1) return false;
-      return s.indexOf("/funnels") !== -1 || s.indexOf("/builder") !== -1;
+      for (var i = 0; i < SKIP_DOMAINS.length; i++) {
+        if (s.indexOf(SKIP_DOMAINS[i]) !== -1) return false;
+      }
+      var m = (method || "GET").toUpperCase();
+      /* For GET/HEAD: only capture leadconnectorhq.com calls (low noise) */
+      if (m === "GET" || m === "HEAD") {
+        return s.indexOf("leadconnectorhq.com") !== -1;
+      }
+      /* For POST/PUT/PATCH/DELETE: capture all non-noise domains.
+         This catches same-origin gohighlevel.com save calls that v2.9.0 missed. */
+      return true;
     }
 
     function pushLog(entry) {
@@ -86,7 +107,7 @@
       /* Capture full reqBody string now — we'll slice to appropriate length after
          we know the response status code (201 gets full body, others get 400 chars). */
       var reqBodyFull = (init && init.body) ? String(init.body) : "";
-      if (!shouldCapture(url)) return origFetch.apply(this, arguments);
+      if (!shouldCapture(url, method)) return origFetch.apply(this, arguments);
       var ts = Date.now();
       return origFetch.apply(this, arguments).then(function(resp) {
         var is201 = resp.status === 201;
@@ -120,7 +141,7 @@
         return _origOpen.apply(xhr, arguments);
       };
       xhr.send = function(body) {
-        if (shouldCapture(_url)) {
+        if (shouldCapture(_url, _method)) {
           var _ts = Date.now();
           /* Store full body string — slice after response */
           var _reqFull = body ? String(body) : "";

@@ -261,8 +261,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.42.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.42.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.43.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.43.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -630,9 +630,11 @@ async function doSchemaDiff() {
 }
 
 /* ─── doApiLog ──────────────────────────────────────────────────────────────
- * Fetch window.__cfApiLog from the GHL tab (captured by bridge.js v2.9.0).
+ * Fetch window.__cfApiLog from the GHL tab (captured by bridge.js v2.10.0).
  * Shows GHL API calls with full request bodies for 201 responses.
- * v2.42.0: 201 entries highlighted with ★ and req body shown on own line.
+ * v2.43.0: POST/PUT/PATCH captured from ANY domain (catches same-origin
+ *   gohighlevel.com saves that v2.9.0 missed; GET still restricted).
+ * 201 entries highlighted with ★, req body shown on own line.
  * Goal: expose full URL + request body of GHL's real page-save endpoint.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function doApiLog() {
