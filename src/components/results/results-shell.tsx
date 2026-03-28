@@ -101,7 +101,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
-    offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
+    offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,
     thankYouPage:    <ThankYouSection        data={assets.thankYouPage} />,

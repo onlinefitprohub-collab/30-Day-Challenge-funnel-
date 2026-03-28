@@ -6,8 +6,12 @@
  * Every word here either earns trust or loses it. No filler.
  */
 
-export function buildOfferPagesPrompt(context: string): string {
+export function buildOfferPagesPrompt(context: string, style: string): string {
   return `${context}
+
+=== COPYWRITING STYLE ===
+
+${style}
 
 === YOUR TASK: STRATEGY & PAGES ===
 

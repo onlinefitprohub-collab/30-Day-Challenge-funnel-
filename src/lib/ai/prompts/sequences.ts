@@ -7,8 +7,12 @@
  * Emails must be readable in 45 seconds and feel personal, not automated.
  */
 
-export function buildSequencesPrompt(context: string): string {
+export function buildSequencesPrompt(context: string, style: string): string {
   return `${context}
+
+=== COPYWRITING STYLE ===
+
+${style}
 
 === YOUR TASK: FOLLOW-UP SEQUENCES ===
 

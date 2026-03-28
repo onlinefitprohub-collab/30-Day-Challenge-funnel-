@@ -6,8 +6,12 @@
  * Must hook fast, build just enough trust to click, and hand off cleanly to the landing page.
  */
 
-export function buildAdsCampaignPrompt(context: string): string {
+export function buildAdsCampaignPrompt(context: string, style: string): string {
   return `${context}
+
+=== COPYWRITING STYLE ===
+
+${style}
 
 === YOUR TASK: AD COPY, CREATIVE PROMPTS & CAMPAIGN SETUP ===
 

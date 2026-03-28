@@ -51,6 +51,9 @@ export interface GhlPageData {
   id: string;
   pageStyles: string;
   popups: unknown[];
+  popupsList: unknown[];
+  settings: Record<string, unknown>;
+  trackingCode: string;
   sections: GhlNode[];
   rows: Record<string, GhlNode>;
   columns: Record<string, GhlNode>;
@@ -108,6 +111,9 @@ function buildEnvelope(schemeKey: string | undefined): Omit<GhlPageData, "sectio
     id: Math.random().toString(36).slice(2, 14),
     pageStyles,
     popups: [],
+    popupsList: [],
+    settings: {},
+    trackingCode: "",
   };
 }
 

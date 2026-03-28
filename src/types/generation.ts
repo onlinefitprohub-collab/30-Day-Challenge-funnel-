@@ -92,6 +92,7 @@ export interface GeneratedFunnelAssets {
   campaignNaming: CampaignNaming;
   generatedAdImages?: GeneratedAdImage[];
   colourScheme?: string;
+  copywriterStyle?: string;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

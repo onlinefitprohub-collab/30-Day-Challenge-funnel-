@@ -21,6 +21,7 @@ import { buildCoachContext } from "./context";
 import { buildOfferPagesPrompt } from "./prompts/offer-pages";
 import { buildSequencesPrompt } from "./prompts/sequences";
 import { buildAdsCampaignPrompt } from "./prompts/ads-campaign";
+import { pickRandomStyle } from "./copywriter-styles";
 import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
@@ -118,23 +119,26 @@ export async function generateFunnelAssets(
 ): Promise<GeneratedFunnelAssets> {
   const context = buildCoachContext(inputs);
   const mock    = generateMockAssets(inputs);
+  const style   = pickRandomStyle();
+
+  console.log(`[generate] Copywriter style selected: ${style.name} — ${style.tagline}`);
 
   // Fire all 3 groups in parallel — all through Claude (GPT-4o fallback on failure)
   const [offerPagesResult, sequencesResult, adsCampaignResult] = await Promise.all([
     callCopyGroup(
-      buildOfferPagesPrompt(context),
+      buildOfferPagesPrompt(context, style.promptDescription),
       offerPagesResponseSchema,
       "offer-pages",
       TOKENS.offerPages,
     ),
     callCopyGroup(
-      buildSequencesPrompt(context),
+      buildSequencesPrompt(context, style.promptDescription),
       sequencesResponseSchema,
       "sequences",
       TOKENS.sequences,
     ),
     callCopyGroup(
-      buildAdsCampaignPrompt(context),
+      buildAdsCampaignPrompt(context, style.promptDescription),
       adsCampaignResponseSchema,
       "ads-campaign",
       TOKENS.adsCampaign,
@@ -170,5 +174,6 @@ export async function generateFunnelAssets(
     adCopy:          adsCampaign.adCopy,
     creativePrompts: adsCampaign.creativePrompts,
     campaignNaming:  adsCampaign.campaignNaming,
+    copywriterStyle: `${style.name} — ${style.tagline}`,
   };
 }
