@@ -30,6 +30,7 @@ function initCopyPaste() {
   document.getElementById("debug-inject-btn").addEventListener("click", showInjectDebug);
   document.getElementById("roundtrip-btn").addEventListener("click", doRoundtripTest);
   document.getElementById("schema-diff-btn").addEventListener("click", doSchemaDiff);
+  document.getElementById("api-log-btn").addEventListener("click", doApiLog);
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -229,8 +230,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.34.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.34.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.35.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.35.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -299,8 +300,8 @@ async function showInjectDebug() {
           if (a2.firstSecElemCount !== undefined) lines.push(`A2 firstSecElemCount: ${a2.firstSecElemCount} format: ${a2.firstSecElemFormat ?? "unknown"} | sec0El0HasMeta=${a2.firstSecEl0HasMeta ?? "?"} (expect: false=flat ✓) sec0El0Keys=${JSON.stringify(a2.firstSecEl0Keys ?? "?")}`);
           /* v2.33.0 empty dicts diagnostic */
           if (a2.writeEmptyDicts !== undefined)   lines.push(`A2 writeEmptyDicts: ${a2.writeEmptyDicts} writeFormat: ${a2.writeFormat ?? "?"} ← true = native format (rows/cols/elems={})`);
-          /* v2.34.0 empty child diagnostic */
-          if (a2.sec0MetaChildEmptied !== undefined) lines.push(`A2 sec0MetaChildEmptied: ${a2.sec0MetaChildEmptied} origLen=${a2.sec0MetaChildOrigLen ?? "?"} ← true = child=[] prevents backend 500`);
+          /* v2.35.0 restored child diagnostic */
+          if (a2.sec0MetaChildLen !== undefined) lines.push(`A2 sec0MetaChildLen: ${a2.sec0MetaChildLen} ← child KEPT (non-empty=native format ✓ if >0)`);
           /* v2.26.0 token-patch diagnostics */
           if (a2.newFirebaseToken !== undefined) lines.push(`A2 newFirebaseToken: ${a2.newFirebaseToken} tokenChanged=${a2.tokenChanged}`);
           /* v2.32.0: metaUpdate is PRIMARY — "ok-primary-*" means GHL will re-fetch new data */
@@ -577,6 +578,57 @@ async function doSchemaDiff() {
   } finally {
     btn.disabled    = false;
     btn.textContent = "Schema Diff (native vs inject)";
+  }
+}
+
+/* ─── doApiLog ──────────────────────────────────────────────────────────────
+ * Fetch window.__cfApiLog from the GHL tab (captured by bridge.js v2.8.0).
+ * Shows GHL API calls including the 500 fetchPageData response body.
+ * Also reveals save-page and clone-page API formats (verb + endpoint + body).
+ * ─────────────────────────────────────────────────────────────────────────── */
+async function doApiLog() {
+  const div = document.getElementById("api-log-result");
+  const btn = document.getElementById("api-log-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className  = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Show GHL API Log (500 body)";
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Fetching API log…";
+  div.className   = "paste-result info";
+  div.textContent = "Reading captured GHL API calls from page…";
+
+  try {
+    const res = await sendMessage({ type: "CF_GET_API_LOG" });
+    const log = (res?.log ?? []).slice().reverse();
+    const lines = [];
+    lines.push(`=== GHL API Log (${log.length} entries, newest first) ===`);
+    if (log.length === 0) {
+      lines.push("No entries captured yet.");
+      lines.push("Bridge.js intercepts /funnels/ API calls on *.leadconnectorhq.com.");
+      lines.push("Try: inject a page → reload the GHL builder → click this button.");
+    } else {
+      log.forEach((e, idx) => {
+        const t = new Date(e.ts).toISOString().slice(11, 23);
+        lines.push(`\n[${idx + 1}] ${e.method} ${String(e.url).slice(0, 100)}`);
+        lines.push(`    time=${t} status=${e.status}`);
+        if (e.req) lines.push(`    req: ${String(e.req).slice(0, 150)}`);
+        lines.push(`    res: ${String(e.body ?? "").slice(0, 300)}`);
+      });
+    }
+    div.textContent = lines.join("\n");
+    div.className   = res?.ok ? "paste-result ok" : "paste-result err";
+  } catch (e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Show GHL API Log (500 body)";
   }
 }
 

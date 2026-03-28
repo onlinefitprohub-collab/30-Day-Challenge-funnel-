@@ -1,6 +1,7 @@
-// bridge.js v2.7.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.8.0 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
+// v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
@@ -48,6 +49,79 @@
 
   window.addEventListener("popstate",  () => checkUrl(window.location.href));
   window.addEventListener("hashchange", () => checkUrl(window.location.href));
+
+  /* ─── GHL API interceptor (v2.8.0) ──────────────────────────────────────── *
+   * Captures GHL backend API calls (fetch + XHR) at MAIN world level.         *
+   * Stores last 20 entries in window.__cfApiLog.                               *
+   * Filter: *.leadconnectorhq.com/funnels/* only (skip Firebase storage).     *
+   * Used by CF_GET_API_LOG (background.js) to surface 500 error bodies,       *
+   * page-save API format, and clone API endpoints in the popup.               */
+  (function installApiInterceptor() {
+    if (window.__cfApiInterceptorInstalled) return;
+    window.__cfApiInterceptorInstalled = true;
+    window.__cfApiLog = window.__cfApiLog || [];
+
+    function shouldCapture(url) {
+      if (!url) return false;
+      var s = String(url);
+      if (s.indexOf("firebasestorage.googleapis.com") !== -1) return false;
+      return s.indexOf("leadconnectorhq.com") !== -1 && s.indexOf("/funnels") !== -1;
+    }
+
+    function pushLog(entry) {
+      window.__cfApiLog.push(entry);
+      if (window.__cfApiLog.length > 20) window.__cfApiLog.shift();
+    }
+
+    /* ── Fetch interceptor ── */
+    var origFetch = window.fetch;
+    window.fetch = function(input, init) {
+      var url = (input && typeof input === "object" && input.url) ? input.url : String(input);
+      var method = (init && init.method) ? init.method.toUpperCase() : "GET";
+      var reqBody = (init && init.body) ? String(init.body).slice(0, 400) : "";
+      if (!shouldCapture(url)) return origFetch.apply(this, arguments);
+      var ts = Date.now();
+      return origFetch.apply(this, arguments).then(function(resp) {
+        var cloned = resp.clone();
+        cloned.text().then(function(body) {
+          pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBody, status: resp.status, body: body.slice(0, 500) });
+        }).catch(function() {
+          pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBody, status: resp.status, body: "(read-err)" });
+        });
+        return resp;
+      }).catch(function(err) {
+        pushLog({ ts: ts, method: method, url: url.slice(0, 200), req: reqBody, status: "net-err", body: String(err).slice(0, 200) });
+        throw err;
+      });
+    };
+
+    /* ── XHR interceptor ── */
+    var OrigXHR = window.XMLHttpRequest;
+    function PatchedXHR() {
+      var xhr = new OrigXHR();
+      var _method = "GET", _url = "";
+      var _origOpen = xhr.open.bind(xhr);
+      var _origSend = xhr.send.bind(xhr);
+      xhr.open = function(method, url) {
+        _method = (method || "GET").toUpperCase();
+        _url    = String(url || "");
+        return _origOpen.apply(xhr, arguments);
+      };
+      xhr.send = function(body) {
+        if (shouldCapture(_url)) {
+          var _ts = Date.now();
+          var _req = body ? String(body).slice(0, 400) : "";
+          xhr.addEventListener("loadend", function() {
+            pushLog({ ts: _ts, method: _method, url: _url.slice(0, 200), req: _req, status: xhr.status, body: String(xhr.responseText || "").slice(0, 500) });
+          });
+        }
+        return _origSend.apply(xhr, arguments);
+      };
+      return xhr;
+    }
+    PatchedXHR.prototype = OrigXHR.prototype;
+    window.XMLHttpRequest = PatchedXHR;
+  })();
 
   /* ─── Blind-spot 3: o.off baseline onerror (MAIN world, document_start) ─ *
    * Installs window.onerror immediately — before GHL app code runs — so we  *

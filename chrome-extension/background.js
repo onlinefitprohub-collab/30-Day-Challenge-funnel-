@@ -759,14 +759,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * so section.elements will be [{id, _id, type, tagName, child, ...}, ...]
                * matching native GHL Firebase section element format.                        */
               const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
-              /* v2.34.0: empty metaData.child to prevent backend 500.
-               * With rows={} empty, any child IDs in metaData.child have no matching dict
-               * entry. GHL backend may validate these refs and throw 500.
-               * Native GHL pages have empty flat dicts AND work fine — their child array
-               * is likely [] too. Section.elements is the rendering source of truth.     */
+              /* v2.35.0: RESTORE metaData.child to original (non-empty).
+               * v2.34.0 hypothesis (empty child prevents 500) was WRONG.
+               * Roundtrip confirmed native sec0.metaData.child is NON-EMPTY
+               * ["row-cpgo2YBghqa","row-89A9TNcuqm"] — native always has child IDs.
+               * Emptying child was the likely cause of the backend 500.
+               * Restore full spread to keep original child array from AI sections. */
               return {
                 id:         sec.id,
-                metaData:   { ...sec.metaData, child: [] },
+                metaData:   { ...sec.metaData },
                 elements:   shallowElements,
                 sequence:   i,
                 pageId:     builderId,
@@ -783,9 +784,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             diag.approach2.firstSecEl0HasMeta = _sec0El0 ? ("metaData" in _sec0El0) : null;
             diag.approach2.firstSecEl0Keys    = _sec0El0 ? Object.keys(_sec0El0).slice(0, 10) : "empty";
             diag.approach2.firstSecElemFormat  = "flat-rows-v2.32.0";
-            /* v2.34.0: confirm metaData.child was emptied */
-            diag.approach2.sec0MetaChildEmptied = true;
-            diag.approach2.sec0MetaChildOrigLen  = (pd.sections?.[0]?.metaData?.child ?? []).length;
+            /* v2.35.0: log kept child length (original, non-empty) */
+            diag.approach2.sec0MetaChildLen = (pd.sections?.[0]?.metaData?.child ?? []).length;
 
             /* v2.33.0: Write EMPTY flat dicts to match native GHL Firebase format.
              * Critical new finding (v2.33.0): native GHL page roundtrip shows
@@ -894,9 +894,11 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
                   diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
                   const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
-                  /* v2.34.0: try multiple endpoint patterns in order — stop at first success.
-                   * v2.33.0 used only /funnels/funnel/{fid}/page/{pid} → 404 every time.
-                   * Correct GET that works: /funnels/page/{pid} (no funnelId).
+                  /* v2.35.0: try PATCH first (then PUT fallback) on each URL pattern.
+                   * v2.34.0 tried PUT on all 3 URLs — all returned 404.
+                   * GHL's axios API commonly uses PATCH for partial updates.
+                   * Try order: /funnels/page/{pid} → /funnels/funnel/page/{pid} → /funnels/funnel/{fid}/page/{pid}
+                   * Verb order per URL: PATCH → PUT (PUT as fallback on 404/405)
                    * Log all attempts as metaUpdateAttempts for debugging.              */
                   const metaUpdateUrls = [
                     `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
@@ -905,22 +907,24 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   ];
                   const metaUpdateAttempts = [];
                   diag.approach2.metaUpdateAttempts = metaUpdateAttempts;
-                  for (const metaUpdateUrl of metaUpdateUrls) {
-                    try {
-                      await revex.put(metaUpdateUrl, updateBody);
-                      metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), status: 200, ok: true });
-                      metaUpdateSucceeded = true;
-                      diag.approach2.metaUpdateStatus = `ok-primary-url:${metaUpdateUrl.slice(50, 90)}`;
-                      diag.approach2.metaUpdateEndpoint = metaUpdateUrl.slice(0, 120);
-                      break;
-                    } catch (_uN) {
-                      const st = _uN?.response?.status ?? "err";
-                      metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), status: st, ok: false });
+                  outer: for (const metaUpdateUrl of metaUpdateUrls) {
+                    for (const verb of ["patch", "put"]) {
+                      try {
+                        await revex[verb](metaUpdateUrl, updateBody);
+                        metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), verb, status: 200, ok: true });
+                        metaUpdateSucceeded = true;
+                        diag.approach2.metaUpdateStatus = `ok-primary-verb:${verb} url:${metaUpdateUrl.slice(50, 90)}`;
+                        diag.approach2.metaUpdateEndpoint = metaUpdateUrl.slice(0, 120);
+                        break outer;
+                      } catch (_uN) {
+                        const st = _uN?.response?.status ?? "err";
+                        metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), verb, status: st, ok: false });
+                      }
                     }
                   }
                   if (!metaUpdateSucceeded) {
                     diag.approach2.metaUpdateStatus =
-                      `all-failed: ${metaUpdateAttempts.map(a => `${a.url.slice(-30)}→${a.status}`).join(" | ")}`;
+                      `all-failed: ${metaUpdateAttempts.map(a => `${a.verb} ${a.url.slice(-30)}→${a.status}`).join(" | ")}`;
                   }
                 } else {
                   diag.approach2.metaUpdateStatus = "skipped-no-token-after-fallback";
@@ -1198,10 +1202,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => {
               const childRowIds2B   = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
               const shallowEls2B    = childRowIds2B.map(rowId => wrappedRows2B[rowId]).filter(Boolean);
-              /* v2.34.0: empty metaData.child — mirrors Approach 2 fix */
+              /* v2.35.0: keep original metaData.child (non-empty) — mirrors Approach 2 fix */
               return {
                 id:         sec.id,
-                metaData:   { ...sec.metaData, child: [] },
+                metaData:   { ...sec.metaData },
                 elements:   shallowEls2B,
                 sequence:   i,
                 pageId:     builderId,
@@ -2694,7 +2698,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             const shallowElements = childRowIds.map(rowId => wrappedRows[rowId]).filter(Boolean);
             return {
               id:         sec.id,
-              metaData:   sec.metaData,
+              metaData:   { ...sec.metaData },
               elements:   shallowElements,
               sequence:   i,
               pageId:     "(builder-target)",
@@ -2729,8 +2733,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             rowCount:            0,
             colCount:            0,
             elemCount:           0,
-            /* v2.34.0: inject empties metaData.child — report 0 to match expected native */
-            sec0MetaChildLen:    0,
+            /* v2.35.0: report actual child length (child restored, should be non-zero) */
+            sec0MetaChildLen:    sec0?.metaData?.child?.length ?? 0,
           };
         }
 
@@ -3103,6 +3107,29 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
    * The record is merged (using spread) so a later "seenAfterInject: true"
    * update does not clobber the earlier "seenBeforeInject: true" entry.
    * Stored per-tab. A 60s cleanup timer removes stale records.             */
+  /* ── CF_GET_API_LOG ───────────────────────────────────────────────────────
+   * Returns window.__cfApiLog from the active GHL tab (captured by bridge.js).
+   * Shows GHL API calls including the 500 fetchPageData response body.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_GET_API_LOG") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+        const res = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   () => JSON.stringify(window.__cfApiLog ?? []),
+        });
+        const log = JSON.parse(res?.[0]?.result ?? "[]");
+        sendResponse({ ok: true, log });
+      } catch(err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
+  }
+
   if (type === "CF_OOFF_ERROR") {
     const senderTabId = sender?.tab?.id;
     if (!senderTabId) return false;
