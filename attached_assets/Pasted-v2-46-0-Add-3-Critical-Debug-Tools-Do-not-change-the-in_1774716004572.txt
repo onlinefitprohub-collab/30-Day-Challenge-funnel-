@@ -1,0 +1,79 @@
+v2.46.0 — Add 3 Critical Debug Tools
+
+Do not change the inject logic from v2.45.0. Only add these three debug tools:
+
+1. Native Firebase Payload Capture in bridge.js
+
+Find the existing fetch interceptor. Add logic to detect Firebase Storage responses:
+
+// In the fetch response interceptor, after getting response:
+if (url && url.includes('firebasestorage.googleapis.com') && url.includes('alt=media')) {
+  // Clone the response so we can read it without consuming it
+  var cloned = response.clone();
+  cloned.text().then(function(body) {
+    try {
+      var parsed = JSON.parse(body);
+      window.__cfNativeFirebasePayload = {
+        raw: body.substring(0, 5000),
+        sectionCount: parsed.sections ? parsed.sections.length : 0,
+        sec0HasElements: parsed.sections && parsed.sections[0] ? !!parsed.sections[0].elements : false,
+        sec0ElementsLen: parsed.sections && parsed.sections[0] && parsed.sections[0].elements ? parsed.sections[0].elements.length : 0,
+        sec0ElemKeys: parsed.sections && parsed.sections[0] && parsed.sections[0].elements && parsed.sections[0].elements[0] ? Object.keys(parsed.sections[0].elements[0]).join(',') : 'none',
+        rowDictFormat: parsed.rows ? JSON.stringify(Object.values(parsed.rows)[0]).substring(0, 200) : 'no rows',
+        rowCount: parsed.rows ? Object.keys(parsed.rows).length : 0,
+        colCount: parsed.columns ? Object.keys(parsed.columns).length : 0,
+        elemCount: parsed.elements ? Object.keys(parsed.elements).length : 0,
+        capturedAt: Date.now()
+      };
+      window.__cfNativeFirebaseRaw = body.substring(0, 8000);
+    } catch(e) {
+      window.__cfNativeFirebasePayload = { error: e.message, raw: body.substring(0, 500) };
+    }
+  });
+}
+
+2. Post-Write Firebase Read-Back in background.js
+
+In _cf_injectViaBuilderSave, after the Firebase PUT write succeeds (inside approach A2, after the write confirmation log), add a read-back:
+
+// Read back what we just wrote
+try {
+  var readBackUrl = 'https://firebasestorage.googleapis.com/v0/b/' + cachedBucket + '/o/' + encodeURIComponent(fbPath) + '?alt=media';
+  var rbResp = await fetch(readBackUrl, { headers: { 'Authorization': 'Firebase ' + idToken } });
+  var rbJson = await rbResp.json();
+  injectLog.push('READBACK status=' + rbResp.status);
+  injectLog.push('READBACK sections=' + (rbJson.sections ? rbJson.sections.length : 'missing'));
+  injectLog.push('READBACK rows=' + (rbJson.rows ? Object.keys(rbJson.rows).length : 'missing'));
+  injectLog.push('READBACK cols=' + (rbJson.columns ? Object.keys(rbJson.columns).length : 'missing'));
+  injectLog.push('READBACK elems=' + (rbJson.elements ? Object.keys(rbJson.elements).length : 'missing'));
+  injectLog.push('READBACK sec0HasElements=' + (rbJson.sections && rbJson.sections[0] ? !!rbJson.sections[0].elements : 'N/A'));
+  injectLog.push('READBACK sec0ElemsLen=' + (rbJson.sections && rbJson.sections[0] && rbJson.sections[0].elements ? rbJson.sections[0].elements.length : 0));
+  injectLog.push('READBACK sec0ElemKeys=' + (rbJson.sections && rbJson.sections[0] && rbJson.sections[0].elements && rbJson.sections[0].elements[0] ? Object.keys(rbJson.sections[0].elements[0]).join(',') : 'none'));
+  injectLog.push('READBACK rowDictSample=' + (rbJson.rows ? JSON.stringify(Object.values(rbJson.rows)[0]).substring(0, 150) : 'none'));
+} catch(rbErr) {
+  injectLog.push('READBACK error: ' + rbErr.message);
+}
+
+3. Page Load Error Trap in the injected script
+
+In the script injected into the GHL page (the one that runs in MAIN world), add at the top:
+
+window.__cfPageLoadErrors = [];
+window.addEventListener('error', function(e) {
+  window.__cfPageLoadErrors.push({ msg: e.message, file: e.filename, line: e.lineno, col: e.colno, stack: e.error ? e.error.stack : '' });
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.__cfPageLoadErrors.push({ msg: String(e.reason), stack: e.reason && e.reason.stack ? e.reason.stack : '' });
+});
+
+4. In popup.js add three new sections to the debug UI:
+
+"Native Firebase Payload" button — reads window.__cfNativeFirebasePayload and window.__cfNativeFirebaseRaw and displays the result. Instructions text: "Load a GHL page normally (without injecting), then click this button to see exactly what format GHL uses."
+
+"Post-Write Read-Back" — already visible in the inject results log (the READBACK lines added above), no extra button needed.
+
+"Page Load Errors" section — reads window.__cfPageLoadErrors and displays any errors. Show count + each error message + stack trace.
+
+Version: Bump to 2.46.0.
+
+Do not change the inject logic from v2.45.0 — the section.elements addition I mentioned before can wait. First we need these diagnostics to confirm what we're dealing with before writing more code that might be wrong.
