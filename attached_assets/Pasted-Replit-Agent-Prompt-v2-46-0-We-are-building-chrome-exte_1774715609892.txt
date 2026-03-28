@@ -1,0 +1,90 @@
+Replit Agent Prompt — v2.46.0
+
+We are building chrome-extension/background.js v2.46.0. The current version is v2.45.0.
+
+Status: v2.45.0 correctly writes the Firebase payload with populated dicts (rows=7, cols=17, elems=47, rowRefOk=true, preWriteRowKeys: ["id","metaData"]). But the page still hangs on load.
+
+Root cause found from debug output:
+
+A2 firstSecElemCount: 0           ← our sections have NO elements array
+ghlBackend sec hasElements (post-write): false
+
+Clone baseline (native GHL):
+sec0 hasElements: true
+sec0 elementsLen: 14
+sec0 elem field keys: ["extra","meta","styles","child","id","tagName","wrapper","class","title","type","mobileWrapper","customCss","tag","element","mobileExtra","mobileStyles"]
+
+GHL's renderer now requires two things simultaneously in the Firebase payload:
+
+Populated dicts — rows: { [id]: {id, metaData:{...}} }, columns: {...}, elements: {...} ← v2.45.0 has this ✓
+section.elements — a flat array on each section object, listing every node (rows + columns + elements) inside that section in flat format (all fields at top level, NOT wrapped under metaData) ← v2.45.0 is MISSING this ✗
+The fix — one focused change to _cf_injectViaBuilderSave in background.js:
+
+In the sectionsWithContext builder block, after building each section object, add a elements array to it. This array should contain every row, column, and element that belongs to that section, with each node in the flat format (spread metaData fields to top level alongside id).
+
+Here is the exact logic:
+
+// After building sectionsWithContext, for each section add .elements flat array
+sectionsWithContext = sectionsWithContext.map(function(sec) {
+  var sectionId = sec.id || sec.metaData && sec.metaData.id;
+  var flatNodes = [];
+
+  // Collect all rows belonging to this section
+  Object.keys(pd.rows || {}).forEach(function(rowId) {
+    var row = pd.rows[rowId];
+    var meta = row.metaData || row;
+    // Check if this row belongs to this section (parent is section or row is listed in section.metaData.child)
+    var parentId = meta.parent || meta.parentId || (meta.metaData && (meta.metaData.parent || meta.metaData.parentId));
+    if (parentId === sectionId || (sec.metaData && sec.metaData.child && sec.metaData.child[rowId])) {
+      // Flat format: spread metaData fields alongside id
+      var flat = Object.assign({}, meta, { id: rowId });
+      flatNodes.push(flat);
+      
+      // Collect columns belonging to this row
+      Object.keys(pd.columns || {}).forEach(function(colId) {
+        var col = pd.columns[colId];
+        var colMeta = col.metaData || col;
+        var colParent = colMeta.parent || colMeta.parentId || (colMeta.metaData && (colMeta.metaData.parent || colMeta.metaData.parentId));
+        if (colParent === rowId) {
+          var flatCol = Object.assign({}, colMeta, { id: colId });
+          flatNodes.push(flatCol);
+          
+          // Collect elements belonging to this column
+          Object.keys(pd.elements || {}).forEach(function(elemId) {
+            var elem = pd.elements[elemId];
+            var elemMeta = elem.metaData || elem;
+            var elemParent = elemMeta.parent || elemMeta.parentId || (elemMeta.metaData && (elemMeta.metaData.parent || elemMeta.metaData.parentId));
+            if (elemParent === colId) {
+              var flatElem = Object.assign({}, elemMeta, { id: elemId });
+              flatNodes.push(flatElem);
+            }
+          });
+        }
+      });
+    }
+  });
+
+  sec.elements = flatNodes;
+  return sec;
+});
+
+Important notes:
+
+The pd object already has pd.rows, pd.columns, pd.elements as populated dicts (each value is {id, metaData:{...}}). When building flat nodes, spread the metaData contents, not the outer wrapper.
+Do NOT change the structure of pd.rows, pd.columns, pd.elements in the Firebase write payload — keep those as wrapped {id, metaData:{...}} objects.
+The section.elements flat array is additional — it lives on the section object itself inside the sections array, parallel to the dicts.
+If the parent-linking logic above doesn't find the right nodes (because the AI page data uses different field names), fall back to collecting ALL rows/cols/elems in flat format and assign all to every section. It's better to have extra nodes than none.
+Debug log to add:
+
+After building sectionsWithContext, log:
+
+console.log('[CF v2.46.0] sec0 elements array length:', sectionsWithContext[0] && sectionsWithContext[0].elements ? sectionsWithContext[0].elements.length : 'MISSING');
+console.log('[CF v2.46.0] sec0 first elem keys:', sectionsWithContext[0] && sectionsWithContext[0].elements && sectionsWithContext[0].elements[0] ? Object.keys(sectionsWithContext[0].elements[0]).join(',') : 'none');
+
+And update the A2 debug line to show:
+
+'A2 firstSecElemCount: ' + (sectionsWithContext[0] && sectionsWithContext[0].elements ? sectionsWithContext[0].elements.length : 'MISSING')
+
+Version bump: Set version to 2.46.0 in manifest.json and in the version log line in background.js.
+
+Do not change anything else. Do not touch the roundtrip test, schema diff, API log, clone baseline, patchToken logic, or any other debug tools.

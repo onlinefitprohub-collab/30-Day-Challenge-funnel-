@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.45.0 — revert A2 to v2.17.0-style populated dicts + wrapped format; inject flow is A0→A1→A2→A2B→A3→A4 only.");
+    console.log("[CF Funnel] Installed v2.46.0 — add section.elements flat array alongside populated dicts; inject flow is A0→A1→A2→A2B→A3→A4 only.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.45.0 — revert A2 to v2.17.0-style populated dicts + wrapped format; inject flow is A0→A1→A2→A2B→A3→A4 only.");
+    console.log("[CF Funnel] Updated to v2.46.0 — add section.elements flat array alongside populated dicts; inject flow is A0→A1→A2→A2B→A3→A4 only.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -693,16 +693,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               storageFormat = "probe-err";
             }
 
-            /* ── Step 1: Build structured-dict payload — v2.17.0-style wrapped format ──── *
-             * v2.45.0 REVERT: go back to the format that worked in v2.17.0.
-             * v2.17.0 successfully rendered sections (rows=7, cols=17, elems=47).
-             * rows/columns/elements are written in their ORIGINAL { id, metaData:{...} }
-             * wrapper format — NOT flattened. Flat dicts are populated, NOT empty {}.
-             * sections do NOT carry a section.elements array — element data lives in the
-             * populated rows/columns/elements flat dicts.
-             * History of what went wrong:
-             *   v2.32.0 introduced flattenForFirebase → broke row format to flat keys
-             *   v2.33.0 changed dicts to empty {} → rows=0,cols=0,elems=0 (wrong)        */
+            /* ── Step 1: Build structured-dict payload — v2.46.0 combined format ────────── *
+             * v2.45.0 confirmed: populated rows/cols/elems dicts are correct (rows=7 ✓).
+             * v2.46.0 adds: section.elements flat array (GHL renderer requires BOTH):
+             *   1. rows/columns/elements dicts in { id, metaData:{...} } wrapper format ✓
+             *   2. section.elements — flat array of ALL nodes (metaData spread to top level)
+             * Debug confirmed: sec0 hasElements:false after v2.45.0 → page hang.
+             * Clone baseline: sec0 elementsLen=14, keys=["extra","meta","styles","child",
+             *   "id","tagName","wrapper","class","title","type",...] — flat, no metaData.
+             * Build flat array by traversing section.metaData.child → row.metaData.child
+             * → col.metaData.child (AI generator always populates these child arrays).    */
 
             const pd = pageData;
 
@@ -718,18 +718,59 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               ?? pd.sections?.[0]?.child?.[0]
               ?? "none";
 
-            /* v2.45.0: sections do NOT carry a section.elements array.
-             * Element data lives in the populated rows/columns/elements flat dicts.
-             * metaData.child references row IDs which resolve in the rows dict.
-             * Section top-level keys: ["id","metaData","sequence","pageId","funnelId","locationId","general"] */
+            /* v2.46.0: sections carry BOTH metaData (with child refs) AND a flat elements array.
+             * elements array: every node in the section in flat format (metaData spread to top level).
+             * Traversal: section.metaData.child → row.metaData.child → col.metaData.child */
             const funnelIdFromPath = objectPath.split("/")[1] ?? "";
             /* v2.39.0: extract locationId from the GHL tab URL for metaUpdate patterns.
              * Tab URL format: https://app.gohighlevel.com/location/{locationId}/page-builder/{pageId} */
             const tabLocationId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
             const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
+              /* Build flat elements array for this section */
+              const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              const flatNodes = [];
+
+              if (childRowIds.length > 0) {
+                /* Primary: traverse child chains (AI generator always sets metaData.child) */
+                for (const rowId of childRowIds) {
+                  const row = pd.rows?.[rowId];
+                  if (!row) continue;
+                  const rowMeta = row.metaData ?? row;
+                  flatNodes.push({ ...rowMeta, id: rowId });
+                  const colIds = Array.isArray(rowMeta.child) ? rowMeta.child : [];
+                  for (const colId of colIds) {
+                    const col = pd.columns?.[colId];
+                    if (!col) continue;
+                    const colMeta = col.metaData ?? col;
+                    flatNodes.push({ ...colMeta, id: colId });
+                    const elemIds = Array.isArray(colMeta.child) ? colMeta.child : [];
+                    for (const elemId of elemIds) {
+                      const elem = pd.elements?.[elemId];
+                      if (!elem) continue;
+                      const elemMeta = elem.metaData ?? elem;
+                      flatNodes.push({ ...elemMeta, id: elemId });
+                    }
+                  }
+                }
+              }
+
+              /* Fallback: if child traversal found nothing, collect ALL nodes flat */
+              if (flatNodes.length === 0) {
+                for (const [rowId, row] of Object.entries(pd.rows ?? {})) {
+                  flatNodes.push({ ...(row.metaData ?? row), id: rowId });
+                }
+                for (const [colId, col] of Object.entries(pd.columns ?? {})) {
+                  flatNodes.push({ ...(col.metaData ?? col), id: colId });
+                }
+                for (const [elemId, elem] of Object.entries(pd.elements ?? {})) {
+                  flatNodes.push({ ...(elem.metaData ?? elem), id: elemId });
+                }
+              }
+
               return {
                 id:         sec.id,
                 metaData:   { ...sec.metaData },
+                elements:   flatNodes,
                 sequence:   i,
                 pageId:     builderId,
                 funnelId:   funnelIdFromPath,
@@ -737,6 +778,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 general:    {},
               };
             });
+
+            console.log("[CF v2.46.0] sec0 elements array length:", sectionsWithContext[0]?.elements?.length ?? "MISSING");
+            console.log("[CF v2.46.0] sec0 first elem keys:", sectionsWithContext[0]?.elements?.[0] ? Object.keys(sectionsWithContext[0].elements[0]).join(",") : "none");
 
             /* Diagnostics: full flat tree written into section[0].elements.
              * v2.37.0: firstSecElemCount should be >> 1 (rows+cols+leaves).
@@ -747,7 +791,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             diag.approach2.firstSecEl0HasMeta    = _sec0El0 ? ("metaData" in _sec0El0) : null;
             diag.approach2.firstSecEl0HasElement = _sec0El0 ? ("element" in _sec0El0) : null;
             diag.approach2.firstSecEl0Keys       = _sec0El0 ? Object.keys(_sec0El0).slice(0, 14) : "empty";
-            diag.approach2.firstSecElemFormat  = "full-flat-tree-v2.38.0";
+            diag.approach2.firstSecElemFormat  = "child-traversal-flat-v2.46.0";
             diag.approach2.sec0MetaChildLen = (pd.sections?.[0]?.metaData?.child ?? []).length;
             /* rowRefOk / colRefOk: verify child IDs resolve in section.elements */
             (() => {
@@ -765,9 +809,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               diag.approach2.firstElemId = firstElemId ?? "none";
             })();
 
-            /* v2.45.0: Write POPULATED flat dicts — reverting to v2.17.0 working format.
-             * rows/columns/elements are written as-is from pageData in { id, metaData:{} }
-             * wrapper format. sections do NOT have a section.elements array.
+            /* v2.46.0: write BOTH section.elements (flat array) AND populated dicts.
+             * rows/columns/elements dicts: { id, metaData:{...} } wrapper format (v2.45.0 ✓).
+             * sections: include flat elements array built above (v2.46.0 addition).
              * v2.36.0: spread full pd so no fields are silently omitted (settings, trackingCode, popupsList).
              * Bug 3 fix (v2.41.0): id:builderId is LAST so ...pd can never overwrite it. */
             const writePayload = {
@@ -781,7 +825,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
             diag.approach2.writePayloadTopKeys = Object.keys(writePayload);
             diag.approach2.storageFormat   = storageFormat;
-            diag.approach2.writeFormat     = "v2.17.0-style-wrapped-populated-v2.45.0";
+            diag.approach2.writeFormat     = "populated-dicts-plus-flat-elements-v2.46.0";
             diag.approach2.writeEmptyDicts = false;
             diag.approach2.existElemCount  = existElemCount;
             diag.approach2.nodeCount       = Object.keys(pd.rows     ?? {}).length
