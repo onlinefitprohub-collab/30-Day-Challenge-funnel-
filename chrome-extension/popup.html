@@ -322,6 +322,20 @@
       <button class="btn-copy-debug" id="capture-clone-baseline-copy">Copy</button>
     </div>
     <div class="paste-result" id="capture-clone-baseline-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+    <!-- Native Firebase Payload: shows the raw Firebase Storage data GHL reads for this page -->
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="native-firebase-btn" style="font-size:10px;color:#9333ea;border-color:#e9d5ff;">Native Firebase Payload</button>
+      <button class="btn-copy-debug" id="native-firebase-copy">Copy</button>
+    </div>
+    <div class="paste-result" id="native-firebase-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+    <!-- Page Load Errors: shows JS errors captured by bridge.js error trap after inject -->
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="page-load-errors-btn" style="font-size:10px;color:#dc2626;border-color:#fecaca;">Page Load Errors</button>
+      <button class="btn-copy-debug" id="page-load-errors-copy">Copy</button>
+    </div>
+    <div class="paste-result" id="page-load-errors-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
   </div>
 
   <!-- ── AI CONTENT SECTION (project library) ── -->

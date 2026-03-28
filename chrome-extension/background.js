@@ -848,6 +848,38 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             if (res.ok) {
               diag.approach2.result = `success (HTTP ${res.status})`;
 
+              /* ── v2.46.0: Post-write readback ───────────────────────────────────── *
+               * Immediately GET the file we just wrote and record the first 2000      *
+               * chars + key-structure so we can compare format with what was sent.   */
+              try {
+                const readBackEp =
+                  `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
+                  `/o/${encodedPath}?alt=media`;
+                const readBackRes = await fetch(readBackEp, {
+                  headers: { "Authorization": `Firebase ${idToken}` },
+                  signal:  AbortSignal.timeout(5000),
+                });
+                if (readBackRes.ok) {
+                  const readBackText = await readBackRes.text().catch(() => "");
+                  const first2k = readBackText.slice(0, 2000);
+                  let keyStruct = "parse-err";
+                  try {
+                    const parsed = JSON.parse(readBackText);
+                    const secCount = parsed.sections ? parsed.sections.length : 0;
+                    const sec0ElemLen = parsed.sections?.[0]?.elements?.length ?? "none";
+                    const rowCount = parsed.rows ? Object.keys(parsed.rows).length : 0;
+                    const colCount = parsed.columns ? Object.keys(parsed.columns).length : 0;
+                    const elemCount = parsed.elements ? Object.keys(parsed.elements).length : 0;
+                    keyStruct = `sections:${secCount} sec0.elements:${sec0ElemLen} rows:${rowCount} cols:${colCount} elems:${elemCount}`;
+                  } catch (_) {}
+                  diag.approach2.readBack = { ok: true, keyStruct, first2k };
+                } else {
+                  diag.approach2.readBack = { ok: false, status: readBackRes.status };
+                }
+              } catch (readBackErr) {
+                diag.approach2.readBack = { ok: false, error: String(readBackErr).slice(0, 100) };
+              }
+
               /* ── Extract new Firebase download token from upload response ────────── *
                * Firebase Storage REST API returns { downloadTokens: "…" } on upload.
                * If it generated a NEW token, GHL's cached pageDataDownloadUrl (stored
@@ -3381,6 +3413,54 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         const log = JSON.parse(res?.[0]?.result ?? "[]");
         sendResponse({ ok: true, log });
+      } catch(err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
+  }
+
+  /* ── CF_GET_NATIVE_FIREBASE_PAYLOAD ──────────────────────────────────────
+   * Returns window.__cfNativeFirebasePayload and __cfNativeFirebaseRaw
+   * captured by bridge.js v2.11.0 when GHL reads a page from Firebase Storage.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_GET_NATIVE_FIREBASE_PAYLOAD") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+        const res = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   () => JSON.stringify({
+            payload: window.__cfNativeFirebasePayload ?? null,
+            raw:     window.__cfNativeFirebaseRaw ?? null,
+          }),
+        });
+        const data = JSON.parse(res?.[0]?.result ?? "{}");
+        sendResponse({ ok: true, payload: data.payload, raw: data.raw });
+      } catch(err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
+  }
+
+  /* ── CF_GET_PAGE_LOAD_ERRORS ──────────────────────────────────────────────
+   * Returns window.__cfPageLoadErrors captured by bridge.js v2.11.0 error trap.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_GET_PAGE_LOAD_ERRORS") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+        const res = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   () => JSON.stringify(window.__cfPageLoadErrors ?? []),
+        });
+        const errors = JSON.parse(res?.[0]?.result ?? "[]");
+        sendResponse({ ok: true, errors });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
       }

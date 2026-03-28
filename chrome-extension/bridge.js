@@ -1,13 +1,36 @@
-// bridge.js v2.10.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.11.0 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
 // v2.9.0: Capture full request body for 201 responses.
 // v2.10.0: Capture ALL POST/PUT/PATCH (any domain) so same-origin gohighlevel.com saves are caught.
+// v2.11.0: Firebase Storage payload capture (alt=media reads). Page load error trap.
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
   window.__cf_bridge_active = true;
+
+  /* ─── Page load error trap (v2.11.0) ──────────────────────────────────── *
+   * Installed at document_start so we catch errors from GHL's app code.    *
+   * Errors accumulate in window.__cfPageLoadErrors (array).                 */
+  window.__cfPageLoadErrors = window.__cfPageLoadErrors || [];
+  window.addEventListener("error", function(e) {
+    window.__cfPageLoadErrors.push({
+      msg:   e.message ? String(e.message).slice(0, 300) : "?",
+      file:  e.filename ? String(e.filename).slice(0, 120) : "",
+      line:  e.lineno,
+      col:   e.colno,
+      stack: e.error && e.error.stack ? String(e.error.stack).slice(0, 600) : "",
+    });
+    if (window.__cfPageLoadErrors.length > 50) window.__cfPageLoadErrors.shift();
+  });
+  window.addEventListener("unhandledrejection", function(e) {
+    window.__cfPageLoadErrors.push({
+      msg:   String(e.reason).slice(0, 300),
+      stack: e.reason && e.reason.stack ? String(e.reason.stack).slice(0, 600) : "",
+    });
+    if (window.__cfPageLoadErrors.length > 50) window.__cfPageLoadErrors.shift();
+  });
 
   /* ─── URL parsing ──────────────────────────────────────────────────────── */
   function parseBuilderUrl(url) {
@@ -107,6 +130,42 @@
       /* Capture full reqBody string now — we'll slice to appropriate length after
          we know the response status code (201 gets full body, others get 400 chars). */
       var reqBodyFull = (init && init.body) ? String(init.body) : "";
+
+      /* v2.11.0: Firebase Storage payload capture — intercept alt=media reads so we
+       * can inspect exactly what format GHL uses for its own pages.
+       * These are excluded from shouldCapture (Firebase is in SKIP_DOMAINS) so we
+       * handle them separately before the early-return below.                        */
+      var isFbPayload = url.indexOf("firebasestorage.googleapis.com") !== -1 && url.indexOf("alt=media") !== -1;
+      if (isFbPayload) {
+        var fbProm = origFetch.apply(this, arguments);
+        fbProm.then(function(resp) {
+          var fbClone = resp.clone();
+          fbClone.text().then(function(body) {
+            try {
+              var parsed = JSON.parse(body);
+              window.__cfNativeFirebasePayload = {
+                raw:            body.substring(0, 5000),
+                sectionCount:   parsed.sections ? parsed.sections.length : 0,
+                sec0HasElements: !!(parsed.sections && parsed.sections[0] && parsed.sections[0].elements),
+                sec0ElementsLen: parsed.sections && parsed.sections[0] && parsed.sections[0].elements
+                                   ? parsed.sections[0].elements.length : 0,
+                sec0ElemKeys:   parsed.sections && parsed.sections[0] && parsed.sections[0].elements && parsed.sections[0].elements[0]
+                                   ? Object.keys(parsed.sections[0].elements[0]).join(",") : "none",
+                rowDictFormat:  parsed.rows ? JSON.stringify(Object.values(parsed.rows)[0]).substring(0, 200) : "no rows",
+                rowCount:       parsed.rows    ? Object.keys(parsed.rows).length    : 0,
+                colCount:       parsed.columns ? Object.keys(parsed.columns).length : 0,
+                elemCount:      parsed.elements? Object.keys(parsed.elements).length: 0,
+                capturedAt:     Date.now(),
+              };
+              window.__cfNativeFirebaseRaw = body.substring(0, 8000);
+            } catch(fbErr) {
+              window.__cfNativeFirebasePayload = { error: String(fbErr.message).slice(0, 200), raw: body.substring(0, 500) };
+            }
+          });
+        }).catch(function() {});
+        return fbProm;
+      }
+
       if (!shouldCapture(url, method)) return origFetch.apply(this, arguments);
       var ts = Date.now();
       return origFetch.apply(this, arguments).then(function(resp) {

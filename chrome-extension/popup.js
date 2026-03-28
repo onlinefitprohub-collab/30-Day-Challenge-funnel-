@@ -54,6 +54,8 @@ function initCopyPaste() {
   document.getElementById("schema-diff-btn").addEventListener("click", doSchemaDiff);
   document.getElementById("api-log-btn").addEventListener("click", doApiLog);
   document.getElementById("capture-clone-baseline-btn").addEventListener("click", doCaptureCloneBaseline);
+  document.getElementById("native-firebase-btn").addEventListener("click", doNativeFirebasePayload);
+  document.getElementById("page-load-errors-btn").addEventListener("click", doPageLoadErrors);
 
   /* Wire copy buttons */
   document.getElementById("debug-inject-copy").addEventListener("click", () => copyDebugResult("debug-inject-result", "debug-inject-copy"));
@@ -61,6 +63,8 @@ function initCopyPaste() {
   document.getElementById("schema-diff-copy").addEventListener("click", () => copyDebugResult("schema-diff-result", "schema-diff-copy"));
   document.getElementById("api-log-copy").addEventListener("click", () => copyDebugResult("api-log-result", "api-log-copy"));
   document.getElementById("capture-clone-baseline-copy").addEventListener("click", () => copyDebugResult("capture-clone-baseline-result", "capture-clone-baseline-copy"));
+  document.getElementById("native-firebase-copy").addEventListener("click", () => copyDebugResult("native-firebase-result", "native-firebase-copy"));
+  document.getElementById("page-load-errors-copy").addEventListener("click", () => copyDebugResult("page-load-errors-result", "page-load-errors-copy"));
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -261,8 +265,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.45.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.45.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.46.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.46.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -696,6 +700,128 @@ async function doApiLog() {
   } finally {
     btn.disabled    = false;
     btn.textContent = "Show GHL API Log";
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   NATIVE FIREBASE PAYLOAD
+   Shows the raw Firebase Storage data GHL reads when loading this page.
+   Captured by bridge.js v2.11.0 fetch interceptor (alt=media URL pattern).
+   Reveals the exact key/format structure GHL itself uses so we can match it.
+   ════════════════════════════════════════════════════════════════════════════ */
+async function doNativeFirebasePayload() {
+  const div = document.getElementById("native-firebase-result");
+  const btn = document.getElementById("native-firebase-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className   = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Native Firebase Payload";
+    hideCopyBtn("native-firebase-copy");
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Fetching…";
+  div.className   = "paste-result info";
+  div.textContent = "Reading captured Firebase Storage payload…";
+
+  try {
+    const res = await sendMessage({ type: "CF_GET_NATIVE_FIREBASE_PAYLOAD" });
+    const lines = [];
+    if (!res?.ok) {
+      lines.push(`Error: ${res?.error ?? "unknown"}`);
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result err";
+    } else if (!res.payload) {
+      lines.push("No Firebase payload captured yet.");
+      lines.push("Steps: open a GHL page in the builder so GHL loads its page data,");
+      lines.push("then click this button. Bridge.js intercepts the alt=media fetch.");
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result info";
+    } else {
+      const p = res.payload;
+      lines.push(`=== Native GHL Firebase Payload (captured ${new Date(p.capturedAt).toISOString().slice(11,23)}) ===`);
+      lines.push(`sections: ${p.sectionCount}  rows: ${p.rowCount}  cols: ${p.colCount}  elems: ${p.elemCount}`);
+      lines.push(`sec[0].elements exists: ${p.sec0HasElements}  len: ${p.sec0ElementsLen}`);
+      lines.push(`sec[0].elements[0] keys: ${p.sec0ElemKeys}`);
+      lines.push(`row dict sample: ${p.rowDictFormat}`);
+      lines.push(`─────────────────────────────────────────────────────────`);
+      lines.push(`RAW (first 5000 chars):`);
+      lines.push(String(p.raw ?? ""));
+      if (res.raw && res.raw.length > 5000) {
+        lines.push(`… (${res.raw.length - 5000} more chars — use Copy to get all 8000)`);
+      }
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result ok";
+    }
+    showCopyBtn("native-firebase-copy");
+  } catch(e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+    showCopyBtn("native-firebase-copy");
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Native Firebase Payload";
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PAGE LOAD ERRORS
+   Shows JS errors captured by bridge.js v2.11.0 error trap after inject.
+   Helps identify what breaks in GHL's Vue/FunnelBuilder after our write.
+   ════════════════════════════════════════════════════════════════════════════ */
+async function doPageLoadErrors() {
+  const div = document.getElementById("page-load-errors-result");
+  const btn = document.getElementById("page-load-errors-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className   = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Page Load Errors";
+    hideCopyBtn("page-load-errors-copy");
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Fetching…";
+  div.className   = "paste-result info";
+  div.textContent = "Reading captured page load errors…";
+
+  try {
+    const res = await sendMessage({ type: "CF_GET_PAGE_LOAD_ERRORS" });
+    const errors = res?.errors ?? [];
+    const lines = [];
+    lines.push(`=== Page Load Errors (${errors.length} captured) ===`);
+    if (!res?.ok) {
+      lines.push(`Error: ${res?.error ?? "unknown"}`);
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result err";
+    } else if (errors.length === 0) {
+      lines.push("No errors captured yet.");
+      lines.push("Steps: run inject → wait for page reload → click this button.");
+      lines.push("Bridge.js traps window.onerror + unhandledrejection from document_start.");
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result info";
+    } else {
+      errors.forEach((e, i) => {
+        lines.push(`[${i + 1}] ${e.msg}`);
+        if (e.file) lines.push(`    at ${e.file}:${e.line}:${e.col}`);
+        if (e.stack) lines.push(`    ${e.stack.split("\n").slice(0, 4).join("\n    ")}`);
+      });
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result err";
+    }
+    showCopyBtn("page-load-errors-copy");
+  } catch(e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+    showCopyBtn("page-load-errors-copy");
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Page Load Errors";
   }
 }
 
