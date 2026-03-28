@@ -87,6 +87,17 @@
     }
     .btn-clear:hover { color: #dc2626; border-color: #fecaca; }
 
+    /* ── Inline copy button next to debug trigger buttons ── */
+    .debug-btn-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+    .debug-btn-row .btn-clear { margin-top: 0; flex: 1; }
+    .btn-copy-debug {
+      background: transparent; color: #6b7280;
+      border: 1px solid #e5e7eb; border-radius: 5px;
+      padding: 4px 8px; font-size: 9px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; display: none;
+    }
+    .btn-copy-debug:hover { color: #1d4ed8; border-color: #bfdbfe; }
+
     /* ── Copy action result ── */
     .copy-result {
       border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
@@ -278,23 +289,38 @@
     <div class="paste-result" id="paste-result"></div>
 
     <!-- Debug: full state dump -->
-    <button class="btn-clear" id="debug-inject-btn" style="margin-top:4px;font-size:10px;">Debug Info</button>
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="debug-inject-btn" style="font-size:10px;">Debug Info</button>
+      <button class="btn-copy-debug" id="debug-inject-copy">Copy</button>
+    </div>
     <div class="paste-result" id="debug-inject-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
 
     <!-- Roundtrip test: read existing Firebase data, write it back unchanged, probe structure -->
-    <button class="btn-clear" id="roundtrip-btn" style="margin-top:4px;font-size:10px;color:#7c3aed;border-color:#ddd6fe;">Roundtrip Test (diagnostic)</button>
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="roundtrip-btn" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">Roundtrip Test (diagnostic)</button>
+      <button class="btn-copy-debug" id="roundtrip-copy">Copy</button>
+    </div>
     <div class="paste-result" id="roundtrip-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
 
     <!-- Schema Diff: compare GHL native Firebase schema vs our inject output (no write) -->
-    <button class="btn-clear" id="schema-diff-btn" style="margin-top:4px;font-size:10px;color:#0369a1;border-color:#bae6fd;">Schema Diff (native vs inject)</button>
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="schema-diff-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Schema Diff (native vs inject)</button>
+      <button class="btn-copy-debug" id="schema-diff-copy">Copy</button>
+    </div>
     <div class="paste-result" id="schema-diff-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
 
     <!-- GHL API Log: shows captured GHL API calls including 500 response bodies -->
-    <button class="btn-clear" id="api-log-btn" style="margin-top:4px;font-size:10px;color:#b45309;border-color:#fde68a;">Show GHL API Log (500 body)</button>
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="api-log-btn" style="font-size:10px;color:#b45309;border-color:#fde68a;">Show GHL API Log (500 body)</button>
+      <button class="btn-copy-debug" id="api-log-copy">Copy</button>
+    </div>
     <div class="paste-result" id="api-log-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
 
     <!-- Clone Baseline Capture: reads full Firebase data of current cloned page & stores for deep-diff in GHL Inspector -->
-    <button class="btn-clear" id="capture-clone-baseline-btn" style="margin-top:4px;font-size:10px;color:#059669;border-color:#a7f3d0;">Capture Clone Baseline (for deep diff)</button>
+    <div class="debug-btn-row">
+      <button class="btn-clear" id="capture-clone-baseline-btn" style="font-size:10px;color:#059669;border-color:#a7f3d0;">Capture Clone Baseline (for deep diff)</button>
+      <button class="btn-copy-debug" id="capture-clone-baseline-copy">Copy</button>
+    </div>
     <div class="paste-result" id="capture-clone-baseline-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
   </div>
 

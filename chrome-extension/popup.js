@@ -21,6 +21,28 @@ document.addEventListener("DOMContentLoaded", async () => {
    COPY / PASTE — clone any GHL page into the builder
    ════════════════════════════════════════════════════════════════════════════ */
 
+/* ── Copy-debug helpers ────────────────────────────────────────────────────── */
+
+function showCopyBtn(btnId) {
+  const btn = document.getElementById(btnId);
+  if (btn) btn.style.display = "inline-block";
+}
+function hideCopyBtn(btnId) {
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.style.display = "none"; btn.textContent = "Copy"; }
+}
+function copyDebugResult(divId, btnId) {
+  const text = document.getElementById(divId)?.textContent ?? "";
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+    }
+  }).catch(() => {});
+}
+
 function initCopyPaste() {
   refreshCopiedCard();
 
@@ -32,6 +54,13 @@ function initCopyPaste() {
   document.getElementById("schema-diff-btn").addEventListener("click", doSchemaDiff);
   document.getElementById("api-log-btn").addEventListener("click", doApiLog);
   document.getElementById("capture-clone-baseline-btn").addEventListener("click", doCaptureCloneBaseline);
+
+  /* Wire copy buttons */
+  document.getElementById("debug-inject-copy").addEventListener("click", () => copyDebugResult("debug-inject-result", "debug-inject-copy"));
+  document.getElementById("roundtrip-copy").addEventListener("click", () => copyDebugResult("roundtrip-result", "roundtrip-copy"));
+  document.getElementById("schema-diff-copy").addEventListener("click", () => copyDebugResult("schema-diff-result", "schema-diff-copy"));
+  document.getElementById("api-log-copy").addEventListener("click", () => copyDebugResult("api-log-result", "api-log-copy"));
+  document.getElementById("capture-clone-baseline-copy").addEventListener("click", () => copyDebugResult("capture-clone-baseline-result", "capture-clone-baseline-copy"));
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -205,6 +234,7 @@ async function showInjectDebug() {
     div.className = "paste-result";
     div.textContent = "";
     btn.textContent = "Debug Info";
+    hideCopyBtn("debug-inject-copy");
     return;
   }
 
@@ -409,6 +439,7 @@ async function showInjectDebug() {
 
   div.textContent = lines.join("\n");
   div.className = inject?.ok ? "paste-result ok" : "paste-result info";
+  showCopyBtn("debug-inject-copy");
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -429,6 +460,7 @@ async function doRoundtripTest() {
     div.className = "paste-result";
     div.textContent = "";
     btn.textContent = "Roundtrip Test (diagnostic)";
+    hideCopyBtn("roundtrip-copy");
     return;
   }
 
@@ -494,9 +526,11 @@ async function doRoundtripTest() {
 
     div.textContent = lines.join("\n");
     div.className   = res?.ok ? "paste-result ok" : "paste-result err";
+    showCopyBtn("roundtrip-copy");
   } catch (e) {
     div.textContent = `Error: ${e.message}`;
     div.className   = "paste-result err";
+    showCopyBtn("roundtrip-copy");
   } finally {
     btn.disabled    = false;
     btn.textContent = "Roundtrip Test (diagnostic)";
@@ -518,6 +552,7 @@ async function doSchemaDiff() {
     div.className  = "paste-result";
     div.textContent = "";
     btn.textContent = "Schema Diff (native vs inject)";
+    hideCopyBtn("schema-diff-copy");
     return;
   }
 
@@ -573,9 +608,11 @@ async function doSchemaDiff() {
 
     div.textContent = lines.join("\n");
     div.className   = res?.ok ? "paste-result ok" : "paste-result err";
+    showCopyBtn("schema-diff-copy");
   } catch (e) {
     div.textContent = `Error: ${e.message}`;
     div.className   = "paste-result err";
+    showCopyBtn("schema-diff-copy");
   } finally {
     btn.disabled    = false;
     btn.textContent = "Schema Diff (native vs inject)";
@@ -596,6 +633,7 @@ async function doApiLog() {
     div.className  = "paste-result";
     div.textContent = "";
     btn.textContent = "Show GHL API Log (500 body)";
+    hideCopyBtn("api-log-copy");
     return;
   }
 
@@ -622,9 +660,11 @@ async function doApiLog() {
     }
     div.textContent = lines.join("\n");
     div.className   = res?.ok ? "paste-result ok" : "paste-result err";
+    showCopyBtn("api-log-copy");
   } catch (e) {
     div.textContent = `Error: ${e.message}`;
     div.className   = "paste-result err";
+    showCopyBtn("api-log-copy");
   } finally {
     btn.disabled    = false;
     btn.textContent = "Show GHL API Log (500 body)";
@@ -646,6 +686,7 @@ async function doCaptureCloneBaseline() {
     div.className   = "paste-result";
     div.textContent = "";
     btn.textContent = "Capture Clone Baseline (for deep diff)";
+    hideCopyBtn("capture-clone-baseline-copy");
     return;
   }
 
@@ -672,13 +713,16 @@ async function doCaptureCloneBaseline() {
       lines.push(`\nNow open the GHL Inspector in the web app and click "Load Clone Baseline" to see the deep diff.`);
       div.textContent = lines.join("\n");
       div.className   = "paste-result ok";
+      showCopyBtn("capture-clone-baseline-copy");
     } else {
       div.textContent = `Error: ${res?.error ?? "unknown"}\n${JSON.stringify(res?.diag ?? {}, null, 2)}`;
       div.className   = "paste-result err";
+      showCopyBtn("capture-clone-baseline-copy");
     }
   } catch (e) {
     div.textContent = `Error: ${e.message}`;
     div.className   = "paste-result err";
+    showCopyBtn("capture-clone-baseline-copy");
   } finally {
     btn.disabled    = false;
     btn.textContent = "Capture Clone Baseline (for deep diff)";

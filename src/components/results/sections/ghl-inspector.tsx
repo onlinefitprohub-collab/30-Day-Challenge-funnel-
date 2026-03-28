@@ -433,6 +433,35 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
   const inBoth      = allGhlTypes.filter(t => allAiTypes.includes(t));
   const hasMismatch = onlyInGHL.length > 0 || onlyInAI.length > 0;
 
+  /* Plain-text summary for "Copy schema summary" button */
+  const schemaSummaryText = (() => {
+    if (!captured) return "";
+    const lines: string[] = [`=== Schema Comparison (GHL vs AI: ${aiPage}) ===`];
+    if (ghlKeys && aiKeys) {
+      const onlyGhl = ghlKeys.filter(k => !aiKeys!.includes(k));
+      const onlyAi  = aiKeys!.filter(k => !ghlKeys!.includes(k));
+      const both    = ghlKeys.filter(k => aiKeys!.includes(k));
+      lines.push("\n--- Top-level keys ---");
+      if (onlyGhl.length) lines.push(`Only in GHL: ${onlyGhl.join(", ")}`);
+      if (onlyAi.length)  lines.push(`Only in AI:  ${onlyAi.join(", ")}`);
+      if (both.length)    lines.push(`In both:     ${both.join(", ")}`);
+      if (!onlyGhl.length && !onlyAi.length) lines.push("✓ Top-level keys match");
+    }
+    lines.push("\n--- Container counts ---");
+    STRUCT_KEYS.forEach(k => {
+      const gn = countTopLevel(captured.pageData, k);
+      const an = aiData ? countTopLevel(aiData, k) : null;
+      const match = gn !== null && an !== null ? (gn === an ? " ✓" : " ≠") : "";
+      lines.push(`${k}: GHL=${gn ?? "?"}  AI=${an ?? "?"}${match}`);
+    });
+    lines.push("\n--- Element types ---");
+    if (onlyInGHL.length) lines.push(`Only in GHL: ${onlyInGHL.join(", ")}`);
+    if (onlyInAI.length)  lines.push(`Only in AI:  ${onlyInAI.join(", ")}`);
+    if (inBoth.length)    lines.push(`In both:     ${inBoth.join(", ")}`);
+    if (!hasMismatch && allGhlTypes.length > 0 && allAiTypes.length > 0) lines.push("✓ All element types match");
+    return lines.join("\n");
+  })();
+
   return (
     <div className="space-y-5">
 
@@ -636,6 +665,9 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <div className="flex items-center border-b border-gray-100 bg-gray-50 px-5 py-2.5 gap-3">
             <p className="text-sm font-semibold text-gray-900 flex-1">Schema Comparison</p>
+            {captured && schemaSummaryText && (
+              <CopyBtn text={schemaSummaryText} title="Copy schema summary as text" label="Copy summary" />
+            )}
             <span className="text-xs text-gray-500">AI page:</span>
             <select
               value={aiPage}
