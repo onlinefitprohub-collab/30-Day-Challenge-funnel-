@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.28.0 — fix gray FAB (popup writes cf_copied_page to session storage) + fix GHL 500 (finalize() no longer mutates flat map objects).");
+    console.log("[CF Funnel] Installed v2.37.0 — fix GHL hang: section.elements now contains full flat row→col→element tree; all child[] refs resolve in the same array.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.28.0 — fix gray FAB (popup writes cf_copied_page to session storage) + fix GHL 500 (finalize() no longer mutates flat map objects).");
+    console.log("[CF Funnel] Updated to v2.37.0 — fix GHL hang: section.elements now contains full flat row→col→element tree; all child[] refs resolve in the same array.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -719,7 +719,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                  * Defaults for native GHL fields come first so metaData values override. */
                 const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
                 return {
-                  wrapper: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
+                  wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
                   id: v.id ?? key,
                   ...metaWithoutSelfRef,
                 };
@@ -1228,7 +1228,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               if (v.metaData && typeof v.metaData === "object") {
                 const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
                 return {
-                  wrapper: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
+                  wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
                   id: v.id ?? key,
                   ...metaWithoutSelfRef,
                 };
@@ -2837,7 +2837,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             if (v.metaData && typeof v.metaData === "object") {
               const { element: _elRef, ...metaWithoutSelfRef } = v.metaData;
               return {
-                wrapper: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
+                wrapper: {}, class: {}, customCss: "", tag: "", mobileWrapper: {}, mobileExtra: {},
                 id: v.id ?? key,
                 ...metaWithoutSelfRef,
               };
