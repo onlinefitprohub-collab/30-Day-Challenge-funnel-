@@ -1,0 +1,132 @@
+v2.48.0 — Write to NEW file + POST new version to GHL backend
+
+The core insight: GHL caches the Firebase Storage response. Overwriting the same file does nothing because the URL doesn't change. We must write to a new file (new UUID path, new URL) and tell GHL's backend about it via a POST request (not PATCH or PUT — we've confirmed those return 404).
+
+We now have the full page metadata response structure. Use it to build the correct payload.
+
+Change 1: Write to a new Firebase Storage file path (not overwrite existing)
+
+In the Firebase write section of approach A2, instead of using the existing objectPath from GHL's metadata, generate a new UUID for the file:
+
+// Generate new UUID for the file path (don't overwrite existing)
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0;
+    var v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+var newFileUUID = generateUUID();
+var newFbPath = 'funnel/' + funnelId + '/page/' + builderId + '/page-data-' + newFileUUID;
+// Use newFbPath for the Firebase Storage write instead of the existing objectPath
+
+The funnelId is K8DywFrS0jVUYR31muGi (from the metadata response funnelId field — read it from the GHL page metadata stored in window.__cfPageMeta or extract from the existing objectPath which is funnel/{funnelId}/page/{builderId}/page-data-{uuid}).
+
+After writing to the new path, GHL returns a new download token. The full new download URL is:
+
+https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/{encoded-newFbPath}?alt=media&token={newToken}
+
+Log this as: A2 newFileUrl: {full url}
+
+DO NOT run patchToken — the old file and old URL are irrelevant now. We're using a completely new URL.
+
+Change 2: POST new version to GHL backend (meta update)
+
+After the Firebase write succeeds, try these POST requests in order (stop on first 200/201):
+
+// We now know the exact structure GHL expects from the GET response:
+var versionPayload = {
+  pageDataDownloadUrl: newPublicUrl,   // full Firebase Storage URL with token
+  pageDataUrl: newFbPath,              // just the storage path
+  pageDownloadUrl: newPublicUrl,       // same URL (versionHistory field name)
+  pageDownloadPath: newFbPath,         // same path (versionHistory field name)
+  pageType: 'draft',
+  updatedAt: new Date().toISOString(),
+  versionId: generateUUID()
+};
+
+var postEndpoints = [
+  '/funnels/page/' + builderId,
+  '/funnels/page/' + builderId + '/version',
+  '/funnels/page/' + builderId + '/save',
+  '/funnels/builder/' + builderId + '/save',
+  '/funnels/funnel/' + funnelId + '/page/' + builderId,
+  '/funnels/funnel/' + funnelId + '/page/' + builderId + '/version',
+];
+
+var postResult = 'all-failed';
+for (var pi = 0; pi < postEndpoints.length; pi++) {
+  try {
+    var postResp = await revexBackendService.post(postEndpoints[pi], versionPayload);
+    if (postResp.status === 200 || postResp.status === 201) {
+      postResult = 'POST-' + postResp.status + ':' + postEndpoints[pi];
+      break;
+    }
+  } catch(pe) {
+    var peStatus = pe.response ? pe.response.status : 'err';
+    // continue trying
+  }
+}
+injectLog.push('A2 postNewVersion: ' + postResult);
+
+Change 3: Also try Firestore REST API write
+
+After the POST attempts, also try writing the new URL to likely Firestore document paths:
+
+var fsPayload = {
+  fields: {
+    pageDataDownloadUrl: { stringValue: newPublicUrl },
+    pageDataUrl: { stringValue: newFbPath },
+    updatedAt: { stringValue: new Date().toISOString() }
+  }
+};
+
+var fsPaths = [
+  'pages/' + builderId,
+  'funnel-pages/' + builderId,
+  'funnelPages/' + builderId,
+  'builder-pages/' + builderId,
+];
+
+var fsBase = 'https://firestore.googleapis.com/v1/projects/highlevel-backend/databases/(default)/documents/';
+var fsResult = 'all-failed';
+for (var fsi = 0; fsi < fsPaths.length; fsi++) {
+  try {
+    var fsGetResp = await fetch(fsBase + fsPaths[fsi], {
+      headers: { 'Authorization': 'Bearer ' + idToken }
+    });
+    if (fsGetResp.status === 200) {
+      // Found a valid document! Now patch it
+      var fsPatchResp = await fetch(fsBase + fsPaths[fsi] + '?updateMask.fieldPaths=pageDataDownloadUrl&updateMask.fieldPaths=pageDataUrl', {
+        method: 'PATCH',
+        headers: { 
+          'Authorization': 'Bearer ' + idToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(fsPayload)
+      });
+      fsResult = 'GET-200:' + fsPaths[fsi] + ' PATCH:' + fsPatchResp.status;
+      break;
+    } else {
+      // log probe result
+    }
+  } catch(fse) {}
+}
+injectLog.push('A5 Firestore: ' + fsResult);
+
+Change 4: Remove auto page reload
+
+Remove any chrome.tabs.reload() or window.location.reload() calls after inject. Add to the inject result:
+
+"✓ New file written to Firebase Storage. Manual reload required: press F5 in the GHL tab (NOT Ctrl+Shift+R — that clears cache)."
+
+Change 5: Add "Show Page Metadata" debug button to popup.js
+
+Reads window.__cfPageMetaParsed (from bridge.js capture added in previous version) and shows topKeys, hasSections, pageDataUrl, pageDataDownloadUrl.
+
+Also reads window.__cfFirestoreStreamLog to show Firestore document paths being listened to.
+
+Version: 2.48.0
+
+Expected outcome: A2 postNewVersion: POST-201:/funnels/page/{id} or similar. If any POST returns 201 with the new URL, GHL's backend is updated and pressing F5 will load our AI page. If Firestore probe returns GET-200:{path}, we know where the Firestore document lives.

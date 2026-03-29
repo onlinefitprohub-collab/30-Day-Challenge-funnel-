@@ -1,0 +1,65 @@
+Plan approved with one addition required before building.
+
+After Task 3 (Firestore probe), add Approach A5 — Vue/Pinia direct state mutation. This is the most important fallback because it bypasses Firebase Storage, Firestore, and the GHL backend entirely. If POST and Firestore both fail (which is likely given our 404 history), A5 gives us a third path that doesn't require any network calls.
+
+Implementation for A5:
+
+// After firestoreResult is logged:
+
+// APPROACH A5: Direct Vue/Pinia state mutation
+try {
+  var a5ScriptResult = await new Promise(function(resolve) {
+    chrome.scripting.executeScript({
+      target: { tabId: currentTabId },
+      world: 'MAIN',
+      func: function(sectionsJson) {
+        try {
+          var ourSections = JSON.parse(sectionsJson);
+          var mountEl = document.querySelector('#__nuxt') || document.querySelector('[data-v-app]');
+          var vueApp = mountEl && mountEl.__vue_app__;
+          if (!vueApp) return 'no-vue-app';
+          
+          var pinia = vueApp.config && vueApp.config.globalProperties && vueApp.config.globalProperties.$pinia;
+          if (!pinia) return 'no-pinia storeIds=none';
+          
+          var storeIds = [];
+          var sectionStore = null;
+          var sectionStoreId = null;
+          pinia._s.forEach(function(store, id) {
+            storeIds.push(id);
+            var secs = store.sections || (store.$state && store.$state.sections);
+            if (secs && Array.isArray(secs) && secs.length > 0) {
+              sectionStore = store;
+              sectionStoreId = id;
+            }
+          });
+          
+          if (!sectionStore) {
+            return 'no-store-with-sections storeIds=' + storeIds.join(',');
+          }
+          
+          var before = (sectionStore.sections || sectionStore.$state.sections).length;
+          if (sectionStore.sections) {
+            sectionStore.sections = ourSections;
+          } else {
+            sectionStore.$state.sections = ourSections;
+          }
+          var after = (sectionStore.sections || sectionStore.$state.sections).length;
+          return 'found-store=' + sectionStoreId + ' before=' + before + ' after=' + after;
+        } catch(e) {
+          return 'error: ' + e.message;
+        }
+      },
+      args: [JSON.stringify(pageData.sections || [])]
+    }, function(results) {
+      resolve(results && results[0] && results[0].result ? results[0].result : 'no-result');
+    });
+  });
+  diag.approach2.a5VueResult = a5ScriptResult;
+} catch(a5e) {
+  diag.approach2.a5VueResult = 'error: ' + a5e.message;
+}
+
+Log A5 vueResult in the debug output. If it returns found-store=X before=11 after=5, the inject worked in memory and the user won't even need to press F5 — GHL's Vue reactive system should re-render automatically.
+
+All other tasks in the plan are approved as written. Build this.
