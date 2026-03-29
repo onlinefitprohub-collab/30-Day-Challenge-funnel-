@@ -837,7 +837,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
 
-            /* ── v2.49.0: Clone-first inject flow ────────────────────────────────────── *
+            /* ── v2.49.1: Clone-first inject flow ────────────────────────────────────── *
              * Root cause of all prior failures: existing page returns 304 Not Modified  *
              * from browser cache. GHL never re-fetches Firebase Storage for cached pages.*
              * A freshly cloned page has no cache entry → GHL fetches Firebase fresh.   *
@@ -926,7 +926,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               }
             }
 
-            /* v2.49.0 fallback: write to a new UUID Firebase path (clone failed or no stepId) *
+            /* v2.49.1 fallback: write to a new UUID Firebase path (clone failed or no stepId) *
              * v2.48.0: Generate a new UUID file path — write to a NEW file, not overwrite.
              * GHL caches Firebase Storage responses by URL. Overwriting the same path
              * never shows because GHL re-reads the cached (old) URL after reload.
@@ -1054,7 +1054,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 diag.approach2.postNewVersionResult = revex ? "no-newPublicUrl" : "no-revex";
               }
 
-              /* ── v2.49.0: Firestore REST probe (read-only — PATCH blocked by security rules) *
+              /* ── v2.49.1: Firestore REST probe (read-only — PATCH blocked by security rules) *
                * Try 4 likely Firestore document paths with GET only. Log which paths    *
                * exist so we can identify the correct document structure for future use.  */
               try {
