@@ -912,6 +912,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   }
                   cloneUserId = _store?.state?.auth?.user?.id || _store?.state?.user?.id || '';
                 } catch(_ue) {}
+                // AppUtils fallback if Vuex lookup failed
+                if (!cloneUserId) {
+                  try {
+                    if (typeof window.AppUtils !== "undefined" && window.AppUtils?.Utilities?.getCurrentUser) {
+                      var _au = await window.AppUtils.Utilities.getCurrentUser();
+                      cloneUserId = _au?.id ?? _au?.userId ?? '';
+                    }
+                  } catch(_auf) {}
+                }
 
                 // Resolve real stepId via GET /funnels/funnel/fetch/{funnelId}
                 var cloneStepId = null;
