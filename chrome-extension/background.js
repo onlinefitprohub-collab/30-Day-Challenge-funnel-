@@ -1049,8 +1049,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                               if (_s.length < 2) continue;
                               /* Skip URLs */
                               if (/^https?:\/\//i.test(_s)) continue;
-                              /* Skip pure hex/alphanumeric IDs (no spaces, 8+ chars) */
-                              if (/^[a-zA-Z0-9_\-]{8,}$/.test(_s) && !/\s/.test(_s)) continue;
+                              /* Skip UUID and Firebase/Mongo-style object IDs (hex, no spaces) */
+                              if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(_s)) continue;
+                              if (/^[a-zA-Z0-9]{20,}$/.test(_s) && !/\s/.test(_s)) continue;
                               /* Skip CSS values: numbers with units, colour tokens, shorthand */
                               if (/^[\d\s,.\-]*(px|em|rem|%|vh|vw|pt)/.test(_s)) continue;
                               if (/^#[0-9a-fA-F]{3,8}$/.test(_s)) continue;
@@ -1099,7 +1100,6 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                           replacedCount++;
                         }
                         diag.approach2.replacedCount = replacedCount;
-                        diag.approach2.templateMode  = true;
 
                         /* ── Step 5 — Build write payload from modified native ────────────── *
                          * If native read failed, fall back to the old AI-elements approach.   */
@@ -1112,6 +1112,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                             });
                           }
                           npWritePayload = nativePayload;
+                          diag.approach2.templateMode = true;
                         } else {
                           /* Fallback: use AI-generated elements (v2.49.4 behaviour) */
                           var cloneWriteSections = sectionsWithContext.map(function(sec) {
@@ -1121,6 +1122,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                             id:       newPageId,
                             sections: cloneWriteSections,
                           });
+                          diag.approach2.templateMode     = false;
                           diag.approach2.templateFallback = 'ai-elements';
                         }
 
