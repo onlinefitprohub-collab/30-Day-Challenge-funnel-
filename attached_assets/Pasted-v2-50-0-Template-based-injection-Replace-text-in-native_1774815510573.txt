@@ -1,0 +1,54 @@
+v2.50.0 — Template-based injection. Replace text in native GHL elements instead of writing AI element structures.
+
+Why: GHL's backend returns 500 and classConfigForElement returns empty for AI-generated element types. Our elements are invalid. The fix: after cloning, read the native Firebase payload (valid GHL structure), replace only text content values, write back the modified native payload.
+
+The new inject flow in _cf_injectViaBuilderSave:
+
+After the clone succeeds and newPageId is resolved:
+
+Step 1 — Read the new page's native Firebase content
+
+Fetch the Firebase download URL for newPageId from GET /funnels/page/{newPageId} metadata. Do an authenticated GET to that URL. This returns the native GHL payload — valid element structure created by GHL's clone. Store as nativePayload.
+
+Step 2 — Collect AI text values
+
+From pageData (AI content in localStorage), collect a flat ordered array of non-empty strings called aiTexts[]. Pull from every field that contains a non-empty string value — traverse all properties recursively, collecting strings in the order they appear. Skip empty strings, URLs, IDs (strings that look like hex/alphanumeric IDs), and CSS values.
+
+Step 3 — Find replaceable elements in native payload
+
+Traverse nativePayload.sections[].elements[]. For each element, check if extra.content.value exists and is a non-empty string AND meta is one of: "heading", "paragraph", "text", "button", "sub-headline". Collect these in document order as replaceableElements[].
+
+Step 4 — Replace text values
+
+For each replaceableElements[i], if aiTexts[i] exists:
+
+replaceableElements[i].extra.content.value = aiTexts[i];
+if (replaceableElements[i].element && replaceableElements[i].element.extra) {
+  replaceableElements[i].element.extra.content.value = aiTexts[i];
+}
+
+If there are more replaceable elements than AI texts, leave remaining unchanged.
+
+Step 5 — Build writePayload from modified native
+
+var npWritePayload = nativePayload;
+npWritePayload.id = newPageId;
+npWritePayload.sections = npWritePayload.sections.map(function(sec) {
+  return Object.assign({}, sec, { pageId: newPageId });
+});
+
+Step 6 — Write, patchToken, navigate (same as current flow)
+
+Write npWritePayload to the new page's Firebase path. patchToken. Navigate builder to new page URL.
+
+Add diagnostics:
+
+diag.approach2.templateMode = true
+diag.approach2.replaceableCount = replaceableElements.length
+diag.approach2.aiTextCount = aiTexts.length
+diag.approach2.replacedCount = Math.min(replaceableElements.length, aiTexts.length)
+
+Version: Bump to 2.50.0 in manifest.json, background.js, popup.js, ghl-inspector.tsx.
+
+Do NOT change the clone flow, patchToken, navigation, SyntaxError fix, or any other working parts. Only change the write step — replace the old writePayload (AI-generated elements) with npWritePayload (modified native elements).
+
