@@ -1011,10 +1011,21 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
                           + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
                           + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
+                        /* v2.49.4 Fix 1: Build a clone-specific payload with id=newPageId and
+                         * section.pageId=newPageId so the written data is fully keyed to the NEW page,
+                         * not the original builderId. Only applies to this clone-first branch. */
+                        var cloneWriteSections = sectionsWithContext.map(function(sec) {
+                          return Object.assign({}, sec, { pageId: newPageId });
+                        });
+                        var cloneWritePayload = Object.assign({}, writePayload, {
+                          id:       newPageId,
+                          sections: cloneWriteSections,
+                        });
+                        diag.approach2.cloneWritePayloadId = newPageId;
                         var npWriteRes = await fetch(npUploadEp, {
                           method:  'POST',
                           headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
-                          body:    JSON.stringify(writePayload),
+                          body:    JSON.stringify(cloneWritePayload),
                         });
                         diag.approach2.cloneWriteStatus = npWriteRes.status;
                         if (npWriteRes.ok) {

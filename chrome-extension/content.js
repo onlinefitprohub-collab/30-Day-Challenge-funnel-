@@ -1,4 +1,4 @@
-// content.js v2.30.0 — Challenge Funnel in a Box
+// content.js v2.49.4 — Challenge Funnel in a Box
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.
@@ -11,48 +11,54 @@
   // Version-specific guard: when the extension updates, the new version string
   // doesn't match the old one, so the new content.js always replaces the old one
   // in already-open tabs (no manual page reload needed after extension update).
-  if (window.__cfExtLoaded === "2.30.0") return;
-  window.__cfExtLoaded = "2.30.0";
+  if (window.__cfExtLoaded === "2.49.4") return;
+  window.__cfExtLoaded = "2.49.4";
 
-  const IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
+  var IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
   /* ─── CF_SAVE_PAGE handler (runs on our app pages) ──────────────────────
    * The app sends page data via postMessage; we cache it for later pasting.
    * ─────────────────────────────────────────────────────────────────────── */
-  window.addEventListener("message", (evt) => {
+  window.addEventListener("message", function(evt) {
     // Accept CF_SAVE_PAGE from same window OR from child frames (e.g. when the app
     // is embedded inside a Replit project-preview iframe on replit.com/@user/...).
     // We validate by checking source/type fields instead of evt.source identity.
     if (!evt.data || evt.data.source !== "cf-app" || evt.data.type !== "CF_SAVE_PAGE") return;
 
-    const { requestId, projectId, page, pageData, challengeConcept, appUrl } = evt.data.payload || {};
+    var _payload = evt.data.payload || {};
+    var requestId = _payload.requestId;
+    var projectId = _payload.projectId;
+    var page = _payload.page;
+    var pageData = _payload.pageData;
+    var challengeConcept = _payload.challengeConcept;
+    var appUrl = _payload.appUrl;
     if (!page || !pageData) return;
 
-    const PAGE_NAMES = { landing: "Landing Page", optin: "Opt-In Form", thankyou: "Thank You Page", booking: "Booking Page" };
+    var PAGE_NAMES = { landing: "Landing Page", optin: "Opt-In Form", thankyou: "Thank You Page", booking: "Booking Page" };
 
-    const ready = {
+    var ready = {
       projectId: projectId || "",
       appUrl:    appUrl || window.location.origin,
       challengeConcept: challengeConcept || "Challenge Funnel",
-      page,
-      pageData,
+      page: page,
+      pageData: pageData,
       loadedAt: Date.now(),
     };
 
-    const sessionCopy = {
+    var sessionCopy = {
       type:      "ai-inject",
-      page,
+      page: page,
       pageName:  PAGE_NAMES[page] || page || "AI Page",
-      pageData,
+      pageData: pageData,
       projectId: projectId || "",
       appUrl:    appUrl || window.location.origin,
       copiedAt:  Date.now(),
     };
 
-    chrome.storage.local.set({ cfReady: ready }, () => {
-      chrome.storage.session.set({ cf_copied_page: sessionCopy }, () => {
+    chrome.storage.local.set({ cfReady: ready }, function() {
+      chrome.storage.session.set({ cf_copied_page: sessionCopy }, function() {
         window.postMessage(
-          { source: "cf-ext", type: "CF_SAVE_ACK", payload: { requestId, page, success: true } },
+          { source: "cf-ext", type: "CF_SAVE_ACK", payload: { requestId: requestId, page: page, success: true } },
           "*"
         );
       });
@@ -63,18 +69,18 @@
    * App sends { source: "cf-app", type: "CF_GET_CAPTURED_GHL" }.
    * We forward to background, then postMessage the result back to the page.
    * ─────────────────────────────────────────────────────────────────────── */
-  window.addEventListener("message", (evt) => {
+  window.addEventListener("message", function(evt) {
     if (!evt.data || evt.data.source !== "cf-app") return;
-    const t = evt.data.type;
+    var t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.30.0" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.49.4" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {
-      const capturedPage = evt.data.payload;
+      var capturedPage = evt.data.payload;
       if (capturedPage && typeof capturedPage === "object") {
-        chrome.storage.local.set({ capturedGHLPage: capturedPage }, () => {
+        chrome.storage.local.set({ capturedGHLPage: capturedPage }, function() {
           window.postMessage(
             { source: "cf-ext", type: "CF_PERSIST_CAPTURED_GHL_ACK", payload: { ok: true } },
             "*"
@@ -84,9 +90,9 @@
     }
 
     if (t === "CF_GET_CAPTURED_GHL") {
-      chrome.runtime.sendMessage({ type: "CF_GET_CAPTURED_GHL" }, (result) => {
+      chrome.runtime.sendMessage({ type: "CF_GET_CAPTURED_GHL" }, function(result) {
         window.postMessage(
-          { source: "cf-ext", type: "CF_CAPTURED_GHL_DATA", payload: result ?? { ok: false, capturedGHLPage: null } },
+          { source: "cf-ext", type: "CF_CAPTURED_GHL_DATA", payload: result || { ok: false, capturedGHLPage: null } },
           "*"
         );
       });
@@ -97,9 +103,9 @@
     }
 
     if (t === "CF_GET_CLONE_BASELINE") {
-      chrome.runtime.sendMessage({ type: "CF_GET_CLONE_BASELINE" }, (result) => {
+      chrome.runtime.sendMessage({ type: "CF_GET_CLONE_BASELINE" }, function(result) {
         window.postMessage(
-          { source: "cf-ext", type: "CF_CLONE_BASELINE_DATA", payload: result ?? { ok: false, baseline: null } },
+          { source: "cf-ext", type: "CF_CLONE_BASELINE_DATA", payload: result || { ok: false, baseline: null } },
           "*"
         );
       });
@@ -110,28 +116,33 @@
     }
 
     if (t === "CF_FETCH_URL_PAGE") {
-      chrome.runtime.sendMessage({ type: "CF_FETCH_URL_PAGE", url: evt.data.url }, (result) => {
+      chrome.runtime.sendMessage({ type: "CF_FETCH_URL_PAGE", url: evt.data.url }, function(result) {
         window.postMessage(
-          { source: "cf-ext", type: "CF_URL_PAGE_DATA", payload: result ?? { ok: false, error: "no_response" } },
+          { source: "cf-ext", type: "CF_URL_PAGE_DATA", payload: result || { ok: false, error: "no_response" } },
           "*"
         );
       });
     }
 
     if (t === "CF_SAVE_URL_PAGE") {
-      const { pageData, pageName, funnelId, locationId, requestId } = evt.data.payload || {};
-      if (!pageData) return;
-      const sessionCopy = {
+      var _p2 = evt.data.payload || {};
+      var _pageData = _p2.pageData;
+      var _pageName = _p2.pageName;
+      var _funnelId = _p2.funnelId;
+      var _locationId = _p2.locationId;
+      var _requestId = _p2.requestId;
+      if (!_pageData) return;
+      var sessionCopy2 = {
         type:       "url-clone",
-        pageName:   pageName  || "Captured GHL Page",
-        pageData,
-        funnelId:   funnelId  || "",
-        locationId: locationId || "",
+        pageName:   _pageName  || "Captured GHL Page",
+        pageData: _pageData,
+        funnelId:   _funnelId  || "",
+        locationId: _locationId || "",
         copiedAt:   Date.now(),
       };
-      chrome.storage.session.set({ cf_copied_page: sessionCopy }, () => {
+      chrome.storage.session.set({ cf_copied_page: sessionCopy2 }, function() {
         window.postMessage(
-          { source: "cf-ext", type: "CF_URL_CLONE_ACK", payload: { requestId, success: true } },
+          { source: "cf-ext", type: "CF_URL_CLONE_ACK", payload: { requestId: _requestId, success: true } },
           "*"
         );
       });
@@ -146,10 +157,10 @@
    * CF_INJECT_DONE is postMessaged by background (via executeScript) once the
    * Firebase write succeeds. We use seenBeforeInject / seenAfterInject booleans
    * so overwriting a later event cannot corrupt an earlier pre-existing record.  */
-  let _cfInjectDone      = false;
-  let _cfOoffSeenBefore  = false; // any o.off before inject
-  let _cfOoffSeenAfter   = false; // any o.off after inject
-  let _cfOoffFirstSample = null;  // first event ever (for display)
+  var _cfInjectDone      = false;
+  var _cfOoffSeenBefore  = false; // any o.off before inject
+  var _cfOoffSeenAfter   = false; // any o.off after inject
+  var _cfOoffFirstSample = null;  // first event ever (for display)
 
   function _cfHandleOoffEvent(d) {
     if (!_cfOoffFirstSample) {
@@ -177,9 +188,9 @@
 
   /* Drain buffer of events that fired at document_start (before we were attached) */
   try {
-    const queue = window.__cfOoffQueue;
-    if (Array.isArray(queue)) {
-      for (const ev of queue) _cfHandleOoffEvent(ev);
+    var _cfQueue = window.__cfOoffQueue;
+    if (Array.isArray(_cfQueue)) {
+      for (var _cfQi = 0; _cfQi < _cfQueue.length; _cfQi++) _cfHandleOoffEvent(_cfQueue[_cfQi]);
       window.__cfOoffQueue = [];
     }
   } catch (_) {}
@@ -187,9 +198,9 @@
   /* ─── Network sniffer relay + bridge event relay ────────────────────────
    * bridge (source:"cf-bridge"):   CF_OOFF_EVENT, CF_INJECT_DONE
    * network sniffer (source:"cf-network-sniffer"): CF_GHL_BACKEND_ERROR     */
-  window.addEventListener("message", (evt) => {
+  window.addEventListener("message", function(evt) {
     if (!evt.data) return;
-    const d = evt.data;
+    var d = evt.data;
 
     /* ── bridge.js events ── */
     if (d.source === "cf-bridge") {
@@ -215,7 +226,7 @@
   /* ─── Inject bridge.js into main world ──────────────────────────────── */
   function injectBridge() {
     if (document.getElementById("cf-bridge-script")) return;
-    const s = document.createElement("script");
+    var s = document.createElement("script");
     s.id  = "cf-bridge-script";
     s.src = chrome.runtime.getURL("bridge.js");
     (document.head || document.documentElement).appendChild(s);
@@ -225,7 +236,7 @@
    * Same logic as _cf_injectFetchSniffer in background.js — used after a hard *
    * page reload where executeScript cannot reach the new document.            *
    * onerror is handled by bridge.js (document_start); only fetch is patched.  */
-  const CF_SNIFF_CODE = `(function(){
+  var CF_SNIFF_CODE = `(function(){
     if(window.__cfFetchSniffInstalled)return;
     window.__cfFetchSniffInstalled=true;
     var origFetch=window.fetch;
@@ -253,7 +264,7 @@
 
   function injectSniff() {
     if (document.getElementById("cf-sniff-script")) return;
-    const s = document.createElement("script");
+    var s = document.createElement("script");
     s.id = "cf-sniff-script";
     s.textContent = CF_SNIFF_CODE;
     (document.head || document.documentElement).appendChild(s);
@@ -265,19 +276,19 @@
       /* Ask background whether THIS tab is the armed sniffer tab.
        * Background clears the flag on first successful claim, so only
        * the correct tab gets the sniffer even if multiple tabs load GHL. */
-      chrome.runtime.sendMessage({ type: "CF_SNIFF_CLAIM" }, (resp) => {
+      chrome.runtime.sendMessage({ type: "CF_SNIFF_CLAIM" }, function(resp) {
         if (chrome.runtime.lastError) return;
         if (resp && resp.claimed) injectSniff();
       });
     } catch (_) {}
   }
 
-  const HOST_ID = "cf-fab-host";
-  let   shadow  = null;
-  let   pasting = false;
+  var HOST_ID = "cf-fab-host";
+  var shadow  = null;
+  var pasting = false;
 
   /* ─── FAB CSS (shadow DOM — isolated from GHL styles) ───────────────── */
-  const CSS = `
+  var CSS = `
     :host { all: initial; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -331,7 +342,7 @@
 
   /* ─── Build FAB ─────────────────────────────────────────────────────── */
   function buildFab() {
-    const host = document.createElement("div");
+    var host = document.createElement("div");
     host.id    = HOST_ID;
     document.body.appendChild(host);
     shadow = host.attachShadow({ mode: "open" });
@@ -357,63 +368,63 @@
 
   function updateFab() {
     if (!shadow) return;
-    const fab   = shadow.getElementById("fab");
-    const badge = shadow.getElementById("badge");
+    var fab   = shadow.getElementById("fab");
+    var badge = shadow.getElementById("badge");
     if (!fab || !badge) return;
 
-    const PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
-    const isBuilder = /\/(page-builder|funnel-builder)\//.test(window.location.href);
+    var PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
+    var isBuilder = /\/(page-builder|funnel-builder)\//.test(window.location.href);
 
     // Safety net: if storage callbacks never fire (e.g. service worker restart),
     // 8 s is enough for the service worker to cold-start after browser/extension restart.
-    const fallbackTimer = setTimeout(() => setFabNoPage(fab, badge), 8000);
+    var fallbackTimer = setTimeout(function() { setFabNoPage(fab, badge); }, 8000);
 
     try {
-      chrome.storage.local.get(["cfReady"], (ls) => {
+      chrome.storage.local.get(["cfReady"], function(ls) {
         if (chrome.runtime.lastError) {
           clearTimeout(fallbackTimer);
           setFabNoPage(fab, badge);
           return;
         }
-        chrome.storage.session.get(["cf_copied_page"], (ss) => {
+        chrome.storage.session.get(["cf_copied_page"], function(ss) {
           clearTimeout(fallbackTimer);
           if (chrome.runtime.lastError) {
             setFabNoPage(fab, badge);
             return;
           }
 
-          const ready  = ls.cfReady       ?? null;
-          const copied = ss.cf_copied_page ?? null;
+          var ready  = ls.cfReady       || null;
+          var copied = ss.cf_copied_page || null;
 
-          const hasAiCopy  = !!(copied?.type === "ai-inject" && copied?.pageData);
-          const hasUrlClone = !!(copied?.type === "url-clone" && copied?.pageData);
-          const hasGHLCopy = !!(copied?.funnelId && copied?.stepId);
-          const hasAIOnly  = !hasAiCopy && !hasUrlClone && !hasGHLCopy && !!(ready?.pageData);
+          var hasAiCopy   = !!(copied && copied.type === "ai-inject" && copied.pageData);
+          var hasUrlClone = !!(copied && copied.type === "url-clone" && copied.pageData);
+          var hasGHLCopy  = !!(copied && copied.funnelId && copied.stepId);
+          var hasAIOnly   = !hasAiCopy && !hasUrlClone && !hasGHLCopy && !!(ready && ready.pageData);
 
           if (hasGHLCopy) {
-            const name = copied.pageName || "GHL Page";
+            var name = copied.pageName || "GHL Page";
             fab.title   = isBuilder
-              ? `GHL Clone ready: ${name} — click to paste`
-              : `GHL Clone: ${name} — open a GHL builder tab to paste`;
+              ? "GHL Clone ready: " + name + " — click to paste"
+              : "GHL Clone: " + name + " — open a GHL builder tab to paste";
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show ghl";
 
           } else if (hasUrlClone) {
-            const name = copied.pageName || "Captured GHL Page";
+            var name2 = copied.pageName || "Captured GHL Page";
             fab.title   = isBuilder
-              ? `Captured: ${name} — click to paste`
-              : `Captured: ${name} — open a GHL builder tab to paste`;
+              ? "Captured: " + name2 + " — click to paste"
+              : "Captured: " + name2 + " — open a GHL builder tab to paste";
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show";
 
           } else if (hasAiCopy || hasAIOnly) {
-            const pg    = hasAiCopy ? copied.page : ready.page;
-            const label = PAGE_LABELS[pg] || "AI Page";
+            var pg    = hasAiCopy ? copied.page : ready.page;
+            var label = PAGE_LABELS[pg] || "AI Page";
             fab.title   = isBuilder
-              ? `AI Page Ready: ${label} — click to paste`
-              : `AI Page: ${label} — open a GHL builder tab to paste`;
+              ? "AI Page Ready: " + label + " — click to paste"
+              : "AI Page: " + label + " — open a GHL builder tab to paste";
             fab.disabled = !isBuilder || pasting;
             fab.classList.remove("no-page");
             badge.className = "show";
@@ -433,51 +444,48 @@
 
   /* ─── Paste action ──────────────────────────────────────────────────── */
   function setFabText(txt) {
-    const t = shadow && shadow.getElementById("fab-text");
+    var t = shadow && shadow.getElementById("fab-text");
     if (t) t.textContent = txt;
   }
 
-  async function doPaste() {
+  function doPaste() {
     if (pasting) return;
     pasting = true;
-    const fab = shadow && shadow.getElementById("fab");
+    var fab = shadow && shadow.getElementById("fab");
     if (fab) fab.disabled = true;
     setFabText("…");
     showToast("spin", "Pasting page…");
 
-    try {
-      const result = await Promise.race([
-        new Promise((resolve) => chrome.runtime.sendMessage({ type: "CF_PASTE_PAGE" }, resolve)),
-        new Promise((resolve) => setTimeout(
-          () => resolve({ ok: false, error: "Timed out (10s) — the extension took too long. Try reloading the GHL builder tab and clicking the CF button again." }),
-          10000
-        )),
-      ]);
-
-      if (result?.ok) {
+    Promise.race([
+      new Promise(function(resolve) { chrome.runtime.sendMessage({ type: "CF_PASTE_PAGE" }, resolve); }),
+      new Promise(function(resolve) { setTimeout(
+        function() { resolve({ ok: false, error: "Timed out (10s) — the extension took too long. Try reloading the GHL builder tab and clicking the CF button again." }); },
+        10000
+      ); }),
+    ]).then(function(result) {
+      if (result && result.ok) {
         setFabText("✓");
-        const msg = result.toast
-          ?? "Pasted! Builder is reloading — your content will appear in a few seconds.";
+        var msg = (result.toast)
+          || "Pasted! Builder is reloading — your content will appear in a few seconds.";
         showToast("ok", msg);
-        setTimeout(() => { resetFab(); hideToast(); }, 4000);
-      } else if (result?.injectResult?.method === "clipboard-ready" || result?.method === "clipboard-ready") {
-        // Clipboard keys written — direct injection didn't land, but GHL's own Ctrl+V may work
+        setTimeout(function() { resetFab(); hideToast(); }, 4000);
+      } else if ((result && result.injectResult && result.injectResult.method === "clipboard-ready") || (result && result.method === "clipboard-ready")) {
         setFabText("V");
         showToast("spin", "Content written to clipboard storage! Now press Ctrl+V inside the GHL builder to paste using GHL's own paste.");
-        setTimeout(() => { resetFab(); hideToast(); }, 12000);
+        setTimeout(function() { resetFab(); hideToast(); }, 12000);
       } else {
-        const err = result?.error ?? "Unknown error";
+        var err = (result && result.error) || "Unknown error";
         setFabText("!");
         showToast("err", err.slice(0, 220));
-        setTimeout(() => { resetFab(); hideToast(); }, 7000);
+        setTimeout(function() { resetFab(); hideToast(); }, 7000);
       }
-    } catch(e) {
+    }).catch(function(e) {
       setFabText("!");
-      showToast("err", `Error: ${e.message.slice(0, 180)}`);
-      setTimeout(() => { resetFab(); hideToast(); }, 7000);
-    } finally {
+      showToast("err", "Error: " + e.message.slice(0, 180));
+      setTimeout(function() { resetFab(); hideToast(); }, 7000);
+    }).finally(function() {
       pasting = false;
-    }
+    });
   }
 
   function resetFab() {
@@ -487,26 +495,27 @@
 
   /* ─── Toast helpers ─────────────────────────────────────────────────── */
   function showToast(type, msg) {
-    const t = shadow && shadow.getElementById("toast");
+    var t = shadow && shadow.getElementById("toast");
     if (!t) return;
     t.textContent = msg;
-    t.className   = `show ${type}`;
+    t.className   = "show " + type;
   }
 
   function hideToast() {
-    const t = shadow && shadow.getElementById("toast");
+    var t = shadow && shadow.getElementById("toast");
     if (t) { t.className = ""; t.textContent = ""; }
   }
 
   /* ─── Listen for storage changes ────────────────────────────────────── */
-  chrome.storage.onChanged.addListener((changes, area) => {
+  chrome.storage.onChanged.addListener(function(changes, area) {
     if (area === "session" && changes.cf_copied_page) updateFab();
     if (area === "local"   && changes.cfReady)        updateFab();
   });
 
   /* ─── Mount ─────────────────────────────────────────────────────────── */
   function mount() {
-    document.getElementById(HOST_ID)?.remove();
+    var existing = document.getElementById(HOST_ID);
+    if (existing) existing.remove();
     injectBridge();
     buildFab();
     checkAndInjectSniff();

@@ -1,4 +1,4 @@
-// bridge.js v2.13.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.49.4 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
@@ -36,9 +36,9 @@
   /* ─── URL parsing ──────────────────────────────────────────────────────── */
   function parseBuilderUrl(url) {
     try {
-      const m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
+      var m = url.match(/\/location\/([^/?#]+)\/page-builder\/([^/?#]+)/i);
       if (m) return { locationId: m[1], pageBuilderId: m[2] };
-    } catch {}
+    } catch (_) {}
     return null;
   }
 
@@ -47,25 +47,25 @@
     window.postMessage({
       source:  "cf-bridge",
       type:    "CONTEXT_DETECTED",
-      payload: { pageId: pageBuilderId, locationId, source },
+      payload: { pageId: pageBuilderId, locationId: locationId, source: source },
     }, "*");
   }
 
   function checkUrl(url) {
-    const parsed = parseBuilderUrl(url);
+    var parsed = parseBuilderUrl(url);
     if (parsed) {
       emit(parsed.pageBuilderId, parsed.locationId, "url");
       return;
     }
-    const locId = window?.attribution?.locationId;
+    var locId = window && window.attribution && window.attribution.locationId;
     if (locId) emit(null, locId, "attribution");
   }
 
   checkUrl(window.location.href);
 
   /* ─── Navigation observer (GHL is a SPA) ─────────────────────────────── */
-  let lastUrl = window.location.href;
-  const observer = new MutationObserver(() => {
+  var lastUrl = window.location.href;
+  var observer = new MutationObserver(function() {
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       checkUrl(lastUrl);
@@ -73,8 +73,8 @@
   });
   observer.observe(document, { subtree: true, childList: true });
 
-  window.addEventListener("popstate",  () => checkUrl(window.location.href));
-  window.addEventListener("hashchange", () => checkUrl(window.location.href));
+  window.addEventListener("popstate",  function() { checkUrl(window.location.href); });
+  window.addEventListener("hashchange", function() { checkUrl(window.location.href); });
 
   /* ─── GHL API interceptor (v2.10.0) ─────────────────────────────────────── *
    * Captures GHL backend API calls (fetch + XHR) at MAIN world level.         *
@@ -201,14 +201,14 @@
                 pmClone.json().then(function(pmBody) {
                   try {
                     window.__cfPageMetaParsed = {
-                      id:                   pmBody.id ?? pmBody._id ?? null,
-                      pageDataDownloadUrl:  pmBody.pageDataDownloadUrl ?? pmBody.pageDownloadUrl ?? null,
-                      pageDataUrl:          pmBody.pageDataUrl ?? pmBody.pageDownloadPath ?? null,
-                      funnelId:             pmBody.funnelId ?? null,
-                      locationId:           pmBody.locationId ?? null,
+                      id:                   pmBody.id || pmBody._id || null,
+                      pageDataDownloadUrl:  pmBody.pageDataDownloadUrl || pmBody.pageDownloadUrl || null,
+                      pageDataUrl:          pmBody.pageDataUrl || pmBody.pageDownloadPath || null,
+                      funnelId:             pmBody.funnelId || null,
+                      locationId:           pmBody.locationId || null,
                       hasSections:          Array.isArray(pmBody.sections) && pmBody.sections.length > 0,
                       topKeys:              Object.keys(pmBody).join(","),
-                      updatedAt:            pmBody.updatedAt ?? null,
+                      updatedAt:            pmBody.updatedAt || null,
                       fullBody:             pmBody,
                       raw:                  JSON.stringify(pmBody),
                       capturedAt:           Date.now(),
