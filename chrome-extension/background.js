@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.49.1 — SyntaxError fix (const→var everywhere) + sections-only writePayload + pre-write validator + Copy All Debug. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.49.2 — Fix clone URL (absolute, no /funnel/ prefix, no revex baseURL) + final const/let cleanup. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.49.1 — SyntaxError fix (const→var everywhere) + sections-only writePayload + pre-write validator + Copy All Debug. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.49.2 — Fix clone URL (absolute, no /funnel/ prefix, no revex baseURL) + final const/let cleanup. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -294,7 +294,7 @@ async function _cf_cloneFunnelStep(req) {
     console.log("[CF] clone-funnel-step payload:", JSON.stringify(payload).slice(0, 300));
 
     var response = await revex.post(
-      "https://backend.leadconnectorhq.com/funnels/funnel/clone-funnel-step/",
+      "https://backend.leadconnectorhq.com/funnels/clone-funnel-step/",
       payload
     );
     var data   = response?.data ?? response;
@@ -330,16 +330,16 @@ async function _cf_cloneFunnelStep(req) {
    Returns { ok, status, raw, method, error?, metaStatus? } serialised as JSON. */
 async function _cf_injectPageData(builderId, locationId, pageData) {
   try {
-    let revex = null;
+    var revex = null;
 
     // Try #app.__vue_app__ first
-    const appEl = document.querySelector("#app");
+    var appEl = document.querySelector("#app");
     revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
 
     // Fallback: window.app entries
     if (!revex) {
-      for (const ai of Object.values(window.app ?? {})) {
-        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      for (var ai of Object.values(window.app ?? {})) {
+        var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
         if (r && typeof r.put === "function") { revex = r; break; }
       }
     }
@@ -349,10 +349,10 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
     }
 
     // Step 1: fetch page metadata so we can include name/funnelId/stepId in the PUT
-    let pageMeta = {};
-    let metaStatus = null;
+    var pageMeta = {};
+    var metaStatus = null;
     try {
-      const metaResp = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+      var metaResp = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
       pageMeta = metaResp?.data ?? metaResp ?? {};
       metaStatus = metaResp?.status ?? 200;
       console.log("[CF] _cf_injectPageData: meta fetched", JSON.stringify(pageMeta).slice(0, 200));
@@ -360,7 +360,7 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
       console.warn("[CF] _cf_injectPageData: could not fetch page metadata:", metaErr?.message ?? String(metaErr).slice(0, 80));
     }
 
-    const payload = {
+    var payload = {
       pageData,
       locationId,
       pageId:      builderId,
@@ -378,27 +378,27 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
       "meta:", pageMeta.name, pageMeta.funnelId);
 
     // Step 2: try primary endpoint /funnels/funnel/page/{id}
-    const tryPut = async (url) => {
+    var tryPut = async (url) => {
       try {
-        const resp = await revex.put(url, payload);
-        const data   = resp?.data ?? resp;
-        const status = typeof resp?.status === "number" ? resp.status
+        var resp = await revex.put(url, payload);
+        var data   = resp?.data ?? resp;
+        var status = typeof resp?.status === "number" ? resp.status
                      : typeof data?.status === "number" ? data.status : 200;
         return { data, status };
       } catch(e) {
-        const status = e?.response?.status ?? null;
-        const data   = e?.response?.data ?? { message: String(e).slice(0, 200) };
+        var status = e?.response?.status ?? null;
+        var data   = e?.response?.data ?? { message: String(e).slice(0, 200) };
         return { data, status, threw: true };
       }
     };
 
-    let r = await tryPut(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
-    let method = "funnel-page";
+    var r = await tryPut(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+    var method = "funnel-page";
 
     // Step 3: if primary fails (4xx or threw), try alternative endpoint
     if (r.threw || (r.status !== null && r.status >= 400)) {
       console.warn("[CF] _cf_injectPageData: primary endpoint failed (status", r.status, "), trying /funnels/page/");
-      const r2 = await tryPut(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+      var r2 = await tryPut(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
       if (!r2.threw && (r2.status === null || r2.status < 400)) {
         r = r2;
         method = "page";
@@ -869,7 +869,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     stepIdToImportInto:   cloneStepId,
                   };
                   if (cloneUserId) clonePayload.userId = cloneUserId;
-                  var cloneResp = await revex.post('/funnels/clone-funnel-step/', clonePayload);
+                  var cloneResp = await revex.post('https://backend.leadconnectorhq.com/funnels/clone-funnel-step/', clonePayload);
                   diag.approach2.cloneStatus = cloneResp && cloneResp.status;
                   diag.approach2.cloneData   = JSON.stringify((cloneResp && cloneResp.data) || {}).slice(0, 200);
 
@@ -2624,7 +2624,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   /* ── CF_PASTE_PAGE ────────────────────────────────────────────────────────
    * Clones the copied GHL page into the active builder tab.
-   * Uses revexBackendService.post('/funnels/funnel/clone-funnel-step/').
+   * Uses revexBackendService.post('https://backend.leadconnectorhq.com/funnels/clone-funnel-step/').
    * The active tab MUST be app.gohighlevel.com/.../page-builder/... OR .../funnel-builder/...
    * ─────────────────────────────────────────────────────────────────────── */
   if (type === "CF_PASTE_PAGE") {
