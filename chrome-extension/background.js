@@ -1565,7 +1565,7 @@ function _cf_approach5PiniaWithStoredSections(sectionsJsonArg) {
     pinia._s.forEach(function(store, id) {
       storeIds.push(id);
       var secs = store.sections !== undefined ? store.sections : (store.$state && store.$state.sections);
-      if (secs && Array.isArray(secs) && secs.length > 0) {
+      if (Array.isArray(secs)) {
         secStore   = store;
         secStoreId = id;
       }
