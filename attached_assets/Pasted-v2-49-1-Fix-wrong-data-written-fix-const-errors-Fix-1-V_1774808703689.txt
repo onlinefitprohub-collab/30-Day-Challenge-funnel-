@@ -1,0 +1,40 @@
+v2.49.1 — Fix wrong data written + fix const errors
+
+Fix 1: Variable name collision — AI page data being overwritten by GHL metadata
+
+In the clone-first inject flow, the code fetches GHL page metadata to get stepId, funnelId, and userId. This fetch result must NOT be stored in a variable named pageData. pageData must remain the AI-generated page content (the queued page data from storage) throughout the entire flow.
+
+Find the line that fetches GHL page metadata in the clone flow and rename its result variable to ghlPageMeta (or similar). Then extract stepId, funnelId, userId from ghlPageMeta, not from pageData.
+
+Example of the bug to fix:
+
+// WRONG — overwrites AI content:
+var pageData = await revex.get('/funnels/page/' + builderId);
+var stepId = pageData.data.stepId;
+
+// CORRECT — keeps AI content intact:
+var ghlPageMeta = await revex.get('/funnels/page/' + builderId);
+var stepId = ghlPageMeta.data.stepId;
+// pageData still = AI-generated sections
+
+Check every place in the clone flow where GHL metadata is read and ensure pageData is never reassigned.
+
+Fix 2: Remove rows, columns, elements from the Firebase write payload
+
+The native GHL Firebase format confirmed from a live capture has no rows, columns, or elements keys at all — they are completely absent, not even as {}. Remove them entirely from writePayload:
+
+// REMOVE these lines entirely from writePayload:
+rows: {},
+columns: {},
+elements: {},
+
+The final writePayload top-level keys should match native exactly:
+sections, settings, general, pageStyles, trackingCode, fontsForPreview, popups, popupsList, id
+
+Fix 3: const/let → var still not done
+
+The SyntaxError: Unexpected token 'const' at clonelevel-inject.js:1:13706 is still present. This means Fix 2 from v2.49.0 was not applied. Do it now — scan clonelevel-inject.js and every func: body passed to chrome.scripting.executeScript and change every const and let to var.
+
+Version: 2.49.1
+
+Expected result: Firebase write uses AI page data → secs=5 in roundtrip verify, not secs=11. New page loads with AI sections visible.
