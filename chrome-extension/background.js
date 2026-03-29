@@ -2667,8 +2667,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2 }); } catch(_) {}
             const method = r.method ?? "injected";
             const toast = r.warning
-              ? `Content injected (${method}) — ${r.warning}. Press F5 to reload builder.`
-              : `Content injected via ${method} — press F5 to reload the builder tab.`;
+              ? `Content injected (${method}) — ${r.warning}. Hard-reload the builder tab with F5 (NOT Ctrl+Shift+R) to see your content.`
+              : `Content injected via ${method}. Hard-reload the builder tab with F5 (NOT Ctrl+Shift+R) to see your AI content.`;
             sendResponse({ ok: true, builderId: builderId2, injectResult: r, toast });
           } else {
             sendResponse({ ok: false, error: r.error ?? "inject failed", injectResult: r });
@@ -3433,10 +3433,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const res = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
-          func:   () => JSON.stringify(window.__cfPageMetaParsed ?? null),
+          func:   () => JSON.stringify({
+            meta:           window.__cfPageMetaParsed ?? null,
+            firestoreLog:   window.__cfFirestoreStreamLog ?? [],
+          }),
         });
-        const meta = JSON.parse(res?.[0]?.result ?? "null");
-        sendResponse({ ok: true, meta });
+        const { meta, firestoreLog } = JSON.parse(res?.[0]?.result ?? '{"meta":null,"firestoreLog":[]}');
+        sendResponse({ ok: true, meta, firestoreLog });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
       }

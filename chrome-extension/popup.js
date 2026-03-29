@@ -853,12 +853,18 @@ async function doPageMeta() {
       div.textContent = lines.join("\n");
       div.className   = "paste-result err";
     } else {
-      const meta = res.meta;
+      const meta         = res.meta;
+      const firestoreLog = res.firestoreLog ?? [];
       if (!meta || meta.error) {
         lines.push("No page metadata captured yet.");
         lines.push("Steps: open the GHL page builder → navigate to a page → click this button.");
         lines.push("bridge.js v2.12.0 captures GET /funnels/page/:id responses from GHL backend.");
         if (meta?.error) lines.push("Capture error: " + meta.error);
+        if (firestoreLog.length > 0) {
+          lines.push("");
+          lines.push(`--- Firestore URLs captured (${firestoreLog.length}) ---`);
+          firestoreLog.forEach((e, i) => lines.push(`[${i+1}] ${e.method} ${e.url}`));
+        }
         div.textContent = lines.join("\n");
         div.className   = "paste-result info";
       } else {
@@ -868,10 +874,20 @@ async function doPageMeta() {
         lines.push(`locationId:          ${meta.locationId ?? "(none)"}`);
         lines.push(`pageDataDownloadUrl: ${meta.pageDataDownloadUrl ?? "(none)"}`);
         lines.push(`pageDataUrl:         ${meta.pageDataUrl ?? "(none)"}`);
+        lines.push(`hasSections:         ${meta.hasSections ?? "(none)"}`);
+        lines.push(`topKeys:             ${meta.topKeys ?? "(none)"}`);
         lines.push(`updatedAt:           ${meta.updatedAt ?? "(none)"}`);
         lines.push(`captureUrl:          ${meta.url ?? "(none)"}`);
+        if (firestoreLog.length > 0) {
+          lines.push("");
+          lines.push(`--- Firestore URLs captured (${firestoreLog.length}) ---`);
+          firestoreLog.forEach((e, i) => lines.push(`[${i+1}] ${e.method} ${e.url}`));
+        } else {
+          lines.push("");
+          lines.push("--- Firestore URLs: none captured ---");
+        }
         lines.push("");
-        lines.push("--- raw (first 2000 chars) ---");
+        lines.push("--- raw response (first 4000 chars) ---");
         lines.push(meta.raw ?? "(no raw)");
         div.textContent = lines.join("\n");
         div.className   = "paste-result ok";
