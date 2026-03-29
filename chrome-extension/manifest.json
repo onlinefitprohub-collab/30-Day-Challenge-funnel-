@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.49.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.48.0: Write to new UUID Firebase path + POST version to GHL + Firestore probe + A5 Pinia mutation. No API key needed.",
+  "version": "2.49.1",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.49.1: Fix SyntaxError (const→var everywhere) + sections-only writePayload + pre-write validator + Copy All Debug. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

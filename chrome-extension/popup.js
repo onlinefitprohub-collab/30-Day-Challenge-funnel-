@@ -43,6 +43,50 @@ function copyDebugResult(divId, btnId) {
   }).catch(() => {});
 }
 
+/* ── Copy All Debug: run all collectors, concatenate, copy to clipboard ─── */
+async function doCopyAllDebug() {
+  const btn = document.getElementById("copy-all-debug-btn");
+  if (btn) { btn.textContent = "Copying…"; btn.disabled = true; }
+  try {
+    /* Run each collector sequentially — order matches popup from top to bottom */
+    await showInjectDebug();
+    await doRoundtripTest();
+    await doSchemaDiff();
+    await doApiLog();
+    await doCaptureCloneBaseline();
+    await doNativeFirebasePayload();
+    await doPageLoadErrors();
+    await doPageMeta();
+
+    /* Collect text from each result div */
+    const sections = [
+      ["=== DEBUG INFO ===",        "debug-inject-result"],
+      ["=== ROUNDTRIP TEST ===",     "roundtrip-result"],
+      ["=== SCHEMA DIFF ===",        "schema-diff-result"],
+      ["=== GHL API LOG ===",        "api-log-result"],
+      ["=== CLONE BASELINE ===",     "capture-clone-baseline-result"],
+      ["=== NATIVE FIREBASE ===",    "native-firebase-result"],
+      ["=== PAGE LOAD ERRORS ===",   "page-load-errors-result"],
+      ["=== PAGE METADATA ===",      "page-meta-result"],
+    ];
+    const blob = sections
+      .map(([header, divId]) => {
+        const text = (document.getElementById(divId)?.textContent ?? "").trim();
+        return header + "\n" + (text || "(empty)");
+      })
+      .join("\n\n");
+
+    await navigator.clipboard.writeText(blob);
+    if (btn) {
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = "Copy All Debug"; btn.disabled = false; }, 2000);
+    }
+  } catch (err) {
+    if (btn) { btn.textContent = "Error"; btn.disabled = false; }
+    setTimeout(() => { if (btn) btn.textContent = "Copy All Debug"; }, 2000);
+  }
+}
+
 function initCopyPaste() {
   refreshCopiedCard();
 
@@ -57,6 +101,7 @@ function initCopyPaste() {
   document.getElementById("native-firebase-btn").addEventListener("click", doNativeFirebasePayload);
   document.getElementById("page-load-errors-btn").addEventListener("click", doPageLoadErrors);
   document.getElementById("page-meta-btn").addEventListener("click", doPageMeta);
+  document.getElementById("copy-all-debug-btn").addEventListener("click", doCopyAllDebug);
 
   /* Wire copy buttons */
   document.getElementById("debug-inject-copy").addEventListener("click", () => copyDebugResult("debug-inject-result", "debug-inject-copy"));
@@ -267,8 +312,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.49.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.49.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.49.1 ===");
+  lines.push("REMINDER: If version above is NOT 2.49.1, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";

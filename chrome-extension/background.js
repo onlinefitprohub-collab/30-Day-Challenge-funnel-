@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.49.0 — clone-first inject + bridge.js Firebase passthrough + Vue 3 Vuex lookup + const→var. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.49.1 — SyntaxError fix (const→var everywhere) + sections-only writePayload + pre-write validator + Copy All Debug. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.49.0 — clone-first inject + bridge.js Firebase passthrough + Vue 3 Vuex lookup + const→var. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.49.1 — SyntaxError fix (const→var everywhere) + sections-only writePayload + pre-write validator + Copy All Debug. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -47,15 +47,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 /* Extract funnelId + stepId from any GHL page (public funnel or builder).
    Searches Nuxt payload, window.attribution, window globals, and inline scripts. */
 function _cf_extractGhlMetadata() {
-  const w = window;
-  const log = [];
+  var w = window;
+  var log = [];
 
   function extractIds(str, source) {
-    const fm = str.match(/"funnelId"\s*:\s*"([A-Za-z0-9_\-]{8,}?)"/);
-    const sm = str.match(/"stepId"\s*:\s*"([A-Za-z0-9_\-]{8,}?)"/);
+    var fm = str.match(/"funnelId"\s*:\s*"([A-Za-z0-9_\-]{8,}?)"/);
+    var sm = str.match(/"stepId"\s*:\s*"([A-Za-z0-9_\-]{8,}?)"/);
     if (fm && sm) {
-      const lm  = str.match(/"locationId"\s*:\s*"([A-Za-z0-9_\-]{8,}?)"/);
-      const pnm = str.match(/"(?:pageName|page_name)"\s*:\s*"([^"]{1,80})"/);
+      var lm  = str.match(/"locationId"\s*:\s*"([A-Za-z0-9_\-]{8,}?)"/);
+      var pnm = str.match(/"(?:pageName|page_name)"\s*:\s*"([^"]{1,80})"/);
       return JSON.stringify({
         ok: true,
         funnelId:   fm[1],
@@ -70,18 +70,18 @@ function _cf_extractGhlMetadata() {
   }
 
   try {
-    const locationId = w.attribution?.locationId ?? "";
+    var locationId = w.attribution?.locationId ?? "";
     log.push(`attr.locationId=${locationId || "(none)"}`);
 
     // 1. Nuxt app (GHL builder / funnel pages use Nuxt)
     if (typeof w.useNuxtApp === "function") {
       log.push("useNuxtApp=ok");
       try {
-        const nuxt = w.useNuxtApp();
-        const payload = nuxt?.payload?.data ?? nuxt?._data ?? {};
-        const keys = Object.keys(payload);
-        for (const k of keys) {
-          const v = payload[k];
+        var nuxt = w.useNuxtApp();
+        var payload = nuxt?.payload?.data ?? nuxt?._data ?? {};
+        var keys = Object.keys(payload);
+        for (var k of keys) {
+          var v = payload[k];
           if (v && typeof v === "object" && (v.funnelId || v.funnel_id)) {
             return JSON.stringify({
               ok: true,
@@ -94,7 +94,7 @@ function _cf_extractGhlMetadata() {
             });
           }
         }
-        const hit = extractIds(JSON.stringify(payload), "nuxt.payload-serialized");
+        var hit = extractIds(JSON.stringify(payload), "nuxt.payload-serialized");
         if (hit) return hit;
       } catch(e) { log.push(`nuxt threw: ${String(e).slice(0, 60)}`); }
     }
@@ -102,13 +102,13 @@ function _cf_extractGhlMetadata() {
     // 2. __NUXT__ global
     if (w.__NUXT__) {
       log.push("__NUXT__=found");
-      const hit = extractIds(JSON.stringify(w.__NUXT__), "__NUXT__");
+      var hit = extractIds(JSON.stringify(w.__NUXT__), "__NUXT__");
       if (hit) return hit;
     }
 
     // 3. Common window globals
-    for (const key of ["pageData","funnel","funnelData","pageInfo","stepData","__GHL__","__HL__","ghlPage","attribution"]) {
-      const val = w[key];
+    for (var key of ["pageData","funnel","funnelData","pageInfo","stepData","__GHL__","__HL__","ghlPage","attribution"]) {
+      var val = w[key];
       if (!val || typeof val !== "object") continue;
       if (val.funnelId && val.stepId) {
         return JSON.stringify({
@@ -121,15 +121,15 @@ function _cf_extractGhlMetadata() {
           log: log.join(" | "),
         });
       }
-      const hit = extractIds(JSON.stringify(val), `window.${key}`);
+      var hit = extractIds(JSON.stringify(val), `window.${key}`);
       if (hit) return hit;
     }
 
     // 4. Inline script tags containing funnelId
-    for (const el of Array.from(document.querySelectorAll("script:not([src])"))) {
-      const t = el.textContent ?? "";
+    for (var el of Array.from(document.querySelectorAll("script:not([src])"))) {
+      var t = el.textContent ?? "";
       if (!t.includes("funnelId")) continue;
-      const hit = extractIds(t, `dom-script[id=${el.id || "?"}]`);
+      var hit = extractIds(t, `dom-script[id=${el.id || "?"}]`);
       if (hit) return hit;
     }
 
@@ -143,12 +143,12 @@ function _cf_extractGhlMetadata() {
 /* Get destination page info from GHL builder using revex (MAIN world). */
 async function _cf_getBuilderInfo(builderId) {
   try {
-    const appMap = window.app ?? {};
-    let revex = null;
+    var appMap = window.app ?? {};
+    var revex = null;
 
     // Try window.app entries (how GHL's Nuxt app exposes it)
-    for (const ai of Object.values(appMap)) {
-      const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+    for (var ai of Object.values(appMap)) {
+      var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
       if (r && (typeof r.get === "function" || typeof r.post === "function")) {
         revex = r;
         break;
@@ -157,7 +157,7 @@ async function _cf_getBuilderInfo(builderId) {
 
     // Fallback: #app.__vue_app__
     if (!revex) {
-      const appEl = document.querySelector("#app");
+      var appEl = document.querySelector("#app");
       revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
     }
 
@@ -165,8 +165,8 @@ async function _cf_getBuilderInfo(builderId) {
       return JSON.stringify({ ok: false, error: "revexBackendService not found — make sure you are on the GHL builder tab" });
     }
 
-    const resp = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
-    const data = resp?.data ?? resp;
+    var resp = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+    var data = resp?.data ?? resp;
     return JSON.stringify({
       ok:         true,
       funnelId:   data?.funnelId   ?? data?.funnel_id   ?? "",
@@ -186,15 +186,15 @@ async function _cf_getBuilderInfo(builderId) {
  * Returns { ok, data } serialised as JSON string. */
 async function _cf_fetchFullPageData(builderId) {
   try {
-    const appMap = window.app ?? {};
-    let revex = null;
+    var appMap = window.app ?? {};
+    var revex = null;
 
-    for (const ai of Object.values(appMap)) {
-      const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+    for (var ai of Object.values(appMap)) {
+      var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
       if (r && typeof r.get === "function") { revex = r; break; }
     }
     if (!revex) {
-      const appEl = document.querySelector("#app");
+      var appEl = document.querySelector("#app");
       revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
     }
     if (!revex) {
@@ -202,13 +202,13 @@ async function _cf_fetchFullPageData(builderId) {
     }
 
     // Step 1: GET page metadata (contains pageDataDownloadUrl → Firebase Storage)
-    let metadata = null;
+    var metadata = null;
     try {
-      const r1 = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+      var r1 = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
       metadata = r1?.data ?? r1;
     } catch (e1) {
       try {
-        const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+        var r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
         metadata = r2?.data ?? r2;
       } catch (e2) {
         return JSON.stringify({ ok: false, error: `both endpoints failed — primary: ${String(e1).slice(0, 80)}` });
@@ -220,12 +220,12 @@ async function _cf_fetchFullPageData(builderId) {
     // Step 2: Follow pageDataDownloadUrl to get the REAL element tree from Firebase Storage.
     // The GHL API only returns page metadata; the actual sections/rows/columns/elements
     // are stored in Firebase Storage and downloaded via this public URL.
-    const downloadUrl = metadata.pageDataDownloadUrl ?? metadata.data?.pageDataDownloadUrl ?? null;
+    var downloadUrl = metadata.pageDataDownloadUrl ?? metadata.data?.pageDataDownloadUrl ?? null;
     if (downloadUrl && typeof downloadUrl === "string") {
       try {
-        const fbRes = await fetch(downloadUrl);
+        var fbRes = await fetch(downloadUrl);
         if (fbRes.ok) {
-          const elementTree = await fbRes.json();
+          var elementTree = await fbRes.json();
           return JSON.stringify({
             ok:       true,
             data:     JSON.parse(JSON.stringify(elementTree)),
@@ -256,12 +256,12 @@ async function _cf_fetchFullPageData(builderId) {
 /* Clone source GHL step into destination step using revex (MAIN world). */
 async function _cf_cloneFunnelStep(req) {
   try {
-    const appEl = document.querySelector("#app");
-    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    var appEl = document.querySelector("#app");
+    var revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
 
     if (!revex) {
-      for (const ai of Object.values(window.app ?? {})) {
-        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      for (var ai of Object.values(window.app ?? {})) {
+        var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
         if (r && (typeof r.post === "function")) { revex = r; break; }
       }
     }
@@ -271,15 +271,15 @@ async function _cf_cloneFunnelStep(req) {
     }
 
     // Try to get userId (optional, CloneLevel includes it)
-    let userId = "";
+    var userId = "";
     try {
       if (typeof window.AppUtils !== "undefined" && window.AppUtils?.Utilities?.getCurrentUser) {
-        const u = await window.AppUtils.Utilities.getCurrentUser();
+        var u = await window.AppUtils.Utilities.getCurrentUser();
         userId = u?.id ?? u?.userId ?? "";
       }
     } catch(_) {}
 
-    const payload = {
+    var payload = {
       funnelId:              req.destFunnelId,
       funnelIdToImport:      req.sourceFunnelId,
       funnels:               [req.destFunnelId],
@@ -293,12 +293,12 @@ async function _cf_cloneFunnelStep(req) {
 
     console.log("[CF] clone-funnel-step payload:", JSON.stringify(payload).slice(0, 300));
 
-    const response = await revex.post(
+    var response = await revex.post(
       "https://backend.leadconnectorhq.com/funnels/funnel/clone-funnel-step/",
       payload
     );
-    const data   = response?.data ?? response;
-    const status = typeof response?.status === "number" ? response.status
+    var data   = response?.data ?? response;
+    var status = typeof response?.status === "number" ? response.status
                  : typeof data?.status     === "number" ? data.status : 0;
 
     if (status >= 400) {
@@ -310,11 +310,11 @@ async function _cf_cloneFunnelStep(req) {
       });
     }
 
-    const ok = !data?.status || data?.status === "ok" || status < 300 || status === 0;
+    var ok = !data?.status || data?.status === "ok" || status < 300 || status === 0;
     return JSON.stringify({ ok, status, raw: JSON.stringify(data).slice(0, 400) });
   } catch(e) {
-    const status = e?.response?.status;
-    const data   = e?.response?.data;
+    var status = e?.response?.status;
+    var data   = e?.response?.data;
     return JSON.stringify({
       ok:    false,
       error: `clone-funnel-step threw: ${data?.message ?? String(e).slice(0, 120)}`,
@@ -441,7 +441,7 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
  * Returns { ok, method, diag, error? } serialised as JSON.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedBucket) {
-  const diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null };
+  var diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null };
   try {
     /* ════════════════════════════════════════════════════════════════════════
        APPROACH 0: Write AI content to every likely GHL clipboard localStorage key.
@@ -451,21 +451,21 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
        using GHL's OWN paste mechanism (no Firebase write needed from our side).
        ════════════════════════════════════════════════════════════════════════ */
     {
-      const clipKeys = [
+      var clipKeys = [
         "hl-copy-element",   "hl_copy_element",   "builder-clipboard",
         "ghl-clipboard",     "funnel-clipboard",   "section-clipboard",
         "hl-page-clipboard", "highlevel_clipboard","page-builder-clipboard",
         "hl-section-copy",   "hl_section_copy",    "hl-builder-copy",
       ];
-      const clipPayload = JSON.stringify({
+      var clipPayload = JSON.stringify({
         type:     "section",
         sections: pageData.sections,
         rows:     pageData.rows,
         columns:  pageData.columns ?? pageData.cols ?? {},
         elements: pageData.elements,
       });
-      const attempts = [];
-      for (const k of clipKeys) {
+      var attempts = [];
+      for (var k of clipKeys) {
         try { localStorage.setItem(k, clipPayload); attempts.push(k + ":ok"); }
         catch (e)  { attempts.push(k + ":err"); }
       }
@@ -473,31 +473,31 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
     }
 
     /* ── Find revex for metadata fetch (used by approaches 1 and 2) ─────── */
-    let revex = null;
-    const appEl = document.querySelector("#app");
+    var revex = null;
+    var appEl = document.querySelector("#app");
     revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
     if (!revex) {
-      for (const ai of Object.values(window.app ?? {})) {
-        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      for (var ai of Object.values(window.app ?? {})) {
+        var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
         if (r && typeof r.get === "function") { revex = r; break; }
       }
     }
 
     /* ── 1. Fetch GHL page metadata (needed for approaches 1 and 2) ─────── */
-    let metadata = null;
+    var metadata = null;
     if (revex) {
       try {
-        const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+        var r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
         metadata = r?.data ?? r ?? null;
       } catch (_) {
         try {
-          const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+          var r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
           metadata = r2?.data ?? r2 ?? null;
         } catch (_2) {}
       }
     }
-    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
-    const uploadUrl   = metadata?.pageDataUploadUrl   ?? null;
+    var downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    var uploadUrl   = metadata?.pageDataUploadUrl   ?? null;
     diag.metaOk = !!metadata;
 
     /* ════════════════════════════════════════════════════════════════════════
@@ -507,7 +507,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
        ════════════════════════════════════════════════════════════════════════ */
     if (uploadUrl && typeof uploadUrl === "string") {
       try {
-        const res = await fetch(uploadUrl, {
+        var res = await fetch(uploadUrl, {
           method:  "PUT",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify(pageData),
@@ -531,20 +531,20 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
        POST to firebase storage upload endpoint with Authorization: Firebase {token}.
        ════════════════════════════════════════════════════════════════════════ */
     if (downloadUrl && typeof downloadUrl === "string") {
-      const fbMatch = downloadUrl.match(
+      var fbMatch = downloadUrl.match(
         /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
       );
       if (fbMatch) {
-        const bucket      = decodeURIComponent(fbMatch[1]);
-        const encodedPath = fbMatch[2]; // keep URL-encoded; decode for name param
-        const objectPath  = decodeURIComponent(encodedPath);
-        let   idToken     = null;
-        const tokenDiag   = [];
+        var bucket      = decodeURIComponent(fbMatch[1]);
+        var encodedPath = fbMatch[2]; // keep URL-encoded; decode for name param
+        var objectPath  = decodeURIComponent(encodedPath);
+        var   idToken     = null;
+        var tokenDiag   = [];
 
         /* Try Firebase v8 compat global */
         try {
           if (typeof firebase !== "undefined" && firebase.apps?.length) {
-            const user = firebase.auth().currentUser;
+            var user = firebase.auth().currentUser;
             if (user) { idToken = await user.getIdToken(true); tokenDiag.push("v8-global"); }
           }
         } catch (te1) { tokenDiag.push(`v8-err:${String(te1).slice(0, 40)}`); }
@@ -552,10 +552,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
         /* Try Firebase apps attached to window properties */
         if (!idToken) {
           try {
-            for (const val of Object.values(window)) {
+            for (var val of Object.values(window)) {
               if (!val || typeof val !== "object") continue;
               if (typeof val.auth === "function") {
-                const auth = val.auth();
+                var auth = val.auth();
                 if (auth?.currentUser) {
                   idToken = await auth.currentUser.getIdToken(true);
                   tokenDiag.push("window-prop-auth");
@@ -569,8 +569,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
         /* Try Vue global properties ($auth, firebaseAuth, auth) */
         if (!idToken) {
           try {
-            const globals = appEl?.__vue_app__?.config?.globalProperties ?? {};
-            const authObj = globals.$auth ?? globals.firebaseAuth ?? globals.auth ?? null;
+            var globals = appEl?.__vue_app__?.config?.globalProperties ?? {};
+            var authObj = globals.$auth ?? globals.firebaseAuth ?? globals.auth ?? null;
             if (authObj?.currentUser) {
               idToken = await authObj.currentUser.getIdToken(true);
               tokenDiag.push("vue-globals");
@@ -581,7 +581,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
         /* Try window.__firebaseAuthUser__ or similar GHL-specific globals */
         if (!idToken) {
           try {
-            const authUser = window.__firebaseAuthUser__
+            var authUser = window.__firebaseAuthUser__
               ?? window._firebaseUser
               ?? window.currentFirebaseUser
               ?? null;
@@ -600,22 +600,22 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
         if (!idToken) {
           try {
             idToken = await new Promise((resolve) => {
-              const req = indexedDB.open("firebaseLocalStorageDb");
+              var req = indexedDB.open("firebaseLocalStorageDb");
               req.onerror = () => resolve(null);
               req.onsuccess = (evt) => {
-                const db = evt.target.result;
+                var db = evt.target.result;
                 if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
                   db.close(); resolve(null); return;
                 }
-                const tx     = db.transaction("firebaseLocalStorage", "readonly");
-                const store  = tx.objectStore("firebaseLocalStorage");
-                const getAll = store.getAll();
+                var tx     = db.transaction("firebaseLocalStorage", "readonly");
+                var store  = tx.objectStore("firebaseLocalStorage");
+                var getAll = store.getAll();
                 getAll.onerror   = () => { db.close(); resolve(null); };
                 getAll.onsuccess = (e2) => {
                   db.close();
-                  const records = e2.target.result ?? [];
-                  for (const rec of records) {
-                    const token = rec?.value?.stsTokenManager?.accessToken;
+                  var records = e2.target.result ?? [];
+                  for (var rec of records) {
+                    var token = rec?.value?.stsTokenManager?.accessToken;
                     if (token) { resolve(token); return; }
                   }
                   resolve(null);
@@ -635,15 +635,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * The probe reveals the storage format and logs the first row's top-level
              * keys (firstRowKeys) so we can verify flat vs metaData-wrapped entries.
              * We always write structured-dict format with wrapped { id, metaData:{} } entries. */
-            let storageFormat  = "skipped";
-            let existElemCount = 0;
+            var storageFormat  = "skipped";
+            var existElemCount = 0;
             try {
-              const existRes = await fetch(downloadUrl, {
+              var existRes = await fetch(downloadUrl, {
                 headers: { "Authorization": `Firebase ${idToken}` },
                 signal:  AbortSignal.timeout(5000),
               });
               if (existRes.ok) {
-                const existing = await existRes.json();
+                var existing = await existRes.json();
                 /* Capture the top-level id GHL uses in its own saved data */
                 diag.approach2.existingPayloadId = existing.id ?? "none";
                 if (Array.isArray(existing.elements)) {
@@ -655,7 +655,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   /* Peek at first row entry's top-level keys (confirm wrapped vs flat)
                    * AND the inner metaData keys so we can compare GHL's own row
                    * structure against what buildNode() generates.                       */
-                  const firstRowVal = existing.rows && Object.values(existing.rows)[0];
+                  var firstRowVal = existing.rows && Object.values(existing.rows)[0];
                   diag.approach2.firstRowKeys = firstRowVal
                     ? Object.keys(firstRowVal).slice(0, 12)
                     : "rows-empty";
@@ -663,13 +663,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     ? Object.keys(firstRowVal.metaData).slice(0, 14)
                     : "no-metaData";
                   /* Confirm rows are keyed by the row's own .id, not by section ID */
-                  const firstRowDictKey = existing.rows ? Object.keys(existing.rows)[0] : null;
+                  var firstRowDictKey = existing.rows ? Object.keys(existing.rows)[0] : null;
                   diag.approach2.firstExistRowDictKey = firstRowDictKey ?? "none";
                   diag.approach2.firstExistRowIdMatch  = firstRowDictKey !== null
                     ? (firstRowDictKey === (firstRowVal?.id ?? firstRowVal?.metaData?.id ?? "__no-id__"))
                     : null;
                   /* Peek at first section's top-level keys and metaData keys */
-                  const sec0 = Array.isArray(existing.sections) && existing.sections[0];
+                  var sec0 = Array.isArray(existing.sections) && existing.sections[0];
                   if (sec0) {
                     diag.approach2.firstSectionKeys     = Object.keys(sec0).slice(0, 8);
                     diag.approach2.firstSectionMetaKeys = sec0.metaData
@@ -704,11 +704,11 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * Build flat array by traversing section.metaData.child → row.metaData.child
              * → col.metaData.child (AI generator always populates these child arrays).    */
 
-            const pd = pageData;
+            var pd = pageData;
 
             /* Pre-write diagnostics — sample from raw pd.rows (wrapped format).
              * v2.45.0: preWriteRowHasMeta should be TRUE ({ id, metaData:{} } wrapper). */
-            const _firstRawRow = Object.values(pd.rows ?? {})[0];
+            var _firstRawRow = Object.values(pd.rows ?? {})[0];
             diag.approach2.preWriteRowKeys    = _firstRawRow
               ? Object.keys(_firstRawRow).slice(0, 10) : "rows-empty";
             diag.approach2.preWriteRowHasMeta = _firstRawRow
@@ -721,33 +721,33 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.46.0: sections carry BOTH metaData (with child refs) AND a flat elements array.
              * elements array: every node in the section in flat format (metaData spread to top level).
              * Traversal: section.metaData.child → row.metaData.child → col.metaData.child */
-            const funnelIdFromPath = objectPath.split("/")[1] ?? "";
+            var funnelIdFromPath = objectPath.split("/")[1] ?? "";
             /* v2.39.0: extract locationId from the GHL tab URL for metaUpdate patterns.
              * Tab URL format: https://app.gohighlevel.com/location/{locationId}/page-builder/{pageId} */
-            const tabLocationId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
-            const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
+            var tabLocationId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
+            var sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
               /* Build flat elements array for this section */
-              const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-              const flatNodes = [];
+              var childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              var flatNodes = [];
 
               if (childRowIds.length > 0) {
                 /* Primary: traverse child chains (AI generator always sets metaData.child) */
-                for (const rowId of childRowIds) {
-                  const row = pd.rows?.[rowId];
+                for (var rowId of childRowIds) {
+                  var row = pd.rows?.[rowId];
                   if (!row) continue;
-                  const rowMeta = row.metaData ?? row;
+                  var rowMeta = row.metaData ?? row;
                   flatNodes.push({ ...rowMeta, id: rowId });
-                  const colIds = Array.isArray(rowMeta.child) ? rowMeta.child : [];
-                  for (const colId of colIds) {
-                    const col = pd.columns?.[colId];
+                  var colIds = Array.isArray(rowMeta.child) ? rowMeta.child : [];
+                  for (var colId of colIds) {
+                    var col = pd.columns?.[colId];
                     if (!col) continue;
-                    const colMeta = col.metaData ?? col;
+                    var colMeta = col.metaData ?? col;
                     flatNodes.push({ ...colMeta, id: colId });
-                    const elemIds = Array.isArray(colMeta.child) ? colMeta.child : [];
-                    for (const elemId of elemIds) {
-                      const elem = pd.elements?.[elemId];
+                    var elemIds = Array.isArray(colMeta.child) ? colMeta.child : [];
+                    for (var elemId of elemIds) {
+                      var elem = pd.elements?.[elemId];
                       if (!elem) continue;
-                      const elemMeta = elem.metaData ?? elem;
+                      var elemMeta = elem.metaData ?? elem;
                       flatNodes.push({ ...elemMeta, id: elemId });
                     }
                   }
@@ -756,13 +756,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
               /* Fallback: if child traversal found nothing, collect ALL nodes flat */
               if (flatNodes.length === 0) {
-                for (const [rowId, row] of Object.entries(pd.rows ?? {})) {
+                for (var [rowId, row] of Object.entries(pd.rows ?? {})) {
                   flatNodes.push({ ...(row.metaData ?? row), id: rowId });
                 }
-                for (const [colId, col] of Object.entries(pd.columns ?? {})) {
+                for (var [colId, col] of Object.entries(pd.columns ?? {})) {
                   flatNodes.push({ ...(col.metaData ?? col), id: colId });
                 }
-                for (const [elemId, elem] of Object.entries(pd.elements ?? {})) {
+                for (var [elemId, elem] of Object.entries(pd.elements ?? {})) {
                   flatNodes.push({ ...(elem.metaData ?? elem), id: elemId });
                 }
               }
@@ -786,7 +786,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * v2.37.0: firstSecElemCount should be >> 1 (rows+cols+leaves).
              * rowRefOk = first row's first child col IS in the elements array.
              * colRefOk = that col's first child elem IS in the elements array.  */
-            const _sec0El0 = sectionsWithContext[0]?.elements?.[0] ?? null;
+            var _sec0El0 = sectionsWithContext[0]?.elements?.[0] ?? null;
             diag.approach2.firstSecElemCount  = sectionsWithContext[0]?.elements?.length ?? 0;
             diag.approach2.firstSecEl0HasMeta    = _sec0El0 ? ("metaData" in _sec0El0) : null;
             diag.approach2.firstSecEl0HasElement = _sec0El0 ? ("element" in _sec0El0) : null;
@@ -795,14 +795,14 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             diag.approach2.sec0MetaChildLen = (pd.sections?.[0]?.metaData?.child ?? []).length;
             /* rowRefOk / colRefOk: verify child IDs resolve in section.elements */
             (() => {
-              const sec0Elems = sectionsWithContext[0]?.elements ?? [];
-              const sec0ElemIds = new Set(sec0Elems.map(e => e.id));
-              const firstRow = sec0Elems[0];
-              const firstColId = firstRow && Array.isArray(firstRow.child) ? firstRow.child[0] : null;
-              const rowRefOk = firstColId ? sec0ElemIds.has(firstColId) : null;
-              const firstCol = firstColId ? sec0Elems.find(e => e.id === firstColId) : null;
-              const firstElemId = firstCol && Array.isArray(firstCol.child) ? firstCol.child[0] : null;
-              const colRefOk = firstElemId ? sec0ElemIds.has(firstElemId) : null;
+              var sec0Elems = sectionsWithContext[0]?.elements ?? [];
+              var sec0ElemIds = new Set(sec0Elems.map(e => e.id));
+              var firstRow = sec0Elems[0];
+              var firstColId = firstRow && Array.isArray(firstRow.child) ? firstRow.child[0] : null;
+              var rowRefOk = firstColId ? sec0ElemIds.has(firstColId) : null;
+              var firstCol = firstColId ? sec0Elems.find(e => e.id === firstColId) : null;
+              var firstElemId = firstCol && Array.isArray(firstCol.child) ? firstCol.child[0] : null;
+              var colRefOk = firstElemId ? sec0ElemIds.has(firstElemId) : null;
               diag.approach2.rowRefOk  = rowRefOk;
               diag.approach2.colRefOk  = colRefOk;
               diag.approach2.firstColId = firstColId ?? "none";
@@ -814,23 +814,25 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * sections: include flat elements array built above (v2.46.0 addition).
              * v2.36.0: spread full pd so no fields are silently omitted (settings, trackingCode, popupsList).
              * Bug 3 fix (v2.41.0): id:builderId is LAST so ...pd can never overwrite it. */
-            const writePayload = {
+            var writePayload = {
               ...pd,
               sections: sectionsWithContext,
-              rows:     pd.rows     ?? {},
-              columns:  pd.columns  ?? {},
-              elements: pd.elements ?? {},
               id:       builderId,
             };
+            /* v2.49.1: Remove rows/columns/elements from writePayload.
+             * Native GHL Firebase confirmed: NO top-level rows/cols/elems keys in real pages.
+             * ...pd spread already includes sections, settings, general, pageStyles,
+             * trackingCode, fontsForPreview, popups, popupsList. id overrides any in pd. */
+            delete writePayload.rows;
+            delete writePayload.columns;
+            delete writePayload.elements;
 
             diag.approach2.writePayloadTopKeys = Object.keys(writePayload);
-            diag.approach2.storageFormat   = storageFormat;
-            diag.approach2.writeFormat     = "populated-dicts-plus-flat-elements-v2.46.0";
-            diag.approach2.writeEmptyDicts = false;
-            diag.approach2.existElemCount  = existElemCount;
-            diag.approach2.nodeCount       = Object.keys(pd.rows     ?? {}).length
-              + Object.keys(pd.columns  ?? {}).length
-              + Object.keys(pd.elements ?? {}).length;
+            diag.approach2.storageFormat       = storageFormat;
+            diag.approach2.writeFormat         = "populated-dicts-plus-flat-elements-v2.46.0";
+            diag.approach2.writeEmptyDicts     = false;
+            diag.approach2.existElemCount      = existElemCount;
+            diag.approach2.writePayloadFormat  = "sections-only-v2.49.1";
 
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
@@ -843,8 +845,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * unless missing.                                                            */
             if (revex) {
               try {
-                var cloneStepId = (metadata && (metadata.stepId || metadata.step_id)) || null;
-                var cloneUserId = (metadata && (metadata.userId || metadata.user_id)) || null;
+                var ghlPageMeta = metadata;
+                var cloneStepId = (ghlPageMeta && (ghlPageMeta.stepId || ghlPageMeta.step_id)) || null;
+                var cloneUserId = (ghlPageMeta && (ghlPageMeta.userId || ghlPageMeta.user_id)) || null;
                 if (!cloneStepId) {
                   try {
                     var sfResp = await revex.get('/funnels/page/' + builderId);
@@ -895,6 +898,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                       var npPath     = decodeURIComponent(npFbMatch[2]);
                       var npUploadEp = 'https://firebasestorage.googleapis.com/v0/b/' +
                         encodeURIComponent(npBucket) + '/o?uploadType=media&name=' + encodeURIComponent(npPath);
+                      /* v2.49.1: Pre-write validator — confirms AI content (not GHL native) */
+                      diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
+                        + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
+                        + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
                       var npWriteRes = await fetch(npUploadEp, {
                         method:  'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
@@ -931,16 +938,20 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 return v.toString(16);
               });
             }
-            const newFileUUID    = generateUUID();
-            const newFbPath      = "funnel/" + funnelIdFromPath + "/page/" + builderId + "/page-data-" + newFileUUID;
-            const encodedNewPath = encodeURIComponent(newFbPath);
+            var newFileUUID    = generateUUID();
+            var newFbPath      = "funnel/" + funnelIdFromPath + "/page/" + builderId + "/page-data-" + newFileUUID;
+            var encodedNewPath = encodeURIComponent(newFbPath);
             diag.approach2.newFbPath = newFbPath;
 
             /* Firebase Storage upload endpoint — creates a NEW file (not overwrite) */
-            const uploadEp =
+            var uploadEp =
               `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
               `/o?uploadType=media&name=${encodedNewPath}`;
-            const res = await fetch(uploadEp, {
+            /* v2.49.1: Pre-write validator (UUID fallback path) */
+            diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
+              + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
+              + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
+            var res = await fetch(uploadEp, {
               method:  "POST",
               headers: {
                 "Content-Type":  "application/json",
@@ -956,24 +967,24 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * Immediately GET the file we just wrote and record the first 2000      *
                * chars + key-structure so we can compare format with what was sent.   */
               try {
-                const readBackEp =
+                var readBackEp =
                   `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
                   `/o/${encodedNewPath}?alt=media`;
-                const readBackRes = await fetch(readBackEp, {
+                var readBackRes = await fetch(readBackEp, {
                   headers: { "Authorization": `Firebase ${idToken}` },
                   signal:  AbortSignal.timeout(5000),
                 });
                 if (readBackRes.ok) {
-                  const readBackText = await readBackRes.text().catch(() => "");
-                  const first2k = readBackText.slice(0, 2000);
-                  let keyStruct = "parse-err";
+                  var readBackText = await readBackRes.text().catch(() => "");
+                  var first2k = readBackText.slice(0, 2000);
+                  var keyStruct = "parse-err";
                   try {
-                    const parsed = JSON.parse(readBackText);
-                    const secCount = parsed.sections ? parsed.sections.length : 0;
-                    const sec0ElemLen = parsed.sections?.[0]?.elements?.length ?? "none";
-                    const rowCount = parsed.rows ? Object.keys(parsed.rows).length : 0;
-                    const colCount = parsed.columns ? Object.keys(parsed.columns).length : 0;
-                    const elemCount = parsed.elements ? Object.keys(parsed.elements).length : 0;
+                    var parsed = JSON.parse(readBackText);
+                    var secCount = parsed.sections ? parsed.sections.length : 0;
+                    var sec0ElemLen = parsed.sections?.[0]?.elements?.length ?? "none";
+                    var rowCount = parsed.rows ? Object.keys(parsed.rows).length : 0;
+                    var colCount = parsed.columns ? Object.keys(parsed.columns).length : 0;
+                    var elemCount = parsed.elements ? Object.keys(parsed.elements).length : 0;
                     keyStruct = `sections:${secCount} sec0.elements:${sec0ElemLen} rows:${rowCount} cols:${colCount} elems:${elemCount}`;
                   } catch (_) {}
                   diag.approach2.readBack = { ok: true, keyStruct, first2k };
@@ -987,13 +998,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               /* ── v2.48.0: Extract new Firebase token → build new public URL ──────── *
                * Firebase Storage returns { downloadTokens } on upload.
                * We build the full public URL for the NEW file and log it.            */
-              let newPublicUrl = null;
+              var newPublicUrl = null;
               try {
-                const uploadResp    = await res.clone().json().catch(() => ({}));
-                const newToken      = uploadResp.downloadTokens ?? null;
+                var uploadResp    = await res.clone().json().catch(() => ({}));
+                var newToken      = uploadResp.downloadTokens ?? null;
                 diag.approach2.newFirebaseToken = newToken ? newToken.slice(0, 20) + "…" : "none-in-resp";
                 if (newToken) {
-                  const newFileBaseUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedNewPath}`;
+                  var newFileBaseUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedNewPath}`;
                   newPublicUrl = newFileBaseUrl + `?alt=media&token=${newToken}`;
                 }
                 diag.approach2.newPublicUrl = newPublicUrl ? newPublicUrl.slice(0, 150) : "no-url";
@@ -1007,7 +1018,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * PATCH/PUT return 404 on all tested patterns; POST targets version or
                * save sub-endpoints that may accept new file registration.             */
               if (revex && newPublicUrl) {
-                const versionPayload = {
+                var versionPayload = {
                   pageDataDownloadUrl: newPublicUrl,
                   pageDataUrl:         newFbPath,
                   pageDownloadUrl:     newPublicUrl,
@@ -1016,7 +1027,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   updatedAt:           new Date().toISOString(),
                   versionId:           generateUUID(),
                 };
-                const postEndpoints = [
+                var postEndpoints = [
                   `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
                   `https://backend.leadconnectorhq.com/funnels/page/${builderId}/version`,
                   `https://backend.leadconnectorhq.com/funnels/page/${builderId}/save`,
@@ -1024,16 +1035,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
                   `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}/version`,
                 ];
-                let postResult = "all-failed";
-                for (const ep of postEndpoints) {
+                var postResult = "all-failed";
+                for (var ep of postEndpoints) {
                   try {
-                    const postResp = await revex.post(ep, versionPayload);
+                    var postResp = await revex.post(ep, versionPayload);
                     if (postResp.status === 200 || postResp.status === 201) {
                       postResult = `POST-${postResp.status}:${ep.slice(45)}`;
                       break;
                     }
                   } catch (_pe) {
-                    const st = _pe?.response?.status ?? "err";
+                    var st = _pe?.response?.status ?? "err";
                     /* log last status */
                     postResult = `last-err:${st} ep:${ep.slice(45)}`;
                   }
@@ -1047,17 +1058,17 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * Try 4 likely Firestore document paths with GET only. Log which paths    *
                * exist so we can identify the correct document structure for future use.  */
               try {
-                const fsPaths = [
+                var fsPaths = [
                   `pages/${builderId}`,
                   `funnel-pages/${builderId}`,
                   `funnelPages/${builderId}`,
                   `builder-pages/${builderId}`,
                 ];
-                const fsBase = "https://firestore.googleapis.com/v1/projects/highlevel-backend/databases/(default)/documents/";
-                let fsResult = "all-404";
-                for (const fsPath of fsPaths) {
+                var fsBase = "https://firestore.googleapis.com/v1/projects/highlevel-backend/databases/(default)/documents/";
+                var fsResult = "all-404";
+                for (var fsPath of fsPaths) {
                   try {
-                    const fsGetResp = await fetch(fsBase + fsPath, {
+                    var fsGetResp = await fetch(fsBase + fsPath, {
                       headers: { "Authorization": `Bearer ${idToken}` },
                       signal:  AbortSignal.timeout(4000),
                     });
@@ -1079,28 +1090,28 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               /* ── Post-write verification: re-read what we wrote (new file URL) ─── *
                * v2.48.0: reads from newPublicUrl (new file), falls back to old URL. */
               try {
-                const vrUrl = newPublicUrl ?? downloadUrl;
-                const vrRes = await fetch(vrUrl, {
+                var vrUrl = newPublicUrl ?? downloadUrl;
+                var vrRes = await fetch(vrUrl, {
                   cache:   "no-store",
                   headers: { "Authorization": `Firebase ${idToken}` },
                   signal:  AbortSignal.timeout(5000),
                 });
                 if (vrRes.ok) {
-                  const vr = await vrRes.json();
-                  const sec0 = Array.isArray(vr.sections) && vr.sections[0];
+                  var vr = await vrRes.json();
+                  var sec0 = Array.isArray(vr.sections) && vr.sections[0];
                   /* Cross-reference: does the row referenced by section[0].child[0] exist? */
-                  const sec0ChildRowId = sec0?.metaData?.child?.[0] ?? sec0?.child?.[0] ?? null;
-                  const referencedRow  = sec0ChildRowId ? (vr.rows?.[sec0ChildRowId] ?? null) : null;
-                  const firstColId     = referencedRow?.metaData?.child?.[0] ?? null;
-                  const referencedCol  = firstColId ? (vr.columns?.[firstColId] ?? null) : null;
+                  var sec0ChildRowId = sec0?.metaData?.child?.[0] ?? sec0?.child?.[0] ?? null;
+                  var referencedRow  = sec0ChildRowId ? (vr.rows?.[sec0ChildRowId] ?? null) : null;
+                  var firstColId     = referencedRow?.metaData?.child?.[0] ?? null;
+                  var referencedCol  = firstColId ? (vr.columns?.[firstColId] ?? null) : null;
                   /* v2.32.0 post-write checks:
                    * - sec0El0HasMeta: should be FALSE (flat format = no metaData key)
                    * - firstRowHasMeta: should be FALSE (flat format)                  */
-                  const sec0El0 = Array.isArray(sec0?.elements) ? sec0.elements[0] : null;
-                  const firstRow = vr.rows && Object.values(vr.rows)[0];
+                  var sec0El0 = Array.isArray(sec0?.elements) ? sec0.elements[0] : null;
+                  var firstRow = vr.rows && Object.values(vr.rows)[0];
                   /* col ref: flat rows don't have metaData wrapper, so child is at top-level */
-                  const firstColIdFlat = referencedRow?.child?.[0] ?? referencedRow?.metaData?.child?.[0] ?? null;
-                  const referencedColFlat = firstColIdFlat ? (vr.columns?.[firstColIdFlat] ?? null) : null;
+                  var firstColIdFlat = referencedRow?.child?.[0] ?? referencedRow?.metaData?.child?.[0] ?? null;
+                  var referencedColFlat = firstColIdFlat ? (vr.columns?.[firstColIdFlat] ?? null) : null;
                   diag.approach2.postWrite = {
                     readOk:          true,
                     httpStatus:      vrRes.status,
@@ -1137,7 +1148,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * Storage re-read by GHL after reload has caching issues.              */
               diag.approach2.fallThrough = true;
             } else {
-              const errText = await res.text().catch(() => "");
+              var errText = await res.text().catch(() => "");
               diag.approach2.result = `HTTP ${res.status}: ${errText.slice(0, 100)}`;
             }
           } catch (e2) {
@@ -1163,29 +1174,29 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
        can reload with the injected content.
        ════════════════════════════════════════════════════════════════════════ */
     if (!diag.approach2?.fallThrough && !downloadUrl && metadata) {
-      const a2b = { source: "constructed-path" };
+      var a2b = { source: "constructed-path" };
       try {
-        const funnelId2B  = metadata?.funnelId ?? metadata?.funnel_id ?? null;
+        var funnelId2B  = metadata?.funnelId ?? metadata?.funnel_id ?? null;
         a2b.funnelId      = funnelId2B ?? "missing";
         a2b.metaFunnelId  = funnelId2B ?? null;
         a2b.metadataKeys  = Object.keys(metadata ?? {}).slice(0, 15);
 
         if (funnelId2B) {
           /* ── Get Firebase auth token (same IDB logic as approach 2) ──── */
-          let idToken2B = null;
-          const tokDiag2B = [];
+          var idToken2B = null;
+          var tokDiag2B = [];
           try {
             if (typeof firebase !== "undefined" && firebase.apps?.length) {
-              const u = firebase.auth().currentUser;
+              var u = firebase.auth().currentUser;
               if (u) { idToken2B = await u.getIdToken(true); tokDiag2B.push("v8"); }
             }
           } catch (_t1) {}
           if (!idToken2B) {
             try {
-              for (const val of Object.values(window)) {
+              for (var val of Object.values(window)) {
                 if (!val || typeof val !== "object") continue;
                 if (typeof val.auth === "function") {
-                  const auth = val.auth();
+                  var auth = val.auth();
                   if (auth?.currentUser) {
                     idToken2B = await auth.currentUser.getIdToken(true);
                     tokDiag2B.push("win-prop"); break;
@@ -1197,19 +1208,19 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
           if (!idToken2B) {
             try {
               idToken2B = await new Promise((resolve) => {
-                const req = indexedDB.open("firebaseLocalStorageDb");
+                var req = indexedDB.open("firebaseLocalStorageDb");
                 req.onerror = () => resolve(null);
                 req.onsuccess = (evt) => {
-                  const db = evt.target.result;
+                  var db = evt.target.result;
                   if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
-                  const tx     = db.transaction("firebaseLocalStorage", "readonly");
-                  const store  = tx.objectStore("firebaseLocalStorage");
-                  const getAll = store.getAll();
+                  var tx     = db.transaction("firebaseLocalStorage", "readonly");
+                  var store  = tx.objectStore("firebaseLocalStorage");
+                  var getAll = store.getAll();
                   getAll.onerror   = () => { db.close(); resolve(null); };
                   getAll.onsuccess = (e2) => {
                     db.close();
-                    for (const rec of (e2.target.result ?? [])) {
-                      const token = rec?.value?.stsTokenManager?.accessToken;
+                    for (var rec of (e2.target.result ?? [])) {
+                      var token = rec?.value?.stsTokenManager?.accessToken;
                       if (token) { resolve(token); return; }
                     }
                     resolve(null);
@@ -1223,8 +1234,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
           a2b.hasToken = !!idToken2B;
 
           /* ── Probe for Firebase storage bucket ──────────────────────── */
-          let bucketFinal = cachedBucket ?? null;
-          const bucketDiag = [];
+          var bucketFinal = cachedBucket ?? null;
+          var bucketDiag = [];
           if (bucketFinal) bucketDiag.push("sw-cached");
           if (!bucketFinal) {
             try {
@@ -1236,15 +1247,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
           }
           if (!bucketFinal) {
             try {
-              const fa = window.__FIREBASE_APP__ ?? window._firebaseApp ?? null;
+              var fa = window.__FIREBASE_APP__ ?? window._firebaseApp ?? null;
               bucketFinal = fa?.options?.storageBucket ?? null;
               if (bucketFinal) bucketDiag.push("window-fb-app");
             } catch (_b2) {}
           }
           if (!bucketFinal) {
             try {
-              const globs = appEl?.__vue_app__?.config?.globalProperties ?? {};
-              const fbApp = globs.$firebase ?? globs.firebase ?? globs.firebaseApp ?? null;
+              var globs = appEl?.__vue_app__?.config?.globalProperties ?? {};
+              var fbApp = globs.$firebase ?? globs.firebase ?? globs.firebaseApp ?? null;
               bucketFinal = fbApp?.options?.storageBucket ?? null;
               if (bucketFinal) bucketDiag.push("vue-globals-fb");
             } catch (_b3) {}
@@ -1259,7 +1270,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
           if (idToken2B) {
             /* ── Build write payload (mirrors approach 2 writePayload) ── *
              * v2.32.0: use flattenForFirebase (same as approach 2).       */
-            const pd2B = pageData;
+            var pd2B = pageData;
             /* v2.38.0: same flattenForFirebase fix as approach 2 — keep `element` snapshot field.
              * (This was missed in v2.37.0 — only approach 2 was fixed then.) */
             function flattenForFirebase2B(key, v) {
@@ -1273,32 +1284,32 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               }
               return v;
             }
-            const wrappedRows2B = Object.fromEntries(
+            var wrappedRows2B = Object.fromEntries(
               Object.entries(pd2B.rows    ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
-            const wrappedCols2B = Object.fromEntries(
+            var wrappedCols2B = Object.fromEntries(
               Object.entries(pd2B.columns ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
-            const wrappedEls2B = Object.fromEntries(
+            var wrappedEls2B = Object.fromEntries(
               Object.entries(pd2B.elements ?? {}).map(([k, v]) => [k, flattenForFirebase2B(k, v)])
             );
             /* v2.37.0: full flat element tree — mirrors approach 2 sectionsWithContext fix.
              * Push row + its cols + each col's leaf elements into one flat section.elements. */
-            const sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => {
-              const childRowIds2B = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-              const flatEls2B = [];
-              for (const rowId of childRowIds2B) {
-                const row = wrappedRows2B[rowId];
+            var sectionsCtx2B = (pd2B.sections ?? []).map((sec, i) => {
+              var childRowIds2B = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              var flatEls2B = [];
+              for (var rowId of childRowIds2B) {
+                var row = wrappedRows2B[rowId];
                 if (!row) continue;
                 flatEls2B.push(row);
-                const colIds = Array.isArray(row.child) ? row.child : [];
-                for (const colId of colIds) {
-                  const col = wrappedCols2B[colId];
+                var colIds = Array.isArray(row.child) ? row.child : [];
+                for (var colId of colIds) {
+                  var col = wrappedCols2B[colId];
                   if (!col) continue;
                   flatEls2B.push(col);
-                  const elemIds = Array.isArray(col.child) ? col.child : [];
-                  for (const elemId of elemIds) {
-                    const elem = wrappedEls2B[elemId];
+                  var elemIds = Array.isArray(col.child) ? col.child : [];
+                  for (var elemId of elemIds) {
+                    var elem = wrappedEls2B[elemId];
                     if (elem) flatEls2B.push(elem);
                   }
                 }
@@ -1317,27 +1328,26 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.33.0: Empty flat dicts — mirrors native GHL Firebase format.
              * Native roundtrip shows rows=0 cols=0 elems=0. All element data lives in
              * section.elements (shallow flat rows). Empty dicts match native format.   */
-            const writePayload2B = {
+            var writePayload2B = {
               fontsForPreview: pd2B.fontsForPreview,
               general:         pd2B.general,
               id:              builderId,
               pageStyles:      pd2B.pageStyles,
               popups:          pd2B.popups ?? [],
               sections:        sectionsCtx2B,
-              rows:            {},
-              columns:         {},
-              elements:        {},
             };
-            a2b.writeFormat     = "sections-with-empty-dicts-v2.33.0";
-            a2b.writeEmptyDicts = true;
+            /* v2.49.1: No rows/columns/elements in writePayload2B either.
+             * Matches native GHL Firebase format (sections-only). */
+            a2b.writeFormat       = "sections-only-v2.49.1";
+            a2b.writePayloadFormat = "sections-only-v2.49.1";
 
             /* ── POST to Firebase Storage REST API ───────────────────── */
-            const constructedPath = `funnels/${funnelId2B}/${builderId}.json`;
+            var constructedPath = `funnels/${funnelId2B}/${builderId}.json`;
             a2b.path = constructedPath;
-            const uploadEp2B =
+            var uploadEp2B =
               `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucketFinal)}` +
               `/o?uploadType=media&name=${encodeURIComponent(constructedPath)}`;
-            const res2B = await fetch(uploadEp2B, {
+            var res2B = await fetch(uploadEp2B, {
               method:  "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken2B}` },
               body:    JSON.stringify(writePayload2B),
@@ -1347,22 +1357,22 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             if (res2B.ok) {
               a2b.result = "success";
               /* ── Extract download token + patch GHL metadata ──────── */
-              const fbData2B = await res2B.json().catch(() => ({}));
-              const newTok2B = fbData2B.downloadTokens ?? "";
-              const encPath2B = encodeURIComponent(constructedPath);
-              const newUrl2B  =
+              var fbData2B = await res2B.json().catch(() => ({}));
+              var newTok2B = fbData2B.downloadTokens ?? "";
+              var encPath2B = encodeURIComponent(constructedPath);
+              var newUrl2B  =
                 `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucketFinal)}` +
                 `/o/${encPath2B}?alt=media&token=${newTok2B}`;
               a2b.newDownloadUrl = newUrl2B.slice(0, 160);
               /* v2.39.0: declare patchOk2B BEFORE the revex block so it's in scope
                * for the success gate check below (outside if/else). */
-              let patchOk2B = false;
+              var patchOk2B = false;
               if (revex) {
                 /* v2.39.0: same 6-pattern PATCH→PUT retry as approach 2.
                  * locationId extracted from window.location.href (same tab URL). */
-                const tabLocId2B = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
+                var tabLocId2B = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
                 a2b.tabLocationId = tabLocId2B || "(not-found)";
-                const metaUrls2B = tabLocId2B ? [
+                var metaUrls2B = tabLocId2B ? [
                   `https://backend.leadconnectorhq.com/locations/${tabLocId2B}/funnels/page/${builderId}`,
                   `https://backend.leadconnectorhq.com/funnels/page/${builderId}?locationId=${tabLocId2B}`,
                   `https://backend.leadconnectorhq.com/funnels/${funnelId2B}/page/${builderId}?locationId=${tabLocId2B}`,
@@ -1374,9 +1384,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
                   `https://backend.leadconnectorhq.com/funnels/funnel/${funnelId2B}/page/${builderId}`,
                 ];
-                const patchAttempts2B = [];
-                outer2B: for (const mu of metaUrls2B) {
-                  for (const verb of ["patch", "put"]) {
+                var patchAttempts2B = [];
+                outer2B: for (var mu of metaUrls2B) {
+                  for (var verb of ["patch", "put"]) {
                     try {
                       await revex[verb](mu, { ...metadata, pageDataDownloadUrl: newUrl2B });
                       patchAttempts2B.push({ url: mu.slice(50), verb, status: 200, ok: true });
@@ -1384,7 +1394,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                       a2b.metaPatch = `ok-verb:${verb} url:${mu.slice(50, 90)}`;
                       break outer2B;
                     } catch (_pe) {
-                      const st = _pe?.response?.status ?? "err";
+                      var st = _pe?.response?.status ?? "err";
                       patchAttempts2B.push({ url: mu.slice(50), verb, status: st, ok: false });
                       if (verb === "patch" && st !== 404 && st !== 405) break;
                     }
@@ -1405,7 +1415,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 a2b.result = `firebase-write-ok-but-meta-patch-${a2b.metaPatch ?? "failed"}`;
               }
             } else {
-              const errTxt2B = await res2B.text().catch(() => "");
+              var errTxt2B = await res2B.text().catch(() => "");
               a2b.result = `HTTP ${res2B.status}: ${errTxt2B.slice(0, 80)}`;
             }
           } else {
@@ -1432,17 +1442,17 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
     /* ── Approach 2 or 2B succeeded — Firebase write confirmed ───────────── *
      * GHL will read the new page data on next reload.                         */
     if (diag.approach2?.fallThrough === true || diag.approach2b_ok === true) {
-      const method = diag.approach2?.fallThrough ? "firebase-write" : "firebase-write-constructed";
+      var method = diag.approach2?.fallThrough ? "firebase-write" : "firebase-write-constructed";
       return JSON.stringify({ ok: true, method, diag });
     }
 
     /* All direct approaches failed — but Approach 0 (clipboard) may still work.
        Tell the user to try Ctrl+V in the builder — if GHL reads from any of the
        localStorage clipboard keys we wrote, the content will paste natively. */
-    const a1  = JSON.stringify(diag.approach1).slice(0, 80);
-    const a2  = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 80);
-    const a2b = diag.approach2b ? `A2b=${diag.approach2b.result ?? "?"} http=${diag.approach2b.httpStatus ?? "?"}` : "A2b=skipped";
-    const a3  = "frame-targeted-pending";
+    var a1  = JSON.stringify(diag.approach1).slice(0, 80);
+    var a2  = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 80);
+    var a2b = diag.approach2b ? `A2b=${diag.approach2b.result ?? "?"} http=${diag.approach2b.httpStatus ?? "?"}` : "A2b=skipped";
+    var a3  = "frame-targeted-pending";
     return JSON.stringify({
       ok:      false,
       method:  "clipboard-ready",
@@ -1907,62 +1917,62 @@ async function _cf_refreshBuilderIframe() {
  * deep-diff it against our AI-generated output and find every schema mismatch.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_captureCloneBaseline(builderId) {
-  const diag = {};
+  var diag = {};
   try {
-    const appEl = document.querySelector("#app");
-    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    var appEl = document.querySelector("#app");
+    var revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
     if (!revex) {
-      for (const ai of Object.values(window.app ?? {})) {
-        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      for (var ai of Object.values(window.app ?? {})) {
+        var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
         if (r && typeof r.get === "function") { revex = r; break; }
       }
     }
     if (!revex) return JSON.stringify({ ok: false, error: "revex not found — builder must be fully loaded" });
 
-    let metadata = null;
-    try { const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`); metadata = r?.data ?? r ?? null; } catch (_) {}
-    if (!metadata) { try { const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`); metadata = r2?.data ?? r2 ?? null; } catch (_) {} }
-    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    var metadata = null;
+    try { var r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`); metadata = r?.data ?? r ?? null; } catch (_) {}
+    if (!metadata) { try { var r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`); metadata = r2?.data ?? r2 ?? null; } catch (_) {} }
+    var downloadUrl = metadata?.pageDataDownloadUrl ?? null;
     if (!downloadUrl) return JSON.stringify({ ok: false, error: "no downloadUrl in GHL metadata", diag });
 
-    const fbMatch = downloadUrl.match(/firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/);
+    var fbMatch = downloadUrl.match(/firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/);
     if (!fbMatch) return JSON.stringify({ ok: false, error: "could not parse Firebase URL", diag });
-    const bucket = decodeURIComponent(fbMatch[1]);
+    var bucket = decodeURIComponent(fbMatch[1]);
     diag.bucket = bucket.slice(0, 60);
 
-    let idToken = null;
-    try { if (typeof firebase !== "undefined" && firebase.apps?.length) { const u = firebase.auth().currentUser; if (u) idToken = await u.getIdToken(true); } } catch (_) {}
+    var idToken = null;
+    try { if (typeof firebase !== "undefined" && firebase.apps?.length) { var u = firebase.auth().currentUser; if (u) idToken = await u.getIdToken(true); } } catch (_) {}
     if (!idToken) {
       try {
-        for (const val of Object.values(window)) {
+        for (var val of Object.values(window)) {
           if (!val || typeof val !== "object") continue;
-          if (typeof val.auth === "function") { const a = val.auth(); if (a?.currentUser) { idToken = await a.currentUser.getIdToken(true); break; } }
+          if (typeof val.auth === "function") { var a = val.auth(); if (a?.currentUser) { idToken = await a.currentUser.getIdToken(true); break; } }
         }
       } catch (_) {}
     }
     if (!idToken) {
       idToken = await new Promise(resolve => {
         try {
-          const req = indexedDB.open("firebaseLocalStorageDb");
+          var req = indexedDB.open("firebaseLocalStorageDb");
           req.onerror = () => resolve(null);
           req.onsuccess = evt => {
-            const db = evt.target.result;
+            var db = evt.target.result;
             if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
-            const getAll = db.transaction("firebaseLocalStorage","readonly").objectStore("firebaseLocalStorage").getAll();
+            var getAll = db.transaction("firebaseLocalStorage","readonly").objectStore("firebaseLocalStorage").getAll();
             getAll.onerror   = () => { db.close(); resolve(null); };
-            getAll.onsuccess = e2 => { db.close(); for (const rec of (e2.target.result ?? [])) { const t = rec?.value?.stsTokenManager?.accessToken; if (t) { resolve(t); return; } } resolve(null); };
+            getAll.onsuccess = e2 => { db.close(); for (var rec of (e2.target.result ?? [])) { var t = rec?.value?.stsTokenManager?.accessToken; if (t) { resolve(t); return; } } resolve(null); };
           };
         } catch (_) { resolve(null); }
       });
     }
     if (!idToken) return JSON.stringify({ ok: false, error: "no auth token", diag });
 
-    const readRes = await fetch(downloadUrl, { headers: { "Authorization": `Firebase ${idToken}` }, signal: AbortSignal.timeout(8000) });
+    var readRes = await fetch(downloadUrl, { headers: { "Authorization": `Firebase ${idToken}` }, signal: AbortSignal.timeout(8000) });
     if (!readRes.ok) return JSON.stringify({ ok: false, error: `read failed HTTP ${readRes.status}`, diag });
-    const fullData = await readRes.json();
+    var fullData = await readRes.json();
 
     /* Build structural summary for popup display */
-    const secs = Array.isArray(fullData.sections) ? fullData.sections : [];
+    var secs = Array.isArray(fullData.sections) ? fullData.sections : [];
     diag.topLevelKeys       = Object.keys(fullData);
     diag.sectionCount       = secs.length;
     diag.rowCount           = fullData.rows     ? Object.keys(fullData.rows).length     : 0;
@@ -1971,22 +1981,22 @@ async function _cf_captureCloneBaseline(builderId) {
     diag.sectionElemCounts  = secs.map(s => Array.isArray(s.elements) ? s.elements.length : 0);
     diag.sectionMetaChildLengths = secs.map(s => Array.isArray(s.metaData?.child) ? s.metaData.child.length : 0);
 
-    const sec0      = secs[0] ?? null;
+    var sec0      = secs[0] ?? null;
     diag.sec0Keys   = sec0 ? Object.keys(sec0) : [];
-    const sec0Elems = sec0 && Array.isArray(sec0.elements) ? sec0.elements : [];
+    var sec0Elems = sec0 && Array.isArray(sec0.elements) ? sec0.elements : [];
     diag.sec0ElemCount      = sec0Elems.length;
     diag.sec0ElemFieldKeys  = sec0Elems.length > 0 ? [...new Set(sec0Elems.flatMap(e => Object.keys(e)))] : [];
     diag.sec0MetaChildLen   = Array.isArray(sec0?.metaData?.child) ? sec0.metaData.child.length : 0;
 
-    const row0 = fullData.rows ? Object.values(fullData.rows)[0] : null;
+    var row0 = fullData.rows ? Object.values(fullData.rows)[0] : null;
     diag.row0Keys    = row0 ? Object.keys(row0).slice(0, 12)       : [];
     diag.row0MetaKeys= row0?.metaData ? Object.keys(row0.metaData).slice(0, 12) : [];
 
-    const col0 = fullData.columns ? Object.values(fullData.columns)[0] : null;
+    var col0 = fullData.columns ? Object.values(fullData.columns)[0] : null;
     diag.col0Keys    = col0 ? Object.keys(col0).slice(0, 12)       : [];
     diag.col0MetaKeys= col0?.metaData ? Object.keys(col0.metaData).slice(0, 12) : [];
 
-    const elem0 = fullData.elements ? Object.values(fullData.elements)[0] : null;
+    var elem0 = fullData.elements ? Object.values(fullData.elements)[0] : null;
     diag.elem0Keys   = elem0 ? Object.keys(elem0).slice(0, 12)     : [];
     diag.elem0MetaKeys = elem0?.metaData ? Object.keys(elem0.metaData).slice(0, 12) : [];
 
@@ -2002,60 +2012,60 @@ async function _cf_captureCloneBaseline(builderId) {
  * with what our inject pipeline would produce.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_readFirebaseSchema(builderId) {
-  const diag = {};
+  var diag = {};
   try {
-    const appEl = document.querySelector("#app");
-    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    var appEl = document.querySelector("#app");
+    var revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
     if (!revex) {
-      for (const ai of Object.values(window.app ?? {})) {
-        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      for (var ai of Object.values(window.app ?? {})) {
+        var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
         if (r && typeof r.get === "function") { revex = r; break; }
       }
     }
     if (!revex) return JSON.stringify({ ok: false, error: "revex not found", diag });
 
-    let metadata = null;
-    try { const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`); metadata = r?.data ?? r ?? null; } catch (_) {}
-    if (!metadata) { try { const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`); metadata = r2?.data ?? r2 ?? null; } catch (_) {} }
-    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    var metadata = null;
+    try { var r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`); metadata = r?.data ?? r ?? null; } catch (_) {}
+    if (!metadata) { try { var r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`); metadata = r2?.data ?? r2 ?? null; } catch (_) {} }
+    var downloadUrl = metadata?.pageDataDownloadUrl ?? null;
     diag.hasDownloadUrl = !!downloadUrl;
     if (!downloadUrl) return JSON.stringify({ ok: false, error: "no downloadUrl in GHL metadata", diag });
 
-    const fbMatch = downloadUrl.match(/firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/);
+    var fbMatch = downloadUrl.match(/firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/);
     if (!fbMatch) return JSON.stringify({ ok: false, error: "could not parse Firebase URL", diag });
-    const bucket = decodeURIComponent(fbMatch[1]);
+    var bucket = decodeURIComponent(fbMatch[1]);
     diag.bucket = bucket.slice(0, 60);
 
-    let idToken = null;
-    try { if (typeof firebase !== "undefined" && firebase.apps?.length) { const u = firebase.auth().currentUser; if (u) idToken = await u.getIdToken(true); } } catch (_) {}
+    var idToken = null;
+    try { if (typeof firebase !== "undefined" && firebase.apps?.length) { var u = firebase.auth().currentUser; if (u) idToken = await u.getIdToken(true); } } catch (_) {}
     if (!idToken) {
       try {
-        for (const val of Object.values(window)) {
+        for (var val of Object.values(window)) {
           if (!val || typeof val !== "object") continue;
-          if (typeof val.auth === "function") { const a = val.auth(); if (a?.currentUser) { idToken = await a.currentUser.getIdToken(true); break; } }
+          if (typeof val.auth === "function") { var a = val.auth(); if (a?.currentUser) { idToken = await a.currentUser.getIdToken(true); break; } }
         }
       } catch (_) {}
     }
     if (!idToken) {
       idToken = await new Promise(resolve => {
         try {
-          const req = indexedDB.open("firebaseLocalStorageDb");
+          var req = indexedDB.open("firebaseLocalStorageDb");
           req.onerror = () => resolve(null);
           req.onsuccess = evt => {
-            const db = evt.target.result;
+            var db = evt.target.result;
             if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
-            const getAll = db.transaction("firebaseLocalStorage","readonly").objectStore("firebaseLocalStorage").getAll();
+            var getAll = db.transaction("firebaseLocalStorage","readonly").objectStore("firebaseLocalStorage").getAll();
             getAll.onerror   = () => { db.close(); resolve(null); };
-            getAll.onsuccess = e2 => { db.close(); for (const rec of (e2.target.result ?? [])) { const t = rec?.value?.stsTokenManager?.accessToken; if (t) { resolve(t); return; } } resolve(null); };
+            getAll.onsuccess = e2 => { db.close(); for (var rec of (e2.target.result ?? [])) { var t = rec?.value?.stsTokenManager?.accessToken; if (t) { resolve(t); return; } } resolve(null); };
           };
         } catch (_) { resolve(null); }
       });
     }
     if (!idToken) return JSON.stringify({ ok: false, error: "no auth token", diag });
 
-    const readRes = await fetch(downloadUrl, { headers: { "Authorization": `Firebase ${idToken}` }, signal: AbortSignal.timeout(8000) });
+    var readRes = await fetch(downloadUrl, { headers: { "Authorization": `Firebase ${idToken}` }, signal: AbortSignal.timeout(8000) });
     if (!readRes.ok) return JSON.stringify({ ok: false, error: `read failed HTTP ${readRes.status}`, diag });
-    const existing = await readRes.json();
+    var existing = await readRes.json();
     diag.readOk = true;
 
     diag.topLevelKeys  = Object.keys(existing).slice(0, 20);
@@ -2064,26 +2074,26 @@ async function _cf_readFirebaseSchema(builderId) {
     diag.colCount      = existing.columns  ? Object.keys(existing.columns).length  : 0;
     diag.elemCount     = existing.elements ? Object.keys(existing.elements).length : 0;
 
-    const sec0 = Array.isArray(existing.sections) ? existing.sections[0] : null;
+    var sec0 = Array.isArray(existing.sections) ? existing.sections[0] : null;
     diag.sec0Keys        = sec0 ? Object.keys(sec0).slice(0, 14) : "none";
     diag.sec0HasElements = sec0 ? ("elements" in sec0) : null;
-    const _sArr = sec0 && Array.isArray(sec0.elements) ? sec0.elements : null;
+    var _sArr = sec0 && Array.isArray(sec0.elements) ? sec0.elements : null;
     diag.sec0ElementsLen = _sArr ? _sArr.length : (sec0 && "elements" in sec0 ? "non-array" : "key-missing");
-    const _s0e0 = _sArr?.[0] ?? null;
+    var _s0e0 = _sArr?.[0] ?? null;
     diag.sec0El0Keys        = _s0e0 ? Object.keys(_s0e0).slice(0, 10) : (_sArr?.length === 0 ? "empty-array" : "n/a");
     diag.sec0El0HasMeta     = _s0e0 ? ("metaData" in _s0e0) : false;
     diag.sec0El0HasElements = _s0e0 ? ("elements" in _s0e0) : false;
 
-    const row0 = existing.rows ? Object.values(existing.rows)[0] : null;
+    var row0 = existing.rows ? Object.values(existing.rows)[0] : null;
     diag.row0Keys        = row0 ? Object.keys(row0).slice(0, 10)    : "none";
     diag.row0HasElements = row0 ? ("elements" in row0)               : false;
     diag.row0MetaKeys    = row0?.metaData ? Object.keys(row0.metaData).slice(0, 10) : "none";
 
-    const col0 = existing.columns ? Object.values(existing.columns)[0] : null;
+    var col0 = existing.columns ? Object.values(existing.columns)[0] : null;
     diag.col0Keys        = col0 ? Object.keys(col0).slice(0, 10)    : "none";
     diag.col0HasElements = col0 ? ("elements" in col0)               : false;
 
-    const elem0 = existing.elements ? Object.values(existing.elements)[0] : null;
+    var elem0 = existing.elements ? Object.values(existing.elements)[0] : null;
     diag.elem0Keys        = elem0 ? Object.keys(elem0).slice(0, 10)  : "none";
     diag.elem0HasElements = elem0 ? ("elements" in elem0)            : false;
 
@@ -2112,59 +2122,59 @@ async function _cf_readFirebaseSchema(builderId) {
  * Returns { ok, diag } serialised as JSON.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_roundtripFirebaseWrite(builderId) {
-  const diag = {};
+  var diag = {};
   try {
     /* 1. Find revexBackendService */
-    const appEl = document.querySelector("#app");
-    let revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    var appEl = document.querySelector("#app");
+    var revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
     if (!revex) {
-      for (const ai of Object.values(window.app ?? {})) {
-        const r = ai?.appContext?.config?.globalProperties?.revexBackendService;
+      for (var ai of Object.values(window.app ?? {})) {
+        var r = ai?.appContext?.config?.globalProperties?.revexBackendService;
         if (r && typeof r.get === "function") { revex = r; break; }
       }
     }
     if (!revex) return JSON.stringify({ ok: false, error: "revex not found — builder must be fully loaded", diag });
 
     /* 2. Fetch GHL page metadata → downloadUrl */
-    let metadata = null;
+    var metadata = null;
     try {
-      const r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
+      var r = await revex.get(`https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`);
       metadata = r?.data ?? r ?? null;
     } catch (_) {
       try {
-        const r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
+        var r2 = await revex.get(`https://backend.leadconnectorhq.com/funnels/page/${builderId}`);
         metadata = r2?.data ?? r2 ?? null;
       } catch (_2) {}
     }
-    const downloadUrl = metadata?.pageDataDownloadUrl ?? null;
+    var downloadUrl = metadata?.pageDataDownloadUrl ?? null;
     diag.metaOk       = !!metadata;
     diag.hasDownloadUrl = !!downloadUrl;
     if (!downloadUrl) return JSON.stringify({ ok: false, error: "no downloadUrl in GHL metadata", diag });
 
     /* 3. Parse Firebase bucket + objectPath */
-    const fbMatch = downloadUrl.match(
+    var fbMatch = downloadUrl.match(
       /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
     );
     if (!fbMatch) return JSON.stringify({ ok: false, error: "could not parse Firebase URL", diag });
-    const bucket     = decodeURIComponent(fbMatch[1]);
-    const objectPath = decodeURIComponent(fbMatch[2]);
+    var bucket     = decodeURIComponent(fbMatch[1]);
+    var objectPath = decodeURIComponent(fbMatch[2]);
     diag.bucket = bucket.slice(0, 60);
 
     /* 4. Get Firebase auth token (same v8/IDB logic as Approach 2) */
-    let idToken = null;
-    const tokenDiag = [];
+    var idToken = null;
+    var tokenDiag = [];
     try {
       if (typeof firebase !== "undefined" && firebase.apps?.length) {
-        const user = firebase.auth().currentUser;
+        var user = firebase.auth().currentUser;
         if (user) { idToken = await user.getIdToken(true); tokenDiag.push("v8"); }
       }
     } catch (te1) { tokenDiag.push(`v8-err:${String(te1).slice(0, 30)}`); }
     if (!idToken) {
       try {
-        for (const val of Object.values(window)) {
+        for (var val of Object.values(window)) {
           if (!val || typeof val !== "object") continue;
           if (typeof val.auth === "function") {
-            const auth = val.auth();
+            var auth = val.auth();
             if (auth?.currentUser) { idToken = await auth.currentUser.getIdToken(true); tokenDiag.push("win-prop"); break; }
           }
         }
@@ -2173,19 +2183,19 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     if (!idToken) {
       try {
         idToken = await new Promise((resolve) => {
-          const req = indexedDB.open("firebaseLocalStorageDb");
+          var req = indexedDB.open("firebaseLocalStorageDb");
           req.onerror = () => resolve(null);
           req.onsuccess = (evt) => {
-            const db = evt.target.result;
+            var db = evt.target.result;
             if (!db.objectStoreNames.contains("firebaseLocalStorage")) { db.close(); resolve(null); return; }
-            const tx    = db.transaction("firebaseLocalStorage", "readonly");
-            const store = tx.objectStore("firebaseLocalStorage");
-            const getAll = store.getAll();
+            var tx    = db.transaction("firebaseLocalStorage", "readonly");
+            var store = tx.objectStore("firebaseLocalStorage");
+            var getAll = store.getAll();
             getAll.onerror   = () => { db.close(); resolve(null); };
             getAll.onsuccess = (e2) => {
               db.close();
-              for (const rec of (e2.target.result ?? [])) {
-                const token = rec?.value?.stsTokenManager?.accessToken;
+              for (var rec of (e2.target.result ?? [])) {
+                var token = rec?.value?.stsTokenManager?.accessToken;
                 if (token) { resolve(token); return; }
               }
               resolve(null);
@@ -2199,12 +2209,12 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     if (!idToken) return JSON.stringify({ ok: false, error: "no Firebase auth token found", diag });
 
     /* 5. Read EXISTING Firebase page data */
-    const readRes = await fetch(downloadUrl, {
+    var readRes = await fetch(downloadUrl, {
       headers: { "Authorization": `Firebase ${idToken}` },
       signal:  AbortSignal.timeout(8000),
     });
     if (!readRes.ok) return JSON.stringify({ ok: false, error: `read failed HTTP ${readRes.status}`, diag });
-    const existing = await readRes.json();
+    var existing = await readRes.json();
     diag.readOk = true;
 
     /* 6. DEEP structural probes — capture GHL's own exact schema ─────────── */
@@ -2216,7 +2226,7 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     diag.elemCount      = existing.elements ? Object.keys(existing.elements).length : 0;
 
     /* First section */
-    const firstSec = Array.isArray(existing.sections) && existing.sections[0];
+    var firstSec = Array.isArray(existing.sections) && existing.sections[0];
     diag.firstSecTopKeys      = firstSec ? Object.keys(firstSec).slice(0, 14) : "none";
     diag.firstSecMetaKeys     = firstSec?.metaData ? Object.keys(firstSec.metaData).slice(0, 14) : "none";
     /* KEY diagnostic: does a REAL GHL section in Firebase carry an `elements` array?
@@ -2226,15 +2236,15 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     /* v2.34.0: capture native sec0.metaData.child — is it empty or populated?
      * If empty [], it confirms GHL uses elements array only and child refs are not needed.
      * If populated, it tells us what IDs are expected (even though rows dict is empty).  */
-    const _sec0Child = Array.isArray(firstSec?.metaData?.child) ? firstSec.metaData.child : null;
+    var _sec0Child = Array.isArray(firstSec?.metaData?.child) ? firstSec.metaData.child : null;
     diag.sec0MetaChildLen    = _sec0Child !== null ? _sec0Child.length : "no-array";
     diag.sec0MetaChildSample = _sec0Child ? _sec0Child.slice(0, 2) : "none";
 
     /* Deep probe: what does section[0].elements[0] actually look like?
      * Critical for deciding whether elements are shallow rows, deep trees, or IDs.
      * Only meaningful on pages with real content (non-empty sections).             */
-    const _sec0ElArr = firstSec && Array.isArray(firstSec.elements) ? firstSec.elements : null;
-    const _sec0El0   = _sec0ElArr?.[0] ?? null;
+    var _sec0ElArr = firstSec && Array.isArray(firstSec.elements) ? firstSec.elements : null;
+    var _sec0El0   = _sec0ElArr?.[0] ?? null;
     diag.sec0ElementsLength       = _sec0ElArr
       ? _sec0ElArr.length
       : (firstSec && "elements" in firstSec ? "non-array" : "key-missing");
@@ -2250,13 +2260,13 @@ async function _cf_roundtripFirebaseWrite(builderId) {
       : "n/a";
 
     /* First row */
-    const firstRow = existing.rows ? Object.values(existing.rows)[0] : null;
+    var firstRow = existing.rows ? Object.values(existing.rows)[0] : null;
     diag.firstRowTopKeys      = firstRow ? Object.keys(firstRow).slice(0, 14)                         : "none";
     diag.firstRowMetaKeys     = firstRow?.metaData ? Object.keys(firstRow.metaData).slice(0, 14)     : "none";
     diag.firstRowHasElements  = firstRow ? ("elements" in firstRow)                                   : false;
 
     /* First column — CRITICAL: does GHL put `elements` at top level on cols? */
-    const firstCol = existing.columns ? Object.values(existing.columns)[0] : null;
+    var firstCol = existing.columns ? Object.values(existing.columns)[0] : null;
     diag.firstColTopKeys          = firstCol ? Object.keys(firstCol).slice(0, 14)                       : "none";
     diag.firstColMetaKeys         = firstCol?.metaData ? Object.keys(firstCol.metaData).slice(0, 14)   : "none";
     diag.firstColHasElements      = firstCol ? ("elements" in firstCol)                                 : false;
@@ -2264,7 +2274,7 @@ async function _cf_roundtripFirebaseWrite(builderId) {
       ? Object.keys(firstCol.metaData.element).slice(0, 14) : "none";
 
     /* First element — CRITICAL: does GHL's own element have top-level `elements`? */
-    const firstElem = existing.elements ? Object.values(existing.elements)[0] : null;
+    var firstElem = existing.elements ? Object.values(existing.elements)[0] : null;
     diag.firstElemTopKeys          = firstElem ? Object.keys(firstElem).slice(0, 14)                       : "none";
     diag.firstElemMetaKeys         = firstElem?.metaData ? Object.keys(firstElem.metaData).slice(0, 14)   : "none";
     diag.firstElemHasElements      = firstElem ? ("elements" in firstElem)                                 : false;
@@ -2287,7 +2297,7 @@ async function _cf_roundtripFirebaseWrite(builderId) {
 
     /* 6b. Test if download URL is publicly accessible WITHOUT auth (as GHL reads it) */
     try {
-      const pubBefore = await fetch(downloadUrl, {
+      var pubBefore = await fetch(downloadUrl, {
         signal: AbortSignal.timeout(4000),
       });
       diag.publicReadBefore = { status: pubBefore.status, ok: pubBefore.ok };
@@ -2298,11 +2308,11 @@ async function _cf_roundtripFirebaseWrite(builderId) {
      * path components, which is what Firebase Storage REST API requires.
      * NOTE: The old approach of .split("/").map(encodeURIComponent).join("/")
      * was WRONG — it kept literal "/" separators → Firebase returned 400.     */
-    const encodedPath = encodeURIComponent(objectPath);
-    const uploadEp =
+    var encodedPath = encodeURIComponent(objectPath);
+    var uploadEp =
       `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
       `/o?uploadType=media&name=${encodeURIComponent(objectPath)}`;
-    const writeRes = await fetch(uploadEp, {
+    var writeRes = await fetch(uploadEp, {
       method:  "POST",
       headers: {
         "Content-Type":  "application/json",
@@ -2313,17 +2323,17 @@ async function _cf_roundtripFirebaseWrite(builderId) {
     diag.writeStatus = writeRes.status;
     diag.writeOk     = writeRes.ok;
     if (!writeRes.ok) {
-      const errText = await writeRes.text().catch(() => "");
+      var errText = await writeRes.text().catch(() => "");
       diag.writeError = errText.slice(0, 100);
       return JSON.stringify({ ok: false, error: `write failed HTTP ${writeRes.status}`, diag });
     }
 
     /* 7b. Parse upload response → check if new download token was generated */
-    let newFirebaseToken = null;
+    var newFirebaseToken = null;
     try {
-      const uploadRespJson = await writeRes.clone().json().catch(() => ({}));
+      var uploadRespJson = await writeRes.clone().json().catch(() => ({}));
       newFirebaseToken     = uploadRespJson.downloadTokens ?? null;
-      const oldTokenCheck  = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+      var oldTokenCheck  = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
       diag.oldToken     = oldTokenCheck ? oldTokenCheck.slice(0, 20) + "…" : "none-in-url";
       diag.newToken     = newFirebaseToken ? newFirebaseToken.slice(0, 20) + "…" : "none-in-resp";
       diag.tokenChanged = newFirebaseToken ? (newFirebaseToken !== oldTokenCheck) : false;
@@ -2334,23 +2344,23 @@ async function _cf_roundtripFirebaseWrite(builderId) {
      * cached pageDataDownloadUrl still has the OLD token → reads return 400.
      * We PATCH the object metadata to restore the OLD token so GHL's cached
      * URL stays valid — no GHL backend update needed.                          */
-    const oldTokenForPatch = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
-    const metaEpR =
+    var oldTokenForPatch = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
+    var metaEpR =
       `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedPath}`;
-    let patchSucceededR = false;
+    var patchSucceededR = false;
     if (oldTokenForPatch) {
       /* Format 1: nested metadata field — verify returned token matches */
       try {
-        const pr1 = await fetch(metaEpR, {
+        var pr1 = await fetch(metaEpR, {
           method:  "PATCH",
           headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
           body:    JSON.stringify({ metadata: { downloadTokens: oldTokenForPatch } }),
         });
         diag.patchStatus1 = pr1.status;
         if (pr1.ok) {
-          const pr1Body        = await pr1.json().catch(() => ({}));
-          const returnedTokenR = pr1Body.metadata?.downloadTokens ?? pr1Body.downloadTokens ?? null;
-          const tokenVerifiedR = returnedTokenR === oldTokenForPatch;
+          var pr1Body        = await pr1.json().catch(() => ({}));
+          var returnedTokenR = pr1Body.metadata?.downloadTokens ?? pr1Body.downloadTokens ?? null;
+          var tokenVerifiedR = returnedTokenR === oldTokenForPatch;
           diag.patchTokenOk    = tokenVerifiedR;
           if (tokenVerifiedR) {
             patchSucceededR = true;
@@ -2365,16 +2375,16 @@ async function _cf_roundtripFirebaseWrite(builderId) {
       /* Format 2: top-level field, if format 1 failed/unverified */
       if (!patchSucceededR) {
         try {
-          const pr2 = await fetch(metaEpR, {
+          var pr2 = await fetch(metaEpR, {
             method:  "PATCH",
             headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
             body:    JSON.stringify({ downloadTokens: oldTokenForPatch }),
           });
           diag.patchStatus2 = pr2.status;
           if (pr2.ok) {
-            const pr2Body         = await pr2.json().catch(() => ({}));
-            const returnedToken2R = pr2Body.metadata?.downloadTokens ?? pr2Body.downloadTokens ?? null;
-            const tokenVerified2R = returnedToken2R === oldTokenForPatch;
+            var pr2Body         = await pr2.json().catch(() => ({}));
+            var returnedToken2R = pr2Body.metadata?.downloadTokens ?? pr2Body.downloadTokens ?? null;
+            var tokenVerified2R = returnedToken2R === oldTokenForPatch;
             diag.patchTokenOk     = tokenVerified2R;
             if (tokenVerified2R) {
               patchSucceededR = true;
@@ -2391,8 +2401,8 @@ async function _cf_roundtripFirebaseWrite(builderId) {
         diag.patchToken = "failed";
         /* Fallback: revex.put with funnelId from Firebase path */
         if (revex && newFirebaseToken) {
-          const funnelIdFromPath = objectPath.split("/")[1] ?? "";
-          const newPublicUrl = downloadUrl.replace(/\?.*$/, "") + `?alt=media&token=${newFirebaseToken}`;
+          var funnelIdFromPath = objectPath.split("/")[1] ?? "";
+          var newPublicUrl = downloadUrl.replace(/\?.*$/, "") + `?alt=media&token=${newFirebaseToken}`;
           diag.newPublicUrl = newPublicUrl.slice(0, 120);
           try {
             await revex.put(
@@ -2413,20 +2423,20 @@ async function _cf_roundtripFirebaseWrite(builderId) {
 
     /* 7d. Test if old download URL is now accessible again (after PATCH) */
     try {
-      const pubAfter = await fetch(downloadUrl, { signal: AbortSignal.timeout(4000) });
+      var pubAfter = await fetch(downloadUrl, { signal: AbortSignal.timeout(4000) });
       diag.publicReadAfterPatch = { status: pubAfter.status, ok: pubAfter.ok };
     } catch (_pa) { diag.publicReadAfterPatch = { error: "timeout-or-cors" }; }
 
     /* 8. Verify auth-read after write */
     await new Promise(r => setTimeout(r, 600));
-    const vrRes = await fetch(downloadUrl, {
+    var vrRes = await fetch(downloadUrl, {
       cache:   "no-store",
       headers: { "Authorization": `Firebase ${idToken}` },
       signal:  AbortSignal.timeout(5000),
     });
     diag.verifyStatus = vrRes.status;
     if (vrRes.ok) {
-      const vd = await vrRes.json();
+      var vd = await vrRes.json();
       diag.verifyElemCount = vd.elements ? Object.keys(vd.elements).length : 0;
       diag.verifySecCount  = Array.isArray(vd.sections) ? vd.sections.length : 0;
       diag.verifyId        = vd.id ?? "missing";
