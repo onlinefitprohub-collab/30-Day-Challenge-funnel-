@@ -1,0 +1,47 @@
+v2.49.4 — Two bugs only. No other changes.
+
+Fix 1: Write AI content to the NEW cloned page's Firebase path
+
+In v2.49.3, the clone IS working (new page ID resolved, builder navigates there). But the Firebase write still goes to the ORIGINAL page's path (dos0mk2Pilqza62ZKMAx). After the clone, the write must go to the NEW page's Firebase path.
+
+After resolving newPageId (from the funnel re-fetch), do the following BEFORE writing:
+
+Call GET https://backend.leadconnectorhq.com/funnels/page/{newPageId} to get the new page's metadata
+Extract the Firebase download URL from the metadata (same field as used for the original page)
+Parse the bucket and object path from that URL — this becomes the write target
+Store diag.approach2.newPageFirebasePath for debug
+Then when building writePayload, update:
+
+id: newPageId (NOT the original builderId)
+Every section in writePayload.sections: set section.pageId = newPageId
+This ensures the Firebase file for the new page has correct IDs so GHL doesn't try to cross-reference the original page.
+
+Also update diag.approach2.writeTarget to log which page ID is being written to, so the debug output shows it clearly.
+
+Fix 2: SyntaxError is in content/clonelevel-inject.js — fix THAT file
+
+The SyntaxError is:
+
+Uncaught SyntaxError: Unexpected token 'const'
+at chrome-extension://.../content/clonelevel-inject.js:1:13706
+
+This is chrome-extension/content/clonelevel-inject.js — a different file from background.js. Replit has been running grep on background.js but the error is in the content script.
+
+Do the same global const/let → var replacement on chrome-extension/content/clonelevel-inject.js:
+
+sed -i 's/\bconst /var /g; s/\blet /var /g; s/for (const /for (var /g; s/for (let /for (var /g' chrome-extension/content/clonelevel-inject.js
+
+Then verify with:
+
+grep -n "\bconst \|\blet \|for (const \|for (let " chrome-extension/content/clonelevel-inject.js
+
+Must return zero lines.
+
+Version: Bump to 2.49.4 in manifest.json, background.js, popup.js.
+
+Done looks like:
+
+Page Load Errors: 0 (SyntaxError gone)
+A2 writeTarget: DEtYj2rygUG1UlLGjtBE (writing to new page, not original)
+A2 newPageFirebasePath: funnel/.../page/DEtYj2rygUG1UlLGjtBE/...
+GHL builder loads the new page without hanging
