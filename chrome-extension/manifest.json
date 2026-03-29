@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.49.4",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.49.4: Clone write uses id=newPageId + section.pageId=newPageId. Global const/let→var in content.js and bridge.js. No API key needed.",
+  "version": "2.50.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.50.0: Template-based inject — reads native GHL Firebase payload, replaces text values with AI texts. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

@@ -312,8 +312,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.49.4 ===");
-  lines.push("REMINDER: If version above is NOT 2.49.4, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.50.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.50.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -399,6 +399,11 @@ async function showInjectDebug() {
           if (a2.patchReturnedToken !== undefined) lines.push(`A2 patchReturnedToken: ${a2.patchReturnedToken} (mismatch!)`);
           /* legacy a2.metaUpdate field from old fallback path */
           if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate (legacy-fallback): ${a2.metaUpdate}`);
+          /* v2.50.0: template-based inject diagnostics */
+          if (a2.templateMode !== undefined)     lines.push(`A2 templateMode: ${a2.templateMode} nativeReadStatus=${a2.nativeReadStatus ?? "?"} nativeSecs=${a2.nativeSectionCount ?? "?"}`);
+          if (a2.replaceableCount !== undefined) lines.push(`A2 replaceableCount: ${a2.replaceableCount} aiTextCount: ${a2.aiTextCount ?? "?"} replacedCount: ${a2.replacedCount ?? "?"}`);
+          if (a2.templateFallback !== undefined) lines.push(`A2 templateFallback: ${a2.templateFallback} ← native read failed, used AI elements`);
+          if (a2.nativeReadErr !== undefined)    lines.push(`A2 nativeReadErr: ${a2.nativeReadErr}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
         }

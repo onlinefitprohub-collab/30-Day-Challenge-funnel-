@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.49.4 — Clone write uses id=newPageId + section.pageId=newPageId. Global const/let→var in content.js + bridge.js. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.50.0 — Template-based inject: reads native Firebase payload, replaces text values with AI texts. Bypasses element-type validation. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.49.4 — Clone write uses id=newPageId + section.pageId=newPageId. Global const/let→var in content.js + bridge.js. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.50.0 — Template-based inject: reads native Firebase payload, replaces text values with AI texts. Bypasses element-type validation. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -894,10 +894,12 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
 
-            /* ── v2.49.3: Clone-first inject flow ────────────────────────────────────── *
+            /* ── v2.50.0: Clone-first inject flow (template-based) ───────────────────── *
              * Correct endpoint: /funnels/funnel/clone-funnel-step/ (with /funnel/).     *
              * stepId resolved via GET /funnels/funnel/fetch/{funnelId} (real step UUID).*
-             * Post-clone: newPageId from response stepIds[0] + funnel re-fetch.        */
+             * Post-clone: newPageId from response stepIds[0] + funnel re-fetch.        *
+             * v2.50.0: Read native Firebase payload for cloned page → replace text     *
+             * values with AI texts → write back. Bypasses element-type validation.     */
             if (revex) {
               try {
                 // Get userId from Vuex store
@@ -1007,27 +1009,125 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         var npPath     = decodeURIComponent(npFbMatch[2]);
                         var npUploadEp = 'https://firebasestorage.googleapis.com/v0/b/' +
                           encodeURIComponent(npBucket) + '/o?uploadType=media&name=' + encodeURIComponent(npPath);
-                        /* v2.49.1: Pre-write validator — confirms AI content (not GHL native) */
-                        diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
-                          + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
-                          + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
-                        /* v2.49.4 Fix 1: Build a clone-specific payload with id=newPageId and
-                         * section.pageId=newPageId so the written data is fully keyed to the NEW page,
-                         * not the original builderId. Only applies to this clone-first branch. */
-                        var cloneWriteSections = sectionsWithContext.map(function(sec) {
-                          return Object.assign({}, sec, { pageId: newPageId });
-                        });
-                        var cloneWritePayload = Object.assign({}, writePayload, {
-                          id:       newPageId,
-                          sections: cloneWriteSections,
-                        });
-                        diag.approach2.cloneWritePayloadId  = newPageId;
-                        diag.approach2.writeTarget          = newPageId;
-                        diag.approach2.newPageFirebasePath  = npPath;
+                        diag.approach2.writeTarget         = newPageId;
+                        diag.approach2.newPageFirebasePath = npPath;
+
+                        /* ── v2.50.0: Template-based injection ─────────────────────────────────── *
+                         * Step 1 — Read native Firebase payload for the newly cloned page.        *
+                         * GHL's clone creates a fully valid element structure — we reuse it and   *
+                         * only swap in our AI text values. This bypasses element-type validation. */
+                        var nativePayload = null;
+                        try {
+                          var npReadRes = await fetch(_npData.pageDataDownloadUrl, {
+                            method:  'GET',
+                            headers: { 'Authorization': 'Firebase ' + idToken },
+                          });
+                          if (npReadRes.ok) {
+                            nativePayload = await npReadRes.json();
+                            diag.approach2.nativeReadStatus  = npReadRes.status;
+                            diag.approach2.nativeSectionCount = nativePayload && nativePayload.sections
+                              ? nativePayload.sections.length : 0;
+                          } else {
+                            diag.approach2.nativeReadStatus = npReadRes.status;
+                          }
+                        } catch(_nrErr) {
+                          diag.approach2.nativeReadErr = String(_nrErr).slice(0, 80);
+                        }
+
+                        /* ── Step 2 — Collect AI text strings from pageData ─────────────────── *
+                         * Recursively traverse pageData in property order.                       *
+                         * Collect non-empty strings that are NOT: URLs, hex/alphanumeric IDs,   *
+                         * or CSS values (px/em/%, colour tokens, etc.).                          */
+                        var aiTexts = [];
+                        (function collectAiTexts(obj) {
+                          if (!obj || typeof obj !== 'object') return;
+                          var keys = Object.keys(obj);
+                          for (var _ki = 0; _ki < keys.length; _ki++) {
+                            var _kv = obj[keys[_ki]];
+                            if (typeof _kv === 'string') {
+                              var _s = _kv.trim();
+                              if (_s.length < 2) continue;
+                              /* Skip URLs */
+                              if (/^https?:\/\//i.test(_s)) continue;
+                              /* Skip pure hex/alphanumeric IDs (no spaces, 8+ chars) */
+                              if (/^[a-zA-Z0-9_\-]{8,}$/.test(_s) && !/\s/.test(_s)) continue;
+                              /* Skip CSS values: numbers with units, colour tokens, shorthand */
+                              if (/^[\d\s,.\-]*(px|em|rem|%|vh|vw|pt)/.test(_s)) continue;
+                              if (/^#[0-9a-fA-F]{3,8}$/.test(_s)) continue;
+                              if (/^rgba?\(/.test(_s)) continue;
+                              aiTexts.push(_s);
+                            } else if (_kv && typeof _kv === 'object') {
+                              collectAiTexts(_kv);
+                            }
+                          }
+                        })(pageData);
+                        diag.approach2.aiTextCount = aiTexts.length;
+
+                        /* ── Step 3 — Find replaceable elements in native payload ──────────── *
+                         * Traverse nativePayload.sections[].elements[] in document order.      *
+                         * Target: extra.content.value is non-empty AND meta is a text type.    */
+                        var replaceableElements = [];
+                        var _replaceableMetas = { heading: 1, paragraph: 1, text: 1, button: 1, 'sub-headline': 1 };
+                        if (nativePayload && Array.isArray(nativePayload.sections)) {
+                          for (var _rsi = 0; _rsi < nativePayload.sections.length; _rsi++) {
+                            var _rsec = nativePayload.sections[_rsi];
+                            var _relems = Array.isArray(_rsec.elements) ? _rsec.elements : [];
+                            for (var _rei = 0; _rei < _relems.length; _rei++) {
+                              var _rel = _relems[_rei];
+                              if (_rel && _rel.extra && _rel.extra.content &&
+                                  typeof _rel.extra.content.value === 'string' &&
+                                  _rel.extra.content.value.trim().length > 0 &&
+                                  _replaceableMetas[_rel.meta]) {
+                                replaceableElements.push(_rel);
+                              }
+                            }
+                          }
+                        }
+                        diag.approach2.replaceableCount = replaceableElements.length;
+
+                        /* ── Step 4 — Replace text values ───────────────────────────────────── */
+                        var replacedCount = 0;
+                        for (var _rpi = 0; _rpi < replaceableElements.length; _rpi++) {
+                          if (!aiTexts[_rpi]) break;
+                          replaceableElements[_rpi].extra.content.value = aiTexts[_rpi];
+                          if (replaceableElements[_rpi].element &&
+                              replaceableElements[_rpi].element.extra) {
+                            replaceableElements[_rpi].element.extra.content =
+                              replaceableElements[_rpi].element.extra.content || {};
+                            replaceableElements[_rpi].element.extra.content.value = aiTexts[_rpi];
+                          }
+                          replacedCount++;
+                        }
+                        diag.approach2.replacedCount = replacedCount;
+                        diag.approach2.templateMode  = true;
+
+                        /* ── Step 5 — Build write payload from modified native ────────────── *
+                         * If native read failed, fall back to the old AI-elements approach.   */
+                        var npWritePayload;
+                        if (nativePayload) {
+                          nativePayload.id = newPageId;
+                          if (Array.isArray(nativePayload.sections)) {
+                            nativePayload.sections = nativePayload.sections.map(function(sec) {
+                              return Object.assign({}, sec, { pageId: newPageId });
+                            });
+                          }
+                          npWritePayload = nativePayload;
+                        } else {
+                          /* Fallback: use AI-generated elements (v2.49.4 behaviour) */
+                          var cloneWriteSections = sectionsWithContext.map(function(sec) {
+                            return Object.assign({}, sec, { pageId: newPageId });
+                          });
+                          npWritePayload = Object.assign({}, writePayload, {
+                            id:       newPageId,
+                            sections: cloneWriteSections,
+                          });
+                          diag.approach2.templateFallback = 'ai-elements';
+                        }
+
                         var npWriteRes = await fetch(npUploadEp, {
                           method:  'POST',
                           headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
-                          body:    JSON.stringify(cloneWritePayload),
+                          body:    JSON.stringify(npWritePayload),
                         });
                         diag.approach2.cloneWriteStatus = npWriteRes.status;
                         if (npWriteRes.ok) {
