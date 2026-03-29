@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.49.3 — Correct clone URL (/funnel/ restored), body, stepId lookup, userId from Vuex, post-clone newPageId. Global const/let→var. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.49.4 — Clone write uses id=newPageId + section.pageId=newPageId. Global const/let→var in content.js + bridge.js. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.49.3 — Correct clone URL (/funnel/ restored), body, stepId lookup, userId from Vuex, post-clone newPageId. Global const/let→var. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.49.4 — Clone write uses id=newPageId + section.pageId=newPageId. Global const/let→var in content.js + bridge.js. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1021,7 +1021,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                           id:       newPageId,
                           sections: cloneWriteSections,
                         });
-                        diag.approach2.cloneWritePayloadId = newPageId;
+                        diag.approach2.cloneWritePayloadId  = newPageId;
+                        diag.approach2.writeTarget          = newPageId;
+                        diag.approach2.newPageFirebasePath  = npPath;
                         var npWriteRes = await fetch(npUploadEp, {
                           method:  'POST',
                           headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
