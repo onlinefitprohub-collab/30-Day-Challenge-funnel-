@@ -368,7 +368,7 @@ async function _cf_cloneFunnelStep(req) {
     }
 
     var ok = !data?.status || data?.status === "ok" || status < 300 || status === 0;
-    return JSON.stringify({ ok, status, raw: JSON.stringify(data).slice(0, 400), newStepId, newPageId });
+    return JSON.stringify({ ok, status, raw: JSON.stringify(data).slice(0, 400), resolvedStepId: stepId, newStepId, newPageId });
   } catch(e) {
     var status = e?.response?.status;
     var data   = e?.response?.data;
