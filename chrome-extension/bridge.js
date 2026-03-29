@@ -1,4 +1,4 @@
-// bridge.js v2.12.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.13.0 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
@@ -90,6 +90,24 @@
     window.__cfApiInterceptorInstalled = true;
     window.__cfApiLog = window.__cfApiLog || [];
 
+    /* v2.49.0: Firebase auth/token URLs that must NEVER be intercepted.
+     * If we intercept these, GHL cannot refresh its Firebase token and
+     * Firestore streaming fails → indefinite loading spinner.           */
+    var CF_PASSTHROUGH_URLS = [
+      'securetoken.googleapis.com',
+      'accounts:signInWithCustomToken',
+      'accounts:lookup',
+      'identitytoolkit.googleapis.com',
+      'firebase:fetch',
+    ];
+    function cfShouldPassthrough(url) {
+      if (!url) return false;
+      for (var _cfPi = 0; _cfPi < CF_PASSTHROUGH_URLS.length; _cfPi++) {
+        if (url.indexOf(CF_PASSTHROUGH_URLS[_cfPi]) !== -1) return true;
+      }
+      return false;
+    }
+
     /* Noise-list: domains we never want even for POST/PUT/PATCH */
     var SKIP_DOMAINS = [
       "firebasestorage.googleapis.com",
@@ -125,6 +143,8 @@
     var origFetch = window.fetch;
     window.fetch = function(input, init) {
       var url = (input && typeof input === "object" && input.url) ? input.url : String(input);
+      /* v2.49.0: Always pass through Firebase auth/token URLs untouched */
+      if (cfShouldPassthrough(url)) return origFetch.apply(this, arguments);
       var method = (init && init.method) ? init.method.toUpperCase()
                  : (input && typeof input === "object" && input.method) ? input.method.toUpperCase()
                  : "GET";
@@ -173,31 +193,35 @@
       var isPageMeta = method === "GET" && url.indexOf("leadconnectorhq.com/funnels/page/") !== -1;
       if (isPageMeta) {
         var pmProm = origFetch.apply(this, arguments);
-        pmProm.then(function(pmResp) {
-          if (pmResp.status === 200) {
-            var pmClone = pmResp.clone();
-            pmClone.json().then(function(pmBody) {
-              try {
-                window.__cfPageMetaParsed = {
-                  id:                   pmBody.id ?? pmBody._id ?? null,
-                  pageDataDownloadUrl:  pmBody.pageDataDownloadUrl ?? pmBody.pageDownloadUrl ?? null,
-                  pageDataUrl:          pmBody.pageDataUrl ?? pmBody.pageDownloadPath ?? null,
-                  funnelId:             pmBody.funnelId ?? null,
-                  locationId:           pmBody.locationId ?? null,
-                  hasSections:          Array.isArray(pmBody.sections) && pmBody.sections.length > 0,
-                  topKeys:              Object.keys(pmBody).join(","),
-                  updatedAt:            pmBody.updatedAt ?? null,
-                  fullBody:             pmBody,
-                  raw:                  JSON.stringify(pmBody),
-                  capturedAt:           Date.now(),
-                  url:                  url.slice(0, 200),
-                };
-              } catch(_pmE) {
-                window.__cfPageMetaParsed = { error: String(_pmE).slice(0, 100), url: url.slice(0, 200) };
+        try {
+          pmProm.then(function(pmResp) {
+            try {
+              if (pmResp.status === 200) {
+                var pmClone = pmResp.clone();
+                pmClone.json().then(function(pmBody) {
+                  try {
+                    window.__cfPageMetaParsed = {
+                      id:                   pmBody.id ?? pmBody._id ?? null,
+                      pageDataDownloadUrl:  pmBody.pageDataDownloadUrl ?? pmBody.pageDownloadUrl ?? null,
+                      pageDataUrl:          pmBody.pageDataUrl ?? pmBody.pageDownloadPath ?? null,
+                      funnelId:             pmBody.funnelId ?? null,
+                      locationId:           pmBody.locationId ?? null,
+                      hasSections:          Array.isArray(pmBody.sections) && pmBody.sections.length > 0,
+                      topKeys:              Object.keys(pmBody).join(","),
+                      updatedAt:            pmBody.updatedAt ?? null,
+                      fullBody:             pmBody,
+                      raw:                  JSON.stringify(pmBody),
+                      capturedAt:           Date.now(),
+                      url:                  url.slice(0, 200),
+                    };
+                  } catch(_pmE) {
+                    window.__cfPageMetaParsed = { error: String(_pmE).slice(0, 100), url: url.slice(0, 200) };
+                  }
+                }).catch(function() {});
               }
-            }).catch(function() {});
-          }
-        }).catch(function() {});
+            } catch(_pmRespE) {}
+          }).catch(function() {});
+        } catch(_pmCapE) {}
         return pmProm;
       }
 
@@ -206,10 +230,12 @@
        * used by GHL for page data (needed for Firestore PATCH approach).                          */
       var isFirestore = url.indexOf("firestore.googleapis.com") !== -1;
       if (isFirestore) {
-        window.__cfFirestoreStreamLog = window.__cfFirestoreStreamLog || [];
-        var fsEntry = { ts: Date.now(), method: method, url: url.slice(0, 300) };
-        window.__cfFirestoreStreamLog.push(fsEntry);
-        if (window.__cfFirestoreStreamLog.length > 20) window.__cfFirestoreStreamLog.shift();
+        try {
+          window.__cfFirestoreStreamLog = window.__cfFirestoreStreamLog || [];
+          var fsEntry = { ts: Date.now(), method: method, url: url.slice(0, 300) };
+          window.__cfFirestoreStreamLog.push(fsEntry);
+          if (window.__cfFirestoreStreamLog.length > 20) window.__cfFirestoreStreamLog.shift();
+        } catch(_fsCapE) {}
         return origFetch.apply(this, arguments);
       }
 
@@ -242,6 +268,8 @@
       var _origOpen = xhr.open.bind(xhr);
       var _origSend = xhr.send.bind(xhr);
       xhr.open = function(method, url) {
+        /* v2.49.0: Pass through Firebase auth URLs without any interception */
+        if (cfShouldPassthrough(String(url || ""))) return _origOpen.apply(xhr, arguments);
         _method = (method || "GET").toUpperCase();
         _url    = String(url || "");
         return _origOpen.apply(xhr, arguments);

@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.48.0 — write to new UUID Firebase path + POST version to GHL + Firestore probe + A5 Pinia mutation. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.49.0 — clone-first inject + bridge.js Firebase passthrough + Vue 3 Vuex lookup + const→var. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.48.0 — write to new UUID Firebase path + POST version to GHL + Firestore probe + A5 Pinia mutation. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.49.0 — clone-first inject + bridge.js Firebase passthrough + Vue 3 Vuex lookup + const→var. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -835,7 +835,92 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
 
-            /* v2.48.0: Generate a new UUID file path — write to a NEW file, not overwrite.
+            /* ── v2.49.0: Clone-first inject flow ────────────────────────────────────── *
+             * Root cause of all prior failures: existing page returns 304 Not Modified  *
+             * from browser cache. GHL never re-fetches Firebase Storage for cached pages.*
+             * A freshly cloned page has no cache entry → GHL fetches Firebase fresh.   *
+             * stepId and funnelId are already in fetched metadata — no extra GET needed  *
+             * unless missing.                                                            */
+            if (revex) {
+              try {
+                var cloneStepId = (metadata && (metadata.stepId || metadata.step_id)) || null;
+                var cloneUserId = (metadata && (metadata.userId || metadata.user_id)) || null;
+                if (!cloneStepId) {
+                  try {
+                    var sfResp = await revex.get('/funnels/page/' + builderId);
+                    var sfData = (sfResp && sfResp.data) ? sfResp.data : (sfResp || {});
+                    cloneStepId = sfData.stepId || sfData.step_id || null;
+                    cloneUserId = cloneUserId || sfData.userId || null;
+                  } catch(_sfE) { diag.approach2.cloneStepIdErr = String(_sfE).slice(0, 60); }
+                }
+                diag.approach2.cloneStepId = cloneStepId || 'missing';
+                if (cloneStepId) {
+                  var clonePayload = {
+                    funnelId:             funnelIdFromPath,
+                    funnelIdToImport:     funnelIdFromPath,
+                    funnels:              [funnelIdFromPath],
+                    locationId:           tabLocationId || locationId,
+                    pageIndexToImport:    '0',
+                    pageIndexToImportInto: '0',
+                    stepId:               cloneStepId,
+                    stepIdToImportInto:   cloneStepId,
+                  };
+                  if (cloneUserId) clonePayload.userId = cloneUserId;
+                  var cloneResp = await revex.post('/funnels/clone-funnel-step/', clonePayload);
+                  diag.approach2.cloneStatus = cloneResp && cloneResp.status;
+                  diag.approach2.cloneData   = JSON.stringify((cloneResp && cloneResp.data) || {}).slice(0, 200);
+
+                  /* 1-second delay so GHL backend reflects the new page */
+                  await new Promise(function(resolveClone) { setTimeout(resolveClone, 1000); });
+
+                  var lookupResp = await revex.get('/funnels/lookup/list', {
+                    params: { funnelId: funnelIdFromPath, locationId: tabLocationId || locationId, type: 'page' }
+                  });
+                  var lookupPages = (lookupResp && lookupResp.data && lookupResp.data.data)
+                    ? lookupResp.data.data : [];
+                  var newPage = lookupPages
+                    .filter(function(lp) { return lp.stepId === cloneStepId && lp._id !== builderId; })
+                    .sort(function(a, b) { return new Date(b.dateAdded) - new Date(a.dateAdded); })[0];
+
+                  if (newPage) {
+                    diag.approach2.newPageId       = newPage._id;
+                    diag.approach2.newFirebasePath = newPage.pageDataUrl;
+                    diag.approach2.newDownloadUrl  = newPage.pageDataDownloadUrl;
+
+                    var npFbMatch = (newPage.pageDataDownloadUrl || '').match(
+                      /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
+                    );
+                    if (npFbMatch) {
+                      var npBucket   = decodeURIComponent(npFbMatch[1]);
+                      var npPath     = decodeURIComponent(npFbMatch[2]);
+                      var npUploadEp = 'https://firebasestorage.googleapis.com/v0/b/' +
+                        encodeURIComponent(npBucket) + '/o?uploadType=media&name=' + encodeURIComponent(npPath);
+                      var npWriteRes = await fetch(npUploadEp, {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                        body:    JSON.stringify(writePayload),
+                      });
+                      diag.approach2.cloneWriteStatus = npWriteRes.status;
+                      if (npWriteRes.ok) {
+                        var newBuilderUrl = 'https://app.gohighlevel.com/location/' +
+                          (tabLocationId || locationId) + '/page-builder/' + newPage._id;
+                        diag.approach2.navigatedTo = newBuilderUrl;
+                        return JSON.stringify({ ok: true, method: 'firebase-clone-first', diag: diag });
+                      }
+                    } else {
+                      diag.approach2.cloneResult = 'new-page-no-fb-url';
+                    }
+                  } else {
+                    diag.approach2.cloneResult = 'new-page-not-found-after-clone lookupCount=' + lookupPages.length;
+                  }
+                }
+              } catch(_cloneErr) {
+                diag.approach2.cloneError = String(_cloneErr).slice(0, 120);
+              }
+            }
+
+            /* v2.49.0 fallback: write to a new UUID Firebase path (clone failed or no stepId) *
+             * v2.48.0: Generate a new UUID file path — write to a NEW file, not overwrite.
              * GHL caches Firebase Storage responses by URL. Overwriting the same path
              * never shows because GHL re-reads the cached (old) URL after reload.
              * Writing to a fresh UUID path means the URL has never been cached.        */
@@ -958,15 +1043,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 diag.approach2.postNewVersionResult = revex ? "no-newPublicUrl" : "no-revex";
               }
 
-              /* ── v2.48.0: Firestore REST probe ──────────────────────────────────── *
-               * Try 4 likely Firestore document paths. If GET-200, PATCH with new URL.*
-               * Firebase ID tokens can be used as Bearer tokens for Firestore REST.  */
+              /* ── v2.49.0: Firestore REST probe (read-only — PATCH blocked by security rules) *
+               * Try 4 likely Firestore document paths with GET only. Log which paths    *
+               * exist so we can identify the correct document structure for future use.  */
               try {
-                const fsFields  = { fields: {
-                  pageDataDownloadUrl: { stringValue: newPublicUrl ?? "" },
-                  pageDataUrl:         { stringValue: newFbPath },
-                  updatedAt:           { stringValue: new Date().toISOString() },
-                }};
                 const fsPaths = [
                   `pages/${builderId}`,
                   `funnel-pages/${builderId}`,
@@ -974,7 +1054,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   `builder-pages/${builderId}`,
                 ];
                 const fsBase = "https://firestore.googleapis.com/v1/projects/highlevel-backend/databases/(default)/documents/";
-                let fsResult = "all-failed";
+                let fsResult = "all-404";
                 for (const fsPath of fsPaths) {
                   try {
                     const fsGetResp = await fetch(fsBase + fsPath, {
@@ -982,13 +1062,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                       signal:  AbortSignal.timeout(4000),
                     });
                     if (fsGetResp.status === 200) {
-                      const fsPatchResp = await fetch(
-                        fsBase + fsPath + "?updateMask.fieldPaths=pageDataDownloadUrl&updateMask.fieldPaths=pageDataUrl", {
-                          method:  "PATCH",
-                          headers: { "Authorization": `Bearer ${idToken}`, "Content-Type": "application/json" },
-                          body:    JSON.stringify(fsFields),
-                        });
-                      fsResult = `GET-200:${fsPath} PATCH:${fsPatchResp.status}`;
+                      fsResult = `GET-200:${fsPath} (read-only — write blocked by security rules)`;
                       break;
                     } else {
                       fsResult = `probe-${fsGetResp.status}:${fsPath}`;
@@ -1390,152 +1464,152 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
    Probe injected into ALL frames with allFrames:true. Returns true if a live
    Pinia instance with ≥1 store exists in this frame's Vue app.                */
 function _cf_probePinia() {
-  const tryEls = [
+  var tryEls = [
     document.querySelector("#app"),
     document.documentElement,
-    ...Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3),
-  ].filter(Boolean);
-  for (const el of tryEls) {
-    const va = el.__vue_app__;
+  ].concat(Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3)).filter(Boolean);
+  for (var _pi = 0; _pi < tryEls.length; _pi++) {
+    var el = tryEls[_pi];
+    var va = el.__vue_app__;
     if (!va) continue;
-    const provides = va._context?.provides ?? {};
-    const p = provides[Symbol.for("pinia")]
-      ?? Object.values(provides).find(v => v && v._s instanceof Map)
-      ?? null;
+    var provides = (va._context && va._context.provides) ? va._context.provides : {};
+    var p = provides[Symbol.for("pinia")]
+      || (Object.values(provides).find(function(v) { return v && v._s instanceof Map; }))
+      || null;
     if (p && p._s instanceof Map && p._s.size > 0) return true;
   }
   return false;
 }
 
 /* ─── _cf_approach4VuexInFrame ────────────────────────────────────────────────
-   Approach 4: Vue 2 / Nuxt 2 Vuex direct state mutation.
-   GHL's older builder (Nuxt 2) exposes its store via window.__nuxt__.$store.
-   We find the module containing rows/columns/elements and directly patch it,
-   then trigger a re-render. This bypasses the Firebase read path entirely so
-   the builder immediately shows our content without needing an iframe reload. */
+   Approach 4: Vuex direct state mutation — Vue 3 lookup (v2.49.0).
+   GHL uses vuex.esm-bundler.js with Vue 3. Store is found via
+   vueApp.config.globalProperties.$store. Falls back to window.$store and
+   vueApp._instance.proxy.$store, then Vue 2 patterns as last resort.
+   Uses var throughout (no const/let) for safe executeScript serialization.    */
 function _cf_approach4VuexInFrame(builderId, locationId, pageData) {
-  const diag4 = { source: "vuex-frame-targeted", storeFound: false };
+  var diag4 = { source: "vuex-frame-targeted", storeFound: false };
   try {
-    /* ── 1. Locate the Vuex store ────────────────────────────────────────── */
-    let store =
-      window.__nuxt__?.$store
-      ?? window.__vue_store__
-      ?? null;
+    /* ── 1. Locate the Vuex store — Vue 3 pattern first ─────────────────── */
+    var mountEl = document.querySelector('#__nuxt') ||
+                  document.querySelector('[data-v-app]') ||
+                  document.querySelector('#app');
+    var vueApp = mountEl && mountEl.__vue_app__;
+    var vuexStore = (vueApp &&
+                     vueApp.config &&
+                     vueApp.config.globalProperties &&
+                     vueApp.config.globalProperties.$store) || null;
 
-    /* Fallback: walk Vue 2 component tree from #app */
-    if (!store) {
-      const root = document.querySelector("#app")?.__vue__;
-      if (root) store = root.$store ?? root.$root?.$store ?? null;
-    }
-    /* Fallback: scan all Vue roots in DOM */
-    if (!store) {
-      for (const el of document.querySelectorAll("*")) {
-        const v = el.__vue__;
-        if (v && v.$store) { store = v.$store; break; }
-      }
+    if (!vuexStore) vuexStore = window.$store || null;
+
+    if (!vuexStore && vueApp) {
+      try {
+        var rootInstance = vueApp._instance;
+        if (rootInstance && rootInstance.proxy && rootInstance.proxy.$store) {
+          vuexStore = rootInstance.proxy.$store;
+        }
+      } catch(_vri) {}
     }
 
-    if (!store) {
-      diag4.result = "no vuex store found";
-      return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+    /* Vue 2 fallbacks */
+    if (!vuexStore) {
+      vuexStore = (window.__nuxt__ && window.__nuxt__.$store) || window.__vue_store__ || null;
+    }
+    if (!vuexStore) {
+      var rootEl = document.querySelector('#app');
+      var rootVue = rootEl && rootEl.__vue__;
+      if (rootVue) vuexStore = rootVue.$store || (rootVue.$root && rootVue.$root.$store) || null;
+    }
+
+    if (!vuexStore) {
+      diag4.result = 'no-vuex-store-found';
+      return JSON.stringify({ ok: false, method: 'vuex-direct', diag: { approach4: diag4 } });
     }
     diag4.storeFound = true;
 
-    /* ── 2. Identify state module containing builder data ───────────────── */
-    const state = store.state ?? {};
-    const topStateKeys = Object.keys(state).slice(0, 30);
-    diag4.topStateKeys = topStateKeys;
+    /* ── 2. Find module with sections array ──────────────────────────────── */
+    var stateKeys = Object.keys(vuexStore.state || {});
+    diag4.topStateKeys = stateKeys.slice(0, 30);
+    var sectionsModuleKey = null;
 
-    let moduleKey = null;
-    let mod = null;
-    for (const k of topStateKeys) {
-      const m = state[k];
-      if (m && typeof m === "object" && !Array.isArray(m)) {
-        const mk = Object.keys(m);
-        if (mk.includes("rows") || mk.includes("sections") || mk.includes("elements")) {
-          moduleKey = k;
-          mod = m;
-          break;
+    /* Primary: look for a module with Array.isArray(sections) */
+    stateKeys.forEach(function(key) {
+      var mod = vuexStore.state[key];
+      if (mod && Array.isArray(mod.sections)) {
+        sectionsModuleKey = key;
+      }
+    });
+
+    /* Fallback: look for rows/elements in any module */
+    if (!sectionsModuleKey) {
+      stateKeys.forEach(function(key) {
+        var mod = vuexStore.state[key];
+        if (mod && typeof mod === 'object' && !Array.isArray(mod)) {
+          var mk = Object.keys(mod);
+          if (mk.indexOf('rows') !== -1 || mk.indexOf('elements') !== -1) {
+            if (!sectionsModuleKey) sectionsModuleKey = key;
+          }
         }
+      });
+    }
+
+    /* Fallback: check root state directly */
+    if (!sectionsModuleKey) {
+      if (Array.isArray(vuexStore.state.sections) ||
+          vuexStore.state.rows !== undefined) {
+        sectionsModuleKey = '__root__';
       }
     }
 
-    /* Fallback: look at root state directly */
-    if (!mod) {
-      const rootKeys = Object.keys(state);
-      if (rootKeys.includes("rows") || rootKeys.includes("sections")) {
-        moduleKey = "__root__";
-        mod = state;
-      }
+    if (!sectionsModuleKey) {
+      diag4.result = 'vuex-found stateKeys=' + stateKeys.join(',') + ' no-sections-module';
+      return JSON.stringify({ ok: false, method: 'vuex-direct', diag: { approach4: diag4 } });
     }
+    diag4.moduleKey = sectionsModuleKey;
 
-    if (!mod) {
-      diag4.result = "no state module with rows/sections/elements";
-      diag4.topStateKeys = topStateKeys;
-      return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+    var modState = sectionsModuleKey === '__root__' ? vuexStore.state : vuexStore.state[sectionsModuleKey];
+    var ourSections = pageData.sections || [];
+    var before = Array.isArray(modState.sections) ? modState.sections.length : 0;
+
+    /* ── 3. Commit via mutation, fall back to direct state patch ─────────── */
+    var commitOk = false;
+    try {
+      vuexStore.commit(sectionsModuleKey + '/SET_SECTIONS', ourSections);
+      commitOk = true;
+    } catch(_ce) {
+      try {
+        vuexStore.commit(sectionsModuleKey + '/setSections', ourSections);
+        commitOk = true;
+      } catch(_ce2) {}
     }
-    diag4.moduleKey     = moduleKey;
-    diag4.moduleDataKeys = Object.keys(mod).slice(0, 20);
-
-    /* ── 3. Log available mutations for diagnosis ───────────────────────── */
-    const mutKeys = Object.keys(store._mutations ?? {});
-    diag4.mutKeySample = mutKeys.filter(k =>
-      /row|col|elem|section|page|node|builder/i.test(k)
-    ).slice(0, 20);
-
-    /* ── 4. Directly patch the state ─────────────────────────────────────── */
-    const rows     = pageData.rows     ?? {};
-    const columns  = pageData.columns  ?? {};
-    const elements = pageData.elements ?? {};
-    const sections = pageData.sections ?? [];
-
-    let patched = {};
-    if ("rows"     in mod) { mod.rows     = rows;     patched.rows     = Object.keys(rows).length; }
-    if ("columns"  in mod) { mod.columns  = columns;  patched.columns  = Object.keys(columns).length; }
-    if ("elements" in mod) { mod.elements = elements; patched.elements = Object.keys(elements).length; }
-    if ("sections" in mod && sections.length) {
-      mod.sections = sections;
-      patched.sections = sections.length;
+    if (!commitOk) {
+      modState.sections = ourSections;
     }
+    diag4.commitOk = commitOk;
+
+    /* Also patch rows/columns/elements for completeness */
+    var rows     = pageData.rows     || {};
+    var columns  = pageData.columns  || {};
+    var elements = pageData.elements || {};
+    var patched  = {};
+    if ('rows'     in modState) { modState.rows     = rows;     patched.rows     = Object.keys(rows).length; }
+    if ('columns'  in modState) { modState.columns  = columns;  patched.columns  = Object.keys(columns).length; }
+    if ('elements' in modState) { modState.elements = elements; patched.elements = Object.keys(elements).length; }
     diag4.patched = patched;
 
-    /* ── 5. Force Vue 2 re-render ────────────────────────────────────────── */
-    /* Try $forceUpdate on root Vue instance */
-    const tryRoots = [
-      window.__nuxt__,
-      document.querySelector("#app")?.__vue__,
-    ].filter(Boolean);
-    let forced = false;
-    for (const r of tryRoots) {
-      const root = r.$root ?? r;
-      if (root.$forceUpdate) { root.$forceUpdate(); forced = true; break; }
-    }
-    diag4.forced = forced;
+    /* ── 4. Log available mutations ──────────────────────────────────────── */
+    var mutKeys = Object.keys(vuexStore._mutations || {});
+    diag4.mutKeySample = mutKeys.filter(function(k) {
+      return /row|col|elem|section|page|node|builder/i.test(k);
+    }).slice(0, 20);
 
-    /* ── 6. Also try committing known GHL mutations ──────────────────────── */
-    const tryCommit = (name, payload) => {
-      try { store.commit(name, payload); return true; } catch (_) { return false; }
-    };
-    const commitResults = {};
-    for (const mk of mutKeys) {
-      if (/setRows|SET_ROWS|setPageRows|setBuilderRows/i.test(mk)) {
-        commitResults[mk] = tryCommit(mk, rows);
-      }
-      if (/setElements|SET_ELEMENTS|setPageElements/i.test(mk)) {
-        commitResults[mk] = tryCommit(mk, elements);
-      }
-    }
-    diag4.commitResults = commitResults;
+    var after = Array.isArray(modState.sections) ? modState.sections.length : 0;
+    diag4.result = 'vuex-found module=' + sectionsModuleKey + ' before=' + before + ' after=' + after;
 
-    diag4.result = "patched";
-    return JSON.stringify({
-      ok:     true,
-      method: "vuex-direct",
-      diag:   { approach4: diag4 },
-    });
-  } catch (e) {
-    diag4.result = `threw: ${String(e).slice(0, 120)}`;
-    return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+    return JSON.stringify({ ok: true, method: 'vuex-direct', diag: { approach4: diag4 } });
+  } catch(e) {
+    diag4.result = 'threw: ' + String(e && e.message ? e.message : e).slice(0, 120);
+    return JSON.stringify({ ok: false, method: 'vuex-direct', diag: { approach4: diag4 } });
   }
 }
 
@@ -1587,7 +1661,7 @@ function _cf_approach5PiniaWithStoredSections(sectionsJsonArg) {
    Finds the Pinia instance, patches the page-data store, and triggers a native
    save. Returns a JSON-serialised result + diag.approach3 object.              */
 async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
-  const diag3 = {
+  var diag3 = {
     piniaSource:    "frame-targeted",
     storeCount:     0,
     storeIds:       [],
@@ -1596,26 +1670,25 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
   };
   try {
     /* ── Find Pinia in THIS frame ─────────────────────────────────────────── */
-    /* Try window-level pinia first (sometimes GHL exposes it directly) */
-    let pinia = null;
+    var pinia = null;
     try {
-      const wp = window._pinia ?? window.pinia ?? window.__pinia ?? null;
+      var wp = window._pinia || window.pinia || window.__pinia || null;
       if (wp && wp._s instanceof Map) { pinia = wp; diag3.piniaSource = "window-global"; }
     } catch (_wp) {}
 
     if (!pinia) {
-      const tryEls = [
+      var tryEls = [
         document.querySelector("#app"),
         document.documentElement,
-        ...Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3),
-      ].filter(Boolean);
-      for (const el of tryEls) {
-        const va = el.__vue_app__;
+      ].concat(Array.from(document.querySelectorAll("[data-v-app]")).slice(0, 3)).filter(Boolean);
+      for (var _ti = 0; _ti < tryEls.length; _ti++) {
+        var el = tryEls[_ti];
+        var va = el.__vue_app__;
         if (!va) continue;
-        const provides = va._context?.provides ?? {};
-        const p = provides[Symbol.for("pinia")]
-          ?? Object.values(provides).find(v => v && v._s instanceof Map)
-          ?? null;
+        var provides = (va._context && va._context.provides) ? va._context.provides : {};
+        var p = provides[Symbol.for("pinia")]
+          || (Object.values(provides).find(function(v) { return v && v._s instanceof Map; }))
+          || null;
         if (p && p._s instanceof Map) { pinia = p; break; }
       }
     }
@@ -1625,49 +1698,51 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
       return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
     }
 
-    const storeIds = [...pinia._s.keys()];
-    diag3.storeCount = storeIds.length;
-    diag3.storeIds   = storeIds.slice(0, 20);
+    var storeIds = Array.from(pinia._s.keys());
+    diag3.storeCount  = storeIds.length;
+    diag3.storeIds    = storeIds.slice(0, 20);
     diag3.allStoreIds = storeIds.slice(0, 30);
 
     /* ── Probe clipboard stores ──────────────────────────────────────────── */
-    const clipStoreDiag = [];
-    for (const [storeId, store] of pinia._s) {
-      const state    = store.$state ?? {};
-      const clipKeys = Object.keys(state).filter(k => /clipboard|copy|paste|buffer/i.test(k));
-      if (clipKeys.length === 0) continue;
-      const entry = { storeId, clipboardKeys: clipKeys, patched: false, pasteAttempted: false };
+    var clipStoreDiag = [];
+    pinia._s.forEach(function(store, storeId) {
+      var state    = store.$state || {};
+      var clipKeys = Object.keys(state).filter(function(k) { return /clipboard|copy|paste|buffer/i.test(k); });
+      if (clipKeys.length === 0) return;
+      var entry = { storeId: storeId, clipboardKeys: clipKeys, patched: false, pasteAttempted: false };
       try {
-        const patch = {};
-        for (const ck of clipKeys) patch[ck] = pageData;
+        var patch = {};
+        for (var _cki = 0; _cki < clipKeys.length; _cki++) patch[clipKeys[_cki]] = pageData;
         store.$patch(patch);
         entry.patched = true;
-        for (const pa of ["paste", "pasteSection", "applyClipboard", "doPaste", "pasteElement"]) {
+        var _pas = ["paste", "pasteSection", "applyClipboard", "doPaste", "pasteElement"];
+        for (var _pai = 0; _pai < _pas.length; _pai++) {
+          var pa = _pas[_pai];
           if (typeof store[pa] === "function") {
-            try { await store[pa](); entry.pasteAttempted = pa; break; } catch(_) {}
+            try { store[pa](); entry.pasteAttempted = pa; break; } catch(_) {}
           }
         }
       } catch (ce) { entry.error = String(ce).slice(0, 60); }
       clipStoreDiag.push(entry);
-    }
+    });
     diag3.clipboardStores = clipStoreDiag;
 
     /* ── Identify candidate page-data stores ────────────────────────────── */
-    const candidates = [];
-    for (const [storeId, store] of pinia._s) {
-      const state = store.$state ?? {};
-      const keys  = Object.keys(state);
-      const hasSections = keys.includes("sections");
-      const hasRows     = keys.includes("rows");
-      const hasElements = keys.includes("elements");
-      const hasColumns  = keys.includes("columns");
-      const hasPageData = keys.includes("pageData");
-      const score = (hasSections ? 3 : 0) + (hasRows ? 2 : 0) + (hasElements ? 2 : 0)
-                  + (hasColumns ? 1 : 0) + (hasPageData ? 1 : 0);
-      if (score > 0) candidates.push({ storeId, store, keys, score, hasPageData, hasSections });
-    }
-    candidates.sort((a, b) => b.score - a.score);
-    diag3.candidates = candidates.map(c => ({ storeId: c.storeId, score: c.score })).slice(0, 10);
+    var candidates = [];
+    pinia._s.forEach(function(store, storeId) {
+      var state = store.$state || {};
+      var keys  = Object.keys(state);
+      var hasSections = keys.indexOf("sections") !== -1;
+      var hasRows     = keys.indexOf("rows")     !== -1;
+      var hasElements = keys.indexOf("elements") !== -1;
+      var hasColumns  = keys.indexOf("columns")  !== -1;
+      var hasPageData = keys.indexOf("pageData") !== -1;
+      var score = (hasSections ? 3 : 0) + (hasRows ? 2 : 0) + (hasElements ? 2 : 0)
+                + (hasColumns ? 1 : 0) + (hasPageData ? 1 : 0);
+      if (score > 0) candidates.push({ storeId: storeId, store: store, keys: keys, score: score, hasPageData: hasPageData, hasSections: hasSections });
+    });
+    candidates.sort(function(a, b) { return b.score - a.score; });
+    diag3.candidates = candidates.map(function(c) { return { storeId: c.storeId, score: c.score }; }).slice(0, 10);
 
     if (candidates.length === 0) {
       diag3.result = "no store with GHL page structure found";
@@ -1675,19 +1750,25 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
     }
 
     /* ── Patch each candidate + try save actions ─────────────────────────── */
-    const SAVE_ACTIONS = ["savePage", "savePageData", "save", "autoSave",
-                          "updatePage", "saveCurrentPage", "persistPage"];
-    let successResult = null;
-    const candidateDiag = [];
+    var SAVE_ACTIONS = ["savePage", "savePageData", "save", "autoSave",
+                        "updatePage", "saveCurrentPage", "persistPage"];
+    var successResult = null;
+    var candidateDiag = [];
 
-    for (const { storeId, store, keys, hasPageData, hasSections } of candidates) {
-      const cd = { storeId, stateKeys: keys.slice(0, 20), patched: false, savedVia: null, errors: [] };
+    for (var _ci = 0; _ci < candidates.length; _ci++) {
+      var cand = candidates[_ci];
+      var storeId2 = cand.storeId;
+      var store2   = cand.store;
+      var keys2    = cand.keys;
+      var hasPageData2  = cand.hasPageData;
+      var hasSections2  = cand.hasSections;
+      var cd = { storeId: storeId2, stateKeys: keys2.slice(0, 20), patched: false, savedVia: null, errors: [] };
       try {
-        if (hasPageData && !hasSections) {
-          store.$patch({ pageData });
+        if (hasPageData2 && !hasSections2) {
+          store2.$patch({ pageData: pageData });
           cd.patchShape = "nested-pageData";
         } else {
-          store.$patch(pageData);
+          store2.$patch(pageData);
           cd.patchShape = "root";
         }
         cd.patched = true;
@@ -1696,20 +1777,21 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
         candidateDiag.push(cd);
         continue;
       }
-      for (const action of SAVE_ACTIONS) {
-        if (typeof store[action] === "function") {
+      for (var _ai = 0; _ai < SAVE_ACTIONS.length; _ai++) {
+        var action = SAVE_ACTIONS[_ai];
+        if (typeof store2[action] === "function") {
           try {
-            await store[action]();
+            await store2[action]();
             cd.savedVia = action;
             break;
           } catch (se) {
-            cd.errors.push(`${action}:${String(se).slice(0, 50)}`);
+            cd.errors.push(action + ":" + String(se).slice(0, 50));
           }
         }
       }
       candidateDiag.push(cd);
       if (cd.savedVia) {
-        successResult = { storeId, savedVia: cd.savedVia, patchShape: cd.patchShape };
+        successResult = { storeId: storeId2, savedVia: cd.savedVia, patchShape: cd.patchShape };
         break;
       }
     }
@@ -1726,13 +1808,13 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
         patchShape: successResult.patchShape,
         diag:       { approach3: diag3 },
       });
-    } else if (candidateDiag.some(c => c.patched)) {
-      const patchedStore = candidateDiag.find(c => c.patched);
+    } else if (candidateDiag.some(function(c) { return c.patched; })) {
+      var patchedStore = candidateDiag.find(function(c) { return c.patched; });
       diag3.result = "patched-no-save";
       return JSON.stringify({
         ok:      true,
         method:  "pinia-patched",
-        storeId: patchedStore?.storeId,
+        storeId: patchedStore ? patchedStore.storeId : null,
         savedVia: null,
         diag:    { approach3: diag3 },
         warning: "Content injected into builder (visible now). Click Save in GHL to persist permanently.",
@@ -1743,7 +1825,7 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
     return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
 
   } catch (e) {
-    diag3.result = `threw: ${String(e).slice(0, 180)}`;
+    diag3.result = "threw: " + String(e).slice(0, 180);
     return JSON.stringify({ ok: false, diag: { approach3: diag3 } });
   }
 }
@@ -1788,16 +1870,16 @@ async function _cf_refreshBuilderIframe() {
      * serve the old cached pageData, so our write is never seen by the
      * builder.  We enumerate every SW cache and delete any entry whose URL
      * contains "firebasestorage.googleapis.com" before reloading.          */
-    let cacheCleared = 0;
+    var cacheCleared = 0;
     if (typeof caches !== "undefined") {
       try {
-        const cacheNames = await caches.keys();
-        for (const name of cacheNames) {
-          const c    = await caches.open(name);
-          const keys = await c.keys();
-          for (const req of keys) {
-            if (req.url.includes("firebasestorage.googleapis.com")) {
-              await c.delete(req);
+        var cacheNames = await caches.keys();
+        for (var _cn = 0; _cn < cacheNames.length; _cn++) {
+          var c    = await caches.open(cacheNames[_cn]);
+          var keys = await c.keys();
+          for (var _rq = 0; _rq < keys.length; _rq++) {
+            if (keys[_rq].url.indexOf("firebasestorage.googleapis.com") !== -1) {
+              await c.delete(keys[_rq]);
               cacheCleared++;
             }
           }
@@ -1806,13 +1888,13 @@ async function _cf_refreshBuilderIframe() {
     }
 
     /* ── Step 2: reload the builder ─────────────────────────────────────── */
-    const iframe = document.querySelector('iframe[name="funnel-builder"]');
+    var iframe = document.querySelector('iframe[name="funnel-builder"]');
     if (!iframe) {
       window.location.reload();
-      return JSON.stringify({ ok: true, method: "cache-bust+page-reload", cacheCleared });
+      return JSON.stringify({ ok: true, method: "cache-bust+page-reload", cacheCleared: cacheCleared });
     }
     iframe.src = iframe.src;
-    return JSON.stringify({ ok: true, method: "cache-bust+iframe-reload", cacheCleared, src: iframe.src.slice(0, 80) });
+    return JSON.stringify({ ok: true, method: "cache-bust+iframe-reload", cacheCleared: cacheCleared, src: iframe.src.slice(0, 80) });
   } catch(e) {
     return JSON.stringify({ ok: false, error: String(e).slice(0, 100) });
   }
@@ -2581,6 +2663,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               args:   [builderId2, locId2, pageData, cachedBkt],
             });
             r = JSON.parse(res2?.[0]?.result ?? "{}");
+            /* v2.49.0: If clone-first succeeded, navigate to the new page URL */
+            if (r && r.diag && r.diag.approach2 && r.diag.approach2.navigatedTo) {
+              chrome.tabs.update(tabId2, { url: r.diag.approach2.navigatedTo });
+            }
           } catch(e) { r = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` }; }
 
           /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ─ */
@@ -3096,6 +3182,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             args:   [builderId, locationId, ready.pageData, aiBkt],
           });
           injectResult = JSON.parse(res?.[0]?.result ?? "{}");
+          /* v2.49.0: If clone-first succeeded, navigate to the new page URL */
+          if (injectResult && injectResult.diag && injectResult.diag.approach2 && injectResult.diag.approach2.navigatedTo) {
+            chrome.tabs.update(tabId, { url: injectResult.diag.approach2.navigatedTo });
+          }
         } catch(e) {
           injectResult = { ok: false, error: `scripting failed: ${String(e).slice(0, 80)}` };
         }

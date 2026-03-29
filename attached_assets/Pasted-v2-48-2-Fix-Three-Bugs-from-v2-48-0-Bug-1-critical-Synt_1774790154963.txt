@@ -1,0 +1,64 @@
+v2.48.2 — Fix Three Bugs from v2.48.0
+
+Bug 1 (critical): SyntaxError: Unexpected token 'const' breaking A5
+
+Inside the func: function(sectionsJson) { ... } passed to chrome.scripting.executeScript for the A5 Vue state mutation, find every const and let and change them all to var. This function is serialized as a string and re-evaluated in the page context — ES6 declarations are not allowed there.
+
+Check every line inside that function body including:
+
+Variable declarations at the top
+Variables inside loops
+Variables inside try/catch blocks
+Any nested functions
+Change ALL of them to var. No exceptions.
+
+Bug 2: Missing or insufficient permissions — remove the Firestore PATCH write
+
+GHL's Firestore security rules block direct client writes. The Firestore probe GET may return 200 (read allowed) but PATCH returns PERMISSION_DENIED.
+
+Change the Firestore probe to read-only — keep the GET requests to find which document paths exist and log them, but remove the PATCH/write attempt entirely. Log the result as:
+
+A5 Firestore probe: GET-200:{path} (read-only — write blocked by security rules)
+
+or
+
+A5 Firestore probe: all-404
+
+Bug 3 (critical regression): bridge.js is breaking GHL's Firestore connection — sections no longer load at all
+
+The Firestore Listen/channel XHR body capture code added in v2.48.0 is breaking GHL's Firestore streaming connection. GHL sections no longer load at all on page load — the page shows a loading spinner indefinitely. This must be fixed before anything else works.
+
+The fix has two parts:
+
+Part A — Wrap all Firestore capture code in try/catch:
+
+Find the Firestore Listen/channel body capture code in bridge.js. Change it to this exact safe pattern where the original send() is ALWAYS called regardless of what our capture code does:
+
+var _cf_originalSend = xhr.send;
+xhr.send = function(body) {
+  try {
+    if (_cf_xhr_url && _cf_xhr_url.includes('firestore.googleapis.com') && _cf_xhr_url.includes('Listen/channel')) {
+      if (!window.__cfFirestoreListenBodies) window.__cfFirestoreListenBodies = [];
+      if (window.__cfFirestoreListenBodies.length < 5) {
+        window.__cfFirestoreListenBodies.push({
+          url: (_cf_xhr_url || '').substring(0, 150),
+          body: (body || '').toString().substring(0, 800),
+          ts: new Date().toISOString()
+        });
+      }
+    }
+  } catch(e) {
+    // NEVER let capture errors affect GHL
+  }
+  return _cf_originalSend.apply(this, arguments); // always call original
+};
+
+Part B — Wrap every other new capture block added in v2.48.0 in try/catch:
+
+In the onreadystatechange handler and fetch interceptor, every new block of capture code added in v2.48.0 (Firestore URL logging, page metadata capture, Firebase Storage logging) must be wrapped in try { ... } catch(e) {} so a capture error can never prevent GHL's own response handling from running.
+
+General rule going forward for ALL bridge.js code: The original XHR/fetch behavior must ALWAYS execute regardless of what our capture code does. If our code throws, swallow it silently. Never let a capture error reach GHL.
+
+Part C — Check for const/let in bridge.js:
+
+Scan all new code added to bridge.js in v2.48.0. If any const or let was used, change to var. bridge.js runs at document_start in MAIN world — any syntax or runtime error here will break GHL's entire initialization.
