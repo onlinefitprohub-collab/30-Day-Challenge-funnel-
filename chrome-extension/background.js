@@ -2,18 +2,18 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.49.2 — Fix clone URL (absolute, no /funnel/ prefix, no revex baseURL) + final const/let cleanup. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.49.3 — Correct clone URL (/funnel/ restored), body, stepId lookup, userId from Vuex, post-clone newPageId. Global const/let→var. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.49.2 — Fix clone URL (absolute, no /funnel/ prefix, no revex baseURL) + final const/let cleanup. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.49.3 — Correct clone URL (/funnel/ restored), body, stepId lookup, userId from Vuex, post-clone newPageId. Global const/let→var. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
   // The manifest <all_urls> match handles new navigations; this handles open tabs.
   if (reason === "install" || reason === "update") {
-    const re = /^https:\/\/(app\.gohighlevel\.com|[^/]*\.replit\.(dev|app|com))\//;
+    var re = /^https:\/\/(app\.gohighlevel\.com|[^/]*\.replit\.(dev|app|com))\//;
     chrome.tabs.query({}, (tabs) => {
-      for (const tab of tabs) {
+      for (var tab of tabs) {
         if (!tab.url || !re.test(tab.url)) continue;
         chrome.scripting.executeScript({
           target: { tabId: tab.id, allFrames: true },
@@ -27,10 +27,10 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 // Dynamic injection fallback for GHL and Replit tabs.
 // The manifest <all_urls> match handles any-domain app pages declaratively;
 // this listener re-injects into tabs that were already open before install/update.
-const CF_INJECT_RE = /^https:\/\/(app\.gohighlevel\.com|[^/]*\.replit\.(dev|app|com))\//;
+var CF_INJECT_RE = /^https:\/\/(app\.gohighlevel\.com|[^/]*\.replit\.(dev|app|com))\//;
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status !== "complete") return;
-  const url = tab.url ?? "";
+  var url = tab.url ?? "";
   if (!CF_INJECT_RE.test(url)) return;
   chrome.scripting.executeScript({
     target: { tabId, allFrames: true },
@@ -256,8 +256,9 @@ async function _cf_fetchFullPageData(builderId) {
 /* Clone source GHL step into destination step using revex (MAIN world). */
 async function _cf_cloneFunnelStep(req) {
   try {
-    var appEl = document.querySelector("#app");
-    var revex = appEl?.__vue_app__?.config?.globalProperties?.revexBackendService ?? null;
+    var appEl  = document.querySelector("#app");
+    var vueApp = appEl?.__vue_app__ ?? null;
+    var revex  = vueApp?.config?.globalProperties?.revexBackendService ?? null;
 
     if (!revex) {
       for (var ai of Object.values(window.app ?? {})) {
@@ -270,31 +271,66 @@ async function _cf_cloneFunnelStep(req) {
       return JSON.stringify({ ok: false, error: "revexBackendService not found — must be on the GHL builder tab" });
     }
 
-    // Try to get userId (optional, CloneLevel includes it)
+    // Get userId from Vuex store (preferred) then AppUtils fallback
     var userId = "";
     try {
-      if (typeof window.AppUtils !== "undefined" && window.AppUtils?.Utilities?.getCurrentUser) {
-        var u = await window.AppUtils.Utilities.getCurrentUser();
-        userId = u?.id ?? u?.userId ?? "";
+      var store = vueApp?.config?.globalProperties?.$store;
+      if (!store) {
+        for (var ai2 of Object.values(window.app ?? {})) {
+          var s = ai2?.appContext?.config?.globalProperties?.$store;
+          if (s) { store = s; break; }
+        }
       }
-    } catch(_) {}
+      userId = store?.state?.auth?.user?.id || store?.state?.user?.id || "";
+    } catch(_ue) {}
+    if (!userId) {
+      try {
+        if (typeof window.AppUtils !== "undefined" && window.AppUtils?.Utilities?.getCurrentUser) {
+          var u = await window.AppUtils.Utilities.getCurrentUser();
+          userId = u?.id ?? u?.userId ?? "";
+        }
+      } catch(_au) {}
+    }
+
+    var funnelId   = req.funnelId || req.destFunnelId;
+    var pageId     = req.pageId;
+    var locationId = req.locationId;
+
+    // Resolve stepId via GET /funnels/funnel/fetch/{funnelId}
+    // stepId = UUID of the funnel STEP that contains this page (not the page ID itself)
+    var stepId = null;
+    try {
+      var fetchResp  = await revex.get("https://backend.leadconnectorhq.com/funnels/funnel/fetch/" + funnelId);
+      var fetchData  = (fetchResp && fetchResp.data) ? fetchResp.data : {};
+      var fetchSteps = (fetchData.steps || (fetchData.data && fetchData.data.steps)) || [];
+      for (var i = 0; i < fetchSteps.length; i++) {
+        var stp   = fetchSteps[i];
+        var pages = stp.pages || [];
+        for (var j = 0; j < pages.length; j++) {
+          var pg   = pages[j];
+          var pgId = (typeof pg === "string") ? pg : (pg._id || pg.id || null);
+          if (pgId === pageId) { stepId = stp.id; break; }
+        }
+        if (stepId) break;
+      }
+    } catch(_fe) {}
+
+    if (!stepId) {
+      return JSON.stringify({ ok: false, error: "Could not resolve stepId — pageId=" + pageId + " funnelId=" + funnelId });
+    }
 
     var payload = {
-      funnelId:              req.destFunnelId,
-      funnelIdToImport:      req.sourceFunnelId,
-      funnels:               [req.destFunnelId],
-      locationId:            req.locationId,
-      pageIndexToImport:     "0",
-      pageIndexToImportInto: "0",
-      stepId:                req.sourceStepId,
-      stepIdToImportInto:    req.destStepId,
+      stepId:     stepId,
+      funnelId:   funnelId,
+      funnels:    [funnelId],
+      locationId: locationId,
+      userId:     userId,
     };
-    if (userId) payload.userId = userId;
 
     console.log("[CF] clone-funnel-step payload:", JSON.stringify(payload).slice(0, 300));
 
     var response = await revex.post(
-      "https://backend.leadconnectorhq.com/funnels/clone-funnel-step/",
+      "https://backend.leadconnectorhq.com/funnels/funnel/clone-funnel-step/",
       payload
     );
     var data   = response?.data ?? response;
@@ -304,20 +340,41 @@ async function _cf_cloneFunnelStep(req) {
     if (status >= 400) {
       return JSON.stringify({
         ok:      false,
-        error:   `HTTP ${status}: ${data?.message ?? data?.response ?? "server error"}`,
+        error:   "HTTP " + status + ": " + (data?.message ?? data?.response ?? "server error"),
         raw:     JSON.stringify(data).slice(0, 300),
         payload: JSON.stringify(payload).slice(0, 300),
       });
     }
 
+    // Extract newStepId from response and re-fetch funnel to find the new page ID
+    var newStepId = null;
+    try { newStepId = (data?.data?.stepIds ?? data?.stepIds ?? [])[0] ?? null; } catch(_) {}
+
+    var newPageId = null;
+    if (newStepId) {
+      try {
+        var fetchResp2  = await revex.get("https://backend.leadconnectorhq.com/funnels/funnel/fetch/" + funnelId);
+        var fetchData2  = (fetchResp2 && fetchResp2.data) ? fetchResp2.data : {};
+        var fetchSteps2 = (fetchData2.steps || (fetchData2.data && fetchData2.data.steps)) || [];
+        for (var i2 = 0; i2 < fetchSteps2.length; i2++) {
+          var stp2 = fetchSteps2[i2];
+          if (stp2.id === newStepId) {
+            var npg = stp2.pages && stp2.pages[0];
+            if (npg) newPageId = (typeof npg === "string") ? npg : (npg._id || npg.id || null);
+            break;
+          }
+        }
+      } catch(_fe2) {}
+    }
+
     var ok = !data?.status || data?.status === "ok" || status < 300 || status === 0;
-    return JSON.stringify({ ok, status, raw: JSON.stringify(data).slice(0, 400) });
+    return JSON.stringify({ ok, status, raw: JSON.stringify(data).slice(0, 400), newStepId, newPageId });
   } catch(e) {
     var status = e?.response?.status;
     var data   = e?.response?.data;
     return JSON.stringify({
       ok:    false,
-      error: `clone-funnel-step threw: ${data?.message ?? String(e).slice(0, 120)}`,
+      error: "clone-funnel-step threw: " + (data?.message ?? String(e).slice(0, 120)),
       status,
     });
   }
@@ -837,88 +894,134 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
 
-            /* ── v2.49.1: Clone-first inject flow ────────────────────────────────────── *
-             * Root cause of all prior failures: existing page returns 304 Not Modified  *
-             * from browser cache. GHL never re-fetches Firebase Storage for cached pages.*
-             * A freshly cloned page has no cache entry → GHL fetches Firebase fresh.   *
-             * stepId and funnelId are already in fetched metadata — no extra GET needed  *
-             * unless missing.                                                            */
+            /* ── v2.49.3: Clone-first inject flow ────────────────────────────────────── *
+             * Correct endpoint: /funnels/funnel/clone-funnel-step/ (with /funnel/).     *
+             * stepId resolved via GET /funnels/funnel/fetch/{funnelId} (real step UUID).*
+             * Post-clone: newPageId from response stepIds[0] + funnel re-fetch.        */
             if (revex) {
               try {
-                var ghlPageMeta = metadata;
-                var cloneStepId = (ghlPageMeta && (ghlPageMeta.stepId || ghlPageMeta.step_id)) || null;
-                var cloneUserId = (ghlPageMeta && (ghlPageMeta.userId || ghlPageMeta.user_id)) || null;
-                if (!cloneStepId) {
-                  try {
-                    var sfResp = await revex.get('/funnels/page/' + builderId);
-                    var sfData = (sfResp && sfResp.data) ? sfResp.data : (sfResp || {});
-                    cloneStepId = sfData.stepId || sfData.step_id || null;
-                    cloneUserId = cloneUserId || sfData.userId || null;
-                  } catch(_sfE) { diag.approach2.cloneStepIdErr = String(_sfE).slice(0, 60); }
+                // Get userId from Vuex store
+                var cloneUserId = '';
+                try {
+                  var _store = appEl?.__vue_app__?.config?.globalProperties?.$store;
+                  if (!_store) {
+                    for (var _ai of Object.values(window.app ?? {})) {
+                      var _sv = _ai?.appContext?.config?.globalProperties?.$store;
+                      if (_sv) { _store = _sv; break; }
+                    }
+                  }
+                  cloneUserId = _store?.state?.auth?.user?.id || _store?.state?.user?.id || '';
+                } catch(_ue) {}
+
+                // Resolve real stepId via GET /funnels/funnel/fetch/{funnelId}
+                var cloneStepId = null;
+                diag.approach2.cloneStepId = 'fetching';
+                try {
+                  var _ffResp  = await revex.get('https://backend.leadconnectorhq.com/funnels/funnel/fetch/' + funnelIdFromPath);
+                  var _ffData  = (_ffResp && _ffResp.data) ? _ffResp.data : {};
+                  var _ffSteps = (_ffData.steps || (_ffData.data && _ffData.data.steps)) || [];
+                  for (var _si = 0; _si < _ffSteps.length; _si++) {
+                    var _stp   = _ffSteps[_si];
+                    var _pgs   = _stp.pages || [];
+                    for (var _pi = 0; _pi < _pgs.length; _pi++) {
+                      var _pg   = _pgs[_pi];
+                      var _pgId = (typeof _pg === 'string') ? _pg : (_pg._id || _pg.id || null);
+                      if (_pgId === builderId) { cloneStepId = _stp.id; break; }
+                    }
+                    if (cloneStepId) break;
+                  }
+                } catch(_ffe) {
+                  diag.approach2.cloneStepIdErr = String(_ffe).slice(0, 60);
                 }
-                diag.approach2.cloneStepId = cloneStepId || 'missing';
+                // Fallback: use page metadata stepId if fetch failed
+                if (!cloneStepId) {
+                  var _meta = metadata;
+                  cloneStepId = (_meta && (_meta.stepId || _meta.step_id)) || null;
+                }
+                diag.approach2.resolvedStepId = cloneStepId || 'missing';
+
                 if (cloneStepId) {
                   var clonePayload = {
-                    funnelId:             funnelIdFromPath,
-                    funnelIdToImport:     funnelIdFromPath,
-                    funnels:              [funnelIdFromPath],
-                    locationId:           tabLocationId || locationId,
-                    pageIndexToImport:    '0',
-                    pageIndexToImportInto: '0',
-                    stepId:               cloneStepId,
-                    stepIdToImportInto:   cloneStepId,
+                    stepId:     cloneStepId,
+                    funnelId:   funnelIdFromPath,
+                    funnels:    [funnelIdFromPath],
+                    locationId: tabLocationId || locationId,
+                    userId:     cloneUserId,
                   };
-                  if (cloneUserId) clonePayload.userId = cloneUserId;
-                  var cloneResp = await revex.post('https://backend.leadconnectorhq.com/funnels/clone-funnel-step/', clonePayload);
+                  var cloneResp = await revex.post('https://backend.leadconnectorhq.com/funnels/funnel/clone-funnel-step/', clonePayload);
                   diag.approach2.cloneStatus = cloneResp && cloneResp.status;
                   diag.approach2.cloneData   = JSON.stringify((cloneResp && cloneResp.data) || {}).slice(0, 200);
 
-                  /* 1-second delay so GHL backend reflects the new page */
+                  /* 1-second delay so GHL backend reflects the new step */
                   await new Promise(function(resolveClone) { setTimeout(resolveClone, 1000); });
 
-                  var lookupResp = await revex.get('/funnels/lookup/list', {
-                    params: { funnelId: funnelIdFromPath, locationId: tabLocationId || locationId, type: 'page' }
-                  });
-                  var lookupPages = (lookupResp && lookupResp.data && lookupResp.data.data)
-                    ? lookupResp.data.data : [];
-                  var newPage = lookupPages
-                    .filter(function(lp) { return lp.stepId === cloneStepId && lp._id !== builderId; })
-                    .sort(function(a, b) { return new Date(b.dateAdded) - new Date(a.dateAdded); })[0];
+                  // Extract newStepId from clone response
+                  var _crData   = (cloneResp && cloneResp.data) ? cloneResp.data : {};
+                  var newStepId = (_crData.data && _crData.data.stepIds && _crData.data.stepIds[0])
+                    || (_crData.stepIds && _crData.stepIds[0]) || null;
+                  diag.approach2.newStepId = newStepId || 'missing';
 
-                  if (newPage) {
-                    diag.approach2.newPageId       = newPage._id;
-                    diag.approach2.newFirebasePath = newPage.pageDataUrl;
-                    diag.approach2.newDownloadUrl  = newPage.pageDataDownloadUrl;
-
-                    var npFbMatch = (newPage.pageDataDownloadUrl || '').match(
-                      /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
-                    );
-                    if (npFbMatch) {
-                      var npBucket   = decodeURIComponent(npFbMatch[1]);
-                      var npPath     = decodeURIComponent(npFbMatch[2]);
-                      var npUploadEp = 'https://firebasestorage.googleapis.com/v0/b/' +
-                        encodeURIComponent(npBucket) + '/o?uploadType=media&name=' + encodeURIComponent(npPath);
-                      /* v2.49.1: Pre-write validator — confirms AI content (not GHL native) */
-                      diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
-                        + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
-                        + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
-                      var npWriteRes = await fetch(npUploadEp, {
-                        method:  'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
-                        body:    JSON.stringify(writePayload),
-                      });
-                      diag.approach2.cloneWriteStatus = npWriteRes.status;
-                      if (npWriteRes.ok) {
-                        var newBuilderUrl = 'https://app.gohighlevel.com/location/' +
-                          (tabLocationId || locationId) + '/page-builder/' + newPage._id;
-                        diag.approach2.navigatedTo = newBuilderUrl;
-                        return JSON.stringify({ ok: true, method: 'firebase-clone-first', diag: diag });
+                  // Re-fetch funnel to find the new page ID from the new step's pages[0]
+                  var newPageId = null;
+                  if (newStepId) {
+                    try {
+                      var _ff2Resp  = await revex.get('https://backend.leadconnectorhq.com/funnels/funnel/fetch/' + funnelIdFromPath);
+                      var _ff2Data  = (_ff2Resp && _ff2Resp.data) ? _ff2Resp.data : {};
+                      var _ff2Steps = (_ff2Data.steps || (_ff2Data.data && _ff2Data.data.steps)) || [];
+                      for (var _si2 = 0; _si2 < _ff2Steps.length; _si2++) {
+                        var _stp2 = _ff2Steps[_si2];
+                        if (_stp2.id === newStepId) {
+                          var _npg = _stp2.pages && _stp2.pages[0];
+                          if (_npg) newPageId = (typeof _npg === 'string') ? _npg : (_npg._id || _npg.id || null);
+                          break;
+                        }
                       }
-                    } else {
-                      diag.approach2.cloneResult = 'new-page-no-fb-url';
+                    } catch(_ff2e) {
+                      diag.approach2.newPageLookupErr = String(_ff2e).slice(0, 60);
+                    }
+                  }
+                  diag.approach2.newPageId = newPageId || 'missing';
+
+                  // Fetch new page metadata to get its Firebase download URL
+                  if (newPageId) {
+                    try {
+                      var _npResp = await revex.get('https://backend.leadconnectorhq.com/funnels/page/' + newPageId);
+                      var _npData = (_npResp && _npResp.data) ? _npResp.data : {};
+                      diag.approach2.newFirebasePath = _npData.pageDataUrl || '';
+                      diag.approach2.newDownloadUrl  = _npData.pageDataDownloadUrl || '';
+
+                      var npFbMatch = (_npData.pageDataDownloadUrl || '').match(
+                        /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
+                      );
+                      if (npFbMatch) {
+                        var npBucket   = decodeURIComponent(npFbMatch[1]);
+                        var npPath     = decodeURIComponent(npFbMatch[2]);
+                        var npUploadEp = 'https://firebasestorage.googleapis.com/v0/b/' +
+                          encodeURIComponent(npBucket) + '/o?uploadType=media&name=' + encodeURIComponent(npPath);
+                        /* v2.49.1: Pre-write validator — confirms AI content (not GHL native) */
+                        diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
+                          + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
+                          + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
+                        var npWriteRes = await fetch(npUploadEp, {
+                          method:  'POST',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                          body:    JSON.stringify(writePayload),
+                        });
+                        diag.approach2.cloneWriteStatus = npWriteRes.status;
+                        if (npWriteRes.ok) {
+                          var newBuilderUrl = 'https://app.gohighlevel.com/location/' +
+                            (tabLocationId || locationId) + '/page-builder/' + newPageId;
+                          diag.approach2.navigatedTo = newBuilderUrl;
+                          return JSON.stringify({ ok: true, method: 'firebase-clone-first', diag: diag });
+                        }
+                      } else {
+                        diag.approach2.cloneResult = 'new-page-no-fb-url';
+                      }
+                    } catch(_npe) {
+                      diag.approach2.newPageFetchErr = String(_npe).slice(0, 60);
                     }
                   } else {
-                    diag.approach2.cloneResult = 'new-page-not-found-after-clone lookupCount=' + lookupPages.length;
+                    diag.approach2.cloneResult = 'new-page-not-found-after-clone';
                   }
                 }
               } catch(_cloneErr) {
@@ -2453,7 +2556,7 @@ async function _cf_roundtripFirebaseWrite(builderId) {
    ════════════════════════════════════════════════════════════════════════════ */
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  const type = msg.type ?? msg.action;
+  var type = msg.type ?? msg.action;
 
   /* ── ping ── */
   if (type === "ping") {
@@ -2475,13 +2578,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_COPY_PAGE") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
         // Strategy 1: Nuxt / window globals extraction (works on any GHL page)
-        let info = {};
+        var info = {};
         try {
-          const res = await chrome.scripting.executeScript({
+          var res = await chrome.scripting.executeScript({
             target: { tabId, allFrames: false },
             world:  "MAIN",
             func:   _cf_extractGhlMetadata,
@@ -2493,19 +2596,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         // Strategy 2: Builder URL + revex (for GHL builder tabs where Nuxt may not expose the data)
         if (!info.ok) {
-          const tab = await chrome.tabs.get(tabId);
-          const url = tab.url ?? "";
-          const m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+          var tab = await chrome.tabs.get(tabId);
+          var url = tab.url ?? "";
+          var m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
           if (m) {
-            const [, locationId, , builderId] = m;
+            var [, locationId, , builderId] = m;
             try {
-              const res2 = await chrome.scripting.executeScript({
+              var res2 = await chrome.scripting.executeScript({
                 target: { tabId, allFrames: false },
                 world:  "MAIN",
                 func:   _cf_getBuilderInfo,
                 args:   [builderId],
               });
-              const info2 = JSON.parse(res2?.[0]?.result ?? "{}");
+              var info2 = JSON.parse(res2?.[0]?.result ?? "{}");
               if (info2.ok) {
                 info = { ok: true, funnelId: info2.funnelId, stepId: info2.stepId,
                          locationId: info2.locationId || locationId, pageName: "(builder page)",
@@ -2522,7 +2625,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         if (info.ok && info.funnelId && info.stepId) {
-          const record = {
+          var record = {
             funnelId:   info.funnelId,
             stepId:     info.stepId,
             locationId: info.locationId ?? "",
@@ -2537,17 +2640,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           // ── Also capture full pageData for schema inspection (non-blocking) ──
           // Only works when the tab is a /page-builder/ or /funnel-builder/ URL (revex is accessible).
           try {
-            const tab2 = await chrome.tabs.get(tabId);
-            const bm   = (tab2.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+            var tab2 = await chrome.tabs.get(tabId);
+            var bm   = (tab2.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
             if (bm) {
-              const [, , , builderId] = bm;
-              const pdRes = await chrome.scripting.executeScript({
+              var [, , , builderId] = bm;
+              var pdRes = await chrome.scripting.executeScript({
                 target: { tabId, allFrames: false },
                 world:  "MAIN",
                 func:   _cf_fetchFullPageData,
                 args:   [builderId],
               });
-              const pdResult = JSON.parse(pdRes?.[0]?.result ?? "{}");
+              var pdResult = JSON.parse(pdRes?.[0]?.result ?? "{}");
               if (pdResult.ok && pdResult.data) {
                 await chrome.storage.local.set({
                   capturedGHLPage: {
@@ -2590,10 +2693,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             console.warn("[CF] CF_COPY_PAGE: pageData capture threw:", String(pdErr).slice(0, 80));
             // Still persist metadata-only fallback so "Load Captured GHL Page" has something to show
             try {
-              const bm2 = (await chrome.tabs.get(tabId).catch(() => ({ url: "" }))).url
+              var bm2 = (await chrome.tabs.get(tabId).catch(() => ({ url: "" }))).url
                 .match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
               if (bm2) {
-                const [, , , builderId2] = bm2;
+                var [, , , builderId2] = bm2;
                 await chrome.storage.local.set({
                   capturedGHLPage: {
                     builderId:  builderId2,
@@ -2624,49 +2727,49 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   /* ── CF_PASTE_PAGE ────────────────────────────────────────────────────────
    * Clones the copied GHL page into the active builder tab.
-   * Uses revexBackendService.post('https://backend.leadconnectorhq.com/funnels/clone-funnel-step/').
+   * Uses revexBackendService.post('https://backend.leadconnectorhq.com/funnels/funnel/clone-funnel-step/').
    * The active tab MUST be app.gohighlevel.com/.../page-builder/... OR .../funnel-builder/...
    * ─────────────────────────────────────────────────────────────────────── */
   if (type === "CF_PASTE_PAGE") {
     (async () => {
       try {
         // 1. Read what was copied
-        const stored = await chrome.storage.session.get("cf_copied_page");
-        const src    = stored.cf_copied_page;
+        var stored = await chrome.storage.session.get("cf_copied_page");
+        var src    = stored.cf_copied_page;
 
         // ── Helper: run builder injection on the active GHL builder tab ──
-        const doAIInject = async (pageData, debugLabel) => {
+        var doAIInject = async (pageData, debugLabel) => {
           /* Use sender.tab.id (the tab that clicked the FAB) — more reliable
              than chrome.tabs.query which can return the wrong window/tab. */
-          const tabId2 = sender.tab?.id ?? msg.tabId
+          var tabId2 = sender.tab?.id ?? msg.tabId
             ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
           if (!tabId2) { sendResponse({ ok: false, error: "Could not identify the GHL builder tab. Make sure you clicked the orange CF button inside the GHL builder." }); return; }
-          const tab2 = await chrome.tabs.get(tabId2);
-          const m2   = (tab2.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+          var tab2 = await chrome.tabs.get(tabId2);
+          var m2   = (tab2.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
           if (!m2) {
             sendResponse({ ok: false, error: `This tab is not a GHL builder page (URL: ${(tab2.url ?? "").slice(0, 80)}). Open a funnel page in the GHL builder, then click the orange CF button.` });
             return;
           }
-          const [, locId2, , builderId2] = m2;
+          var [, locId2, , builderId2] = m2;
           console.log("[CF] CF_PASTE_PAGE:", debugLabel, "→ builder", builderId2);
           /* ── Step A: Probe all frames to find which one has Pinia ──────── */
-          let iframeFrameId2 = 0;
+          var iframeFrameId2 = 0;
           try {
-            const probeRes2 = await chrome.scripting.executeScript({
+            var probeRes2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, allFrames: true },
               world:  "MAIN",
               func:   _cf_probePinia,
             });
-            const builderFrame2 = probeRes2.find(r2 => r2.result === true && r2.frameId !== 0)
+            var builderFrame2 = probeRes2.find(r2 => r2.result === true && r2.frameId !== 0)
               ?? probeRes2.find(r2 => r2.result === true);
             if (builderFrame2) iframeFrameId2 = builderFrame2.frameId ?? 0;
           } catch (_probeErr2) {}
 
           /* ── Step B: Run approaches 0/1/2/2B in top frame ──────────── */
-          const { cf_cached_bucket: cachedBkt = null } = await chrome.storage.local.get("cf_cached_bucket");
-          let r = {};
+          var { cf_cached_bucket: cachedBkt = null } = await chrome.storage.local.get("cf_cached_bucket");
+          var r = {};
           try {
-            const res2 = await chrome.scripting.executeScript({
+            var res2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, allFrames: false },
               world:  "MAIN",
               func:   _cf_injectViaBuilderSave,
@@ -2681,18 +2784,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
           /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ─ */
           try {
-            const a3Res2 = await chrome.scripting.executeScript({
+            var a3Res2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, frameIds: [iframeFrameId2] },
               world:  "MAIN",
               func:   _cf_approach3PiniaInFrame,
               args:   [builderId2, locId2, pageData],
             });
-            const a3b = JSON.parse(a3Res2?.[0]?.result ?? "{}");
+            var a3b = JSON.parse(a3Res2?.[0]?.result ?? "{}");
             if (!r.diag) r.diag = {};
             r.diag.approach3 = { ...(a3b.diag?.approach3 ?? {}), iframeFrameId: iframeFrameId2 };
-            const a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
+            var a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
             if (a3b.ok) {
-              const a3Base2 = a3b.method ?? "pinia";
+              var a3Base2 = a3b.method ?? "pinia";
               if (a2Wrote2) {
                 r.method = a3Base2 === "pinia-patched" ? "firebase+pinia-patched" : "firebase+pinia";
               } else if (!r.ok) {
@@ -2712,17 +2815,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
           /* ── Step D: Approach 4 — Vuex 2 / Nuxt 2 direct store mutation ─ */
           try {
-            const a4Res2 = await chrome.scripting.executeScript({
+            var a4Res2 = await chrome.scripting.executeScript({
               target: { tabId: tabId2, frameIds: [iframeFrameId2] },
               world:  "MAIN",
               func:   _cf_approach4VuexInFrame,
               args:   [builderId2, locId2, pageData],
             });
-            const a4b = JSON.parse(a4Res2?.[0]?.result ?? "{}");
+            var a4b = JSON.parse(a4Res2?.[0]?.result ?? "{}");
             if (!r.diag) r.diag = {};
             r.diag.approach4 = { ...(a4b.diag?.approach4 ?? {}), iframeFrameId: iframeFrameId2 };
             if (a4b.ok) {
-              const a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
+              var a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
               if (a2Wrote2) {
                 r.method = (r.method ?? "firebase") + "+vuex";
               } else if (!r.ok) {
@@ -2748,7 +2851,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
            * Wrapped in callback-style Promise per spec requirement.              */
           try {
             /* Step E1: Read stored sections from top frame */
-            const a5SectionsJson = await new Promise((resolve) => {
+            var a5SectionsJson = await new Promise((resolve) => {
               chrome.scripting.executeScript(
                 {
                   target: { tabId: tabId2, frameIds: [0] },
@@ -2767,8 +2870,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             });
 
             /* Step E2: Inject sections into builder frame Pinia store */
-            const a5FrameIds = iframeFrameId2 !== 0 ? [iframeFrameId2] : [0];
-            const a5Result = await new Promise((resolve) => {
+            var a5FrameIds = iframeFrameId2 !== 0 ? [iframeFrameId2] : [0];
+            var a5Result = await new Promise((resolve) => {
               chrome.scripting.executeScript(
                 {
                   target: { tabId: tabId2, frameIds: a5FrameIds },
@@ -2825,8 +2928,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
             /* Arm sniffer for NEXT page load (post-hard-reload fetches) */
             try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2 }); } catch(_) {}
-            const method = r.method ?? "injected";
-            const toast = r.warning
+            var method = r.method ?? "injected";
+            var toast = r.warning
               ? `Content injected (${method}) — ${r.warning}. Hard-reload the builder tab with F5 (NOT Ctrl+Shift+R) to see your content.`
               : `Content injected via ${method}. Hard-reload the builder tab with F5 (NOT Ctrl+Shift+R) to see your AI content.`;
             sendResponse({ ok: true, builderId: builderId2, injectResult: r, toast });
@@ -2843,8 +2946,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         // ── Route B: No real GHL clone — try cfReady fallback (popup-loaded) ─
         if (!src?.funnelId || !src?.stepId) {
-          const lsData = await chrome.storage.local.get("cfReady");
-          const ready  = lsData.cfReady;
+          var lsData = await chrome.storage.local.get("cfReady");
+          var ready  = lsData.cfReady;
           if (ready?.pageData) {
             await doAIInject(ready.pageData, "cfReady-fallback");
             return;
@@ -2856,23 +2959,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // ── Route C: Real GHL clone (clone-funnel-step) ───────────────────
 
         // 2. Get the active tab (must be GHL builder)
-        const tabId = sender.tab?.id ?? msg.tabId
+        var tabId = sender.tab?.id ?? msg.tabId
           ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
-        const tab = await chrome.tabs.get(tabId);
-        const url = tab.url ?? "";
-        const m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        var tab = await chrome.tabs.get(tabId);
+        var url = tab.url ?? "";
+        var m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
           sendResponse({ ok: false, error: `This tab is not a GHL builder page (URL: ${url.slice(0, 80)}). Open a funnel page in the GHL builder, then try again.` });
           return;
         }
-        const [, locationId, , builderId] = m;
+        var [, locationId, , builderId] = m;
 
         // 3. Get destination funnelId + stepId via revex
-        let destInfo = {};
+        var destInfo = {};
         try {
-          const res = await chrome.scripting.executeScript({
+          var res = await chrome.scripting.executeScript({
             target: { tabId, allFrames: false },
             world:  "MAIN",
             func:   _cf_getBuilderInfo,
@@ -2889,20 +2992,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         // 4. Clone!
-        const req = {
-          sourceFunnelId: src.funnelId,
-          sourceStepId:   src.stepId,
-          destFunnelId:   destInfo.funnelId,
-          destStepId:     destInfo.stepId,
-          locationId:     destInfo.locationId || locationId,
+        var req = {
+          funnelId:   destInfo.funnelId,
+          pageId:     destInfo.pageId || builderId,
+          locationId: destInfo.locationId || locationId,
         };
 
-        console.log("[CF] CF_PASTE_PAGE: cloning", req.sourceFunnelId + "/" + req.sourceStepId,
-          "→", req.destFunnelId + "/" + req.destStepId);
+        console.log("[CF] CF_PASTE_PAGE: cloning into funnelId=" + req.funnelId + " pageId=" + req.pageId);
 
-        let cloneResult = {};
+        var cloneResult = {};
         try {
-          const res = await chrome.scripting.executeScript({
+          var res = await chrome.scripting.executeScript({
             target: { tabId, allFrames: false },
             world:  "MAIN",
             func:   _cf_cloneFunnelStep,
@@ -2945,24 +3045,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_ROUNDTRIP_TEST") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
-        const tab = await chrome.tabs.get(tabId);
-        const m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        var tab = await chrome.tabs.get(tabId);
+        var m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
           sendResponse({ ok: false, error: `Not a GHL builder tab: ${(tab.url ?? "").slice(0, 80)}` });
           return;
         }
-        const [, , , builderId] = m;
+        var [, , , builderId] = m;
 
-        const res = await chrome.scripting.executeScript({
+        var res = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   _cf_roundtripFirebaseWrite,
           args:   [builderId],
         });
-        const result = JSON.parse(res?.[0]?.result ?? "{}");
+        var result = JSON.parse(res?.[0]?.result ?? "{}");
         /* Cache bucket for future blank-page inject attempts (Approach 2B) */
         if (result.diag?.bucket) {
           chrome.storage.local.set({ cf_cached_bucket: result.diag.bucket }).catch(() => {});
@@ -2983,33 +3083,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_SCHEMA_DIFF") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
-        const tab = await chrome.tabs.get(tabId);
-        const m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        var tab = await chrome.tabs.get(tabId);
+        var m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
           sendResponse({ ok: false, error: `Not a GHL builder tab: ${(tab.url ?? "").slice(0, 80)}` });
           return;
         }
-        const [, , , builderId] = m;
+        var [, , , builderId] = m;
 
         /* Read GHL native schema from Firebase (no write) */
-        const execRes = await chrome.scripting.executeScript({
+        var execRes = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   _cf_readFirebaseSchema,
           args:   [builderId],
         });
-        const nativeResult = JSON.parse(execRes?.[0]?.result ?? "{}");
+        var nativeResult = JSON.parse(execRes?.[0]?.result ?? "{}");
 
         /* Simulate our inject payload using the EXACT same transformation pipeline
          * as the real CF_INJECT_AI_PAGE handler. Inline flattenForFirebase and sectionsWithContext
          * construction so the diff reflects what we actually write to Firebase.           */
-        const stored = await chrome.storage.local.get(["cfReady"]);
-        const pd     = stored?.cfReady?.pageData ?? null;
+        var stored = await chrome.storage.local.get(["cfReady"]);
+        var pd     = stored?.cfReady?.pageData ?? null;
 
-        let injectSim = null;
+        var injectSim = null;
         if (pd) {
           /* ── Same flattenForFirebase as inject pipeline (v2.38.0) ── *
            * v2.38.0: keep `element` snapshot field (matches native GHL  *
@@ -3025,32 +3125,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             }
             return v;
           }
-          const wrappedRows = Object.fromEntries(
+          var wrappedRows = Object.fromEntries(
             Object.entries(pd.rows    ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
-          const wrappedCols = Object.fromEntries(
+          var wrappedCols = Object.fromEntries(
             Object.entries(pd.columns ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
-          const wrappedEls = Object.fromEntries(
+          var wrappedEls = Object.fromEntries(
             Object.entries(pd.elements ?? {}).map(([k, v]) => [k, _diff_flattenForFirebase(k, v)])
           );
 
           /* ── Same sectionsWithContext as inject pipeline (v2.38.0 full flat tree + element field) ── */
-          const sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
-            const childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
-            const flatElements = [];
-            for (const rowId of childRowIds) {
-              const row = wrappedRows[rowId];
+          var sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
+            var childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+            var flatElements = [];
+            for (var rowId of childRowIds) {
+              var row = wrappedRows[rowId];
               if (!row) continue;
               flatElements.push(row);
-              const colIds = Array.isArray(row.child) ? row.child : [];
-              for (const colId of colIds) {
-                const col = wrappedCols[colId];
+              var colIds = Array.isArray(row.child) ? row.child : [];
+              for (var colId of colIds) {
+                var col = wrappedCols[colId];
                 if (!col) continue;
                 flatElements.push(col);
-                const elemIds = Array.isArray(col.child) ? col.child : [];
-                for (const elemId of elemIds) {
-                  const elem = wrappedEls[elemId];
+                var elemIds = Array.isArray(col.child) ? col.child : [];
+                for (var elemId of elemIds) {
+                  var elem = wrappedEls[elemId];
                   if (elem) flatElements.push(elem);
                 }
               }
@@ -3068,10 +3168,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           });
 
           /* ── Build the schema summary from real pipeline output ── */
-          const sec0        = sectionsWithContext[0] ?? null;
-          const shallowEls  = sec0?.elements ?? [];
-          const row0        = Object.values(wrappedRows)[0] ?? null;
-          const col0        = Object.values(wrappedCols)[0] ?? null;
+          var sec0        = sectionsWithContext[0] ?? null;
+          var shallowEls  = sec0?.elements ?? [];
+          var row0        = Object.values(wrappedRows)[0] ?? null;
+          var col0        = Object.values(wrappedCols)[0] ?? null;
 
           injectSim = {
             sec0Keys:            sec0 ? Object.keys(sec0)                                      : "none",
@@ -3121,36 +3221,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     (async () => {
       try {
         // 1. Read the loaded AI page from local storage
-        const s     = await chrome.storage.local.get(["cfReady", "cfProject"]);
-        let   ready = s.cfReady;
+        var s     = await chrome.storage.local.get(["cfReady", "cfProject"]);
+        var   ready = s.cfReady;
         if (!ready?.pageData) {
           sendResponse({ ok: false, error: "No AI page loaded — open the extension popup, pick a page from the AI library and click Load, then try again." });
           return;
         }
 
         // 2. Get the active tab (must be GHL builder)
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
-        const tab = await chrome.tabs.get(tabId);
-        const url = tab.url ?? "";
-        const m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        var tab = await chrome.tabs.get(tabId);
+        var url = tab.url ?? "";
+        var m   = url.match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
           sendResponse({ ok: false, error: `This tab is not a GHL builder page (URL: ${url.slice(0, 80)}). Open a funnel page in the GHL builder, then try again.` });
           return;
         }
-        const [, locationId, , builderId] = m;
+        var [, locationId, , builderId] = m;
 
         // 2b. Re-fetch fresh pageData from the server (avoids stale cached data)
         //     Uses the projectId + page stored in cfReady so we always inject latest AI output.
         if (ready.projectId && ready.page) {
           try {
-            const apiOrigin = ready.appUrl ?? s.cfProject?.apiOrigin ?? "https://challenge-funnel.replit.app";
-            const freshResp = await fetch(
+            var apiOrigin = ready.appUrl ?? s.cfProject?.apiOrigin ?? "https://challenge-funnel.replit.app";
+            var freshResp = await fetch(
               `${apiOrigin}/api/highlevel/page-data?projectId=${encodeURIComponent(ready.projectId)}&page=${encodeURIComponent(ready.page)}`
             );
             if (freshResp.ok) {
-              const freshJson = await freshResp.json();
+              var freshJson = await freshResp.json();
               if (freshJson?.pageData) {
                 ready = { ...ready, pageData: freshJson.pageData };
                 await chrome.storage.local.set({ cfReady: ready });
@@ -3168,24 +3268,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         console.log("[CF] CF_INJECT_AI_PAGE: injecting page=", ready.page, "→ builder=", builderId);
 
         /* ── Step A: Probe all frames to find which one has Pinia ────────────── */
-        let iframeFrameId = 0;
+        var iframeFrameId = 0;
         try {
-          const probeRes = await chrome.scripting.executeScript({
+          var probeRes = await chrome.scripting.executeScript({
             target: { tabId, allFrames: true },
             world:  "MAIN",
             func:   _cf_probePinia,
           });
           /* Prefer a non-zero frameId (builder iframe) over the top frame (0) */
-          const builderFrame = probeRes.find(r => r.result === true && r.frameId !== 0)
+          var builderFrame = probeRes.find(r => r.result === true && r.frameId !== 0)
             ?? probeRes.find(r => r.result === true);
           if (builderFrame) iframeFrameId = builderFrame.frameId ?? 0;
         } catch (_probeErr) {}
 
         /* ── Step B: Run approaches 0/1/2 in top frame ───────────────────── */
-        const { cf_cached_bucket: aiBkt = null } = await chrome.storage.local.get("cf_cached_bucket");
-        let injectResult = {};
+        var { cf_cached_bucket: aiBkt = null } = await chrome.storage.local.get("cf_cached_bucket");
+        var injectResult = {};
         try {
-          const res = await chrome.scripting.executeScript({
+          var res = await chrome.scripting.executeScript({
             target: { tabId, allFrames: false },
             world:  "MAIN",
             func:   _cf_injectViaBuilderSave,
@@ -3203,20 +3303,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ── *
          * Must run even when A2 succeeded so method can become firebase+pinia.  */
         try {
-          const a3Res = await chrome.scripting.executeScript({
+          var a3Res = await chrome.scripting.executeScript({
             target: { tabId, frameIds: [iframeFrameId] },
             world:  "MAIN",
             func:   _cf_approach3PiniaInFrame,
             args:   [builderId, locationId, ready.pageData],
           });
-          const a3 = JSON.parse(a3Res?.[0]?.result ?? "{}");
+          var a3 = JSON.parse(a3Res?.[0]?.result ?? "{}");
           /* Merge A3 diag (with iframeFrameId) */
           if (!injectResult.diag) injectResult.diag = {};
           injectResult.diag.approach3 = { ...(a3.diag?.approach3 ?? {}), iframeFrameId };
           /* Compose combined method from A2 + A3 outcomes */
-          const a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
+          var a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
           if (a3.ok) {
-            const a3Base = a3.method ?? "pinia"; /* "pinia" or "pinia-patched" */
+            var a3Base = a3.method ?? "pinia"; /* "pinia" or "pinia-patched" */
             if (a2Wrote) {
               /* Both Firebase write AND Pinia patch succeeded */
               injectResult.method = a3Base === "pinia-patched"
@@ -3246,17 +3346,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
          * we find the state module with rows/sections and patch it, bypassing the *
          * Firebase re-read entirely. No reload needed — content appears live.     */
         try {
-          const a4Res = await chrome.scripting.executeScript({
+          var a4Res = await chrome.scripting.executeScript({
             target: { tabId, frameIds: [iframeFrameId] },
             world:  "MAIN",
             func:   _cf_approach4VuexInFrame,
             args:   [builderId, locationId, ready.pageData],
           });
-          const a4 = JSON.parse(a4Res?.[0]?.result ?? "{}");
+          var a4 = JSON.parse(a4Res?.[0]?.result ?? "{}");
           if (!injectResult.diag) injectResult.diag = {};
           injectResult.diag.approach4 = { ...(a4.diag?.approach4 ?? {}), iframeFrameId };
           if (a4.ok) {
-            const a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
+            var a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
             if (a2Wrote) {
               injectResult.method = (injectResult.method ?? "firebase") + "+vuex";
             } else if (!injectResult.ok) {
@@ -3286,8 +3386,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               func:   _cf_refreshBuilderIframe,
             });
           } catch(_) {}
-          const method = injectResult.method ?? "injected";
-          const toast  = injectResult.warning
+          var method = injectResult.method ?? "injected";
+          var toast  = injectResult.warning
             ? `Injected (${method}) — ${injectResult.warning}`
             : `Injected via ${method} — builder is saving, allow a few seconds.`;
           sendResponse({ ok: true, page: ready.page, builderId, injectResult, toast });
@@ -3343,16 +3443,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_FETCH_URL_PAGE") {
     (async () => {
       try {
-        const pageUrl = msg.url;
+        var pageUrl = msg.url;
         if (!pageUrl || typeof pageUrl !== "string") {
           sendResponse({ ok: false, error: "No URL provided" });
           return;
         }
 
         // 1. Fetch the page HTML
-        let html;
+        var html;
         try {
-          const res = await fetch(pageUrl, {
+          var res = await fetch(pageUrl, {
             credentials: "omit",
             headers: { "Accept": "text/html,application/xhtml+xml" },
           });
@@ -3368,7 +3468,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         // 2. Search HTML for pageDataDownloadUrl (handles JSON string escaping like \/)
         // GHL SSR pages embed the page metadata in the Nuxt payload JSON inside a <script> tag.
-        const rawMatch = html.match(/"pageDataDownloadUrl"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        var rawMatch = html.match(/"pageDataDownloadUrl"\s*:\s*"((?:[^"\\]|\\.)*)"/);
         if (!rawMatch) {
           sendResponse({
             ok: false,
@@ -3378,7 +3478,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         // Unescape the JSON string value to get the real URL
-        let downloadUrl;
+        var downloadUrl;
         try {
           downloadUrl = JSON.parse('"' + rawMatch[1] + '"');
         } catch {
@@ -3386,16 +3486,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         // Also try to extract page name from the HTML
-        const nameMatch = html.match(/"name"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        let pageName = "";
+        var nameMatch = html.match(/"name"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        var pageName = "";
         try {
           pageName = nameMatch ? JSON.parse('"' + nameMatch[1] + '"') : "";
         } catch { pageName = nameMatch?.[1] ?? ""; }
 
         // 3. Fetch the actual element tree from Firebase Storage
-        let elementTree;
+        var elementTree;
         try {
-          const fbRes = await fetch(downloadUrl);
+          var fbRes = await fetch(downloadUrl);
           if (!fbRes.ok) {
             sendResponse({ ok: false, error: `Firebase Storage returned HTTP ${fbRes.status} — the page data may have expired or moved.` });
             return;
@@ -3434,7 +3534,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
    * matches cf_sniff_tab. Clears the pending flag immediately to prevent a
    * second tab from stealing the same sniffer session.                       */
   if (type === "CF_SNIFF_CLAIM") {
-    const senderTabId = sender?.tab?.id;
+    var senderTabId = sender?.tab?.id;
     chrome.storage.local.get(["cf_sniff_pending", "cf_sniff_tab"], (d) => {
       if (d.cf_sniff_pending && senderTabId && d.cf_sniff_tab === senderTabId) {
         chrome.storage.local.remove(["cf_sniff_pending"], () => {
@@ -3451,13 +3551,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
    * Only stored when the sender tab matches the tab we armed the sniffer for.
    * After 60 s the record is stale; popup truncates display accordingly.    */
   if (type === "CF_GHL_BACKEND_ERROR") {
-    const senderTabId = sender?.tab?.id;
+    var senderTabId = sender?.tab?.id;
     if (!senderTabId) return false;
-    const { status, url, body } = msg;
+    var { status, url, body } = msg;
     /* Stored per-tab; no cf_sniff_tab gate needed — sender.tab.id already
      * ensures this is from the correct GHL tab. A 60s cleanup is scheduled
      * by the CF_OOFF_ERROR handler; add a fallback here too.               */
-    const storeKey = `cf_ghl_err_${senderTabId}`;
+    var storeKey = `cf_ghl_err_${senderTabId}`;
     chrome.storage.local.set({ [storeKey]: { status, url, body, tabId: senderTabId, ts: Date.now() } });
     setTimeout(() => chrome.storage.local.remove(storeKey), 60000);
     return false;
@@ -3479,27 +3579,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_CAPTURE_CLONE_BASELINE") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
 
-        const tab = await chrome.tabs.get(tabId);
-        const m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
+        var tab = await chrome.tabs.get(tabId);
+        var m   = (tab.url ?? "").match(/\/location\/([^/]+)\/(page-builder|funnel-builder)\/([^/]+)/);
         if (!m) {
           sendResponse({ ok: false, error: `Not a GHL builder tab: ${(tab.url ?? "").slice(0, 80)}` });
           return;
         }
-        const [, , , builderId] = m;
+        var [, , , builderId] = m;
 
-        const execRes = await chrome.scripting.executeScript({
+        var execRes = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   _cf_captureCloneBaseline,
           args:   [builderId],
         });
-        const result = JSON.parse(execRes?.[0]?.result ?? "{}");
+        var result = JSON.parse(execRes?.[0]?.result ?? "{}");
 
         if (result.ok && result.fullData) {
-          const baseline = {
+          var baseline = {
             builderId,
             tabUrl:     (tab.url ?? "").slice(0, 120),
             fullData:   result.fullData,
@@ -3543,14 +3643,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_GET_API_LOG") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
-        const res = await chrome.scripting.executeScript({
+        var res = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   () => JSON.stringify(window.__cfApiLog ?? []),
         });
-        const log = JSON.parse(res?.[0]?.result ?? "[]");
+        var log = JSON.parse(res?.[0]?.result ?? "[]");
         sendResponse({ ok: true, log });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
@@ -3566,9 +3666,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_GET_NATIVE_FIREBASE_PAYLOAD") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
-        const res = await chrome.scripting.executeScript({
+        var res = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   () => JSON.stringify({
@@ -3576,7 +3676,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             raw:     window.__cfNativeFirebaseRaw ?? null,
           }),
         });
-        const data = JSON.parse(res?.[0]?.result ?? "{}");
+        var data = JSON.parse(res?.[0]?.result ?? "{}");
         sendResponse({ ok: true, payload: data.payload, raw: data.raw });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
@@ -3592,9 +3692,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_GET_PAGE_META") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
-        const res = await chrome.scripting.executeScript({
+        var res = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   () => JSON.stringify({
@@ -3602,7 +3702,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             firestoreLog:   window.__cfFirestoreStreamLog ?? [],
           }),
         });
-        const { meta, firestoreLog } = JSON.parse(res?.[0]?.result ?? '{"meta":null,"firestoreLog":[]}');
+        var { meta, firestoreLog } = JSON.parse(res?.[0]?.result ?? '{"meta":null,"firestoreLog":[]}');
         sendResponse({ ok: true, meta, firestoreLog });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
@@ -3617,14 +3717,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (type === "CF_GET_PAGE_LOAD_ERRORS") {
     (async () => {
       try {
-        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        var tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
         if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
-        const res = await chrome.scripting.executeScript({
+        var res = await chrome.scripting.executeScript({
           target: { tabId, allFrames: false },
           world:  "MAIN",
           func:   () => JSON.stringify(window.__cfPageLoadErrors ?? []),
         });
-        const errors = JSON.parse(res?.[0]?.result ?? "[]");
+        var errors = JSON.parse(res?.[0]?.result ?? "[]");
         sendResponse({ ok: true, errors });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
@@ -3634,14 +3734,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (type === "CF_OOFF_ERROR") {
-    const senderTabId = sender?.tab?.id;
+    var senderTabId = sender?.tab?.id;
     if (!senderTabId) return false;
-    const { msg: errMsg, src, line, seenBeforeInject, seenAfterInject, preExisting } = msg;
-    const storeKey = `cf_ooff_err_${senderTabId}`;
+    var { msg: errMsg, src, line, seenBeforeInject, seenAfterInject, preExisting } = msg;
+    var storeKey = `cf_ooff_err_${senderTabId}`;
     /* Merge with existing to accumulate both boolean flags across multiple calls */
     chrome.storage.local.get([storeKey], (existing) => {
-      const prev = existing[storeKey] ?? {};
-      const merged = {
+      var prev = existing[storeKey] ?? {};
+      var merged = {
         ...prev,
         errMsg: errMsg ?? prev.errMsg,
         src:    src    ?? prev.src,

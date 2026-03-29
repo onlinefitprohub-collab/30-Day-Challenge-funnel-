@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.49.2",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.49.2: Fix clone URL (remove /funnel/ prefix, use absolute URL to bypass revex baseURL) + final const/let cleanup. No API key needed.",
+  "version": "2.49.3",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.49.3: Correct clone URL (/funnel/ restored), body { stepId, funnelId, funnels, locationId, userId }, stepId from funnel fetch, post-clone newPageId. Global const/let→var. No API key needed.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
