@@ -887,8 +887,8 @@ async function doPageMeta() {
           lines.push("--- Firestore URLs: none captured ---");
         }
         lines.push("");
-        lines.push("--- raw response (first 4000 chars) ---");
-        lines.push(meta.raw ?? "(no raw)");
+        lines.push("--- raw response (first 6000 chars) ---");
+        lines.push(typeof meta.raw === "string" ? meta.raw.slice(0, 6000) : JSON.stringify(meta.fullBody ?? "(no raw)").slice(0, 6000));
         div.textContent = lines.join("\n");
         div.className   = "paste-result ok";
       }

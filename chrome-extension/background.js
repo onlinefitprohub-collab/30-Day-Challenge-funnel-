@@ -1545,11 +1545,14 @@ function _cf_approach4VuexInFrame(builderId, locationId, pageData) {
    store directly. Runs in a separate chrome.scripting.executeScript call so it
    can be targeted at any frame (top or builder iframe). Returns a result string
    that background.js stores in r.diag.approach2.a5VueResult.                  */
-function _cf_approach5PiniaWithStoredSections() {
+function _cf_approach5PiniaWithStoredSections(sectionsJsonArg) {
   try {
-    var sections = window.__cfLastSectionsWithContext;
+    var sections = null;
+    if (sectionsJsonArg && sectionsJsonArg !== "null") {
+      try { sections = JSON.parse(sectionsJsonArg); } catch(_) { sections = null; }
+    }
     if (!sections || !Array.isArray(sections) || sections.length === 0) {
-      return "no-stored-sections";
+      return "no-sections-arg";
     }
     var mountEl = document.querySelector("#__nuxt") || document.querySelector("[data-v-app]");
     var vueApp  = mountEl && mountEl.__vue_app__;
@@ -2639,26 +2642,57 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             };
           }
 
-          /* ── Step E: A5 — Vue/Pinia mutation using stored sectionsWithContext ── *
-           * Runs _cf_approach5PiniaWithStoredSections via chrome.scripting in the  *
-           * detected builder frame (falls back to top frame). Reads              *
-           * window.__cfLastSectionsWithContext stored by _cf_injectViaBuilderSave *
-           * and replaces the Pinia sections store with the processed sections     *
-           * (including the flat elements array GHL renderer requires).            */
+          /* ── Step E: A5 — Vue/Pinia mutation using built sectionsWithContext ─── *
+           * Step 1: Read window.__cfLastSectionsWithContext from the TOP frame    *
+           *   (where _cf_injectViaBuilderSave stored it).                        *
+           * Step 2: Pass the sections JSON as an arg to _cf_approach5Pinia in    *
+           *   the BUILDER frame (iframeFrameId2). This avoids the top/iframe    *
+           *   window isolation problem: sections cross the frame boundary via    *
+           *   args, not window globals.                                           *
+           * Wrapped in callback-style Promise per spec requirement.              */
           try {
-            const a5FrameIds = iframeFrameId2 !== 0 ? [iframeFrameId2] : [0];
-            const a5Res2 = await chrome.scripting.executeScript({
-              target: { tabId: tabId2, frameIds: a5FrameIds },
-              world:  "MAIN",
-              func:   _cf_approach5PiniaWithStoredSections,
+            /* Step E1: Read stored sections from top frame */
+            const a5SectionsJson = await new Promise((resolve) => {
+              chrome.scripting.executeScript(
+                {
+                  target: { tabId: tabId2, frameIds: [0] },
+                  world:  "MAIN",
+                  func:   function() {
+                    try {
+                      var s = window.__cfLastSectionsWithContext;
+                      return s && Array.isArray(s) && s.length > 0 ? JSON.stringify(s) : null;
+                    } catch(_) { return null; }
+                  },
+                },
+                function(results) {
+                  resolve((results && results[0] && results[0].result) ? results[0].result : null);
+                }
+              );
             });
+
+            /* Step E2: Inject sections into builder frame Pinia store */
+            const a5FrameIds = iframeFrameId2 !== 0 ? [iframeFrameId2] : [0];
+            const a5Result = await new Promise((resolve) => {
+              chrome.scripting.executeScript(
+                {
+                  target: { tabId: tabId2, frameIds: a5FrameIds },
+                  world:  "MAIN",
+                  func:   _cf_approach5PiniaWithStoredSections,
+                  args:   [a5SectionsJson ?? "null"],
+                },
+                function(results) {
+                  resolve((results && results[0]) ? (results[0].result ?? "no-result") : "no-result");
+                }
+              );
+            });
+
             if (!r.diag) r.diag = {};
             if (!r.diag.approach2) r.diag.approach2 = {};
-            const a5Result = a5Res2?.[0]?.result ?? "no-result";
-            r.diag.approach2.a5VueResult = a5Result;
-            r.diag.approach2.a5FrameId   = iframeFrameId2;
-            /* If firebase path succeeded (A2) and A5 also succeeded, note it */
-            if (a5Result.startsWith("found-store=") && r.ok && (r.method ?? "").includes("firebase")) {
+            r.diag.approach2.a5VueResult    = a5Result;
+            r.diag.approach2.a5FrameId      = iframeFrameId2;
+            r.diag.approach2.a5SectionsRead = a5SectionsJson ? "ok" : "null";
+            if (typeof a5Result === "string" && a5Result.startsWith("found-store=")
+                && r.ok && (r.method ?? "").includes("firebase")) {
               r.method = (r.method ?? "firebase") + "+pinia-a5";
             }
           } catch (a5Err2) {

@@ -187,7 +187,8 @@
                   hasSections:          Array.isArray(pmBody.sections) && pmBody.sections.length > 0,
                   topKeys:              Object.keys(pmBody).join(","),
                   updatedAt:            pmBody.updatedAt ?? null,
-                  raw:                  JSON.stringify(pmBody).slice(0, 4000),
+                  fullBody:             pmBody,
+                  raw:                  JSON.stringify(pmBody),
                   capturedAt:           Date.now(),
                   url:                  url.slice(0, 200),
                 };
