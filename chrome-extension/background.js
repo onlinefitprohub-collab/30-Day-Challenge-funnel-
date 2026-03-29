@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.46.0 — add section.elements flat array alongside populated dicts; inject flow is A0→A1→A2→A2B→A3→A4 only.");
+    console.log("[CF Funnel] Installed v2.48.0 — write to new UUID Firebase path + POST version to GHL + Firestore probe + A5 Pinia mutation. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.46.0 — add section.elements flat array alongside populated dicts; inject flow is A0→A1→A2→A2B→A3→A4 only.");
+    console.log("[CF Funnel] Updated to v2.48.0 — write to new UUID Firebase path + POST version to GHL + Firestore probe + A5 Pinia mutation. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -832,10 +832,26 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               + Object.keys(pd.columns  ?? {}).length
               + Object.keys(pd.elements ?? {}).length;
 
-            /* Firebase Storage upload endpoint (creates/overwrites object) */
+            /* v2.48.0: Generate a new UUID file path — write to a NEW file, not overwrite.
+             * GHL caches Firebase Storage responses by URL. Overwriting the same path
+             * never shows because GHL re-reads the cached (old) URL after reload.
+             * Writing to a fresh UUID path means the URL has never been cached.        */
+            function generateUUID() {
+              return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0;
+                var v = c === "x" ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+              });
+            }
+            const newFileUUID    = generateUUID();
+            const newFbPath      = "funnel/" + funnelIdFromPath + "/page/" + builderId + "/page-data-" + newFileUUID;
+            const encodedNewPath = encodeURIComponent(newFbPath);
+            diag.approach2.newFbPath = newFbPath;
+
+            /* Firebase Storage upload endpoint — creates a NEW file (not overwrite) */
             const uploadEp =
               `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
-              `/o?uploadType=media&name=${encodeURIComponent(objectPath)}`;
+              `/o?uploadType=media&name=${encodedNewPath}`;
             const res = await fetch(uploadEp, {
               method:  "POST",
               headers: {
@@ -854,7 +870,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               try {
                 const readBackEp =
                   `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
-                  `/o/${encodedPath}?alt=media`;
+                  `/o/${encodedNewPath}?alt=media`;
                 const readBackRes = await fetch(readBackEp, {
                   headers: { "Authorization": `Firebase ${idToken}` },
                   signal:  AbortSignal.timeout(5000),
@@ -880,195 +896,155 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 diag.approach2.readBack = { ok: false, error: String(readBackErr).slice(0, 100) };
               }
 
-              /* ── Extract new Firebase download token from upload response ────────── *
-               * Firebase Storage REST API returns { downloadTokens: "…" } on upload.
-               * If it generated a NEW token, GHL's cached pageDataDownloadUrl (stored
-               * in its backend) is now STALE — GHL tries to GET from the old URL, gets
-               * 403/empty, and loadFunnelPage throws "TypeError: o1.elements is not
-               * iterable" on the empty data.  We fix this by updating GHL's metadata
-               * with the new public download URL so GHL can actually read our file.   */
-              let newFirebaseToken = null;
+              /* ── v2.48.0: Extract new Firebase token → build new public URL ──────── *
+               * Firebase Storage returns { downloadTokens } on upload.
+               * We build the full public URL for the NEW file and log it.            */
+              let newPublicUrl = null;
               try {
-                const uploadResp = await res.clone().json().catch(() => ({}));
-                newFirebaseToken = uploadResp.downloadTokens ?? null;
-                const oldToken   = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
-                diag.approach2.newFirebaseToken = newFirebaseToken
-                  ? newFirebaseToken.slice(0, 20) + "…" : "none-in-resp";
-                diag.approach2.tokenChanged = newFirebaseToken
-                  ? (newFirebaseToken !== oldToken) : false;
+                const uploadResp    = await res.clone().json().catch(() => ({}));
+                const newToken      = uploadResp.downloadTokens ?? null;
+                diag.approach2.newFirebaseToken = newToken ? newToken.slice(0, 20) + "…" : "none-in-resp";
+                if (newToken) {
+                  const newFileBaseUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedNewPath}`;
+                  newPublicUrl = newFileBaseUrl + `?alt=media&token=${newToken}`;
+                }
+                diag.approach2.newPublicUrl = newPublicUrl ? newPublicUrl.slice(0, 150) : "no-url";
+                diag.approach2.newFileUrl   = newPublicUrl;
               } catch (_tre) {
                 diag.approach2.newFirebaseToken = "parse-err";
               }
 
-              /* ── v2.32.0: metaUpdate is PRIMARY path ────────────────────────────── *
-               * ROOT CAUSE 2 FIX: patchToken restores the old Firebase download URL *
-               * so GHL backend serves its CACHED original data — inject invisible.  *
-               * metaUpdate instead calls the GHL backend PUT endpoint with the NEW  *
-               * download URL, forcing GHL to re-fetch our newly written file.       *
-               * Strategy: (A) always try metaUpdate first; (B) attempt patchToken   *
-               * only as a fallback for environments where metaUpdate is unavailable.*
-               * Result after inject + GHL reload: our AI page content is visible.   */
-              const oldToken = (downloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? "";
-              const metaEp   =
-                `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
-                `/o/${encodedPath}`;
-
-              /* ── (A) PRIMARY: metaUpdate — tell GHL backend about the new URL ──── */
-              let metaUpdateSucceeded = false;
-              if (revex) {
-                /* Determine the active Firebase token for the new URL:
-                 * Prefer the token from the upload response (newFirebaseToken).
-                 * If upload response didn't include a token, fall back to a metadata
-                 * GET to obtain the current token for the object we just wrote.    */
-                let activeToken = newFirebaseToken;
-                if (!activeToken) {
+              /* ── v2.48.0: POST new version to GHL backend ───────────────────────── *
+               * Try 6 POST endpoints in order — stop at first 200/201 response.
+               * PATCH/PUT return 404 on all tested patterns; POST targets version or
+               * save sub-endpoints that may accept new file registration.             */
+              if (revex && newPublicUrl) {
+                const versionPayload = {
+                  pageDataDownloadUrl: newPublicUrl,
+                  pageDataUrl:         newFbPath,
+                  pageDownloadUrl:     newPublicUrl,
+                  pageDownloadPath:    newFbPath,
+                  pageType:            "draft",
+                  updatedAt:           new Date().toISOString(),
+                  versionId:           generateUUID(),
+                };
+                const postEndpoints = [
+                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}/version`,
+                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}/save`,
+                  `https://backend.leadconnectorhq.com/funnels/builder/${builderId}/save`,
+                  `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
+                  `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}/version`,
+                ];
+                let postResult = "all-failed";
+                for (const ep of postEndpoints) {
                   try {
-                    const metaGetRes = await fetch(metaEp, {
-                      headers: { "Authorization": `Firebase ${idToken}` },
+                    const postResp = await revex.post(ep, versionPayload);
+                    if (postResp.status === 200 || postResp.status === 201) {
+                      postResult = `POST-${postResp.status}:${ep.slice(45)}`;
+                      break;
+                    }
+                  } catch (_pe) {
+                    const st = _pe?.response?.status ?? "err";
+                    /* log last status */
+                    postResult = `last-err:${st} ep:${ep.slice(45)}`;
+                  }
+                }
+                diag.approach2.postNewVersionResult = postResult;
+              } else {
+                diag.approach2.postNewVersionResult = revex ? "no-newPublicUrl" : "no-revex";
+              }
+
+              /* ── v2.48.0: Firestore REST probe ──────────────────────────────────── *
+               * Try 4 likely Firestore document paths. If GET-200, PATCH with new URL.*
+               * Firebase ID tokens can be used as Bearer tokens for Firestore REST.  */
+              try {
+                const fsFields  = { fields: {
+                  pageDataDownloadUrl: { stringValue: newPublicUrl ?? "" },
+                  pageDataUrl:         { stringValue: newFbPath },
+                  updatedAt:           { stringValue: new Date().toISOString() },
+                }};
+                const fsPaths = [
+                  `pages/${builderId}`,
+                  `funnel-pages/${builderId}`,
+                  `funnelPages/${builderId}`,
+                  `builder-pages/${builderId}`,
+                ];
+                const fsBase = "https://firestore.googleapis.com/v1/projects/highlevel-backend/databases/(default)/documents/";
+                let fsResult = "all-failed";
+                for (const fsPath of fsPaths) {
+                  try {
+                    const fsGetResp = await fetch(fsBase + fsPath, {
+                      headers: { "Authorization": `Bearer ${idToken}` },
                       signal:  AbortSignal.timeout(4000),
                     });
-                    if (metaGetRes.ok) {
-                      const metaBody = await metaGetRes.json().catch(() => ({}));
-                      activeToken = metaBody.metadata?.downloadTokens ?? metaBody.downloadTokens ?? null;
-                      diag.approach2.metaGetTokenFallback = activeToken
-                        ? activeToken.slice(0, 20) + "…" : "none";
+                    if (fsGetResp.status === 200) {
+                      const fsPatchResp = await fetch(
+                        fsBase + fsPath + "?updateMask.fieldPaths=pageDataDownloadUrl&updateMask.fieldPaths=pageDataUrl", {
+                          method:  "PATCH",
+                          headers: { "Authorization": `Bearer ${idToken}`, "Content-Type": "application/json" },
+                          body:    JSON.stringify(fsFields),
+                        });
+                      fsResult = `GET-200:${fsPath} PATCH:${fsPatchResp.status}`;
+                      break;
                     } else {
-                      diag.approach2.metaGetTokenFallback = `http-${metaGetRes.status}`;
+                      fsResult = `probe-${fsGetResp.status}:${fsPath}`;
                     }
-                  } catch (_metaGetErr) {
-                    diag.approach2.metaGetTokenFallback = "err";
+                  } catch (_fse) {
+                    fsResult = `err:${fsPath}`;
                   }
                 }
-                if (activeToken) {
-                  const baseUrl      = downloadUrl.replace(/\?.*$/, "");
-                  const newPublicUrl = baseUrl + `?alt=media&token=${activeToken}`;
-                  diag.approach2.newPublicUrl = newPublicUrl.slice(0, 120);
-                  const updateBody = { ...metadata, pageDataDownloadUrl: newPublicUrl };
-                  /* v2.35.0: try PATCH first (then PUT fallback) on each URL pattern.
-                   * v2.34.0 tried PUT on all 3 URLs — all returned 404.
-                   * GHL's axios API commonly uses PATCH for partial updates.
-                   * Try order: /funnels/page/{pid} → /funnels/funnel/page/{pid} → /funnels/funnel/{fid}/page/{pid}
-                   * Verb order per URL: PATCH → PUT (PUT as fallback on 404/405)
-                   * Log all attempts as metaUpdateAttempts for debugging.              */
-                  diag.approach2.tabLocationId = tabLocationId || "(not-found-in-url)";
-                  /* v2.39.0: 6 URL patterns — location-ID patterns first (most specific),
-                   * then existing patterns as fallback. Each tried PATCH→PUT.
-                   * locationId extracted from window.location.href (tab URL).              */
-                  const metaUpdateUrls = tabLocationId ? [
-                    /* Location-ID patterns (new in v2.39.0) */
-                    `https://backend.leadconnectorhq.com/locations/${tabLocationId}/funnels/page/${builderId}`,
-                    `https://backend.leadconnectorhq.com/funnels/page/${builderId}?locationId=${tabLocationId}`,
-                    `https://backend.leadconnectorhq.com/funnels/${funnelIdFromPath}/page/${builderId}?locationId=${tabLocationId}`,
-                    /* Existing patterns (fallback) */
-                    `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
-                    `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
-                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
-                  ] : [
-                    /* No locationId — use existing 3 patterns only */
-                    `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
-                    `https://backend.leadconnectorhq.com/funnels/funnel/page/${builderId}`,
-                    `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
-                  ];
-                  const metaUpdateAttempts = [];
-                  diag.approach2.metaUpdateAttempts = metaUpdateAttempts;
-                  outer: for (const metaUpdateUrl of metaUpdateUrls) {
-                    for (const verb of ["patch", "put"]) {
-                      try {
-                        await revex[verb](metaUpdateUrl, updateBody);
-                        metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), verb, status: 200, ok: true });
-                        metaUpdateSucceeded = true;
-                        diag.approach2.metaUpdateStatus = `ok-primary-verb:${verb} url:${metaUpdateUrl.slice(50, 90)}`;
-                        diag.approach2.metaUpdateEndpoint = metaUpdateUrl.slice(0, 120);
-                        break outer;
-                      } catch (_uN) {
-                        const st = _uN?.response?.status ?? "err";
-                        metaUpdateAttempts.push({ url: metaUpdateUrl.slice(50), verb, status: st, ok: false });
-                        /* Only fall through to PUT if PATCH got a routing error (404/405).
-                         * Any other status (400, 422, 500) means the URL was reached —
-                         * trying PUT would be redundant and mask the real error. */
-                        if (verb === "patch" && st !== 404 && st !== 405) break;
-                      }
-                    }
-                  }
-                  if (!metaUpdateSucceeded) {
-                    diag.approach2.metaUpdateStatus =
-                      `all-failed: ${metaUpdateAttempts.map(a => `${a.verb} ${a.url.slice(-30)}→${a.status}`).join(" | ")}`;
-                  }
-                } else {
-                  diag.approach2.metaUpdateStatus = "skipped-no-token-after-fallback";
-                }
-              } else {
-                diag.approach2.metaUpdateStatus = "skipped-no-revex";
+                diag.approach2.firestoreResult = fsResult;
+              } catch (_fsOuter) {
+                diag.approach2.firestoreResult = "outer-err";
               }
 
-              /* ── (B) FALLBACK: patchToken — restore old Firebase token ───────── *
-               * Only run if metaUpdate failed (revex unavailable). When patchToken  *
-               * succeeds GHL's cached URL still works but serves CACHED data —      *
-               * inject may not be visible until Firebase CDN cache expires.         *
-               * Keep as fallback so at least the page doesn't 403-crash on reload. */
-              let patchSucceeded = false;
-              if (!metaUpdateSucceeded && oldToken) {
-                /* Format 1: nested metadata field */
-                try {
-                  const pr1 = await fetch(metaEp, {
-                    method:  "PATCH",
-                    headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
-                    body:    JSON.stringify({ metadata: { downloadTokens: oldToken } }),
-                  });
-                  diag.approach2.patchStatus1 = pr1.status;
-                  if (pr1.ok) {
-                    const pr1Body       = await pr1.json().catch(() => ({}));
-                    const returnedToken = pr1Body.metadata?.downloadTokens ?? pr1Body.downloadTokens ?? null;
-                    const tokenVerified = returnedToken === oldToken;
-                    diag.approach2.patchTokenOk = tokenVerified;
-                    if (tokenVerified) {
-                      patchSucceeded = true;
-                      diag.approach2.patchToken = "ok-format1-fallback";
-                    } else {
-                      diag.approach2.patchToken = `accepted-not-verified`;
-                      diag.approach2.patchReturnedToken = returnedToken ? returnedToken.slice(0, 20) + "…" : "null";
-                    }
-                  }
-                } catch (_p1) { diag.approach2.patchStatus1 = "err"; }
-
-                /* Format 2: top-level field, if format 1 failed/unverified */
-                if (!patchSucceeded) {
-                  try {
-                    const pr2 = await fetch(metaEp, {
-                      method:  "PATCH",
-                      headers: { "Content-Type": "application/json", "Authorization": `Firebase ${idToken}` },
-                      body:    JSON.stringify({ downloadTokens: oldToken }),
-                    });
-                    diag.approach2.patchStatus2 = pr2.status;
-                    if (pr2.ok) {
-                      const pr2Body        = await pr2.json().catch(() => ({}));
-                      const returnedToken2 = pr2Body.metadata?.downloadTokens ?? pr2Body.downloadTokens ?? null;
-                      const tokenVerified2 = returnedToken2 === oldToken;
-                      diag.approach2.patchTokenOk = tokenVerified2;
-                      if (tokenVerified2) {
-                        patchSucceeded = true;
-                        diag.approach2.patchToken = "ok-format2-fallback";
-                      } else {
-                        diag.approach2.patchToken = `accepted-not-verified-f2`;
-                        diag.approach2.patchReturnedToken = returnedToken2 ? returnedToken2.slice(0, 20) + "…" : "null";
-                      }
-                    }
-                  } catch (_p2) { diag.approach2.patchStatus2 = "err"; }
-                }
-
-                if (!patchSucceeded) {
-                  diag.approach2.patchToken = "failed";
-                }
-              } else if (metaUpdateSucceeded) {
-                diag.approach2.patchToken = "skipped-metaUpdate-primary-ok";
-              } else {
-                diag.approach2.patchToken = "skipped-no-old-token";
-              }
-
-              /* ── Post-write verification: re-read what we wrote ────────────────── *
-               * Confirms the new file is readable and has our sections/rows counts.  */
+              /* ── v2.48.0: A5 — Vue/Pinia direct state mutation ──────────────────── *
+               * Iterates pinia._s to find the store with a `sections` array, then    *
+               * replaces it with our AI sections (with flat elements). No network     *
+               * calls — GHL's Vue reactive system should re-render immediately.       *
+               * Returns: found-store=X before=N after=N (or error string).           */
               try {
-                const vrRes = await fetch(downloadUrl, {
+                const _a5MountEl = document.querySelector("#__nuxt") || document.querySelector("[data-v-app]");
+                const _a5VueApp  = _a5MountEl && _a5MountEl.__vue_app__;
+                if (!_a5VueApp) {
+                  diag.approach2.a5VueResult = "no-vue-app";
+                } else {
+                  const _a5Pinia = _a5VueApp.config?.globalProperties?.$pinia;
+                  if (!_a5Pinia || !_a5Pinia._s) {
+                    diag.approach2.a5VueResult = "no-pinia storeIds=none";
+                  } else {
+                    const _a5StoreIds = [];
+                    let   _a5SecStore = null;
+                    let   _a5SecStoreId = null;
+                    _a5Pinia._s.forEach(function(store, id) {
+                      _a5StoreIds.push(id);
+                      const secs = store.sections ?? store.$state?.sections;
+                      if (secs && Array.isArray(secs) && secs.length > 0) {
+                        _a5SecStore   = store;
+                        _a5SecStoreId = id;
+                      }
+                    });
+                    if (!_a5SecStore) {
+                      diag.approach2.a5VueResult = "no-store-with-sections storeIds=" + _a5StoreIds.join(",");
+                    } else {
+                      const _a5StateRef = _a5SecStore.sections ? _a5SecStore : _a5SecStore.$state;
+                      const _a5Before   = _a5StateRef.sections.length;
+                      _a5StateRef.sections = sectionsWithContext;
+                      const _a5After    = _a5StateRef.sections.length;
+                      diag.approach2.a5VueResult = `found-store=${_a5SecStoreId} before=${_a5Before} after=${_a5After}`;
+                    }
+                  }
+                }
+              } catch (_a5e) {
+                diag.approach2.a5VueResult = "error: " + String(_a5e?.message ?? _a5e).slice(0, 100);
+              }
+
+              /* ── Post-write verification: re-read what we wrote (new file URL) ─── *
+               * v2.48.0: reads from newPublicUrl (new file), falls back to old URL. */
+              try {
+                const vrUrl = newPublicUrl ?? downloadUrl;
+                const vrRes = await fetch(vrUrl, {
                   cache:   "no-store",
                   headers: { "Authorization": `Firebase ${idToken}` },
                   signal:  AbortSignal.timeout(5000),
@@ -2689,11 +2665,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
             /* Arm sniffer for NEXT page load (post-hard-reload fetches) */
             try { await chrome.storage.local.set({ cf_sniff_pending: true, cf_sniff_tab: tabId2 }); } catch(_) {}
-            try { await chrome.scripting.executeScript({ target: { tabId: tabId2, allFrames: false }, world: "MAIN", func: _cf_refreshBuilderIframe }); } catch(_) {}
             const method = r.method ?? "injected";
             const toast = r.warning
-              ? `Content injected (${method}) — ${r.warning}`
-              : `Content injected via ${method} — builder is saving, allow a few seconds.`;
+              ? `Content injected (${method}) — ${r.warning}. Press F5 to reload builder.`
+              : `Content injected via ${method} — press F5 to reload the builder tab.`;
             sendResponse({ ok: true, builderId: builderId2, injectResult: r, toast });
           } else {
             sendResponse({ ok: false, error: r.error ?? "inject failed", injectResult: r });
@@ -3439,6 +3414,29 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         const data = JSON.parse(res?.[0]?.result ?? "{}");
         sendResponse({ ok: true, payload: data.payload, raw: data.raw });
+      } catch(err) {
+        sendResponse({ ok: false, error: String(err).slice(0, 200) });
+      }
+    })();
+    return true;
+  }
+
+  /* ── CF_GET_PAGE_META ─────────────────────────────────────────────────────
+   * Returns window.__cfPageMetaParsed captured by bridge.js v2.12.0.
+   * Contains GHL backend page meta: pageDataDownloadUrl, funnelId, locationId.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_GET_PAGE_META") {
+    (async () => {
+      try {
+        const tabId = msg.tabId ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+        if (!tabId) { sendResponse({ ok: false, error: "no_active_tab" }); return; }
+        const res = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: false },
+          world:  "MAIN",
+          func:   () => JSON.stringify(window.__cfPageMetaParsed ?? null),
+        });
+        const meta = JSON.parse(res?.[0]?.result ?? "null");
+        sendResponse({ ok: true, meta });
       } catch(err) {
         sendResponse({ ok: false, error: String(err).slice(0, 200) });
       }

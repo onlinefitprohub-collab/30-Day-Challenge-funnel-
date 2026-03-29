@@ -56,6 +56,7 @@ function initCopyPaste() {
   document.getElementById("capture-clone-baseline-btn").addEventListener("click", doCaptureCloneBaseline);
   document.getElementById("native-firebase-btn").addEventListener("click", doNativeFirebasePayload);
   document.getElementById("page-load-errors-btn").addEventListener("click", doPageLoadErrors);
+  document.getElementById("page-meta-btn").addEventListener("click", doPageMeta);
 
   /* Wire copy buttons */
   document.getElementById("debug-inject-copy").addEventListener("click", () => copyDebugResult("debug-inject-result", "debug-inject-copy"));
@@ -65,6 +66,7 @@ function initCopyPaste() {
   document.getElementById("capture-clone-baseline-copy").addEventListener("click", () => copyDebugResult("capture-clone-baseline-result", "capture-clone-baseline-copy"));
   document.getElementById("native-firebase-copy").addEventListener("click", () => copyDebugResult("native-firebase-result", "native-firebase-copy"));
   document.getElementById("page-load-errors-copy").addEventListener("click", () => copyDebugResult("page-load-errors-result", "page-load-errors-copy"));
+  document.getElementById("page-meta-copy").addEventListener("click", () => copyDebugResult("page-meta-result", "page-meta-copy"));
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -265,8 +267,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.46.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.46.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.48.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.48.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -822,6 +824,67 @@ async function doPageLoadErrors() {
   } finally {
     btn.disabled    = false;
     btn.textContent = "Page Load Errors";
+  }
+}
+
+async function doPageMeta() {
+  const div = document.getElementById("page-meta-result");
+  const btn = document.getElementById("page-meta-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info")) {
+    div.className   = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Show Page Metadata";
+    hideCopyBtn("page-meta-copy");
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Fetching…";
+  div.className   = "paste-result info";
+  div.textContent = "Reading captured page metadata…";
+
+  try {
+    const res = await sendMessage({ type: "CF_GET_PAGE_META" });
+    const lines = [];
+    if (!res?.ok) {
+      lines.push(`Error: ${res?.error ?? "unknown"}`);
+      div.textContent = lines.join("\n");
+      div.className   = "paste-result err";
+    } else {
+      const meta = res.meta;
+      if (!meta || meta.error) {
+        lines.push("No page metadata captured yet.");
+        lines.push("Steps: open the GHL page builder → navigate to a page → click this button.");
+        lines.push("bridge.js v2.12.0 captures GET /funnels/page/:id responses from GHL backend.");
+        if (meta?.error) lines.push("Capture error: " + meta.error);
+        div.textContent = lines.join("\n");
+        div.className   = "paste-result info";
+      } else {
+        lines.push(`=== GHL Page Metadata (captured ${new Date(meta.capturedAt).toISOString()}) ===`);
+        lines.push(`id:                  ${meta.id ?? "(none)"}`);
+        lines.push(`funnelId:            ${meta.funnelId ?? "(none)"}`);
+        lines.push(`locationId:          ${meta.locationId ?? "(none)"}`);
+        lines.push(`pageDataDownloadUrl: ${meta.pageDataDownloadUrl ?? "(none)"}`);
+        lines.push(`pageDataUrl:         ${meta.pageDataUrl ?? "(none)"}`);
+        lines.push(`updatedAt:           ${meta.updatedAt ?? "(none)"}`);
+        lines.push(`captureUrl:          ${meta.url ?? "(none)"}`);
+        lines.push("");
+        lines.push("--- raw (first 2000 chars) ---");
+        lines.push(meta.raw ?? "(no raw)");
+        div.textContent = lines.join("\n");
+        div.className   = "paste-result ok";
+      }
+    }
+    showCopyBtn("page-meta-copy");
+  } catch(e) {
+    div.textContent = `Error: ${e.message}`;
+    div.className   = "paste-result err";
+    showCopyBtn("page-meta-copy");
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Show Page Metadata";
   }
 }
 

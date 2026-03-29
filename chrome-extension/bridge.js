@@ -1,10 +1,11 @@
-// bridge.js v2.11.0 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.12.0 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
 // v2.9.0: Capture full request body for 201 responses.
 // v2.10.0: Capture ALL POST/PUT/PATCH (any domain) so same-origin gohighlevel.com saves are caught.
 // v2.11.0: Firebase Storage payload capture (alt=media reads). Page load error trap.
+// v2.12.0: Passive captures — page metadata from /funnels/page/ GET-200, Firestore stream URLs.
 
 (function cfBridge() {
   if (window.__cf_bridge_active) return;
@@ -164,6 +165,49 @@
           });
         }).catch(function() {});
         return fbProm;
+      }
+
+      /* v2.12.0: Passive capture A — GHL funnels/page/ GET-200 → window.__cfPageMetaParsed *
+       * Captures the GHL backend response for the current page to reveal pageDataDownloadUrl *
+       * and other metadata. Stored separately from __cfApiLog for direct popup access.       */
+      var isPageMeta = method === "GET" && url.indexOf("leadconnectorhq.com/funnels/page/") !== -1;
+      if (isPageMeta) {
+        var pmProm = origFetch.apply(this, arguments);
+        pmProm.then(function(pmResp) {
+          if (pmResp.status === 200) {
+            var pmClone = pmResp.clone();
+            pmClone.json().then(function(pmBody) {
+              try {
+                window.__cfPageMetaParsed = {
+                  id:                   pmBody.id ?? pmBody._id ?? null,
+                  pageDataDownloadUrl:  pmBody.pageDataDownloadUrl ?? pmBody.pageDownloadUrl ?? null,
+                  pageDataUrl:          pmBody.pageDataUrl ?? pmBody.pageDownloadPath ?? null,
+                  funnelId:             pmBody.funnelId ?? null,
+                  locationId:           pmBody.locationId ?? null,
+                  updatedAt:            pmBody.updatedAt ?? null,
+                  raw:                  JSON.stringify(pmBody).slice(0, 3000),
+                  capturedAt:           Date.now(),
+                  url:                  url.slice(0, 200),
+                };
+              } catch(_pmE) {
+                window.__cfPageMetaParsed = { error: String(_pmE).slice(0, 100), url: url.slice(0, 200) };
+              }
+            }).catch(function() {});
+          }
+        }).catch(function() {});
+        return pmProm;
+      }
+
+      /* v2.12.0: Passive capture B — Firestore googleapis.com fetch URLs → __cfFirestoreStreamLog *
+       * Records up to 20 Firestore fetch URLs so we can identify the correct document path        *
+       * used by GHL for page data (needed for Firestore PATCH approach).                          */
+      var isFirestore = url.indexOf("firestore.googleapis.com") !== -1;
+      if (isFirestore) {
+        window.__cfFirestoreStreamLog = window.__cfFirestoreStreamLog || [];
+        var fsEntry = { ts: Date.now(), method: method, url: url.slice(0, 300) };
+        window.__cfFirestoreStreamLog.push(fsEntry);
+        if (window.__cfFirestoreStreamLog.length > 20) window.__cfFirestoreStreamLog.shift();
+        return origFetch.apply(this, arguments);
       }
 
       if (!shouldCapture(url, method)) return origFetch.apply(this, arguments);
