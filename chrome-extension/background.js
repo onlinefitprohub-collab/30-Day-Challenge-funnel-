@@ -832,6 +832,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               + Object.keys(pd.columns  ?? {}).length
               + Object.keys(pd.elements ?? {}).length;
 
+            /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
+            window.__cfLastSectionsWithContext = sectionsWithContext;
+
             /* v2.48.0: Generate a new UUID file path — write to a NEW file, not overwrite.
              * GHL caches Firebase Storage responses by URL. Overwriting the same path
              * never shows because GHL re-reads the cached (old) URL after reload.
@@ -997,47 +1000,6 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 diag.approach2.firestoreResult = fsResult;
               } catch (_fsOuter) {
                 diag.approach2.firestoreResult = "outer-err";
-              }
-
-              /* ── v2.48.0: A5 — Vue/Pinia direct state mutation ──────────────────── *
-               * Iterates pinia._s to find the store with a `sections` array, then    *
-               * replaces it with our AI sections (with flat elements). No network     *
-               * calls — GHL's Vue reactive system should re-render immediately.       *
-               * Returns: found-store=X before=N after=N (or error string).           */
-              try {
-                const _a5MountEl = document.querySelector("#__nuxt") || document.querySelector("[data-v-app]");
-                const _a5VueApp  = _a5MountEl && _a5MountEl.__vue_app__;
-                if (!_a5VueApp) {
-                  diag.approach2.a5VueResult = "no-vue-app";
-                } else {
-                  const _a5Pinia = _a5VueApp.config?.globalProperties?.$pinia;
-                  if (!_a5Pinia || !_a5Pinia._s) {
-                    diag.approach2.a5VueResult = "no-pinia storeIds=none";
-                  } else {
-                    const _a5StoreIds = [];
-                    let   _a5SecStore = null;
-                    let   _a5SecStoreId = null;
-                    _a5Pinia._s.forEach(function(store, id) {
-                      _a5StoreIds.push(id);
-                      const secs = store.sections ?? store.$state?.sections;
-                      if (secs && Array.isArray(secs) && secs.length > 0) {
-                        _a5SecStore   = store;
-                        _a5SecStoreId = id;
-                      }
-                    });
-                    if (!_a5SecStore) {
-                      diag.approach2.a5VueResult = "no-store-with-sections storeIds=" + _a5StoreIds.join(",");
-                    } else {
-                      const _a5StateRef = _a5SecStore.sections ? _a5SecStore : _a5SecStore.$state;
-                      const _a5Before   = _a5StateRef.sections.length;
-                      _a5StateRef.sections = sectionsWithContext;
-                      const _a5After    = _a5StateRef.sections.length;
-                      diag.approach2.a5VueResult = `found-store=${_a5SecStoreId} before=${_a5Before} after=${_a5After}`;
-                    }
-                  }
-                }
-              } catch (_a5e) {
-                diag.approach2.a5VueResult = "error: " + String(_a5e?.message ?? _a5e).slice(0, 100);
               }
 
               /* ── Post-write verification: re-read what we wrote (new file URL) ─── *
@@ -1574,6 +1536,45 @@ function _cf_approach4VuexInFrame(builderId, locationId, pageData) {
   } catch (e) {
     diag4.result = `threw: ${String(e).slice(0, 120)}`;
     return JSON.stringify({ ok: false, method: "vuex-direct", diag: { approach4: diag4 } });
+  }
+}
+
+/* ─── _cf_approach5PiniaWithStoredSections ────────────────────────────────────
+   A5: Reads window.__cfLastSectionsWithContext (stored by _cf_injectViaBuilderSave
+   just after building the flat-elements array) and replaces the Pinia sections
+   store directly. Runs in a separate chrome.scripting.executeScript call so it
+   can be targeted at any frame (top or builder iframe). Returns a result string
+   that background.js stores in r.diag.approach2.a5VueResult.                  */
+function _cf_approach5PiniaWithStoredSections() {
+  try {
+    var sections = window.__cfLastSectionsWithContext;
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+      return "no-stored-sections";
+    }
+    var mountEl = document.querySelector("#__nuxt") || document.querySelector("[data-v-app]");
+    var vueApp  = mountEl && mountEl.__vue_app__;
+    if (!vueApp) return "no-vue-app";
+    var pinia = vueApp.config && vueApp.config.globalProperties && vueApp.config.globalProperties.$pinia;
+    if (!pinia || !pinia._s) return "no-pinia";
+    var storeIds = [];
+    var secStore = null;
+    var secStoreId = null;
+    pinia._s.forEach(function(store, id) {
+      storeIds.push(id);
+      var secs = store.sections !== undefined ? store.sections : (store.$state && store.$state.sections);
+      if (secs && Array.isArray(secs) && secs.length > 0) {
+        secStore   = store;
+        secStoreId = id;
+      }
+    });
+    if (!secStore) return "no-store-with-sections storeIds=" + storeIds.join(",");
+    var stateRef = secStore.sections !== undefined ? secStore : secStore.$state;
+    var before   = stateRef.sections.length;
+    stateRef.sections = sections;
+    var after = stateRef.sections.length;
+    return "found-store=" + secStoreId + " before=" + before + " after=" + after;
+  } catch (e) {
+    return "error: " + String(e && e.message ? e.message : e).slice(0, 100);
   }
 }
 
@@ -2636,6 +2637,35 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               iframeFrameId: iframeFrameId2,
               iframeA4Error: String(a4Err2).slice(0, 80),
             };
+          }
+
+          /* ── Step E: A5 — Vue/Pinia mutation using stored sectionsWithContext ── *
+           * Runs _cf_approach5PiniaWithStoredSections via chrome.scripting in the  *
+           * detected builder frame (falls back to top frame). Reads              *
+           * window.__cfLastSectionsWithContext stored by _cf_injectViaBuilderSave *
+           * and replaces the Pinia sections store with the processed sections     *
+           * (including the flat elements array GHL renderer requires).            */
+          try {
+            const a5FrameIds = iframeFrameId2 !== 0 ? [iframeFrameId2] : [0];
+            const a5Res2 = await chrome.scripting.executeScript({
+              target: { tabId: tabId2, frameIds: a5FrameIds },
+              world:  "MAIN",
+              func:   _cf_approach5PiniaWithStoredSections,
+            });
+            if (!r.diag) r.diag = {};
+            if (!r.diag.approach2) r.diag.approach2 = {};
+            const a5Result = a5Res2?.[0]?.result ?? "no-result";
+            r.diag.approach2.a5VueResult = a5Result;
+            r.diag.approach2.a5FrameId   = iframeFrameId2;
+            /* If firebase path succeeded (A2) and A5 also succeeded, note it */
+            if (a5Result.startsWith("found-store=") && r.ok && (r.method ?? "").includes("firebase")) {
+              r.method = (r.method ?? "firebase") + "+pinia-a5";
+            }
+          } catch (a5Err2) {
+            if (!r.diag) r.diag = {};
+            if (!r.diag.approach2) r.diag.approach2 = {};
+            r.diag.approach2.a5VueResult = "scripting-err: " + String(a5Err2).slice(0, 80);
+            r.diag.approach2.a5FrameId   = iframeFrameId2;
           }
 
           // Store full inject result so popup can show debug details
