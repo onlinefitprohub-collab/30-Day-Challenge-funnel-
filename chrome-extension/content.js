@@ -237,6 +237,7 @@
    * page reload where executeScript cannot reach the new document.            *
    * onerror is handled by bridge.js (document_start); only fetch is patched.  */
   var CF_SNIFF_CODE = `(function(){
+    //# sourceURL=cf-sniff-inject.js
     if(window.__cfFetchSniffInstalled)return;
     window.__cfFetchSniffInstalled=true;
     var origFetch=window.fetch;

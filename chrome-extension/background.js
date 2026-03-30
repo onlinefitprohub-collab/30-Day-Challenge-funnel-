@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.51.0 — Native GHL schema: extra.text.value fix + flat sections. Template replace now finds real elements. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.52.0 — Deep-clone native sections + restore Firebase download token after clone-first write. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.51.0 — Native GHL schema: extra.text.value fix + flat sections. Template replace now finds real elements. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.52.0 — Deep-clone native sections + restore Firebase download token after clone-first write. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1034,7 +1034,21 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                           diag.approach2.nativeReadErr = String(_nrErr).slice(0, 80);
                         }
 
-                        /* ── Step 2 — Collect AI text strings from pageData ─────────────────── *
+                        /* ── Step 2 — Deep-clone native sections ─────────────────────────────── *
+                         * v2.52.0: JSON.parse/stringify produces a full value copy of all nodes. *
+                         * Without deep-clone, Object.assign shallow copy can lose elements[].   */
+                        var npSections = null;
+                        if (nativePayload && Array.isArray(nativePayload.sections)) {
+                          try {
+                            npSections = JSON.parse(JSON.stringify(nativePayload.sections));
+                          } catch(_dcErr) {
+                            npSections = nativePayload.sections;
+                          }
+                        }
+                        diag.approach2.clonedSec0ElemCount = npSections && npSections[0] &&
+                          Array.isArray(npSections[0].elements) ? npSections[0].elements.length : 0;
+
+                        /* ── Step 3 — Collect AI text strings from pageData ─────────────────── *
                          * Recursively traverse pageData in property order.                       *
                          * Collect non-empty strings that are NOT: URLs, hex/alphanumeric IDs,   *
                          * or CSS values (px/em/%, colour tokens, etc.).                          */
@@ -1047,12 +1061,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                             if (typeof _kv === 'string') {
                               var _s = _kv.trim();
                               if (_s.length < 2) continue;
-                              /* Skip URLs */
                               if (/^https?:\/\//i.test(_s)) continue;
-                              /* Skip UUID and Firebase/Mongo-style object IDs (hex, no spaces) */
                               if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(_s)) continue;
                               if (/^[a-zA-Z0-9]{20,}$/.test(_s) && !/\s/.test(_s)) continue;
-                              /* Skip CSS values: numbers with units, colour tokens, shorthand */
                               if (/^[\d\s,.\-]*(px|em|rem|%|vh|vw|pt)/.test(_s)) continue;
                               if (/^#[0-9a-fA-F]{3,8}$/.test(_s)) continue;
                               if (/^rgba?\(/.test(_s)) continue;
@@ -1064,15 +1075,15 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         })(pageData);
                         diag.approach2.aiTextCount = aiTexts.length;
 
-                        /* ── Step 3 — Find replaceable elements in native payload ──────────── *
-                         * Traverse nativePayload.sections[].elements[] in document order.      *
-                         * Target: extra.text.value is non-empty AND meta is a text type.       *
-                         * Real GHL stores ALL text in extra.text.value (heading/paragraph/btn) */
+                        /* ── Step 4 — Find replaceable elements in CLONED sections ──────────── *
+                         * Traverse npSections[].elements[] (deep-cloned) in document order.     *
+                         * Target: extra.text.value is non-empty AND meta is a text type.        *
+                         * Real GHL stores ALL text in extra.text.value (heading/paragraph/btn)  */
                         var replaceableElements = [];
                         var _replaceableMetas = { heading: 1, paragraph: 1, text: 1, button: 1, 'sub-headline': 1 };
-                        if (nativePayload && Array.isArray(nativePayload.sections)) {
-                          for (var _rsi = 0; _rsi < nativePayload.sections.length; _rsi++) {
-                            var _rsec = nativePayload.sections[_rsi];
+                        if (npSections) {
+                          for (var _rsi = 0; _rsi < npSections.length; _rsi++) {
+                            var _rsec = npSections[_rsi];
                             var _relems = Array.isArray(_rsec.elements) ? _rsec.elements : [];
                             for (var _rei = 0; _rei < _relems.length; _rei++) {
                               var _rel = _relems[_rei];
@@ -1087,7 +1098,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         }
                         diag.approach2.replaceableCount = replaceableElements.length;
 
-                        /* ── Step 4 — Replace text values ───────────────────────────────────── */
+                        /* ── Step 5 — Replace text values ────────────────────────────────────── */
                         var replacedCount = 0;
                         for (var _rpi = 0; _rpi < replaceableElements.length; _rpi++) {
                           if (!aiTexts[_rpi]) break;
@@ -1096,17 +1107,17 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         }
                         diag.approach2.replacedCount = replacedCount;
 
-                        /* ── Step 5 — Build write payload from modified native ────────────── *
-                         * If native read failed, fall back to the old AI-elements approach.   */
+                        /* ── Step 6 — Build write payload from deep-cloned sections ──────────── *
+                         * If native read failed, fall back to the old AI-elements approach.      */
                         var npWritePayload;
-                        if (nativePayload) {
-                          nativePayload.id = newPageId;
-                          if (Array.isArray(nativePayload.sections)) {
-                            nativePayload.sections = nativePayload.sections.map(function(sec) {
-                              return Object.assign({}, sec, { pageId: newPageId });
-                            });
-                          }
-                          npWritePayload = nativePayload;
+                        if (npSections) {
+                          var _npCloneSecs = npSections.map(function(sec) {
+                            return Object.assign({}, sec, { pageId: newPageId });
+                          });
+                          npWritePayload = Object.assign({}, nativePayload, {
+                            id:       newPageId,
+                            sections: _npCloneSecs,
+                          });
                           diag.approach2.templateMode = true;
                         } else {
                           /* Fallback: use AI-generated elements (v2.49.4 behaviour) */
@@ -1128,6 +1139,74 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         });
                         diag.approach2.cloneWriteStatus = npWriteRes.status;
                         if (npWriteRes.ok) {
+                          /* ── v2.52.0: Restore Firebase download token after POST write ─────── *
+                           * Firebase generates a NEW downloadTokens value on every upload.       *
+                           * GHL builder reads via the OLD token URL → 403 → shows old content.  *
+                           * PATCH object metadata to restore the original token so GHL's cached  *
+                           * pageDataDownloadUrl remains valid — no GHL backend call needed.      */
+                          try {
+                            var _clUpResp  = await npWriteRes.clone().json().catch(function() { return {}; });
+                            var _clNewTok  = _clUpResp.downloadTokens ?? null;
+                            var _clOldTok  = (_npData.pageDataDownloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? '';
+                            diag.approach2.cloneOldToken     = _clOldTok  ? _clOldTok.slice(0, 20)  + '…' : 'none-in-url';
+                            diag.approach2.cloneNewToken     = _clNewTok  ? _clNewTok.slice(0, 20)  + '…' : 'none-in-resp';
+                            diag.approach2.cloneTokenChanged = _clNewTok  ? (_clNewTok !== _clOldTok) : false;
+                            if (_clOldTok) {
+                              var _clMetaEp = 'https://firebasestorage.googleapis.com/v0/b/' +
+                                encodeURIComponent(npBucket) + '/o/' + encodeURIComponent(npPath);
+                              var _clPatchOk = false;
+                              /* Format 1: nested metadata.downloadTokens */
+                              try {
+                                var _cp1 = await fetch(_clMetaEp, {
+                                  method:  'PATCH',
+                                  headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                                  body:    JSON.stringify({ metadata: { downloadTokens: _clOldTok } }),
+                                });
+                                diag.approach2.clonePatchStatus1 = _cp1.status;
+                                if (_cp1.ok) {
+                                  var _cp1b  = await _cp1.json().catch(function() { return {}; });
+                                  var _cp1Tok = (_cp1b.metadata && _cp1b.metadata.downloadTokens)
+                                    ? _cp1b.metadata.downloadTokens : (_cp1b.downloadTokens ?? null);
+                                  if (_cp1Tok === _clOldTok) {
+                                    _clPatchOk = true;
+                                    diag.approach2.clonePatchToken = 'ok-format1';
+                                  } else {
+                                    diag.approach2.clonePatchToken = 'accepted-not-verified';
+                                  }
+                                }
+                              } catch(_cp1e) { diag.approach2.clonePatchStatus1 = 'err'; }
+                              /* Format 2: top-level downloadTokens, if format 1 failed */
+                              if (!_clPatchOk) {
+                                try {
+                                  var _cp2 = await fetch(_clMetaEp, {
+                                    method:  'PATCH',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                                    body:    JSON.stringify({ downloadTokens: _clOldTok }),
+                                  });
+                                  diag.approach2.clonePatchStatus2 = _cp2.status;
+                                  if (_cp2.ok) {
+                                    var _cp2b  = await _cp2.json().catch(function() { return {}; });
+                                    var _cp2Tok = (_cp2b.metadata && _cp2b.metadata.downloadTokens)
+                                      ? _cp2b.metadata.downloadTokens : (_cp2b.downloadTokens ?? null);
+                                    if (_cp2Tok === _clOldTok) {
+                                      _clPatchOk = true;
+                                      diag.approach2.clonePatchToken = 'ok-format2';
+                                    } else {
+                                      diag.approach2.clonePatchToken = 'accepted-not-verified-f2';
+                                    }
+                                  }
+                                } catch(_cp2e) { diag.approach2.clonePatchStatus2 = 'err'; }
+                              }
+                              if (!_clPatchOk && !diag.approach2.clonePatchToken) {
+                                diag.approach2.clonePatchToken = 'failed';
+                              }
+                            } else {
+                              diag.approach2.clonePatchToken = 'no-old-token';
+                            }
+                          } catch(_clTokErr) {
+                            diag.approach2.clonePatchToken = 'token-parse-err';
+                          }
+
                           var newBuilderUrl = 'https://app.gohighlevel.com/location/' +
                             (tabLocationId || locationId) + '/page-builder/' + newPageId;
                           diag.approach2.navigatedTo = newBuilderUrl;
