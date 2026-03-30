@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.56.0 — Write-in-place with auto-reload: replaces text in current page's Firebase structure with AI copy and reloads the builder. Press F5.");
+    console.log("[CF Funnel] Installed v2.57.0 — Strip element-history fields + write-in-place with auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.56.0 — Write-in-place with auto-reload: replaces text in current page's Firebase structure with AI copy and reloads the builder.");
+    console.log("[CF Funnel] Updated to v2.57.0 — Strip element-history fields + write-in-place with auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -953,6 +953,23 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
               /* Step 3: Deep-clone native sections and replace text values sequentially */
               var clonedSections  = JSON.parse(JSON.stringify(wipPayload.sections));
+              /* v2.57.0: Strip singular 'element' fields (GHL version-history snapshots)
+               * from every level of the cloned payload. These are NOT the 'elements' array
+               * on sections — they are stale per-element version refs that cause the builder
+               * to render the old page as an overlay alongside the new template structure. */
+              function stripElementFields(obj) {
+                if (Array.isArray(obj)) {
+                  for (var i = 0; i < obj.length; i++) stripElementFields(obj[i]);
+                } else if (obj !== null && typeof obj === 'object') {
+                  delete obj.element;
+                  var keys = Object.keys(obj);
+                  for (var k = 0; k < keys.length; k++) {
+                    if (keys[k] !== 'element') stripElementFields(obj[keys[k]]);
+                  }
+                }
+              }
+              stripElementFields(clonedSections);
+              diag.approach2.strippedElementFields = true;
               var wipReplaceIdx   = 0;
               var wipReplaceableCount = 0;
               var wipReplacedCount    = 0;

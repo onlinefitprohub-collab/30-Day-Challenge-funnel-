@@ -312,8 +312,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.56.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.56.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.57.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.57.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -406,7 +406,8 @@ async function showInjectDebug() {
           if (a2.wipReadStatus !== undefined)      lines.push(`A2 wipReadStatus: ${a2.wipReadStatus}`);
           if (a2.wipReadErr !== undefined)         lines.push(`A2 wipReadErr: ${a2.wipReadErr}`);
           if (a2.writeInPlaceError !== undefined)  lines.push(`A2 writeInPlaceError: ${a2.writeInPlaceError}`);
-          if (a2.aiTextCount !== undefined)        lines.push(`A2 aiTextCount: ${a2.aiTextCount}`);
+          if (a2.aiTextCount !== undefined)          lines.push(`A2 aiTextCount: ${a2.aiTextCount}`);
+          if (a2.strippedElementFields !== undefined) lines.push(`A2 strippedElementFields: ${a2.strippedElementFields}`);
           if (a2.replaceableCount !== undefined)   lines.push(`A2 replaceableCount: ${a2.replaceableCount} replacedCount: ${a2.replacedCount ?? "?"} clonedSec0ElemCount: ${a2.clonedSec0ElemCount ?? "?"}`);
           if (a2.wipWriteError !== undefined)      lines.push(`A2 wipWriteError: ${a2.wipWriteError}`);
           if (a2.cloneWriteStatus !== undefined)   lines.push(`A2 cloneWriteStatus: ${a2.cloneWriteStatus}`);
