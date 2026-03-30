@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.50.0 — Template-based inject: reads native Firebase payload, replaces text values with AI texts. Bypasses element-type validation. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.51.0 — Native GHL schema: extra.text.value fix + flat sections. Template replace now finds real elements. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.50.0 — Template-based inject: reads native Firebase payload, replaces text values with AI texts. Bypasses element-type validation. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.51.0 — Native GHL schema: extra.text.value fix + flat sections. Template replace now finds real elements. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1066,7 +1066,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
 
                         /* ── Step 3 — Find replaceable elements in native payload ──────────── *
                          * Traverse nativePayload.sections[].elements[] in document order.      *
-                         * Target: extra.content.value is non-empty AND meta is a text type.    */
+                         * Target: extra.text.value is non-empty AND meta is a text type.       *
+                         * Real GHL stores ALL text in extra.text.value (heading/paragraph/btn) */
                         var replaceableElements = [];
                         var _replaceableMetas = { heading: 1, paragraph: 1, text: 1, button: 1, 'sub-headline': 1 };
                         if (nativePayload && Array.isArray(nativePayload.sections)) {
@@ -1075,9 +1076,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                             var _relems = Array.isArray(_rsec.elements) ? _rsec.elements : [];
                             for (var _rei = 0; _rei < _relems.length; _rei++) {
                               var _rel = _relems[_rei];
-                              if (_rel && _rel.extra && _rel.extra.content &&
-                                  typeof _rel.extra.content.value === 'string' &&
-                                  _rel.extra.content.value.trim().length > 0 &&
+                              if (_rel && _rel.extra && _rel.extra.text &&
+                                  typeof _rel.extra.text.value === 'string' &&
+                                  _rel.extra.text.value.trim().length > 0 &&
                                   _replaceableMetas[_rel.meta]) {
                                 replaceableElements.push(_rel);
                               }
@@ -1090,13 +1091,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         var replacedCount = 0;
                         for (var _rpi = 0; _rpi < replaceableElements.length; _rpi++) {
                           if (!aiTexts[_rpi]) break;
-                          replaceableElements[_rpi].extra.content.value = aiTexts[_rpi];
-                          if (replaceableElements[_rpi].element &&
-                              replaceableElements[_rpi].element.extra) {
-                            replaceableElements[_rpi].element.extra.content =
-                              replaceableElements[_rpi].element.extra.content || {};
-                            replaceableElements[_rpi].element.extra.content.value = aiTexts[_rpi];
-                          }
+                          replaceableElements[_rpi].extra.text.value = aiTexts[_rpi];
                           replacedCount++;
                         }
                         diag.approach2.replacedCount = replacedCount;

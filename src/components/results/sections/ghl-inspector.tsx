@@ -142,7 +142,7 @@ type AiPageId = (typeof AI_PAGES)[number]["id"];
 
 /* ── constants ────────────────────────────────────────────────────────────── */
 
-const CURRENT_EXT_VERSION = "2.50.0";
+const CURRENT_EXT_VERSION = "2.51.0";
 
 function semverOlder(a: string, b: string): boolean {
   const pa = a.split(".").map(Number);
@@ -1029,12 +1029,10 @@ function CloneBaselinePanel({
   const aiSec0ElemFieldKeys = aiSec0Elems.length > 0
     ? [...new Set(aiSec0Elems.flatMap(e => Object.keys(e)))]
     : [];
-  const aiRows    = aiData?.rows    as Record<string,unknown> | undefined;
-  const aiCols    = aiData?.columns as Record<string,unknown> | undefined;
-  const aiElems   = aiData?.elements as Record<string,unknown> | undefined;
-  const aiRow0    = aiRows  ? Object.values(aiRows)[0]  as Record<string,unknown> | undefined : undefined;
-  const aiCol0    = aiCols  ? Object.values(aiCols)[0]  as Record<string,unknown> | undefined : undefined;
-  const aiElem0   = aiElems ? Object.values(aiElems)[0] as Record<string,unknown> | undefined : undefined;
+  // v2.51.0: flat format — rows/cols/elements all live in sections[0].elements[]; no top-level dicts
+  const aiRow0    = aiSec0Elems.find(e => e.meta === "row")     as Record<string,unknown> | undefined;
+  const aiCol0    = aiSec0Elems.find(e => e.meta === "col")     as Record<string,unknown> | undefined;
+  const aiElem0   = aiSec0Elems.find(e => e.type === "element") as Record<string,unknown> | undefined;
   const aiRow0Keys     = aiRow0  ? Object.keys(aiRow0)                       : [];
   const aiRow0MetaKeys = aiRow0?.metaData ? Object.keys(aiRow0.metaData as object) : [];
   const aiCol0Keys     = aiCol0  ? Object.keys(aiCol0)                       : [];
