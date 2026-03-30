@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.55.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.55.0: Write-in-place — replace text in current page's native Firebase structure with AI copy, write back to same path.",
+  "version": "2.56.0",
+  "description": "GHL page inject — write-in-place with auto-reload",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

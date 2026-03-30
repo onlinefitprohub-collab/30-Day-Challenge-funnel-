@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.55.0 — Write-in-place: replace text in current page's native Firebase structure with AI copy, write back to same path. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.56.0 — Write-in-place with auto-reload: replaces text in current page's Firebase structure with AI copy and reloads the builder. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.55.0 — Write-in-place: replace text in current page's native Firebase structure with AI copy, write back to same path. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.56.0 — Write-in-place with auto-reload: replaces text in current page's Firebase structure with AI copy and reloads the builder.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1055,6 +1055,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 diag.approach2.clonePatchToken = 'no-old-token';
               }
 
+              setTimeout(function() { window.location.reload(); }, 400);
               return JSON.stringify({ ok: true, method: 'write-in-place', diag: diag });
             } catch(_wipErr) {
               diag.approach2.wipErr = String(_wipErr).slice(0, 120);

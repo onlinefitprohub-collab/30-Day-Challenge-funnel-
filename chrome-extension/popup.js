@@ -312,8 +312,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.55.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.55.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.56.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.56.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
