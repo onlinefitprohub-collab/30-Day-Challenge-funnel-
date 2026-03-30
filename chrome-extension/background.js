@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.52.0 — Deep-clone native sections + restore Firebase download token after clone-first write. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.53.0 — Write AI-generated sections directly to cloned page. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.52.0 — Deep-clone native sections + restore Firebase download token after clone-first write. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.53.0 — Write AI-generated sections directly to cloned page. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1012,125 +1012,20 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         diag.approach2.writeTarget         = newPageId;
                         diag.approach2.newPageFirebasePath = npPath;
 
-                        /* ── v2.50.0: Template-based injection ─────────────────────────────────── *
-                         * Step 1 — Read native Firebase payload for the newly cloned page.        *
-                         * GHL's clone creates a fully valid element structure — we reuse it and   *
-                         * only swap in our AI text values. This bypasses element-type validation. */
-                        var nativePayload = null;
-                        try {
-                          var npReadRes = await fetch(_npData.pageDataDownloadUrl, {
-                            method:  'GET',
-                            headers: { 'Authorization': 'Firebase ' + idToken },
-                          });
-                          if (npReadRes.ok) {
-                            nativePayload = await npReadRes.json();
-                            diag.approach2.nativeReadStatus  = npReadRes.status;
-                            diag.approach2.nativeSectionCount = nativePayload && nativePayload.sections
-                              ? nativePayload.sections.length : 0;
-                          } else {
-                            diag.approach2.nativeReadStatus = npReadRes.status;
-                          }
-                        } catch(_nrErr) {
-                          diag.approach2.nativeReadErr = String(_nrErr).slice(0, 80);
-                        }
-
-                        /* ── Step 2 — Deep-clone native sections ─────────────────────────────── *
-                         * v2.52.0: JSON.parse/stringify produces a full value copy of all nodes. *
-                         * Without deep-clone, Object.assign shallow copy can lose elements[].   */
-                        var npSections = null;
-                        if (nativePayload && Array.isArray(nativePayload.sections)) {
-                          try {
-                            npSections = JSON.parse(JSON.stringify(nativePayload.sections));
-                          } catch(_dcErr) {
-                            npSections = nativePayload.sections;
-                          }
-                        }
-                        diag.approach2.clonedSec0ElemCount = npSections && npSections[0] &&
-                          Array.isArray(npSections[0].elements) ? npSections[0].elements.length : 0;
-
-                        /* ── Step 3 — Collect AI text strings from pageData ─────────────────── *
-                         * Recursively traverse pageData in property order.                       *
-                         * Collect non-empty strings that are NOT: URLs, hex/alphanumeric IDs,   *
-                         * or CSS values (px/em/%, colour tokens, etc.).                          */
-                        var aiTexts = [];
-                        (function collectAiTexts(obj) {
-                          if (!obj || typeof obj !== 'object') return;
-                          var keys = Object.keys(obj);
-                          for (var _ki = 0; _ki < keys.length; _ki++) {
-                            var _kv = obj[keys[_ki]];
-                            if (typeof _kv === 'string') {
-                              var _s = _kv.trim();
-                              if (_s.length < 2) continue;
-                              if (/^https?:\/\//i.test(_s)) continue;
-                              if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(_s)) continue;
-                              if (/^[a-zA-Z0-9]{20,}$/.test(_s) && !/\s/.test(_s)) continue;
-                              if (/^[\d\s,.\-]*(px|em|rem|%|vh|vw|pt)/.test(_s)) continue;
-                              if (/^#[0-9a-fA-F]{3,8}$/.test(_s)) continue;
-                              if (/^rgba?\(/.test(_s)) continue;
-                              aiTexts.push(_s);
-                            } else if (_kv && typeof _kv === 'object') {
-                              collectAiTexts(_kv);
-                            }
-                          }
-                        })(pageData);
-                        diag.approach2.aiTextCount = aiTexts.length;
-
-                        /* ── Step 4 — Find replaceable elements in CLONED sections ──────────── *
-                         * Traverse npSections[].elements[] (deep-cloned) in document order.     *
-                         * Target: extra.text.value is non-empty AND meta is a text type.        *
-                         * Real GHL stores ALL text in extra.text.value (heading/paragraph/btn)  */
-                        var replaceableElements = [];
-                        var _replaceableMetas = { heading: 1, paragraph: 1, text: 1, button: 1, 'sub-headline': 1 };
-                        if (npSections) {
-                          for (var _rsi = 0; _rsi < npSections.length; _rsi++) {
-                            var _rsec = npSections[_rsi];
-                            var _relems = Array.isArray(_rsec.elements) ? _rsec.elements : [];
-                            for (var _rei = 0; _rei < _relems.length; _rei++) {
-                              var _rel = _relems[_rei];
-                              if (_rel && _rel.extra && _rel.extra.text &&
-                                  typeof _rel.extra.text.value === 'string' &&
-                                  _rel.extra.text.value.trim().length > 0 &&
-                                  _replaceableMetas[_rel.meta]) {
-                                replaceableElements.push(_rel);
-                              }
-                            }
-                          }
-                        }
-                        diag.approach2.replaceableCount = replaceableElements.length;
-
-                        /* ── Step 5 — Replace text values ────────────────────────────────────── */
-                        var replacedCount = 0;
-                        for (var _rpi = 0; _rpi < replaceableElements.length; _rpi++) {
-                          if (!aiTexts[_rpi]) break;
-                          replaceableElements[_rpi].extra.text.value = aiTexts[_rpi];
-                          replacedCount++;
-                        }
-                        diag.approach2.replacedCount = replacedCount;
-
-                        /* ── Step 6 — Build write payload from deep-cloned sections ──────────── *
-                         * If native read failed, fall back to the old AI-elements approach.      */
-                        var npWritePayload;
-                        if (npSections) {
-                          var _npCloneSecs = npSections.map(function(sec) {
-                            return Object.assign({}, sec, { pageId: newPageId });
-                          });
-                          npWritePayload = Object.assign({}, nativePayload, {
-                            id:       newPageId,
-                            sections: _npCloneSecs,
-                          });
-                          diag.approach2.templateMode = true;
-                        } else {
-                          /* Fallback: use AI-generated elements (v2.49.4 behaviour) */
-                          var cloneWriteSections = sectionsWithContext.map(function(sec) {
-                            return Object.assign({}, sec, { pageId: newPageId });
-                          });
-                          npWritePayload = Object.assign({}, writePayload, {
-                            id:       newPageId,
-                            sections: cloneWriteSections,
-                          });
-                          diag.approach2.templateMode     = false;
-                          diag.approach2.templateFallback = 'ai-elements';
-                        }
+                        /* ── v2.53.0: Write AI-generated sections directly to cloned page ───────── *
+                         * Previous approach read the native sections and tried to swap text fields *
+                         * with AI text — but collected font names and CSS from pageData instead.  *
+                         * Correct approach: clone creates a valid new page (newPageId + FB path); *
+                         * we write the AI-generated sectionsWithContext to that path directly.    */
+                        var cloneWriteSections = sectionsWithContext.map(function(sec) {
+                          return Object.assign({}, sec, { pageId: newPageId });
+                        });
+                        var npWritePayload = Object.assign({}, writePayload, {
+                          id:       newPageId,
+                          sections: cloneWriteSections,
+                        });
+                        diag.approach2.aiSectionsMode  = true;
+                        diag.approach2.aiSectionCount  = cloneWriteSections.length;
 
                         var npWriteRes = await fetch(npUploadEp, {
                           method:  'POST',

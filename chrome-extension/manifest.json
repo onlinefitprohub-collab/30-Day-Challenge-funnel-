@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.52.0",
-  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.52.0: Deep-clone native sections + restore Firebase download token after clone-first write.",
+  "version": "2.53.0",
+  "description": "Paste AI-generated or URL-captured GHL pages into the GHL builder via the orange FAB. v2.53.0: Write AI-generated sections directly to cloned page — no more native-structure text-swap.",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",

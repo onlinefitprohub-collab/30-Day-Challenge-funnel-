@@ -1,0 +1,233 @@
+=== DEBUG INFO ===
+=== CF Extension v2.52.0 ===
+REMINDER: If version above is NOT 2.52.0, reload the extension in chrome://extensions then hard-refresh GHL.
+
+Active tab: https://app.gohighlevel.com/location/5jorVRA6PKGCAeTffHmA/page-builder/dcOHOmKKersYpaLjeN08
+Builder tab: ✓ YES
+
+--- Queued page (session storage) ---
+Nothing queued. Click 'Clone to GHL' in the app first.
+
+--- cfReady (local storage) ---
+page: landing
+hasPageData: true
+loadedAt: 20:19:13
+
+--- Last inject result ---
+[20:19:33] ok=true | method=firebase-clone-first
+builderId: tXrIkelHvOr7XfoslDWu
+A1: "no pageDataUploadUrl in metadata"
+A2 bucket: highlevel-backend.appspot.com hasToken=true
+A2 httpStatus: ? | result: ?
+A2 storageFormat: structured-only writeFormat: populated-dicts-plus-flat-elements-v2.46.0 existN=0 nodeCount=? existingId=tXrIkelHvOr7XfoslDWu
+A2 preWriteRowKeys: "rows-empty" preWriteRowHasMeta=? (expect: false=flat ✓) secChildId=row-xixmtkox
+A2 firstSecElemCount: 0 format: child-traversal-flat-v2.46.0 | sec0El0HasMeta=? (expect: false=flat ✓) sec0El0HasElement=? (expect: true=v2.38+ ✓) sec0El0Keys="empty"
+A2 writeEmptyDicts: false writeFormat: populated-dicts-plus-flat-elements-v2.46.0 ← true = native format (rows/cols/elems={})
+A2 sec0MetaChildLen: 1 ← child KEPT (non-empty=native format ✓ if >0)
+A2 templateMode: true nativeReadStatus=200 nativeSecs=11
+A2 replaceableCount: 46 aiTextCount: 1881 replacedCount: 46
+A2 clonedSec0ElemCount: 14 ← deep-cloned sec0 elements (>0 = deep-clone ok)
+A2 cloneWriteStatus: 200
+A2 cloneOldToken: 1f2c0aef-0bc0-486a-8… cloneNewToken=a09e589d-407c-47aa-9… cloneTokenChanged=true
+A2 clonePatchToken: ok-format1 s1=200 s2=n/a
+A2 tokenDiag: ["win-err:SecurityError: Failed to read a named pr","indexeddb-v9"]
+A2 objectPath: funnel/K8DywFrS0jVUYR31muGi/page/tXrIkelHvOr7XfoslDWu/page-data-28f58250-4383-4d
+A3 iframeFrameId: 0 piniaSource: frame-targeted
+A3 stores found: []
+A3 allStoreIds: []
+A3 result: Pinia not found in frame
+A4 storeFound=true moduleKey=none
+A4 topStateKeys: ["initialized","locationLoaderActive","agencyLoaderActive","loaderCount","user","locations","collapseSideBar","manualCol
+A4 result: vuex-found stateKeys=initialized,locationLoaderActive,agencyLoaderActive,loaderCount,user,locations,collapseSideBar,manualCollapseSidebar,isAdvancedCalendarView,twilioClientReady,menuTabs,currentContacts,auth,company,reputation,reviewAggregate,reviewRequestAggregate,imagePreview,contactsPage,teams,calendarProviders,calendars,numbers,users,agencyUsers,campaigns,workflows,pipelines,agencyTwilio,twilioAccount,phoneCall,funnel,contacts,oauth2,conversation,conversationV2,affiliate,opportunities,filters,defaultEmailService,trigger_folder,campaign_folder,smtpServices,mailgunServices,membership,locationCustomFields,customValues,manualCallStatus,iframe,products,stripeConnect,integrations,LevelUpDayFlag,sidebarv2,whatsApp,featureFlags,customObjectsStore,tasks,conversationChannels,labsFeatures,communities,onboarding,launchpad,phoneIntegration,whatsAppSettings,clientPortal,locationNumbers,locationSetting,conversationAi,aiAgents,aiCompanyPlan,aiLocationPlan,scoreProfiles,affiliateManager,yext,wordpress,freshchat,customPages,adPublishing,notification,regulatoryBundle,prospecting,customMenuLinks,locationsMapSearch,seo,routerParams,marketplace,supportPreferences no-sections-module forced=?
+
+--- GHL Diagnostic ---
+ghlBackendError: none captured
+oOffError: none captured
+
+=== ROUNDTRIP TEST ===
+=== Roundtrip Test v2.32.0 ===
+ok: true 
+tokenDiag: ["win-err:SecurityError: Failed to read ","idb-v9"]
+bucket: highlevel-backend.appspot.com
+metaOk=true hasDownloadUrl=true
+readOk=true payloadId=dcOHOmKKersYpaLjeN08
+topLevelKeys: ["sections","settings","general","pageStyles","trackingCode","fontsForPreview","popups","popupsList","id"]
+secs=11 rows=0 cols=0 elems=0
+sec0 topKeys: ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
+sec0 hasElements: true ← true=sections store elements (v2.31: shallow rows; v2.32: flat format)
+sec0 elements length: 14
+sec0 metaData.child len: 2 sample: ["row-U9TTR1itgIF","row-eI7UwjgCee"] ← 0=native uses empty child ✓
+sec0.elements[0] keys: ["extra","meta","styles","child","id","tagName","wrapper","class","title","type"] hasMeta=false hasElements=false childType=object
+sec0 metaKeys: ["id","wrapper","child","class","extra","title","tagName","meta","styles","type","_id","mobileStyles","element"]
+row0 topKeys: "none" hasElements=false
+col0 topKeys: "none" hasElements=false
+col0 metaKeys: "none"
+col0 metaData.element keys: "none"
+elem0 topKeys: "none" hasElements=false
+elem0 metaKeys: "none" metaHasElems=false
+elem0 metaData.element keys: "none" hasElems=false
+anyRowHasElements=false anyColHasElements=false anyElemHasElements=false
+sectionsWithTopLevelElements=11
+publicRead BEFORE write (no auth): {"status":200,"ok":true}
+writeOk=true writeStatus=200
+oldToken: 1f2c0aef-0bc0-486a-8…
+newToken (from upload resp): 6f2db8ee-1213-4eed-9…
+tokenChanged: true
+patchToken: ok-format1 patchTokenOk=true (s1=200 s2=n/a) ← "ok-format1/2" + patchTokenOk=true = token CONFIRMED restored!
+publicRead AFTER patch (old token, no auth): {"status":200,"ok":true} ← 200=GHL can now read!
+verify (auth read): status=200 secs=11 elems=0 id=dcOHOmKKersYpaLjeN08
+
+Now RELOAD the GHL builder tab.
+patchToken=ok + publicReadAfterPatch=200 → TOKEN RESTORED. TypeError should be gone!
+patchToken=failed, metaUpdate=ok → URL updated in GHL backend. Check TypeError.
+Both failed → need new approach.
+
+=== SCHEMA DIFF ===
+=== Schema Diff v2.32.0 (flat format) ===
+Firebase read: ok
+Has queued page data: yes
+
+--- GHL Native (what Firebase actually stores) ---
+secs=11 rows=0 cols=0 elems=0
+sec0 keys:          ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
+sec0 hasElements:   true  |  elementsLen: 14
+sec0.el[0] keys:    ["extra","meta","styles","child","id","tagName","wrapper","class","title","type"]
+sec0.el[0] hasMeta: false  |  hasElements: false
+row0 keys:          "none"  |  hasElements: false
+col0 keys:          "none"  |  hasElements: false
+elem0 keys:         "none"  |  hasElements: false
+anyRow/Col/ElemHasElements: false/false/false
+
+--- Our Inject (simulated, no write) [v2.32.0 flat format] ---
+secs=5 rows=0 cols=0 elems=0
+sec0 keys:          ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
+sec0 hasElements:   true  |  elementsLen: 0
+sec0.el[0] keys:    "empty-array"
+sec0.el[0] hasMeta: false  |  hasElements: false
+row0 keys (flat):   "none"  |  hasElements: false
+row0 hasMeta:       false  (expect: false)
+col0 keys (flat):   "none"  |  hasElements: false
+
+--- Diff (native vs inject pipeline output) ---
+sec0 hasElements: ✓ MATCH
+sec0.el[0] hasMeta: ✓ MATCH
+sec0.el[0] hasElements: ✓ MATCH
+row0 hasElements: ✓ MATCH
+row0 hasMeta: ✗ MISMATCH  native=undefined  inject=false
+col0 hasElements: ✓ MATCH
+
+=== GHL API LOG ===
+=== GHL API Log (30 entries, 0 with 201, newest first) ===
+★ = 201 response — these are the save-endpoint candidates.
+For each ★ entry: COPY full URL + REQ BODY to find the real page-save call.
+─────────────────────────────────────────────────────────
+[1] 200 | GET https://backend.leadconnectorhq.com/funnels/page/dcOHOmKKersYpaLjeN08 | 19:20:07.531
+    {"popups":[],"colors":[],"versionHistory":[{"integrations":{"blogMeta":{"categoryNavigationList":[],"selectedBlogCategor
+[2] 404 | GET https://backend.leadconnectorhq.com/funnels/funnel/page/dcOHOmKKersYpaLjeN08 | 19:20:07.322
+    {"message":"Cannot GET /funnels/funnel/page/dcOHOmKKersYpaLjeN08","error":"Not Found","statusCode":404}
+[3] 200 | GET https://backend.leadconnectorhq.com/funnels/page/dcOHOmKKersYpaLjeN08 | 19:20:03.854
+    {"popups":[],"colors":[],"versionHistory":[{"integrations":{"blogMeta":{"categoryNavigationList":[],"selectedBlogCategor
+[4] 404 | GET https://backend.leadconnectorhq.com/funnels/funnel/page/dcOHOmKKersYpaLjeN08 | 19:20:03.615
+    {"message":"Cannot GET /funnels/funnel/page/dcOHOmKKersYpaLjeN08","error":"Not Found","statusCode":404}
+[5] 202 | POST https://in.requestmetrics.com/v1?token=i9yd7zv:r6vf8fj&v=2.4.1 | 19:19:55.229
+    
+[6] 0 | POST https://region1.google-analytics.com/g/collect?v=2&tid=G-MX6Z1X7L8K&gtm=45je63q0h1v9122605147za20g&_p=1774898375026&gcd= | 19:19:40.258
+    
+[7] 200 | GET https://backend.leadconnectorhq.com/onboarding/version/xgS6Qhu1R9JhRss9I5WQ | 19:19:37.663
+    {"valueProp":{"productId":"","valuePropName":"","customValueProp":""},"hasJoinedKickOffCall":false,"skipPages":["SETUP_K
+[8] 200 | POST https://data.pathfinder.gohighlevel.com/data/rec/2609845c-58c9-4b6e-7126-639c4121d0b7?ct=1774898377885&v=2.317.2_prod-io | 19:19:37.886
+    
+[9] 200 | GET https://backend.leadconnectorhq.com/saas-billing-v2/billing-config/LOCATION/5jorVRA6PKGCAeTffHmA/contentAI?companyId=xgS | 19:19:37.664
+    {"message":"Billing config GET successful","success":true,"data":[{"product":"contentAI","productTitle":"Content AI","me
+[10] 200 | POST https://data.pathfinder.gohighlevel.com/data/rec/2609845c-58c9-4b6e-7126-639c4121d0b7?jzb=eJydkW9vmzAQxr-LX7PSZE1IeMfSpl | 19:19:37.650
+    
+[11] 200 | GET https://backend.leadconnectorhq.com/funnels/page/dcOHOmKKersYpaLjeN08 | 19:19:37.242
+    {"popups":[],"colors":[],"versionHistory":[{"integrations":{"blogMeta":{"categoryNavigationList":[],"selectedBlogCategor
+[12] 200 | GET https://backend.leadconnectorhq.com/locations/5jorVRA6PKGCAeTffHmA/labs/featureFlags/ | 19:19:36.938
+    {"featureFlags":{"location":{"reputation":{"newDashboard":false,"reputationReviews":{"manualReviews":true},"videoTestimo
+[13] 200 | GET https://backend.leadconnectorhq.com/membership/smart-list/offers-products/5jorVRA6PKGCAeTffHmA | 19:19:36.939
+    {"products":[],"offers":[]}
+[14] 200 | GET https://backend.leadconnectorhq.com/payments/integrations/stripe/?location_id=5jorVRA6PKGCAeTffHmA | 19:19:36.938
+    false
+[15] 200 | GET https://backend.leadconnectorhq.com/launchpad/segments/assigned/xgS6Qhu1R9JhRss9I5WQ? | 19:19:36.635
+    {"segmentAssigned":false,"traceId":"8c3dc8ce-69d0-4b4e-91ae-b78297b3652a"}
+[16] 200 | GET https://backend.leadconnectorhq.com/users/search?companyId=xgS6Qhu1R9JhRss9I5WQ&locationId=5jorVRA6PKGCAeTffHmA&limit=50 | 19:19:36.381
+    {"users":[{"id":"QSmnTYQDglNV1tvWRgPm","deleted":false,"email":"Ben@studiotwenty3.co.uk","firstName":"Ben","lastName":"F
+[17] 200 | GET https://backend.leadconnectorhq.com/locations/5jorVRA6PKGCAeTffHmA/customFields/search?parentId=&skip=0&limit=10000&docu | 19:19:36.638
+    {"customFields":[{"_id":"1Tm0HXJ623cKu584PYjp","dataType":"STANDARD_FIELD","dateAdded":"2025-02-05T10:18:30.552Z","descr
+[18] 200 | GET https://backend.leadconnectorhq.com/locations/5jorVRA6PKGCAeTffHmA/labs/featureFlags/ | 19:19:36.380
+    {"featureFlags":{"location":{"reputation":{"newDashboard":false,"reputationReviews":{"manualReviews":true},"videoTestimo
+[19] 200 | GET https://backend.leadconnectorhq.com/calendars/configuration/location/5jorVRA6PKGCAeTffHmA | 19:19:36.383
+    {"locationId":"5jorVRA6PKGCAeTffHmA","subAccountConfig":{"isRentalsEnabled":false,"modules":["meetings"]},"traceId":"d79
+[20] 200 | GET https://backend.leadconnectorhq.com/objects/?locationId=5jorVRA6PKGCAeTffHmA | 19:19:36.381
+    {"objects":[{"id":"67a33af65be1521641a94849","labels":{"singular":"Company","plural":"Companies"},"description":"Contain
+[21] 200 | GET https://backend.leadconnectorhq.com/locations/5jorVRA6PKGCAeTffHmA/customFields/search?parentId=&skip=0&limit=10000&docu | 19:19:36.382
+    {"customFieldFolders":[{"_id":"1wspTrsSxtzZzlU0665T","dateAdded":"2025-02-05T10:18:30.425Z","documentType":"folder","loc
+[22] 200 | GET https://backend.leadconnectorhq.com/users/xFQgugbHvzvTx25FYKmV | 19:19:35.768
+    {"id":"xFQgugbHvzvTx25FYKmV","name":"Tom Brenchley","firstName":"Tom","lastName":"Brenchley","email":"onlinefitprohub@gm
+[23] 200 | GET https://backend.leadconnectorhq.com/saas-billing-v2/billing-config/LOCATION/5jorVRA6PKGCAeTffHmA/conversationAI?optIn=tr | 19:19:36.383
+    {"message":"Billing config GET successful","success":true,"data":[{"product":"conversationAI","productTitle":"Conversati
+[24] 200 | GET https://backend.leadconnectorhq.com/localization/en-US/?module=common,smartList,contactDetail,copilot | 19:19:36.016
+    {"en-US":{"common":{"save":"Save","select":"Select","cancel":"Cancel","Ok":"Ok","close":"Close","learnMore":"Learn More"
+[25] 200 | GET https://backend.leadconnectorhq.com/users/xFQgugbHvzvTx25FYKmV | 19:19:35.758
+    {"id":"xFQgugbHvzvTx25FYKmV","name":"Tom Brenchley","firstName":"Tom","lastName":"Brenchley","email":"onlinefitprohub@gm
+[26] 202 | POST https://prodregistryv2.org/v1/rgstr?k=client-pUxvdIjL5loLy5OyI7qKmla48XBMDKlDue8lyE9M1O0&st=javascript-client&sv=3.31.2& | 19:19:36.103
+    {"success":true}
+[27] 200 | GET https://services.leadconnectorhq.com/marketplace/custom-script/xgS6Qhu1R9JhRss9I5WQ | 19:19:35.767
+    {"success":false,"traceId":"1cde039e-802f-4b6c-9f48-a58035d5b917"}
+[28] 200 | GET https://backend.leadconnectorhq.com/users/xFQgugbHvzvTx25FYKmV | 19:19:35.463
+    {"id":"xFQgugbHvzvTx25FYKmV","name":"Tom Brenchley","firstName":"Tom","lastName":"Brenchley","email":"onlinefitprohub@gm
+[29] 204 | POST https://featureassets.org/v1/initialize?k=client-pUxvdIjL5loLy5OyI7qKmla48XBMDKlDue8lyE9M1O0&st=javascript-client&sv=3.3 | 19:19:35.785
+    
+[30] 200 | GET https://backend.leadconnectorhq.com/users/xFQgugbHvzvTx25FYKmV | 19:19:35.462
+    {"id":"xFQgugbHvzvTx25FYKmV","name":"Tom Brenchley","firstName":"Tom","lastName":"Brenchley","email":"onlinefitprohub@gm
+
+=== CLONE BASELINE ===
+✓ Clone baseline captured & stored!
+secs=11  rows=0  cols=0  elems=0
+topLevelKeys: ["sections","settings","general","pageStyles","trackingCode","fontsForPreview","popups","popupsList","id"]
+elemsPerSection: [14,5,16,5,8,5,4,13,24,10,4]
+metaChildLen/sec: [2,1,2,1,2,1,1,2,5,1,1]
+sec0 keys: ["id","metaData","elements","sequence","pageId","funnelId","locationId","general"]
+sec0 elem field keys: ["extra","meta","styles","child","id","tagName","wrapper","class","title","type","mobileWrapper","customCss","tag","element","mobileExtra","mobileStyles"]
+row0 keys: []  metaKeys: []
+col0 keys: []  metaKeys: []
+elem0 keys: []  metaKeys: []
+
+Now open the GHL Inspector in the web app and click "Load Clone Baseline" to see the deep diff.
+
+=== NATIVE FIREBASE ===
+=== Native GHL Firebase Payload (captured 19:20:08.846) ===
+sections: 11  rows: 0  cols: 0  elems: 0
+sec[0].elements exists: true  len: 14
+sec[0].elements[0] keys: extra,meta,styles,child,id,tagName,wrapper,class,title,type,mobileWrapper
+row dict sample: no rows
+─────────────────────────────────────────────────────────
+RAW (first 5000 chars):
+{"sections":[{"id":"section-8E58alrS9","metaData":{"id":"section-8E58alrS9","wrapper":{},"child":["row-U9TTR1itgIF","row-eI7UwjgCee"],"class":{"borders":{"value":"noBorder"},"borderRadius":{"value":"radius0"}},"extra":{"visibility":{"value":{"hideMobile":false,"hideDesktop":false}},"desktopFontSize":{"value":22,"unit":"px"},"typography":{"value":"var(--contentfont)"},"mobileFontSize":{"unit":"px","value":"16"},"bgImage":{"value":{"options":"bgCover","url":"","svgCode":"","opacity":".3","servingUrl":"","placeholderBase64":"","imageMeta":"","showSvgToggle":false,"videoUrl":""}}},"title":"Section","tagName":"c-section","meta":"section","styles":{"borderColor":{"value":"var(--color-fept2sjw21)"},"paddingBottom":{"unit":"px","value":60},"backgroundColor":{"value":"var(--black)"},"borderWidth":{"value":5,"unit":"px"},"borderStyle":{"value":"solid"},"paddingTop":{"unit":"px","value":20},"background":{"value":"none"}},"type":"section","_id":"section-8E58alrS9","mobileStyles":{"paddingTop":{"unit":"px","value":20},"paddingBottom":{"unit":"px","value":30}},"element":{"id":"section-Qgw7JbJjSD","wrapper":{},"child":["row-l4vHSF68VJ","row-wq5FMwID_4"],"class":{"borders":{"value":"noBorder"},"borderRadius":{"value":"radius0"}},"extra":{"visibility":{"value":{"hideMobile":false,"hideDesktop":false}},"desktopFontSize":{"value":"16","unit":"px"},"typography":{"value":"var(--contentfont)"},"mobileFontSize":{"unit":"px","value":"16"},"bgImage":{"value":{"options":"bgCover","url":"","svgCode":"","opacity":".3","servingUrl":"","placeholderBase64":"","imageMeta":"","showSvgToggle":false,"videoUrl":""}}},"title":"Section","tagName":"c-section","meta":"section","styles":{"borderColor":{"value":"var(--color-fept2sjw21)"},"paddingBottom":{"unit":"px","value":60},"backgroundColor":{"value":"var(--color-anryyrlf)"},"borderWidth":{"value":5,"unit":"px"},"borderStyle":{"value":"solid"},"paddingTop":{"unit":"px","value":20}},"type":"section","_id":"section-Qgw7JbJjSD","mobileStyles":{"paddingTop":{"unit":"px","value":20},"paddingBottom":{"unit":"px","value":40}},"updated":true}},"elements":[{"extra":{"rowWidth":{"value":"100","unit":"%"},"mobileFontSize":{"unit":"px","value":"16"},"typography":{"value":"var(--contentfont)"},"visibility":{"value":{"hideMobile":false,"hideDesktop":false}},"desktopFontSize":{"value":"16","unit":"px"},"bgImage":{"value":{"options":"bgCover","url":""}}},"meta":"row","styles":{"paddingLeft":{"value":"0","unit":"px"},"paddingTop":{"value":"0","unit":"px"},"paddingBottom":{"value":"0","unit":"px"},"borderStyle":{"value":"solid"},"borderWidth":{"value":3,"unit":"px"},"paddingRight":{"value":"0","unit":"px"},"backgroundColor":{"value":"var(--transparent)"}},"child":["col-qLMZ-6W-1R5","col-ei1DIApcoi"],"id":"row-eI7UwjgCee","tagName":"c-row","wrapper":{"marginTop":{"unit":"px","value":60}},"class":{"borderRadius":{"value":"radius0"},"borders":{"value":"noBorder"},"alignRow":{"value":"row-align-center"}},"title":"2 column row","type":"row","mobileWrapper":{"marginTop":{"unit":"px","value":30}}},{"child":["image-hTolv-ccYh","heading-4sHTwU4OZm","minute-timer-3uMSleI4n6"],"id":"col-ei1DIApcoi","tagName":"c-column","wrapper":{},"extra":{"mobileFontSize":{"value":"16","unit":"px"},"visibility":{"value":{"hideDesktop":false,"hideMobile":false}},"desktopFontSize":{"unit":"px","value":"16"},"bgImage":{"value":{"options":"bgCover","url":""}},"typography":{"value":"var(--contentfont)"},"justifyContentColumnLayout":{"value":"center"}},"styles":{"paddingRight":{"unit":"px","value":0},"paddingLeft":{"unit":"px","value":10},"borderStyle":{"value":"solid"},"paddingBottom":{"unit":"px","value":"0"},"paddingTop":{"unit":"px","value":"0"},"width":{"value":49,"unit":"%"},"borderWidth":{"value":3,"unit":"px"}},"title":"2nd column","class":{"borderRadius":{"value":"radius0"},"borders":{"value":"noBorder"},"nestedColumn":{"value":""}},"meta":"col","type":"col"},{"extra":{"nodeId":"cminute-timer-3uMSleI4n6","visibility":{"value":{"hideDesktop":false,"hideMobile":false}},"typography":{"value":"var(--bebas-neue)"},"hours":{"value":"1"},"minutes":{"value":"42"},"seconds":{"value":"38"},"translate":{"value":"English"},"expireAction":{"value":"url"},"redirectUrl":{"value":"#"},"hideElements":{"value":[]},"showElements":{"value":[]},"timezone":{"value":"Europe/Athens"},"revisitAction":{"value":"auto-reset"},"showElementsOnRevisit":{"value":[]},"cookieDate":{"value":""},"mobileFontSize":{"value":42,"unit":"px"},"desktopFontSize":{"value":61,"unit":"px"},"subTextDesktopFontSize":{"value":15,"unit":"px"},"subTextMobileFontSize":{"value":15,"unit":"px"},"customClass":{"value":[]}},"class":{},"styles":{"color":{"value":"var(--white)"},"justifyContent":{"value":"center"},"secondaryColor":{"value":"var(--white)"}},"wrapper":{"marginTop":{"unit":"px","value":0},"marginBottom":{"unit":"px","value":0}},"customCss":[],"id":"minute-timer-3uMSleI4n6","type":"element","child":[],"meta":"minute-timer","tagName":"c-countdown","title":"Minute Timer","tag":"","
+… (3000 more chars — use Copy to get all 8000)
+
+=== PAGE LOAD ERRORS ===
+=== Page Load Errors (2 captured) ===
+[1] Uncaught SyntaxError: Unexpected token 'const'
+    at chrome-extension://fdjnknmeebepmeonnmfcmpbjlckikgdc/content/clonelevel-inject.js:1:13706
+    SyntaxError: Unexpected token 'const'
+[2] Missing or insufficient permissions.
+
+=== PAGE METADATA ===
+No page metadata captured yet.
+Steps: open the GHL page builder → navigate to a page → click this button.
+bridge.js v2.12.0 captures GET /funnels/page/:id responses from GHL backend.
+
+--- Firestore URLs captured (11) ---
+[1] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&RID=89679&CVER=22&X-HTTP-Session-Id=gsessionid&zx=37zux3f6s06l&t=1
+[2] GET https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&RID=rpc&SID=b67mJgcj0mO2F0mk_dQfdA&AID=0&CI=0&TYPE=xmlhttp&zx=4nkv5nd2t9y8&t=1
+[3] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&SID=b67mJgcj0mO2F0mk_dQfdA&RID=89680&AID=9&zx=duvsfu7ogpt4&t=1
+[4] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&SID=b67mJgcj0mO2F0mk_dQfdA&RID=89681&AID=12&zx=mejpg757tq90&t=1
+[5] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&SID=b67mJgcj0mO2F0mk_dQfdA&RID=89682&AID=12&zx=xp0ok1dgyxzq&t=1
+[6] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&SID=b67mJgcj0mO2F0mk_dQfdA&RID=89683&AID=16&zx=uxjsqcy504m1&t=1
+[7] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&SID=b67mJgcj0mO2F0mk_dQfdA&RID=89684&AID=20&zx=v31kxghyt01&t=1
+[8] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2F(default)&gsessionid=w_iCmiIApOgwIVwOWX_WfSgzNk_u0tjP6V1tQzfpQv9aAsKK10xDdA&SID=b67mJgcj0mO2F0mk_dQfdA&RID=89685&AID=20&zx=j76pzaexpy3&t=1
+[9] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2Fleadgen-onboarding-production&RID=46874&CVER=22&X-HTTP-Session-Id=gsessionid&zx=7libogcxyedg&t=1
+[10] GET https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=_j3LkcGqpR7FFBk2XqkL7KXjOyozfwwdydTapUvHDfrtYIfrdovq_w&VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2Fleadgen-onboarding-production&RID=rpc&SID=799uy2e7JfbgxGZH6jj-DQ&AID=0&CI=0&TYPE=xmlhttp&zx=3mephm
+[11] POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fhighlevel-backend%2Fdatabases%2Fleadgen-onboarding-production&gsessionid=_j3LkcGqpR7FFBk2XqkL7KXjOyozfwwdydTapUvHDfrtYIfrdovq_w&SID=799uy2e7JfbgxGZH6jj-DQ&RID=46875&AID=3&zx=o7iqwqjbyj7a&t=1
