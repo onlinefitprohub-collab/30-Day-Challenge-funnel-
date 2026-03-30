@@ -1,0 +1,57 @@
+Replit Agent Prompt — v2.56.0: Auto-Reload After Write-In-Place
+
+Context
+
+v2.55.0 write-in-place is confirmed working at the Firebase level. The last inject debug shows:
+
+writeInPlace: true ✓
+replacedCount: 39 — all AI texts swapped in ✓
+cloneWriteStatus: 200 — Firebase write succeeded ✓
+clonePatchToken: ok-format1 s1=200 — token restored ✓
+The only reason nothing appears in the GHL builder is that the page never reloads after the write. The builder keeps its in-memory state. Firebase has the correct AI content but the builder never re-reads it.
+
+The current page (CcigoVKGE5W3HNmjTXeS) now has a 12-section public template structure (127 total elements across sections [14,5,16,5,8,13,5,10,13,24,10,4]) — richer than the previous 5-section page. This is the structure the inject will write AI copy into.
+
+The fix — one addition to background.js:
+
+Inside _cf_injectViaBuilderSave, in the write-in-place block, find the line that sets diag.approach2.clonePatchToken (the last diag field set after the token patch). Immediately after that line, before any return statement, add:
+
+setTimeout(function() { window.location.reload(); }, 400);
+
+Rules for placement:
+
+This line must be inside the chrome.scripting.executeScript function body — it runs in the GHL page context, not the background service worker
+It must use function() syntax — no arrow functions inside executeScript
+The 400ms delay is intentional: it lets the executeScript return its result to the background SW (so cf_last_inject is saved) before the reload fires
+Do not add any conditional — always reload after a successful write and token patch
+Also fix — clonelevel-inject.js SyntaxError (still appearing in v2.55.0):
+
+Every debug session still shows:
+
+Uncaught SyntaxError: Unexpected token 'const'
+at chrome-extension://fdjnknmeebepmeonnmfcmpbjlckikgdc/content/clonelevel-inject.js:1:13706
+
+Search background.js for any reference to clonelevel-inject.js or any code that generates or writes a file by that name. Remove it. If no reference exists in background.js, check manifest.json content_scripts entries — remove any entry pointing to content/clonelevel-inject.js. This file must not be loaded by the extension.
+
+Version bump:
+
+Update all four locations to 2.56.0:
+
+manifest.json — version field + description (update description to: "GHL page inject — write-in-place with auto-reload")
+background.js — version string in onInstalled/onStartup log
+popup.js — version display line and REMINDER line
+src/components/results/sections/ghl-inspector.tsx — CURRENT_EXT_VERSION
+Done looks like:
+
+User opens GHL page builder on the target page
+User clicks Inject
+Popup debug shows: ok=true | method=write-in-place, writeInPlace: true, replacedCount > 0, cloneWriteStatus: 200, clonePatchToken: ok-format1
+The GHL builder tab reloads automatically ~400ms after inject completes
+The reloaded page shows AI-generated copy inside the existing page visual layout
+No new funnel step is created in GHL
+No clonelevel-inject.js SyntaxError in Page Load Errors
+Out of scope for this version:
+
+Semantic / order-matching of AI texts to specific element types (sequential replacement is fine)
+Schema Diff tool simulation update (cosmetic, not blocking)
+Any changes to bridge.js, content.js, or the roundtrip test
