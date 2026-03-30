@@ -1,0 +1,82 @@
+We are fixing the GHL page builder Chrome extension inject. Two problems remain after v2.54.0:
+
+Every inject creates a new funnel step instead of updating the page the user has open
+AI content never appears — the page always shows the template structure
+Root cause: The current code uses a "clone-first" approach: it calls clone-funnel-step to create a new page, reads that new page's Firebase data, replaces text, and writes back to the NEW page. This is wrong. It accumulates clones and never touches the original page.
+
+What already works (from _cf_roundtripFirebaseWrite):
+
+Reading the current page's Firebase data using window.__cfNativeFirebasePayload
+Writing back to the same Firebase path using npUploadEp (from downloadUrl)
+Patching the download token after write with PATCH { metadata: { downloadTokens: oldToken } }
+The page reloads correctly after this roundtrip
+The fix: Replace the clone-first approach with write-in-place
+
+In background.js, inside _cf_injectViaBuilderSave, replace "Approach 2 / clone-first path" with a write-in-place path that mirrors _cf_roundtripFirebaseWrite but inserts AI text replacement before the write step.
+
+New logic flow (replaces the entire clone block):
+
+1. Get nativePayload = window.__cfNativeFirebasePayload  (already captured by bridge.js)
+2. If nativePayload is null → diag error "no native payload", return
+3. Deep-clone sections: clonedSections = JSON.parse(JSON.stringify(nativePayload.sections))
+4. Collect AI texts: aiTexts = collectAiTexts(pageData)  (existing helper, no change)
+5. Walk clonedSections[*].elements[*]:
+   - if elem.extra?.text?.value is non-empty string AND
+     elem.meta is in ['heading','paragraph','button','text']
+   - replace elem.extra.text.value with aiTexts[replaceIdx++]
+   - increment replacedCount
+6. Build write payload: { ...nativePayload, sections: clonedSections }
+7. Extract upload endpoint from nativePayload.downloadUrl:
+   - same pattern as roundtrip: strip ?alt=media&token=... → append ?uploadType=media&upload_id=...
+   - OR: use the same npUploadEp construction already in the roundtrip function
+8. POST write payload to upload endpoint (same as roundtrip does)
+9. Parse upload response → extract new token
+10. Extract old token from nativePayload.downloadUrl via match(/[?&]token=([^&]+)/)
+11. PATCH metadata to restore old token (same format1 PATCH as roundtrip and v2.52.0+)
+12. Set diag fields: replaceableCount, replacedCount, clonedSec0ElemCount, cloneWriteStatus, clonePatchToken
+13. DO NOT navigate anywhere — do not call any clone API — do not create new pages
+14. Return { ok: true } — the GHL builder will reload the current page via its own polling
+
+Key differences from current code:
+
+Remove ALL calls to clone-funnel-step API
+Remove ALL code that finds newPageId or navigates to a new builder URL
+The builderId in diag should remain the SAME as the tab's current page ID (not a new clone ID)
+npUploadEp is derived from the CURRENT page's downloadUrl, not a cloned page's URL
+Reference: how _cf_roundtripFirebaseWrite constructs the upload endpoint (copy this exact pattern):
+
+const dlUrl = _npData.pageDataDownloadUrl; // e.g. https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/ENCODED_PATH?alt=media&token=TOKEN
+const objectPath = dlUrl.split('/o/')[1].split('?')[0]; // URL-encoded path
+const npUploadEp = `https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/${objectPath}?uploadType=media&name=${objectPath}`;
+
+Reference: token patch (copy exactly, already working):
+
+const oldToken = dlUrl.match(/[?&]token=([^&]+)/)?.[1];
+const newToken = (await npWriteRes.clone().json()).downloadTokens;
+const patchUrl = `https://firebasestorage.googleapis.com/v0/b/highlevel-backend.appspot.com/o/${objectPath}`;
+const patchRes = await fetch(patchUrl, {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ metadata: { downloadTokens: oldToken } })
+});
+diagFields.clonePatchToken = patchRes.ok ? `ok-format1 s1=${patchRes.status}` : `fail s1=${patchRes.status}`;
+
+Remove from v2.54.0: The PUT/PATCH/POST backend write attempts (backendErr_put, backendErr_patch, backendErr_post) — these all return 404 and are not needed.
+
+Diag fields to add/keep:
+
+writeInPlace: true — confirms new code path is running
+builderId — should match the tab URL's page ID (no clone)
+clonedSec0ElemCount — element count in write payload section 0
+replaceableCount / replacedCount — text replacement stats
+cloneWriteStatus — HTTP status of Firebase POST
+clonePatchToken — token patch result
+Version bump: manifest.json → 2.55.0, update version comment in background.js
+
+Test scenario:
+
+Open GHL page builder on an existing page (not a clone)
+The URL contains a pageId — record it
+Click inject
+Debug output should show writeInPlace: true, builderId = same pageId as URL, replacedCount > 0, cloneWriteStatus: 200, clonePatchToken: ok-format1
+Page should reload showing AI-generated text in the existing page structure — NO new funnel step created

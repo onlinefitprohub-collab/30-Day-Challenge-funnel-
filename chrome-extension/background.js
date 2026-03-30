@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.54.0 — Fix elements population (finalize() sec.elements); try GHL backend write before Firebase. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.55.0 — Write-in-place: replace text in current page's native Firebase structure with AI copy, write back to same path. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.54.0 — Fix elements population (finalize() sec.elements); try GHL backend write before Firebase. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.55.0 — Write-in-place: replace text in current page's native Firebase structure with AI copy, write back to same path. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -900,519 +900,165 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
 
-            /* ── v2.50.0: Clone-first inject flow (template-based) ───────────────────── *
-             * Correct endpoint: /funnels/funnel/clone-funnel-step/ (with /funnel/).     *
-             * stepId resolved via GET /funnels/funnel/fetch/{funnelId} (real step UUID).*
-             * Post-clone: newPageId from response stepIds[0] + funnel re-fetch.        *
-             * v2.50.0: Read native Firebase payload for cloned page → replace text     *
-             * values with AI texts → write back. Bypasses element-type validation.     */
-            if (revex) {
-              try {
-                // Get userId from Vuex store
-                var cloneUserId = '';
+            /* ── v2.55.0: Write-in-place inject ─────────────────────────────────────── *
+             * Replace text values in the current page's native Firebase structure      *
+             * with AI-generated copy, then POST back to the same Firebase path.        *
+             * No new pages, no clone API calls, no navigation to a new builder URL.    *
+             *                                                                          *
+             * AI texts  → collect from pd.sections[*].elements[*]  (AI data)          *
+             * Targets   → walk clonedSections (deep-clone of existing.sections)        *
+             * Never mix the two sources.                                               */
+            try {
+              /* Step 1: Use probe-fetched native data, or re-fetch if probe failed */
+              var wipPayload = (existing && existing.sections) ? existing : null;
+              diag.approach2.wipUsedExisting = !!(existing && existing.sections);
+              if (!wipPayload) {
                 try {
-                  var _store = appEl?.__vue_app__?.config?.globalProperties?.$store;
-                  if (!_store) {
-                    for (var _ai of Object.values(window.app ?? {})) {
-                      var _sv = _ai?.appContext?.config?.globalProperties?.$store;
-                      if (_sv) { _store = _sv; break; }
-                    }
+                  var wipReadRes = await fetch(downloadUrl, {
+                    headers: { 'Authorization': 'Firebase ' + idToken },
+                    signal:  AbortSignal.timeout(6000),
+                  });
+                  diag.approach2.wipReadStatus = wipReadRes.status;
+                  if (wipReadRes.ok) {
+                    wipPayload = await wipReadRes.json();
                   }
-                  cloneUserId = _store?.state?.auth?.user?.id || _store?.state?.user?.id || '';
-                } catch(_ue) {}
-                // AppUtils fallback if Vuex lookup failed
-                if (!cloneUserId) {
-                  try {
-                    if (typeof window.AppUtils !== "undefined" && window.AppUtils?.Utilities?.getCurrentUser) {
-                      var _au = await window.AppUtils.Utilities.getCurrentUser();
-                      cloneUserId = _au?.id ?? _au?.userId ?? '';
-                    }
-                  } catch(_auf) {}
+                } catch(_wipRe) {
+                  diag.approach2.wipReadErr = String(_wipRe).slice(0, 80);
                 }
-
-                // Resolve real stepId via GET /funnels/funnel/fetch/{funnelId}
-                var cloneStepId = null;
-                diag.approach2.cloneStepId = 'fetching';
-                try {
-                  var _ffResp  = await revex.get('https://backend.leadconnectorhq.com/funnels/funnel/fetch/' + funnelIdFromPath);
-                  var _ffData  = (_ffResp && _ffResp.data) ? _ffResp.data : {};
-                  var _ffSteps = (_ffData.steps || (_ffData.data && _ffData.data.steps)) || [];
-                  for (var _si = 0; _si < _ffSteps.length; _si++) {
-                    var _stp   = _ffSteps[_si];
-                    var _pgs   = _stp.pages || [];
-                    for (var _pi = 0; _pi < _pgs.length; _pi++) {
-                      var _pg   = _pgs[_pi];
-                      var _pgId = (typeof _pg === 'string') ? _pg : (_pg._id || _pg.id || null);
-                      if (_pgId === builderId) { cloneStepId = _stp.id; break; }
-                    }
-                    if (cloneStepId) break;
-                  }
-                } catch(_ffe) {
-                  diag.approach2.cloneStepIdErr = String(_ffe).slice(0, 60);
-                }
-                // Fallback: use page metadata stepId if fetch failed
-                if (!cloneStepId) {
-                  var _meta = metadata;
-                  cloneStepId = (_meta && (_meta.stepId || _meta.step_id)) || null;
-                }
-                diag.approach2.resolvedStepId = cloneStepId || 'missing';
-
-                if (cloneStepId) {
-                  var clonePayload = {
-                    stepId:     cloneStepId,
-                    funnelId:   funnelIdFromPath,
-                    funnels:    [funnelIdFromPath],
-                    locationId: tabLocationId || locationId,
-                    userId:     cloneUserId,
-                  };
-                  var cloneResp = await revex.post('https://backend.leadconnectorhq.com/funnels/funnel/clone-funnel-step/', clonePayload);
-                  diag.approach2.cloneStatus = cloneResp && cloneResp.status;
-                  diag.approach2.cloneData   = JSON.stringify((cloneResp && cloneResp.data) || {}).slice(0, 200);
-
-                  /* 1-second delay so GHL backend reflects the new step */
-                  await new Promise(function(resolveClone) { setTimeout(resolveClone, 1000); });
-
-                  // Extract newStepId from clone response
-                  var _crData   = (cloneResp && cloneResp.data) ? cloneResp.data : {};
-                  var newStepId = (_crData.data && _crData.data.stepIds && _crData.data.stepIds[0])
-                    || (_crData.stepIds && _crData.stepIds[0]) || null;
-                  diag.approach2.newStepId = newStepId || 'missing';
-
-                  // Re-fetch funnel to find the new page ID from the new step's pages[0]
-                  var newPageId = null;
-                  if (newStepId) {
-                    try {
-                      var _ff2Resp  = await revex.get('https://backend.leadconnectorhq.com/funnels/funnel/fetch/' + funnelIdFromPath);
-                      var _ff2Data  = (_ff2Resp && _ff2Resp.data) ? _ff2Resp.data : {};
-                      var _ff2Steps = (_ff2Data.steps || (_ff2Data.data && _ff2Data.data.steps)) || [];
-                      for (var _si2 = 0; _si2 < _ff2Steps.length; _si2++) {
-                        var _stp2 = _ff2Steps[_si2];
-                        if (_stp2.id === newStepId) {
-                          var _npg = _stp2.pages && _stp2.pages[0];
-                          if (_npg) newPageId = (typeof _npg === 'string') ? _npg : (_npg._id || _npg.id || null);
-                          break;
-                        }
-                      }
-                    } catch(_ff2e) {
-                      diag.approach2.newPageLookupErr = String(_ff2e).slice(0, 60);
-                    }
-                  }
-                  diag.approach2.newPageId = newPageId || 'missing';
-
-                  // Fetch new page metadata to get its Firebase download URL
-                  if (newPageId) {
-                    try {
-                      var _npResp = await revex.get('https://backend.leadconnectorhq.com/funnels/page/' + newPageId);
-                      var _npData = (_npResp && _npResp.data) ? _npResp.data : {};
-                      diag.approach2.cloneBackendStatus = (_npResp && _npResp.status) || 0;
-                      diag.approach2.cloneBackendKeys   = Object.keys(_npData).slice(0, 15);
-                      diag.approach2.newFirebasePath = _npData.pageDataUrl || '';
-                      diag.approach2.newDownloadUrl  = _npData.pageDataDownloadUrl || '';
-
-                      /* ── v2.54.0: Try GHL backend write first ───────────────────────────── *
-                       * GHL builder reads page content via GET /funnels/builder/page/data    *
-                       * which proxies Firebase. But maybe the backend also accepts direct     *
-                       * writes. Tries PUT → PATCH → POST on /funnels/page/{newPageId} with  *
-                       * AI sections merged into the clone's backend payload; stops on 2xx.  *
-                       * Falls through to Firebase write if all verbs fail.                  */
-                      var _backendWriteOk = false;
-                      var _bwSections = sectionsWithContext.map(function(sec) {
-                        return Object.assign({}, sec, { pageId: newPageId });
-                      });
-                      var _bwPayload = Object.assign({}, _npData, {
-                        id:       newPageId,
-                        sections: _bwSections,
-                      });
-                      var _bwVerbs = ['put', 'patch', 'post'];
-                      for (var _bwi = 0; _bwi < _bwVerbs.length && !_backendWriteOk; _bwi++) {
-                        var _bwVerb = _bwVerbs[_bwi];
-                        try {
-                          var _bwResp = await revex[_bwVerb](
-                            'https://backend.leadconnectorhq.com/funnels/page/' + newPageId,
-                            _bwPayload
-                          );
-                          diag.approach2.backendWriteVerb   = _bwVerb;
-                          diag.approach2.backendWriteStatus = (_bwResp && _bwResp.status) || 0;
-                          if (_bwResp && _bwResp.status >= 200 && _bwResp.status < 300) {
-                            _backendWriteOk = true;
-                          } else {
-                            /* Non-2xx without throw — capture body for diagnostics */
-                            var _bwErrBody = (_bwResp && _bwResp.data)
-                              ? JSON.stringify(_bwResp.data).slice(0, 200) : '';
-                            diag.approach2['backendErr_' + _bwVerb] = (_bwResp.status || '?') + ' ' + _bwErrBody;
-                            if (!diag.approach2.backendWriteError) {
-                              diag.approach2.backendWriteError = diag.approach2['backendErr_' + _bwVerb];
-                            }
-                          }
-                        } catch(_bwe) {
-                          /* Axios throws on 4xx/5xx — extract response body if available */
-                          var _bwErrData = (_bwe && _bwe.response && _bwe.response.data)
-                            ? JSON.stringify(_bwe.response.data).slice(0, 200)
-                            : String(_bwe).slice(0, 200);
-                          var _bwErrStatus = (_bwe && _bwe.response && _bwe.response.status) || '?';
-                          diag.approach2['backendErr_' + _bwVerb] = _bwErrStatus + ' ' + _bwErrData;
-                          if (!diag.approach2.backendWriteError) {
-                            diag.approach2.backendWriteError = diag.approach2['backendErr_' + _bwVerb];
-                          }
-                        }
-                      }
-                      diag.approach2.backendWriteOk = _backendWriteOk;
-                      if (_backendWriteOk) {
-                        diag.approach2.aiSectionsMode  = true;
-                        diag.approach2.aiSectionCount  = _bwSections.length;
-                        diag.approach2.cloneWriteStatus = 'backend-write-ok';
-                        var _bwBuilderUrl = 'https://app.gohighlevel.com/location/' +
-                          (tabLocationId || locationId) + '/page-builder/' + newPageId;
-                        diag.approach2.navigatedTo = _bwBuilderUrl;
-                        return JSON.stringify({ ok: true, method: 'backend-write-clone-first', diag: diag });
-                      }
-                      /* Backend write failed — fall through to Firebase write below */
-
-                      var npFbMatch = (_npData.pageDataDownloadUrl || '').match(
-                        /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/
-                      );
-                      if (npFbMatch) {
-                        var npBucket   = decodeURIComponent(npFbMatch[1]);
-                        var npPath     = decodeURIComponent(npFbMatch[2]);
-                        var npUploadEp = 'https://firebasestorage.googleapis.com/v0/b/' +
-                          encodeURIComponent(npBucket) + '/o?uploadType=media&name=' + encodeURIComponent(npPath);
-                        diag.approach2.writeTarget         = newPageId;
-                        diag.approach2.newPageFirebasePath = npPath;
-
-                        /* ── v2.53.0: Write AI-generated sections directly to cloned page ───────── *
-                         * Previous approach read the native sections and tried to swap text fields *
-                         * with AI text — but collected font names and CSS from pageData instead.  *
-                         * Correct approach: clone creates a valid new page (newPageId + FB path); *
-                         * we write the AI-generated sectionsWithContext to that path directly.    */
-                        var cloneWriteSections = sectionsWithContext.map(function(sec) {
-                          return Object.assign({}, sec, { pageId: newPageId });
-                        });
-                        var npWritePayload = Object.assign({}, writePayload, {
-                          id:       newPageId,
-                          sections: cloneWriteSections,
-                        });
-                        diag.approach2.aiSectionsMode  = true;
-                        diag.approach2.aiSectionCount  = cloneWriteSections.length;
-
-                        var npWriteRes = await fetch(npUploadEp, {
-                          method:  'POST',
-                          headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
-                          body:    JSON.stringify(npWritePayload),
-                        });
-                        diag.approach2.cloneWriteStatus = npWriteRes.status;
-                        if (npWriteRes.ok) {
-                          /* ── v2.52.0: Restore Firebase download token after POST write ─────── *
-                           * Firebase generates a NEW downloadTokens value on every upload.       *
-                           * GHL builder reads via the OLD token URL → 403 → shows old content.  *
-                           * PATCH object metadata to restore the original token so GHL's cached  *
-                           * pageDataDownloadUrl remains valid — no GHL backend call needed.      */
-                          try {
-                            var _clUpResp  = await npWriteRes.clone().json().catch(function() { return {}; });
-                            var _clNewTok  = _clUpResp.downloadTokens ?? null;
-                            var _clOldTok  = (_npData.pageDataDownloadUrl.match(/[?&]token=([^&]+)/) ?? [])[1] ?? '';
-                            diag.approach2.cloneOldToken     = _clOldTok  ? _clOldTok.slice(0, 20)  + '…' : 'none-in-url';
-                            diag.approach2.cloneNewToken     = _clNewTok  ? _clNewTok.slice(0, 20)  + '…' : 'none-in-resp';
-                            diag.approach2.cloneTokenChanged = _clNewTok  ? (_clNewTok !== _clOldTok) : false;
-                            if (_clOldTok) {
-                              var _clMetaEp = 'https://firebasestorage.googleapis.com/v0/b/' +
-                                encodeURIComponent(npBucket) + '/o/' + encodeURIComponent(npPath);
-                              var _clPatchOk = false;
-                              /* Format 1: nested metadata.downloadTokens */
-                              try {
-                                var _cp1 = await fetch(_clMetaEp, {
-                                  method:  'PATCH',
-                                  headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
-                                  body:    JSON.stringify({ metadata: { downloadTokens: _clOldTok } }),
-                                });
-                                diag.approach2.clonePatchStatus1 = _cp1.status;
-                                if (_cp1.ok) {
-                                  var _cp1b  = await _cp1.json().catch(function() { return {}; });
-                                  var _cp1Tok = (_cp1b.metadata && _cp1b.metadata.downloadTokens)
-                                    ? _cp1b.metadata.downloadTokens : (_cp1b.downloadTokens ?? null);
-                                  if (_cp1Tok === _clOldTok) {
-                                    _clPatchOk = true;
-                                    diag.approach2.clonePatchToken = 'ok-format1';
-                                  } else {
-                                    diag.approach2.clonePatchToken = 'accepted-not-verified';
-                                  }
-                                }
-                              } catch(_cp1e) { diag.approach2.clonePatchStatus1 = 'err'; }
-                              /* Format 2: top-level downloadTokens, if format 1 failed */
-                              if (!_clPatchOk) {
-                                try {
-                                  var _cp2 = await fetch(_clMetaEp, {
-                                    method:  'PATCH',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
-                                    body:    JSON.stringify({ downloadTokens: _clOldTok }),
-                                  });
-                                  diag.approach2.clonePatchStatus2 = _cp2.status;
-                                  if (_cp2.ok) {
-                                    var _cp2b  = await _cp2.json().catch(function() { return {}; });
-                                    var _cp2Tok = (_cp2b.metadata && _cp2b.metadata.downloadTokens)
-                                      ? _cp2b.metadata.downloadTokens : (_cp2b.downloadTokens ?? null);
-                                    if (_cp2Tok === _clOldTok) {
-                                      _clPatchOk = true;
-                                      diag.approach2.clonePatchToken = 'ok-format2';
-                                    } else {
-                                      diag.approach2.clonePatchToken = 'accepted-not-verified-f2';
-                                    }
-                                  }
-                                } catch(_cp2e) { diag.approach2.clonePatchStatus2 = 'err'; }
-                              }
-                              if (!_clPatchOk && !diag.approach2.clonePatchToken) {
-                                diag.approach2.clonePatchToken = 'failed';
-                              }
-                            } else {
-                              diag.approach2.clonePatchToken = 'no-old-token';
-                            }
-                          } catch(_clTokErr) {
-                            diag.approach2.clonePatchToken = 'token-parse-err';
-                          }
-
-                          var newBuilderUrl = 'https://app.gohighlevel.com/location/' +
-                            (tabLocationId || locationId) + '/page-builder/' + newPageId;
-                          diag.approach2.navigatedTo = newBuilderUrl;
-                          return JSON.stringify({ ok: true, method: 'firebase-clone-first', diag: diag });
-                        }
-                      } else {
-                        diag.approach2.cloneResult = 'new-page-no-fb-url';
-                      }
-                    } catch(_npe) {
-                      diag.approach2.newPageFetchErr = String(_npe).slice(0, 60);
-                    }
-                  } else {
-                    diag.approach2.cloneResult = 'new-page-not-found-after-clone';
-                  }
-                }
-              } catch(_cloneErr) {
-                diag.approach2.cloneError = String(_cloneErr).slice(0, 120);
               }
-            }
+              diag.approach2.writeInPlace      = true;
+              diag.approach2.wipNativeSecCount = (wipPayload && Array.isArray(wipPayload.sections))
+                ? wipPayload.sections.length : 0;
 
-            /* v2.49.1 fallback: write to a new UUID Firebase path (clone failed or no stepId) *
-             * v2.48.0: Generate a new UUID file path — write to a NEW file, not overwrite.
-             * GHL caches Firebase Storage responses by URL. Overwriting the same path
-             * never shows because GHL re-reads the cached (old) URL after reload.
-             * Writing to a fresh UUID path means the URL has never been cached.        */
-            function generateUUID() {
-              return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0;
-                var v = c === "x" ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
+              if (!wipPayload || !Array.isArray(wipPayload.sections)) {
+                diag.approach2.writeInPlaceError = 'no-native-payload';
+                return JSON.stringify({ ok: false, error: 'write-in-place: no native Firebase payload', diag: diag });
+              }
+
+              /* Step 2: Collect AI texts from pd (the AI-generated data), NOT from existing */
+              var aiTexts = [];
+              var _wipAiSections = pd.sections || [];
+              for (var _ais = 0; _ais < _wipAiSections.length; _ais++) {
+                var _aiSec  = _wipAiSections[_ais];
+                var _aiElems = Array.isArray(_aiSec.elements) ? _aiSec.elements : [];
+                for (var _aie = 0; _aie < _aiElems.length; _aie++) {
+                  var _aiEl  = _aiElems[_aie];
+                  var _aiTxt = (_aiEl && _aiEl.extra && _aiEl.extra.text) ? _aiEl.extra.text.value : undefined;
+                  if (typeof _aiTxt === 'string' && _aiTxt.trim().length > 0) {
+                    aiTexts.push(_aiTxt);
+                  }
+                }
+              }
+              diag.approach2.aiTextCount = aiTexts.length;
+
+              /* Step 3: Deep-clone native sections and replace text values sequentially */
+              var clonedSections  = JSON.parse(JSON.stringify(wipPayload.sections));
+              var wipReplaceIdx   = 0;
+              var wipReplaceableCount = 0;
+              var wipReplacedCount    = 0;
+              var wipReplaceableMetas = ['heading', 'paragraph', 'button', 'text'];
+              for (var _wsi = 0; _wsi < clonedSections.length; _wsi++) {
+                var _wSecElems = Array.isArray(clonedSections[_wsi].elements) ? clonedSections[_wsi].elements : [];
+                for (var _wei = 0; _wei < _wSecElems.length; _wei++) {
+                  var _wel  = _wSecElems[_wei];
+                  var _wTxt = (_wel && _wel.extra && _wel.extra.text) ? _wel.extra.text.value : undefined;
+                  if (typeof _wTxt === 'string' && _wTxt.trim().length > 0
+                      && _wel.meta && wipReplaceableMetas.indexOf(_wel.meta) !== -1) {
+                    wipReplaceableCount++;
+                    if (wipReplaceIdx < aiTexts.length) {
+                      _wel.extra.text.value = aiTexts[wipReplaceIdx++];
+                      wipReplacedCount++;
+                    }
+                  }
+                }
+              }
+              diag.approach2.replaceableCount   = wipReplaceableCount;
+              diag.approach2.replacedCount       = wipReplacedCount;
+              diag.approach2.clonedSec0ElemCount = (clonedSections[0] && Array.isArray(clonedSections[0].elements))
+                ? clonedSections[0].elements.length : 0;
+
+              /* Step 4: Build write payload — preserve native structure, swap sections */
+              var wipWritePayload = Object.assign({}, wipPayload, { sections: clonedSections });
+
+              /* Step 5: Construct Firebase upload endpoint (same objectPath already in scope) */
+              var wipEncodedPath = encodeURIComponent(objectPath);
+              var wipUploadEp    = 'https://firebasestorage.googleapis.com/v0/b/'
+                + encodeURIComponent(bucket)
+                + '/o?uploadType=media&name=' + encodeURIComponent(objectPath);
+
+              /* Step 6: POST write to Firebase — overwrites the same file in-place */
+              var wipWriteRes = await fetch(wipUploadEp, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                body:    JSON.stringify(wipWritePayload),
               });
-            }
-            var newFileUUID    = generateUUID();
-            var newFbPath      = "funnel/" + funnelIdFromPath + "/page/" + builderId + "/page-data-" + newFileUUID;
-            var encodedNewPath = encodeURIComponent(newFbPath);
-            diag.approach2.newFbPath = newFbPath;
-
-            /* Firebase Storage upload endpoint — creates a NEW file (not overwrite) */
-            var uploadEp =
-              `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
-              `/o?uploadType=media&name=${encodedNewPath}`;
-            /* v2.49.1: Pre-write validator (UUID fallback path) */
-            diag.approach2.preWriteCheck = 'secs=' + (pageData.sections ? pageData.sections.length : 'MISSING')
-              + ' firstSecId=' + (pageData.sections && pageData.sections[0] ? pageData.sections[0].id : 'none')
-              + ' isAiData=' + (pageData.sections && pageData.sections.length < 8 ? 'likely-yes' : 'likely-no');
-            var res = await fetch(uploadEp, {
-              method:  "POST",
-              headers: {
-                "Content-Type":  "application/json",
-                "Authorization": `Firebase ${idToken}`,
-              },
-              body: JSON.stringify(writePayload),
-            });
-            diag.approach2.httpStatus = res.status;
-            if (res.ok) {
-              diag.approach2.result = `success (HTTP ${res.status})`;
-
-              /* ── v2.46.0: Post-write readback ───────────────────────────────────── *
-               * Immediately GET the file we just wrote and record the first 2000      *
-               * chars + key-structure so we can compare format with what was sent.   */
-              try {
-                var readBackEp =
-                  `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}` +
-                  `/o/${encodedNewPath}?alt=media`;
-                var readBackRes = await fetch(readBackEp, {
-                  headers: { "Authorization": `Firebase ${idToken}` },
-                  signal:  AbortSignal.timeout(5000),
-                });
-                if (readBackRes.ok) {
-                  var readBackText = await readBackRes.text().catch(() => "");
-                  var first2k = readBackText.slice(0, 2000);
-                  var keyStruct = "parse-err";
-                  try {
-                    var parsed = JSON.parse(readBackText);
-                    var secCount = parsed.sections ? parsed.sections.length : 0;
-                    var sec0ElemLen = parsed.sections?.[0]?.elements?.length ?? "none";
-                    var rowCount = parsed.rows ? Object.keys(parsed.rows).length : 0;
-                    var colCount = parsed.columns ? Object.keys(parsed.columns).length : 0;
-                    var elemCount = parsed.elements ? Object.keys(parsed.elements).length : 0;
-                    keyStruct = `sections:${secCount} sec0.elements:${sec0ElemLen} rows:${rowCount} cols:${colCount} elems:${elemCount}`;
-                  } catch (_) {}
-                  diag.approach2.readBack = { ok: true, keyStruct, first2k };
-                } else {
-                  diag.approach2.readBack = { ok: false, status: readBackRes.status };
-                }
-              } catch (readBackErr) {
-                diag.approach2.readBack = { ok: false, error: String(readBackErr).slice(0, 100) };
+              diag.approach2.cloneWriteStatus = wipWriteRes.status;
+              if (!wipWriteRes.ok) {
+                var wipWriteErrTxt = await wipWriteRes.text().catch(function() { return ''; });
+                diag.approach2.wipWriteError = wipWriteErrTxt.slice(0, 120);
+                return JSON.stringify({ ok: false, error: 'write-in-place: Firebase write failed HTTP ' + wipWriteRes.status, diag: diag });
               }
 
-              /* ── v2.48.0: Extract new Firebase token → build new public URL ──────── *
-               * Firebase Storage returns { downloadTokens } on upload.
-               * We build the full public URL for the NEW file and log it.            */
-              var newPublicUrl = null;
-              try {
-                var uploadResp    = await res.clone().json().catch(() => ({}));
-                var newToken      = uploadResp.downloadTokens ?? null;
-                diag.approach2.newFirebaseToken = newToken ? newToken.slice(0, 20) + "…" : "none-in-resp";
-                if (newToken) {
-                  var newFileBaseUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedNewPath}`;
-                  newPublicUrl = newFileBaseUrl + `?alt=media&token=${newToken}`;
-                }
-                diag.approach2.newPublicUrl = newPublicUrl ? newPublicUrl.slice(0, 150) : "no-url";
-                diag.approach2.newFileUrl   = newPublicUrl;
-              } catch (_tre) {
-                diag.approach2.newFirebaseToken = "parse-err";
-              }
-
-              /* ── v2.48.0: POST new version to GHL backend ───────────────────────── *
-               * Try 6 POST endpoints in order — stop at first 200/201 response.
-               * PATCH/PUT return 404 on all tested patterns; POST targets version or
-               * save sub-endpoints that may accept new file registration.             */
-              if (revex && newPublicUrl) {
-                var versionPayload = {
-                  pageDataDownloadUrl: newPublicUrl,
-                  pageDataUrl:         newFbPath,
-                  pageDownloadUrl:     newPublicUrl,
-                  pageDownloadPath:    newFbPath,
-                  pageType:            "draft",
-                  updatedAt:           new Date().toISOString(),
-                  versionId:           generateUUID(),
-                };
-                var postEndpoints = [
-                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}`,
-                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}/version`,
-                  `https://backend.leadconnectorhq.com/funnels/page/${builderId}/save`,
-                  `https://backend.leadconnectorhq.com/funnels/builder/${builderId}/save`,
-                  `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}`,
-                  `https://backend.leadconnectorhq.com/funnels/funnel/${funnelIdFromPath}/page/${builderId}/version`,
-                ];
-                var postResult = "all-failed";
-                for (var ep of postEndpoints) {
-                  try {
-                    var postResp = await revex.post(ep, versionPayload);
-                    if (postResp.status === 200 || postResp.status === 201) {
-                      postResult = `POST-${postResp.status}:${ep.slice(45)}`;
-                      break;
-                    }
-                  } catch (_pe) {
-                    var st = _pe?.response?.status ?? "err";
-                    /* log last status */
-                    postResult = `last-err:${st} ep:${ep.slice(45)}`;
-                  }
-                }
-                diag.approach2.postNewVersionResult = postResult;
-              } else {
-                diag.approach2.postNewVersionResult = revex ? "no-newPublicUrl" : "no-revex";
-              }
-
-              /* ── v2.49.1: Firestore REST probe (read-only — PATCH blocked by security rules) *
-               * Try 4 likely Firestore document paths with GET only. Log which paths    *
-               * exist so we can identify the correct document structure for future use.  */
-              try {
-                var fsPaths = [
-                  `pages/${builderId}`,
-                  `funnel-pages/${builderId}`,
-                  `funnelPages/${builderId}`,
-                  `builder-pages/${builderId}`,
-                ];
-                var fsBase = "https://firestore.googleapis.com/v1/projects/highlevel-backend/databases/(default)/documents/";
-                var fsResult = "all-404";
-                for (var fsPath of fsPaths) {
-                  try {
-                    var fsGetResp = await fetch(fsBase + fsPath, {
-                      headers: { "Authorization": `Bearer ${idToken}` },
-                      signal:  AbortSignal.timeout(4000),
-                    });
-                    if (fsGetResp.status === 200) {
-                      fsResult = `GET-200:${fsPath} (read-only — write blocked by security rules)`;
-                      break;
+              /* Step 7: Patch old download token back so GHL's cached URL stays valid */
+              var wipOldTok = (downloadUrl.match(/[?&]token=([^&]+)/) || [])[1] || '';
+              diag.approach2.cloneOldToken = wipOldTok ? wipOldTok.slice(0, 20) + '\u2026' : 'none-in-url';
+              if (wipOldTok) {
+                var wipMetaEp  = 'https://firebasestorage.googleapis.com/v0/b/'
+                  + encodeURIComponent(bucket) + '/o/' + wipEncodedPath;
+                var wipPatchOk = false;
+                /* Format 1: nested metadata.downloadTokens */
+                try {
+                  var _wp1 = await fetch(wipMetaEp, {
+                    method:  'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                    body:    JSON.stringify({ metadata: { downloadTokens: wipOldTok } }),
+                  });
+                  diag.approach2.clonePatchStatus1 = _wp1.status;
+                  if (_wp1.ok) {
+                    var _wp1b   = await _wp1.json().catch(function() { return {}; });
+                    var _wp1Tok = (_wp1b.metadata && _wp1b.metadata.downloadTokens)
+                      ? _wp1b.metadata.downloadTokens : (_wp1b.downloadTokens || null);
+                    if (_wp1Tok === wipOldTok) {
+                      wipPatchOk = true;
+                      diag.approach2.clonePatchToken = 'ok-format1';
                     } else {
-                      fsResult = `probe-${fsGetResp.status}:${fsPath}`;
+                      diag.approach2.clonePatchToken = 'accepted-not-verified';
                     }
-                  } catch (_fse) {
-                    fsResult = `err:${fsPath}`;
                   }
+                } catch(_wp1e) { diag.approach2.clonePatchStatus1 = 'err'; }
+                /* Format 2: top-level downloadTokens if format 1 failed */
+                if (!wipPatchOk) {
+                  try {
+                    var _wp2 = await fetch(wipMetaEp, {
+                      method:  'PATCH',
+                      headers: { 'Content-Type': 'application/json', 'Authorization': 'Firebase ' + idToken },
+                      body:    JSON.stringify({ downloadTokens: wipOldTok }),
+                    });
+                    diag.approach2.clonePatchStatus2 = _wp2.status;
+                    if (_wp2.ok) {
+                      var _wp2b   = await _wp2.json().catch(function() { return {}; });
+                      var _wp2Tok = (_wp2b.metadata && _wp2b.metadata.downloadTokens)
+                        ? _wp2b.metadata.downloadTokens : (_wp2b.downloadTokens || null);
+                      if (_wp2Tok === wipOldTok) {
+                        wipPatchOk = true;
+                        diag.approach2.clonePatchToken = 'ok-format2';
+                      } else {
+                        diag.approach2.clonePatchToken = 'accepted-not-verified-f2';
+                      }
+                    }
+                  } catch(_wp2e) { diag.approach2.clonePatchStatus2 = 'err'; }
                 }
-                diag.approach2.firestoreResult = fsResult;
-              } catch (_fsOuter) {
-                diag.approach2.firestoreResult = "outer-err";
+                if (!wipPatchOk && !diag.approach2.clonePatchToken) {
+                  diag.approach2.clonePatchToken = 'failed';
+                }
+              } else {
+                diag.approach2.clonePatchToken = 'no-old-token';
               }
 
-              /* ── Post-write verification: re-read what we wrote (new file URL) ─── *
-               * v2.48.0: reads from newPublicUrl (new file), falls back to old URL. */
-              try {
-                var vrUrl = newPublicUrl ?? downloadUrl;
-                var vrRes = await fetch(vrUrl, {
-                  cache:   "no-store",
-                  headers: { "Authorization": `Firebase ${idToken}` },
-                  signal:  AbortSignal.timeout(5000),
-                });
-                if (vrRes.ok) {
-                  var vr = await vrRes.json();
-                  var sec0 = Array.isArray(vr.sections) && vr.sections[0];
-                  /* Cross-reference: does the row referenced by section[0].child[0] exist? */
-                  var sec0ChildRowId = sec0?.metaData?.child?.[0] ?? sec0?.child?.[0] ?? null;
-                  var referencedRow  = sec0ChildRowId ? (vr.rows?.[sec0ChildRowId] ?? null) : null;
-                  var firstColId     = referencedRow?.metaData?.child?.[0] ?? null;
-                  var referencedCol  = firstColId ? (vr.columns?.[firstColId] ?? null) : null;
-                  /* v2.32.0 post-write checks:
-                   * - sec0El0HasMeta: should be FALSE (flat format = no metaData key)
-                   * - firstRowHasMeta: should be FALSE (flat format)                  */
-                  var sec0El0 = Array.isArray(sec0?.elements) ? sec0.elements[0] : null;
-                  var firstRow = vr.rows && Object.values(vr.rows)[0];
-                  /* col ref: flat rows don't have metaData wrapper, so child is at top-level */
-                  var firstColIdFlat = referencedRow?.child?.[0] ?? referencedRow?.metaData?.child?.[0] ?? null;
-                  var referencedColFlat = firstColIdFlat ? (vr.columns?.[firstColIdFlat] ?? null) : null;
-                  diag.approach2.postWrite = {
-                    readOk:          true,
-                    httpStatus:      vrRes.status,
-                    payloadId:       vr.id ?? "missing",
-                    sectionCount:    Array.isArray(vr.sections) ? vr.sections.length : 0,
-                    rowCount:        vr.rows    ? Object.keys(vr.rows).length    : 0,
-                    colCount:        vr.columns ? Object.keys(vr.columns).length : 0,
-                    elemCount:       vr.elements? Object.keys(vr.elements).length: 0,
-                    firstSectionChildCount: Array.isArray(sec0?.metaData?.child)
-                      ? sec0.metaData.child.length
-                      : (Array.isArray(sec0?.child) ? sec0.child.length : 0),
-                    writtenSecHasElements: sec0 ? ("elements" in sec0) : null,
-                    /* v2.32.0: sec0El0HasMeta should be FALSE (flat format) */
-                    sec0El0HasMeta:  sec0El0 ? ("metaData" in sec0El0) : null,
-                    sec0El0Keys:     sec0El0 ? Object.keys(sec0El0).slice(0, 10) : "no-el0",
-                    sec0ChildRowId:  sec0ChildRowId ?? "none",
-                    rowRefOk:        !!referencedRow,
-                    /* v2.32.0: flat row has no metaData wrapper */
-                    firstRowHasMeta: firstRow ? ("metaData" in firstRow) : null,
-                    firstRowKeys:    firstRow ? Object.keys(firstRow).slice(0, 10) : "rows-empty",
-                    firstColId:      firstColIdFlat ?? "none",
-                    colRefOk:        !!referencedColFlat,
-                  };
-                } else {
-                  diag.approach2.postWrite = { readOk: false, httpStatus: vrRes.status, error: `re-read ${vrRes.status}` };
-                }
-              } catch (_vrErr) {
-                diag.approach2.postWrite = { error: "re-read threw" };
-              }
-
-              /* ── DO NOT return early — fall through to Approach 3 ──────────────── *
-               * Approach 3 (Pinia state mutation) patches the live Vue reactive state
-               * so the builder immediately shows our content, even if the Firebase
-               * Storage re-read by GHL after reload has caching issues.              */
-              diag.approach2.fallThrough = true;
-            } else {
-              var errText = await res.text().catch(() => "");
-              diag.approach2.result = `HTTP ${res.status}: ${errText.slice(0, 100)}`;
+              return JSON.stringify({ ok: true, method: 'write-in-place', diag: diag });
+            } catch(_wipErr) {
+              diag.approach2.wipErr = String(_wipErr).slice(0, 120);
+              return JSON.stringify({ ok: false, error: 'write-in-place exception: ' + String(_wipErr).slice(0, 80), diag: diag });
             }
           } catch (e2) {
             diag.approach2.result = `threw: ${String(e2).slice(0, 80)}`;

@@ -312,8 +312,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.54.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.54.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.55.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.55.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -401,23 +401,20 @@ async function showInjectDebug() {
           if (a2.metaUpdate !== undefined)       lines.push(`A2 metaUpdate (legacy-fallback): ${a2.metaUpdate}`);
           /* v2.50.0: template-based inject diagnostics */
           if (a2.templateMode !== undefined)     lines.push(`A2 templateMode: ${a2.templateMode} nativeReadStatus=${a2.nativeReadStatus ?? "?"} nativeSecs=${a2.nativeSectionCount ?? "?"}`);
-          if (a2.replaceableCount !== undefined) lines.push(`A2 replaceableCount: ${a2.replaceableCount} aiTextCount: ${a2.aiTextCount ?? "?"} replacedCount: ${a2.replacedCount ?? "?"}`);
-          if (a2.templateFallback !== undefined) lines.push(`A2 templateFallback: ${a2.templateFallback} ← native read failed, used AI elements`);
-          if (a2.nativeReadErr !== undefined)    lines.push(`A2 nativeReadErr: ${a2.nativeReadErr}`);
-          /* v2.53.0: AI-sections-direct diagnostics for clone-first path */
-          if (a2.aiSectionsMode !== undefined)     lines.push(`A2 aiSectionsMode: ${a2.aiSectionsMode} aiSectionCount=${a2.aiSectionCount ?? "?"}`);
+          /* v2.55.0: write-in-place diagnostics */
+          if (a2.writeInPlace !== undefined)       lines.push(`A2 writeInPlace: ${a2.writeInPlace} wipUsedExisting=${a2.wipUsedExisting ?? "?"} wipNativeSecCount=${a2.wipNativeSecCount ?? "?"}`);
+          if (a2.wipReadStatus !== undefined)      lines.push(`A2 wipReadStatus: ${a2.wipReadStatus}`);
+          if (a2.wipReadErr !== undefined)         lines.push(`A2 wipReadErr: ${a2.wipReadErr}`);
+          if (a2.writeInPlaceError !== undefined)  lines.push(`A2 writeInPlaceError: ${a2.writeInPlaceError}`);
+          if (a2.aiTextCount !== undefined)        lines.push(`A2 aiTextCount: ${a2.aiTextCount}`);
+          if (a2.replaceableCount !== undefined)   lines.push(`A2 replaceableCount: ${a2.replaceableCount} replacedCount: ${a2.replacedCount ?? "?"} clonedSec0ElemCount: ${a2.clonedSec0ElemCount ?? "?"}`);
+          if (a2.wipWriteError !== undefined)      lines.push(`A2 wipWriteError: ${a2.wipWriteError}`);
           if (a2.cloneWriteStatus !== undefined)   lines.push(`A2 cloneWriteStatus: ${a2.cloneWriteStatus}`);
-          if (a2.cloneOldToken !== undefined)      lines.push(`A2 cloneOldToken: ${a2.cloneOldToken} cloneNewToken=${a2.cloneNewToken ?? "?"} cloneTokenChanged=${a2.cloneTokenChanged ?? "?"}`);
+          if (a2.cloneOldToken !== undefined)      lines.push(`A2 cloneOldToken: ${a2.cloneOldToken}`);
           if (a2.clonePatchToken !== undefined)    lines.push(`A2 clonePatchToken: ${a2.clonePatchToken} s1=${a2.clonePatchStatus1 ?? "?"} s2=${a2.clonePatchStatus2 ?? "n/a"}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
-          /* v2.54.0: backend-write diagnostics */
-          if (a2.cloneBackendStatus !== undefined) lines.push(`A2 cloneBackendStatus: ${a2.cloneBackendStatus} keys=${JSON.stringify(a2.cloneBackendKeys ?? [])}`);
-          if (a2.backendWriteOk !== undefined)     lines.push(`A2 backendWriteOk: ${a2.backendWriteOk} verb=${a2.backendWriteVerb ?? "?"} status=${a2.backendWriteStatus ?? "?"}`);
-          if (a2.backendWriteError !== undefined)  lines.push(`A2 backendWriteError: ${a2.backendWriteError}`);
-          if (a2.backendErr_put !== undefined)     lines.push(`A2 backendErr_put: ${a2['backendErr_put']}`);
-          if (a2.backendErr_patch !== undefined)   lines.push(`A2 backendErr_patch: ${a2['backendErr_patch']}`);
-          if (a2.backendErr_post !== undefined)    lines.push(`A2 backendErr_post: ${a2['backendErr_post']}`);
+          if (a2.wipErr !== undefined)             lines.push(`A2 wipErr: ${a2.wipErr}`);
         }
         if (d.approach2b) {
           const a2b = d.approach2b;
