@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.53.0 — Write AI-generated sections directly to cloned page. No auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.54.0 — Fix elements population (finalize() sec.elements); try GHL backend write before Firebase. No auto-reload. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.53.0 — Write AI-generated sections directly to cloned page. No auto-reload.");
+    console.log("[CF Funnel] Updated to v2.54.0 — Fix elements population (finalize() sec.elements); try GHL backend write before Firebase. No auto-reload.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -783,12 +783,18 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
              * Tab URL format: https://app.gohighlevel.com/location/{locationId}/page-builder/{pageId} */
             var tabLocationId = (window.location.href.match(/\/location\/([^/]+)\//) ?? [])[1] ?? "";
             var sectionsWithContext = (pd.sections ?? []).map((sec, i) => {
-              /* Build flat elements array for this section */
-              var childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
+              /* Build flat elements array for this section.
+               * v2.54.0: AI generator's finalize() already populates sec.elements via DFS.
+               * GhlPageData type has no rows/columns/elements dicts — use sec.elements first.
+               * Fall back to pd.rows traversal for URL-captured pages that do have dicts. */
               var flatNodes = [];
+              var childRowIds = Array.isArray(sec.metaData?.child) ? sec.metaData.child : [];
 
-              if (childRowIds.length > 0) {
-                /* Primary: traverse child chains (AI generator always sets metaData.child) */
+              if (Array.isArray(sec.elements) && sec.elements.length > 0) {
+                /* Primary v2.54.0: elements already flattened by finalize() in AI generator */
+                flatNodes = sec.elements.filter(function(n) { return n && typeof n === 'object'; });
+              } else if (childRowIds.length > 0) {
+                /* Secondary: traverse child chains via pd.rows (URL-captured pages) */
                 for (var rowId of childRowIds) {
                   var row = pd.rows?.[rowId];
                   if (!row) continue;
@@ -811,16 +817,16 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 }
               }
 
-              /* Fallback: if child traversal found nothing, collect ALL nodes flat */
+              /* Last-resort fallback: collect ALL nodes from flat dicts */
               if (flatNodes.length === 0) {
-                for (var [rowId, row] of Object.entries(pd.rows ?? {})) {
-                  flatNodes.push({ ...(row.metaData ?? row), id: rowId });
+                for (var [nrId, nrRow] of Object.entries(pd.rows ?? {})) {
+                  flatNodes.push({ ...(nrRow.metaData ?? nrRow), id: nrId });
                 }
-                for (var [colId, col] of Object.entries(pd.columns ?? {})) {
-                  flatNodes.push({ ...(col.metaData ?? col), id: colId });
+                for (var [ncId, ncCol] of Object.entries(pd.columns ?? {})) {
+                  flatNodes.push({ ...(ncCol.metaData ?? ncCol), id: ncId });
                 }
-                for (var [elemId, elem] of Object.entries(pd.elements ?? {})) {
-                  flatNodes.push({ ...(elem.metaData ?? elem), id: elemId });
+                for (var [neId, neElem] of Object.entries(pd.elements ?? {})) {
+                  flatNodes.push({ ...(neElem.metaData ?? neElem), id: neId });
                 }
               }
 
@@ -998,8 +1004,53 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     try {
                       var _npResp = await revex.get('https://backend.leadconnectorhq.com/funnels/page/' + newPageId);
                       var _npData = (_npResp && _npResp.data) ? _npResp.data : {};
+                      diag.approach2.cloneBackendStatus = (_npResp && _npResp.status) || 0;
+                      diag.approach2.cloneBackendKeys   = Object.keys(_npData).slice(0, 15);
                       diag.approach2.newFirebasePath = _npData.pageDataUrl || '';
                       diag.approach2.newDownloadUrl  = _npData.pageDataDownloadUrl || '';
+
+                      /* ── v2.54.0: Try GHL backend write first ───────────────────────────── *
+                       * GHL builder reads page content via GET /funnels/builder/page/data    *
+                       * which proxies Firebase. But maybe the backend also accepts direct     *
+                       * writes. Tries PUT → PATCH → POST on /funnels/page/{newPageId} with  *
+                       * AI sections merged into the clone's backend payload; stops on 2xx.  *
+                       * Falls through to Firebase write if all verbs fail.                  */
+                      var _backendWriteOk = false;
+                      var _bwSections = sectionsWithContext.map(function(sec) {
+                        return Object.assign({}, sec, { pageId: newPageId });
+                      });
+                      var _bwPayload = Object.assign({}, _npData, {
+                        id:       newPageId,
+                        sections: _bwSections,
+                      });
+                      var _bwVerbs = ['put', 'patch', 'post'];
+                      for (var _bwi = 0; _bwi < _bwVerbs.length && !_backendWriteOk; _bwi++) {
+                        var _bwVerb = _bwVerbs[_bwi];
+                        try {
+                          var _bwResp = await revex[_bwVerb](
+                            'https://backend.leadconnectorhq.com/funnels/page/' + newPageId,
+                            _bwPayload
+                          );
+                          diag.approach2.backendWriteVerb   = _bwVerb;
+                          diag.approach2.backendWriteStatus = (_bwResp && _bwResp.status) || 0;
+                          if (_bwResp && _bwResp.status >= 200 && _bwResp.status < 300) {
+                            _backendWriteOk = true;
+                          }
+                        } catch(_bwe) {
+                          diag.approach2['backendErr_' + _bwVerb] = String(_bwe).slice(0, 120);
+                        }
+                      }
+                      diag.approach2.backendWriteOk = _backendWriteOk;
+                      if (_backendWriteOk) {
+                        diag.approach2.aiSectionsMode  = true;
+                        diag.approach2.aiSectionCount  = _bwSections.length;
+                        diag.approach2.cloneWriteStatus = 'backend-write-ok';
+                        var _bwBuilderUrl = 'https://app.gohighlevel.com/location/' +
+                          (tabLocationId || locationId) + '/page-builder/' + newPageId;
+                        diag.approach2.navigatedTo = _bwBuilderUrl;
+                        return JSON.stringify({ ok: true, method: 'backend-write-clone-first', diag: diag });
+                      }
+                      /* Backend write failed — fall through to Firebase write below */
 
                       var npFbMatch = (_npData.pageDataDownloadUrl || '').match(
                         /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\/([^?]+)/

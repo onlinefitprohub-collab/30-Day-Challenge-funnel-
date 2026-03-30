@@ -312,8 +312,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.53.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.53.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.54.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.54.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -411,6 +411,12 @@ async function showInjectDebug() {
           if (a2.clonePatchToken !== undefined)    lines.push(`A2 clonePatchToken: ${a2.clonePatchToken} s1=${a2.clonePatchStatus1 ?? "?"} s2=${a2.clonePatchStatus2 ?? "n/a"}`);
           lines.push(`A2 tokenDiag: ${JSON.stringify(a2.tokenDiag ?? [])}`);
           lines.push(`A2 objectPath: ${(a2.objectPath ?? "?").slice(0, 80)}`);
+          /* v2.54.0: backend-write diagnostics */
+          if (a2.cloneBackendStatus !== undefined) lines.push(`A2 cloneBackendStatus: ${a2.cloneBackendStatus} keys=${JSON.stringify(a2.cloneBackendKeys ?? [])}`);
+          if (a2.backendWriteOk !== undefined)     lines.push(`A2 backendWriteOk: ${a2.backendWriteOk} verb=${a2.backendWriteVerb ?? "?"} status=${a2.backendWriteStatus ?? "?"}`);
+          if (a2.backendErr_put !== undefined)     lines.push(`A2 backendErr_put: ${a2['backendErr_put']}`);
+          if (a2.backendErr_patch !== undefined)   lines.push(`A2 backendErr_patch: ${a2['backendErr_patch']}`);
+          if (a2.backendErr_post !== undefined)    lines.push(`A2 backendErr_post: ${a2['backendErr_post']}`);
         }
         if (d.approach2b) {
           const a2b = d.approach2b;
