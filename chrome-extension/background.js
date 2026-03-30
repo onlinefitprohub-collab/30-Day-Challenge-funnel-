@@ -1035,9 +1035,25 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                           diag.approach2.backendWriteStatus = (_bwResp && _bwResp.status) || 0;
                           if (_bwResp && _bwResp.status >= 200 && _bwResp.status < 300) {
                             _backendWriteOk = true;
+                          } else {
+                            /* Non-2xx without throw — capture body for diagnostics */
+                            var _bwErrBody = (_bwResp && _bwResp.data)
+                              ? JSON.stringify(_bwResp.data).slice(0, 200) : '';
+                            diag.approach2['backendErr_' + _bwVerb] = (_bwResp.status || '?') + ' ' + _bwErrBody;
+                            if (!diag.approach2.backendWriteError) {
+                              diag.approach2.backendWriteError = diag.approach2['backendErr_' + _bwVerb];
+                            }
                           }
                         } catch(_bwe) {
-                          diag.approach2['backendErr_' + _bwVerb] = String(_bwe).slice(0, 120);
+                          /* Axios throws on 4xx/5xx — extract response body if available */
+                          var _bwErrData = (_bwe && _bwe.response && _bwe.response.data)
+                            ? JSON.stringify(_bwe.response.data).slice(0, 200)
+                            : String(_bwe).slice(0, 200);
+                          var _bwErrStatus = (_bwe && _bwe.response && _bwe.response.status) || '?';
+                          diag.approach2['backendErr_' + _bwVerb] = _bwErrStatus + ' ' + _bwErrData;
+                          if (!diag.approach2.backendWriteError) {
+                            diag.approach2.backendWriteError = diag.approach2['backendErr_' + _bwVerb];
+                          }
                         }
                       }
                       diag.approach2.backendWriteOk = _backendWriteOk;

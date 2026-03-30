@@ -414,6 +414,7 @@ async function showInjectDebug() {
           /* v2.54.0: backend-write diagnostics */
           if (a2.cloneBackendStatus !== undefined) lines.push(`A2 cloneBackendStatus: ${a2.cloneBackendStatus} keys=${JSON.stringify(a2.cloneBackendKeys ?? [])}`);
           if (a2.backendWriteOk !== undefined)     lines.push(`A2 backendWriteOk: ${a2.backendWriteOk} verb=${a2.backendWriteVerb ?? "?"} status=${a2.backendWriteStatus ?? "?"}`);
+          if (a2.backendWriteError !== undefined)  lines.push(`A2 backendWriteError: ${a2.backendWriteError}`);
           if (a2.backendErr_put !== undefined)     lines.push(`A2 backendErr_put: ${a2['backendErr_put']}`);
           if (a2.backendErr_patch !== undefined)   lines.push(`A2 backendErr_patch: ${a2['backendErr_patch']}`);
           if (a2.backendErr_post !== undefined)    lines.push(`A2 backendErr_post: ${a2['backendErr_post']}`);
