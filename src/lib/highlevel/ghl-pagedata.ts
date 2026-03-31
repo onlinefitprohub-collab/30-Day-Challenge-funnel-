@@ -1335,15 +1335,50 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
   const slv     = lp.sectionLayoutVariants ?? {};
 
-  dispatchHero(b, s, lp, concept, slv["hero"] ?? "");
-  if (slv["final-cta"] !== "cta-social-proof-cta") {
-    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof-bar"] ?? "");
-  }
-  dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "");
-  if (lp.faqItems.length > 0) dispatchFaq(b, s, lp, slv["faq"] ?? "");
-  dispatchFinalCta(b, s, lp, slv["final-cta"] ?? "");
+  console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
 
-  return finalize(b, data.colourScheme);
+  const countBefore = (label: string) => ({ label, before: b.sections.length });
+  const countAfter  = (snap: { label: string; before: number }, variant: string) => {
+    const added = b.sections.length - snap.before;
+    console.log(`[diag] dispatch:${snap.label} variant="${variant}" added=${added} section(s)`);
+  };
+
+  let snap = countBefore("hero");
+  dispatchHero(b, s, lp, concept, slv["hero"] ?? "");
+  countAfter(snap, slv["hero"] ?? "(none)");
+
+  const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
+  console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
+  if (!skipSocialProof) {
+    snap = countBefore("social-proof-bar");
+    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof-bar"] ?? "");
+    countAfter(snap, slv["social-proof-bar"] ?? "(none)");
+  }
+
+  snap = countBefore("whats-included");
+  dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "");
+  countAfter(snap, slv["whats-included"] ?? "(none)");
+
+  if (lp.faqItems.length > 0) {
+    snap = countBefore("faq");
+    dispatchFaq(b, s, lp, slv["faq"] ?? "");
+    countAfter(snap, slv["faq"] ?? "(none)");
+  } else {
+    console.log("[diag] dispatch:faq skipped (no faqItems)");
+  }
+
+  snap = countBefore("final-cta");
+  dispatchFinalCta(b, s, lp, slv["final-cta"] ?? "");
+  countAfter(snap, slv["final-cta"] ?? "(none)");
+
+  const result = finalize(b, data.colourScheme);
+  console.log("[diag] FINAL sections array (" + result.sections.length + " total):");
+  result.sections.forEach((sec, i) => {
+    const elemCount = sec.elements?.length ?? 0;
+    console.log(`  [${i}] id=${sec.id} elements=${elemCount}`);
+  });
+
+  return result;
 }
 
 // ── OPT-IN PAGE ───────────────────────────────────────────────────────────────
