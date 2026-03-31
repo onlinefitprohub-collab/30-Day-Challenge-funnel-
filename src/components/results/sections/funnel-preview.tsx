@@ -6,6 +6,7 @@ import {
   ExternalLink, Loader2, X, Download,
 } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
+import { GhlPagePreview } from "./GhlPagePreview";
 
 interface SchemeColors {
   primary: string;
@@ -127,178 +128,6 @@ function CheckItem({ text, color = "#22c55e", textColor = "#374151" }: {
   );
 }
 
-function StarRow({ count = 5, label }: { count?: number; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex">
-        {[...Array(count)].map((_, i) => (
-          <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-        ))}
-      </div>
-      <span className="text-xs text-gray-500">{label}</span>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  LANDING PAGE                                                               */
-/* ─────────────────────────────────────────────────────────────────────────── */
-function LandingPagePreview({ data, scheme }: { data: GeneratedFunnelAssets; scheme: SchemeColors }) {
-  const lp = data.landingPage;
-  const os = data.offerSummary;
-
-  return (
-    <div className="font-sans antialiased">
-      <NavBar cta={lp.ctaText} scheme={scheme} />
-
-      {/* ── Trust bar ── */}
-      <div className="px-6 py-2.5" style={{ backgroundColor: scheme.mid }}>
-        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
-          <StarRow count={5} label="Rated 5 stars by coaches" />
-          <span className="text-slate-600 text-xs hidden sm:block">|</span>
-          <span className="text-xs text-slate-300">✓ {os.corePromise}</span>
-          <span className="text-slate-600 text-xs hidden sm:block">|</span>
-          <span className="text-xs text-slate-300">✓ No credit card required</span>
-        </div>
-      </div>
-
-      {/* ── Hero ── */}
-      <div
-        className="px-8 py-16 text-center"
-        style={{ background: `linear-gradient(160deg, ${scheme.dark} 0%, ${scheme.mid} 55%, ${scheme.dark} 100%)` }}
-      >
-        <span className="inline-block rounded-full px-4 py-1 text-xs font-semibold mb-5" style={{ border: `1px solid ${scheme.primary}66`, backgroundColor: `${scheme.primary}1a`, color: scheme.primary }}>
-          🔥 {lp.urgencyIdeas[0] ?? "Limited spots — challenge starts soon"}
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-black text-white leading-[1.08] mb-4 max-w-2xl mx-auto">
-          {lp.headlineOptions[0] ?? `Join the Free ${os.challengeConcept}`}
-        </h1>
-        <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto mb-8 leading-relaxed">
-          {lp.subheadline}
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
-          <CtaButton text={lp.ctaText} bg={scheme.primary} size="lg" />
-          <span className="text-xs text-slate-400">No credit card · Takes 60 seconds</span>
-        </div>
-        <div className="max-w-md mx-auto mt-6 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-xs text-slate-300 leading-relaxed">
-          {os.offerPositioning}
-        </div>
-      </div>
-
-      {/* ── Who this is for ── */}
-      <div className="bg-white px-8 py-12">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <Eyebrow text="Is This For You?" color={scheme.primary} />
-            <h2 className="text-2xl font-black text-gray-900 leading-tight">
-              {lp.headlineOptions[1] ?? "Built specifically for coaches like you"}
-            </h2>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="rounded-2xl p-5" style={{ backgroundColor: `${scheme.primary}12`, border: `1px solid ${scheme.primary}30` }}>
-              <p className="text-sm font-bold mb-3" style={{ color: scheme.accent }}>This is for you if you…</p>
-              <div className="space-y-2.5">
-                {os.targetAudienceSummary.split(/[.;]/).filter(s => s.trim().length > 10).slice(0, 4).map((line, i) => (
-                  <CheckItem key={i} text={line.trim()} color={scheme.primary} textColor="#374151" />
-                ))}
-              </div>
-            </div>
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5">
-              <p className="text-sm font-bold text-slate-700 mb-3">What you&apos;ll walk away with</p>
-              <div className="space-y-2.5">
-                {lp.bulletPoints.slice(0, 4).map((point, i) => (
-                  <CheckItem key={i} text={point} color="#22c55e" textColor="#374151" />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── What's included grid ── */}
-      <div className="px-8 py-12" style={{ backgroundColor: "#f8fafc" }}>
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <Eyebrow text="What You'll Get" color={scheme.primary} />
-            <h2 className="text-2xl font-black text-gray-900 leading-tight">
-              {lp.headlineOptions[2] ?? "Everything you need inside the challenge"}
-            </h2>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {lp.bulletPoints.slice(0, 6).map((point, i) => (
-              <div key={i} className="flex items-start gap-3 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-black text-white text-xs mt-0.5" style={{ backgroundColor: scheme.primary }}>
-                  {i + 1}
-                </div>
-                <span className="text-sm text-gray-700 leading-snug">{point}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── How it works (sectionIdeas as steps) ── */}
-      {lp.sectionIdeas.length >= 2 && (
-        <div className="px-8 py-12" style={{ backgroundColor: scheme.dark }}>
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <Eyebrow text="How It Works" color={scheme.primary} />
-              <h2 className="text-2xl font-black text-white leading-tight">Simple. Structured. Effective.</h2>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              {lp.sectionIdeas.slice(0, 3).map((idea, i) => {
-                const short = (idea.split("—")[0] ?? idea).trim().slice(0, 72);
-                return (
-                  <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full text-white font-black text-base mx-auto mb-3" style={{ backgroundColor: scheme.primary }}>
-                      {i + 1}
-                    </div>
-                    <p className="text-sm text-slate-200 leading-snug">{short}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── FAQ ── */}
-      {lp.faqItems.length > 0 && (
-        <div className="bg-white px-8 py-12">
-          <div className="max-w-xl mx-auto">
-            <div className="text-center mb-8">
-              <Eyebrow text="Common Questions" color={scheme.primary} />
-              <h2 className="text-2xl font-black text-gray-900">Frequently asked questions</h2>
-            </div>
-            <div className="space-y-3">
-              {lp.faqItems.slice(0, 4).map((faq, i) => (
-                <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-sm font-bold text-gray-900 mb-1.5">{faq.question}</p>
-                  <p className="text-xs text-gray-600 leading-relaxed">{faq.answer}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Final CTA ── */}
-      <div className="px-8 py-14 text-center" style={{ background: `linear-gradient(135deg, ${scheme.accent} 0%, ${scheme.primary} 50%, ${scheme.primary}cc 100%)` }}>
-        <div className="max-w-lg mx-auto">
-          <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-3">Ready to join?</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 leading-tight">
-            {lp.urgencyIdeas[1] ?? "Claim your free spot before it fills up."}
-          </h2>
-          <p className="text-sm text-white/80 mb-7 leading-relaxed">{os.corePromise}</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <CtaButton text={lp.ctaText} bg="white" fg={scheme.accent} size="lg" />
-            <span className="text-xs text-white/60">Free to join · No commitment required</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  OPT-IN PAGE                                                                */
@@ -630,7 +459,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
   };
 
   const pageContent: Record<PageId, React.ReactNode> = {
-    landing:  <LandingPagePreview  data={data} scheme={scheme} />,
+    landing:  <GhlPagePreview projectId={projectId ?? ""} page="landing" />,
     optin:    <OptInFormPreview    data={data} scheme={scheme} />,
     thankyou: <ThankYouPreview     data={data} scheme={scheme} />,
     booking:  <BookingPagePreview  data={data} scheme={scheme} />,
@@ -713,11 +542,13 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
       <div>
         <h2 className="text-base font-bold text-gray-900">Funnel Page Previews</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          A visual preview of each page using your AI-generated copy. Switch pages to review the full funnel flow.
+          Switch pages to review the full funnel flow. The Landing Page renders the exact GHL element tree that will be injected.
         </p>
-        <p className="text-xs text-gray-400 italic mt-1">
-          Design preview — final GHL styling may vary.
-        </p>
+        {activePage !== "landing" && (
+          <p className="text-xs text-gray-400 italic mt-1">
+            Design preview — final GHL styling may vary.
+          </p>
+        )}
       </div>
 
       {/* Page selector + Clone button */}
