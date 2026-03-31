@@ -1,4 +1,4 @@
-// popup.js v2.53.0 — Challenge Funnel Extension
+// popup.js v2.59.0 — Challenge Funnel Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -248,8 +248,13 @@ async function doPaste() {
         detail += `\n\n— method: ${ir.method ?? "?"} | status: ${ir.status ?? "?"} | meta: ${ir.metaStatus ?? "?"}`;
         if (ir.raw) detail += `\n— GHL raw: ${ir.raw.slice(0, 300)}`;
       }
+      if (ir.diag?.blankPage) {
+        detail = "⚠ Blank page detected — add at least one section in the GHL builder and Save, then try again.\n\n" + detail;
+        res.className = "paste-result warn";
+      } else {
+        res.className = "paste-result err";
+      }
       res.textContent = detail;
-      res.className   = "paste-result err";
     }
   } catch(e) {
     btn.textContent = "Error";
@@ -306,8 +311,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.58.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.58.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.59.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.59.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -345,6 +350,7 @@ async function showInjectDebug() {
     const ts = inject.ts ? new Date(inject.ts).toLocaleTimeString() : "?";
     lines.push(`[${ts}] ok=${inject.ok} | method=${inject.method ?? "?"}`);
     lines.push(`builderId: ${inject.builderId ?? "?"}`);
+    if (inject.diag?.blankPage) lines.push("⚠ blankPage=true — add one section in GHL builder and Save before injecting");
     if (inject.savedVia) lines.push(`savedVia: ${inject.savedVia}`);
     if (inject.error)   lines.push(`error: ${inject.error.slice(0, 300)}`);
     if (inject.diag) {
@@ -418,12 +424,17 @@ async function showInjectDebug() {
           if (a2b.path !== undefined)           lines.push(`A2b path: ${a2b.path}`);
           /* v2.33.0 empty dicts diagnostic for 2B */
           if (a2b.writeEmptyDicts !== undefined) lines.push(`A2b writeEmptyDicts: ${a2b.writeEmptyDicts} writeFormat: ${a2b.writeFormat ?? "?"}`);
+          if (a2b.tokenSource !== undefined)    lines.push(`A2b tokenSource: ${a2b.tokenSource}`);
           if (a2b.newDownloadUrl !== undefined) lines.push(`A2b newDownloadUrl: ${a2b.newDownloadUrl}`);
           if (a2b.metaPatch !== undefined)      lines.push(`A2b metaPatch: ${a2b.metaPatch}`);
+          if (a2b.patchAttempts !== undefined)  lines.push(`A2b patchAttempts: ${JSON.stringify(a2b.patchAttempts).slice(0, 200)}`);
           if (a2b.metadataKeys !== undefined)   lines.push(`A2b metadataKeys: ${JSON.stringify(a2b.metadataKeys)}`);
         }
+        if (d.blankPage) lines.push("blankPage: true ← blank GHL page, no Firebase file exists yet");
         if (d.approach3) {
           lines.push(`A3 iframeFrameId: ${d.approach3.iframeFrameId ?? "?"} piniaSource: ${d.approach3.piniaSource ?? "?"}`);
+          lines.push(`A3 frameFound: ${d.approach3.frameFound ?? "?"} piniaFound: ${d.approach3.piniaFound ?? "?"}`);
+          if (d.approach3.status !== undefined) lines.push(`A3 status: ${d.approach3.status}`);
           lines.push(`A3 stores found: ${JSON.stringify(d.approach3.candidates ?? []).slice(0, 200)}`);
           lines.push(`A3 allStoreIds: ${JSON.stringify(d.approach3.allStoreIds ?? []).slice(0, 200)}`);
           if (d.approach3.candidateDiag) {

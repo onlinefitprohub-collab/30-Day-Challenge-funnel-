@@ -556,6 +556,8 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
     var downloadUrl = metadata?.pageDataDownloadUrl ?? null;
     var uploadUrl   = metadata?.pageDataUploadUrl   ?? null;
     diag.metaOk = !!metadata;
+    /* Blank page: metadata exists but GHL never created a Firebase file for this page */
+    if (!downloadUrl && !uploadUrl && metadata) diag.blankPage = true;
 
     /* ════════════════════════════════════════════════════════════════════════
        APPROACH 1: GHL-signed upload URL
@@ -1245,9 +1247,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             a2b.httpStatus = res2B.status;
             if (res2B.ok) {
               a2b.result = "success";
-              /* ── Extract download token + patch GHL metadata ──────── */
+              /* ── Extract download token from POST response (fresh, no old-token PATCH needed) */
               var fbData2B = await res2B.json().catch(() => ({}));
               var newTok2B = fbData2B.downloadTokens ?? "";
+              a2b.tokenSource = "fresh-post-response";
               var encPath2B = encodeURIComponent(constructedPath);
               var newUrl2B  =
                 `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucketFinal)}` +
@@ -1277,7 +1280,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 outer2B: for (var mu of metaUrls2B) {
                   for (var verb of ["patch", "put"]) {
                     try {
-                      await revex[verb](mu, { ...metadata, pageDataDownloadUrl: newUrl2B });
+                      await revex[verb](mu, { pageDataDownloadUrl: newUrl2B });
                       patchAttempts2B.push({ url: mu.slice(50), verb, status: 200, ok: true });
                       patchOk2B = true;
                       a2b.metaPatch = `ok-verb:${verb} url:${mu.slice(50, 90)}`;
@@ -1300,6 +1303,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                  in GHL metadata the builder cannot load the injected content.    */
               if (patchOk2B) {
                 diag.approach2b_ok = true;
+                setTimeout(function() { window.location.reload(); }, 400);
               } else {
                 a2b.result = `firebase-write-ok-but-meta-patch-${a2b.metaPatch ?? "failed"}`;
               }
@@ -1335,21 +1339,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
       return JSON.stringify({ ok: true, method, diag });
     }
 
-    /* All direct approaches failed — but Approach 0 (clipboard) may still work.
-       Tell the user to try Ctrl+V in the builder — if GHL reads from any of the
-       localStorage clipboard keys we wrote, the content will paste natively. */
-    var a1  = JSON.stringify(diag.approach1).slice(0, 80);
-    var a2  = JSON.stringify(diag.approach2?.result ?? diag.approach2).slice(0, 80);
-    var a2b = diag.approach2b ? `A2b=${diag.approach2b.result ?? "?"} http=${diag.approach2b.httpStatus ?? "?"}` : "A2b=skipped";
-    var a3  = "frame-targeted-pending";
-    return JSON.stringify({
-      ok:      false,
-      method:  "clipboard-ready",
-      _a3pending: true,
-      warning: true,
-      error:   `Approaches 0/1/2/2B incomplete; Approach 3 (Pinia) running in builder frame. Diag: A1=${a1} | A2=${a2} | ${a2b} | A3=${a3}.`,
-      diag,
-    });
+    /* All direct approaches failed — A3 (Pinia) will be attempted frame-targeted
+       from the service worker. Return all-failed; SW will elevate to ok if A3 wins. */
+    return JSON.stringify({ ok: false, method: "all-failed", diag });
   } catch (e) {
     return JSON.stringify({
       ok:    false,
@@ -1562,6 +1554,8 @@ function _cf_approach5PiniaWithStoredSections(sectionsJsonArg) {
 async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
   var diag3 = {
     piniaSource:    "frame-targeted",
+    frameFound:     false,
+    piniaFound:     false,
     storeCount:     0,
     storeIds:       [],
     candidates:     [],
@@ -1572,7 +1566,12 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
     var pinia = null;
     try {
       var wp = window._pinia || window.pinia || window.__pinia || null;
-      if (wp && wp._s instanceof Map) { pinia = wp; diag3.piniaSource = "window-global"; }
+      if (wp && wp._s instanceof Map) {
+        pinia = wp;
+        diag3.frameFound  = true;
+        diag3.piniaFound  = true;
+        diag3.piniaSource = "window-global";
+      }
     } catch (_wp) {}
 
     if (!pinia) {
@@ -1584,11 +1583,12 @@ async function _cf_approach3PiniaInFrame(builderId, locationId, pageData) {
         var el = tryEls[_ti];
         var va = el.__vue_app__;
         if (!va) continue;
+        diag3.frameFound = true;
         var provides = (va._context && va._context.provides) ? va._context.provides : {};
         var p = provides[Symbol.for("pinia")]
           || (Object.values(provides).find(function(v) { return v && v._s instanceof Map; }))
           || null;
-        if (p && p._s instanceof Map) { pinia = p; break; }
+        if (p && p._s instanceof Map) { pinia = p; diag3.piniaFound = true; break; }
       }
     }
 
@@ -2570,25 +2570,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
           /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ─ */
           try {
-            var a3Res2 = await chrome.scripting.executeScript({
+            var a3Script2Promise = chrome.scripting.executeScript({
               target: { tabId: tabId2, frameIds: [iframeFrameId2] },
               world:  "MAIN",
               func:   _cf_approach3PiniaInFrame,
               args:   [builderId2, locId2, pageData],
             });
-            var a3b = JSON.parse(a3Res2?.[0]?.result ?? "{}");
+            var a3Timeout2Promise = new Promise(function(resolve) {
+              setTimeout(function() { resolve(null); }, 3000);
+            });
+            var a3Race2Result = await Promise.race([a3Script2Promise, a3Timeout2Promise]);
             if (!r.diag) r.diag = {};
-            r.diag.approach3 = { ...(a3b.diag?.approach3 ?? {}), iframeFrameId: iframeFrameId2 };
-            var a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
-            if (a3b.ok) {
-              var a3Base2 = a3b.method ?? "pinia";
-              if (a2Wrote2) {
-                r.method = a3Base2 === "pinia-patched" ? "firebase+pinia-patched" : "firebase+pinia";
-              } else if (!r.ok) {
-                r.ok = true; r.method = a3Base2;
-                r.storeId = a3b.storeId; r.savedVia = a3b.savedVia; r.warning = a3b.warning;
+            if (a3Race2Result === null) {
+              r.diag.approach3 = { ...(r.diag.approach3 ?? {}), iframeFrameId: iframeFrameId2, status: "timeout" };
+            } else {
+              var a3b = JSON.parse(a3Race2Result?.[0]?.result ?? "{}");
+              r.diag.approach3 = { ...(a3b.diag?.approach3 ?? {}), iframeFrameId: iframeFrameId2 };
+              var a2Wrote2 = r.ok && (r.method ?? "").includes("firebase");
+              if (a3b.ok) {
+                var a3Base2 = a3b.method ?? "pinia";
+                if (a2Wrote2) {
+                  r.method = a3Base2 === "pinia-patched" ? "firebase+pinia-patched" : "firebase+pinia";
+                } else if (!r.ok) {
+                  r.ok = true; r.method = a3Base2;
+                  r.storeId = a3b.storeId; r.savedVia = a3b.savedVia; r.warning = a3b.warning;
+                }
+                delete r._a3pending;
               }
-              delete r._a3pending;
             }
           } catch (a3Err2) {
             if (!r.diag) r.diag = {};
@@ -3087,36 +3095,50 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         /* ── Step C: Run Approach 3 (Pinia patch) in detected frame — ALWAYS ── *
-         * Must run even when A2 succeeded so method can become firebase+pinia.  */
+         * Must run even when A2 succeeded so method can become firebase+pinia.  *
+         * 3-second timeout prevents hanging when the builder frame is slow.     */
         try {
-          var a3Res = await chrome.scripting.executeScript({
+          var a3ScriptPromise = chrome.scripting.executeScript({
             target: { tabId, frameIds: [iframeFrameId] },
             world:  "MAIN",
             func:   _cf_approach3PiniaInFrame,
             args:   [builderId, locationId, ready.pageData],
           });
-          var a3 = JSON.parse(a3Res?.[0]?.result ?? "{}");
-          /* Merge A3 diag (with iframeFrameId) */
+          var a3TimeoutPromise = new Promise(function(resolve) {
+            setTimeout(function() { resolve(null); }, 3000);
+          });
+          var a3RaceResult = await Promise.race([a3ScriptPromise, a3TimeoutPromise]);
           if (!injectResult.diag) injectResult.diag = {};
-          injectResult.diag.approach3 = { ...(a3.diag?.approach3 ?? {}), iframeFrameId };
-          /* Compose combined method from A2 + A3 outcomes */
-          var a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
-          if (a3.ok) {
-            var a3Base = a3.method ?? "pinia"; /* "pinia" or "pinia-patched" */
-            if (a2Wrote) {
-              /* Both Firebase write AND Pinia patch succeeded */
-              injectResult.method = a3Base === "pinia-patched"
-                ? "firebase+pinia-patched"
-                : "firebase+pinia";
-            } else if (!injectResult.ok) {
-              /* Only Pinia succeeded — elevate result */
-              injectResult.ok      = true;
-              injectResult.method  = a3Base;
-              injectResult.storeId = a3.storeId;
-              injectResult.savedVia = a3.savedVia;
-              injectResult.warning  = a3.warning;
+          if (a3RaceResult === null) {
+            /* Timeout — A3 did not respond within 3 s */
+            injectResult.diag.approach3 = {
+              ...(injectResult.diag.approach3 ?? {}),
+              iframeFrameId,
+              status: "timeout",
+            };
+          } else {
+            var a3 = JSON.parse(a3RaceResult?.[0]?.result ?? "{}");
+            /* Merge A3 diag (with iframeFrameId) */
+            injectResult.diag.approach3 = { ...(a3.diag?.approach3 ?? {}), iframeFrameId };
+            /* Compose combined method from A2 + A3 outcomes */
+            var a2Wrote = injectResult.ok && (injectResult.method ?? "").includes("firebase");
+            if (a3.ok) {
+              var a3Base = a3.method ?? "pinia"; /* "pinia" or "pinia-patched" */
+              if (a2Wrote) {
+                /* Both Firebase write AND Pinia patch succeeded */
+                injectResult.method = a3Base === "pinia-patched"
+                  ? "firebase+pinia-patched"
+                  : "firebase+pinia";
+              } else if (!injectResult.ok) {
+                /* Only Pinia succeeded — elevate result */
+                injectResult.ok      = true;
+                injectResult.method  = a3Base;
+                injectResult.storeId = a3.storeId;
+                injectResult.savedVia = a3.savedVia;
+                injectResult.warning  = a3.warning;
+              }
+              delete injectResult._a3pending;
             }
-            delete injectResult._a3pending;
           }
         } catch (a3Err) {
           if (!injectResult.diag) injectResult.diag = {};
