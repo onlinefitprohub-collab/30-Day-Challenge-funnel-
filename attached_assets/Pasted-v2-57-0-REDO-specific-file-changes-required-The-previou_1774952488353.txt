@@ -1,0 +1,47 @@
+v2.57.0: REDO — specific file changes required
+
+The previous build was wrong. It added a clipboard approach with a Ctrl+V prompt. That must be completely removed and replaced with the Firebase write-in-place approach that was working in v2.56.0.
+
+Step 1 — Read these files before making any changes:
+
+chrome-extension/background.js lines 940–980 (the write-in-place block)
+chrome-extension/popup.js lines 1–50 and 400–440 (button handler and diag display)
+Step 2 — In background.js, confirm the write-in-place block at lines ~940–980 still contains:
+
+diag.approach2.writeInPlace = true
+var clonedSections = JSON.parse(JSON.stringify(wipPayload.sections))
+A loop replacing extra.text.value
+A Firebase POST (npUploadEp)
+A token PATCH
+setTimeout(function() { window.location.reload(); }, 400)
+If any of these are missing or were replaced with clipboard code, restore them from the v2.56.0 logic.
+
+Step 3 — Immediately after var clonedSections = JSON.parse(JSON.stringify(wipPayload.sections));, insert exactly this (if not already present):
+
+function stripElementFields(obj) {
+  if (Array.isArray(obj)) {
+    for (var i = 0; i < obj.length; i++) stripElementFields(obj[i]);
+  } else if (obj !== null && typeof obj === 'object') {
+    delete obj.element;
+    var keys = Object.keys(obj);
+    for (var k = 0; k < keys.length; k++) {
+      if (keys[k] !== 'element') stripElementFields(obj[keys[k]]);
+    }
+  }
+}
+stripElementFields(clonedSections);
+diag.approach2.strippedElementFields = true;
+
+Step 4 — In popup.js, search for any text containing "Ctrl+V", "clipboard", or "GHL's own paste handler". Delete every line containing any of those strings. The button click handler for "Paste into GHL Builder" must send a CF_PASTE_PAGE message to the background service worker — it must NOT write to the clipboard.
+
+Step 5 — Version bump to 2.57.0 in manifest.json, background.js, popup.js, ghl-inspector.tsx.
+
+Verification before finishing: Search popup.js for the word "clipboard". Expected result: zero matches. If any match is found, delete that line.
+
+The inject must work like this — no exceptions:
+
+User clicks "Paste into GHL Builder"
+Firebase write happens silently in the background
+GHL builder tab reloads automatically
+AI copy appears in the page
+No prompt, no message asking the user to press anything, no clipboard interaction of any kind
