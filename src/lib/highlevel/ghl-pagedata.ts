@@ -1107,7 +1107,7 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
   ]);
   const c = makeCol(b, [heading, ...faqEls], 100, { padH: 0 });
   const r = makeRow(b, [c], 680, 24);
-  makeSection(b, [r], { bgColor: "#f8fafc", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
@@ -1129,7 +1129,7 @@ function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void
   const leftCol  = makeQaCol(items.slice(0, half));
   const rightCol = makeQaCol(items.slice(half));
   const qaRow = makeRow(b, [leftCol, rightCol], 1100, 0);
-  makeSection(b, [headingRow, qaRow], { bgColor: "#f8fafc", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [headingRow, qaRow], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
@@ -1147,7 +1147,7 @@ function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): v
   ]);
   const textCol = makeCol(b, [heading, ...faqEls], 65, { padH: 24, valign: "top" });
   const r = makeRow(b, [imgCol, textCol], 1100, 0);
-  makeSection(b, [r], { bgColor: "#f8fafc", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
@@ -1162,7 +1162,7 @@ function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): vo
   ]);
   const c = makeCol(b, [heading, ...faqEls], 100, { padH: 0 });
   const r = makeRow(b, [c], 700, 24);
-  makeSection(b, [r], { bgColor: "#f8fafc", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1180,7 +1180,7 @@ function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy)
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 8px 24px ${s.primary}44`) });
   const c = makeCol(b, [heading, ...faqEls, urgency, cta], 100, { padH: 0, align: "center" });
   const r = makeRow(b, [c], 680, 24);
-  makeSection(b, [r], { bgColor: "#f8fafc", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 // ── Final CTA layout variants ──────────────────────────────────────────────
