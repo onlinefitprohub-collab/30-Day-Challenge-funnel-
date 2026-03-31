@@ -237,12 +237,6 @@ async function doPaste() {
       if (ir.raw || ir.status) {
         res.textContent += `\n\nStatus: ${ir.status ?? "ok"} | Meta: ${ir.metaStatus ?? "-"}\n${(ir.raw ?? "").slice(0, 200)}`;
       }
-    } else if ((result?.injectResult?.method ?? result?.method) === "clipboard-ready") {
-      // Clipboard keys written — direct injection didn't land but GHL's Ctrl+V may work
-      btn.textContent = "Ready — Ctrl+V";
-      btn.className   = "btn btn-paste";
-      res.textContent = "Content written to GHL's clipboard storage!\n\nSwitch to your GHL builder tab and press Ctrl+V. GHL's own paste handler should load your content.";
-      res.className   = "paste-result ok";
     } else {
       const err = result?.error ?? "Unknown error";
       const ir  = result?.injectResult ?? {};
