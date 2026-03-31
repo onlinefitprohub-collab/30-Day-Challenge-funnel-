@@ -1,13 +1,17 @@
 /**
  * Group 1: Strategy & Pages
- * Generates: offerSummary, landingPage, optInForm, thankYouPage, bookingPage
+ * Generates: offerSummary, landingPage, optInForm, thankYouPage, bookingPage, design
  *
  * The conversion assets — what the prospect sees before and just after opting in.
  * Every word here either earns trust or loses it. No filler.
  */
 
 export function buildOfferPagesPrompt(context: string, style: string): string {
-  return `${context}
+  return `You are a funnel designer and world-class direct response copywriter specialising in fitness coaching businesses.
+
+As a funnel designer: based on the coach's brand tone and target audience below, choose a compelling colour scheme and typography scale. Pick colours that feel premium and on-brand — not generic. Use dark hero backgrounds with a strong vivid accent colour for fitness, sports, weight loss, and high-energy brands. Use lighter neutral tones with a softer accent for wellness, mindset, nutrition, and lifestyle brands. Your colour choices will be applied directly to the page — make them feel like a real designer chose them for this specific coach.
+
+${context}
 
 === COPYWRITING STYLE ===
 
@@ -80,6 +84,14 @@ BOOKING PAGE
 - whyBook: 3 specific reasons to book. Each should be concrete — what they'll walk away with, not just "get expert advice".
 - expectationSetting: What happens on the call. Duration, format (Zoom/phone), rough agenda, what they don't need to prepare. Should make the call feel low-effort and high-value.
 
+DESIGN SPEC
+- heroGradient: A CSS gradient string for the hero section background. Examples: "linear-gradient(135deg, #0d1f2d 0%, #1a3a4a 100%)" for dark fitness, "linear-gradient(135deg, #fdfaf6 0%, #f0ede8 100%)" for light wellness. Make it feel premium, not generic.
+- primaryColor: The main brand colour used for buttons, accents, and highlights. A bold, vivid hex that works on both dark and light backgrounds.
+- accentColor: A slightly deeper or shifted shade of primaryColor for gradients and hover states.
+- darkBackground: The deep background colour for the hero and dark sections (e.g. "#0d1117" for near-black, "#1a0a2e" for deep purple).
+- midBackground: A step lighter than darkBackground — used for social proof bars and mid-page dark sections (e.g. "#1e2d40", "#2d1069").
+- alternateSectionBackground: A soft, light neutral for the "what's included" and FAQ sections. Should contrast cleanly with dark sections without feeling cold (e.g. "#f7f4f1" for warm cream, "#f0f6ff" for cool off-white, "#f5faf7" for soft sage).
+
 ─── OUTPUT FORMAT ───
 
 Return ONLY this JSON structure. Every string field must contain actual copy, not a description of what to write:
@@ -126,6 +138,14 @@ Return ONLY this JSON structure. Every string field must contain actual copy, no
     "shortIntro": "...",
     "whyBook": ["...", "...", "..."],
     "expectationSetting": "..."
+  },
+  "design": {
+    "heroGradient": "linear-gradient(135deg, #0d1f2d 0%, #1a3a4a 100%)",
+    "primaryColor": "#f97316",
+    "accentColor": "#ea580c",
+    "darkBackground": "#0d1117",
+    "midBackground": "#1e293b",
+    "alternateSectionBackground": "#f7f4f1"
   }
 }`;
 }

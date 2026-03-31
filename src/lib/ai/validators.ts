@@ -80,6 +80,15 @@ export const campaignNamingSchema = z.object({
   utmContent:             z.string().min(1),
 });
 
+export const designSchema = z.object({
+  heroGradient:               z.string().optional(),
+  primaryColor:               z.string().optional(),
+  accentColor:                z.string().optional(),
+  darkBackground:             z.string().optional(),
+  midBackground:              z.string().optional(),
+  alternateSectionBackground: z.string().optional(),
+});
+
 // ─── Group response schemas ──────────────────────────────────────────────────
 
 export const offerPagesResponseSchema = z.object({
@@ -88,6 +97,7 @@ export const offerPagesResponseSchema = z.object({
   optInForm:    optInFormSchema,
   thankYouPage: thankYouPageSchema,
   bookingPage:  bookingPageSchema,
+  design:       designSchema.optional(),
 });
 
 export const sequencesResponseSchema = z.object({

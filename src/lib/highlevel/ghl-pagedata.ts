@@ -2,14 +2,21 @@ import type { GeneratedFunnelAssets, LandingPageCopy } from "@/types/generation"
 
 // ── Colour Scheme ─────────────────────────────────────────────────────────────
 
-interface SchemeColors { primary: string; dark: string; mid: string; accent: string; }
+interface SchemeColors {
+  primary: string;
+  dark: string;
+  mid: string;
+  accent: string;
+  alt: string;
+  heroGradient: string;
+}
 
 const COLOUR_SCHEMES: Record<string, SchemeColors> = {
-  "navy-orange":  { primary: "#f97316", dark: "#0f172a", mid: "#1e293b", accent: "#ea580c" },
-  "rose-pink":    { primary: "#ec4899", dark: "#1a0010", mid: "#2d0420", accent: "#be185d" },
-  "teal-forest":  { primary: "#14b8a6", dark: "#0a1f1e", mid: "#0f2f2e", accent: "#0d9488" },
-  "purple-lilac": { primary: "#a855f7", dark: "#1a0a2e", mid: "#2d1069", accent: "#9333ea" },
-  "sky-blue":     { primary: "#38bdf8", dark: "#0f1b2d", mid: "#1e3a5f", accent: "#0ea5e9" },
+  "navy-orange":  { primary: "#f97316", dark: "#0f172a", mid: "#1e293b", accent: "#ea580c", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%)" },
+  "rose-pink":    { primary: "#ec4899", dark: "#1a0010", mid: "#2d0420", accent: "#be185d", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #1a0010 0%, #2d0420 55%, #1a0010 100%)" },
+  "teal-forest":  { primary: "#14b8a6", dark: "#0a1f1e", mid: "#0f2f2e", accent: "#0d9488", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0a1f1e 0%, #0f2f2e 55%, #0a1f1e 100%)" },
+  "purple-lilac": { primary: "#a855f7", dark: "#1a0a2e", mid: "#2d1069", accent: "#9333ea", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #1a0a2e 0%, #2d1069 55%, #1a0a2e 100%)" },
+  "sky-blue":     { primary: "#38bdf8", dark: "#0f1b2d", mid: "#1e3a5f", accent: "#0ea5e9", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0f1b2d 0%, #1e3a5f 55%, #0f1b2d 100%)" },
 };
 
 function getScheme(key?: string): SchemeColors {
@@ -115,8 +122,7 @@ function ss(s: string): SV { return { value: s }; }
 const STANDARD_FONTS = ["Arial","Lato","Roboto","Open Sans","Oxygen","Oswald","Montserrat","Manrope","Poppins","Bebas Neue"];
 const PREVIEW_FONTS  = ["Roboto","Montserrat","Bebas Neue","Poppins"];
 
-function buildEnvelope(schemeKey?: string): Omit<GhlPageData, "sections"> {
-  const s = getScheme(schemeKey);
+function buildEnvelope(s: SchemeColors): Omit<GhlPageData, "sections"> {
   const pageStyles = [
     `:root{`,
     ` --primary:${s.primary};`,
@@ -166,7 +172,8 @@ function buildEnvelope(schemeKey?: string): Omit<GhlPageData, "sections"> {
 
 // ── Finalize ──────────────────────────────────────────────────────────────────
 
-function finalize(b: Builder, schemeKey?: string): GhlPageData {
+function finalize(b: Builder, scheme?: SchemeColors | string): GhlPageData {
+  const s = (typeof scheme === "object" && scheme !== null) ? scheme : getScheme(scheme as string | undefined);
   for (const sec of b.sections) {
     const flat: GhlElem[] = [];
     const rootIds = (sec.metaData.child as string[]) ?? [];
@@ -181,7 +188,7 @@ function finalize(b: Builder, schemeKey?: string): GhlPageData {
     dfs(rootIds);
     sec.elements = flat;
   }
-  return { ...buildEnvelope(schemeKey), sections: b.sections };
+  return { ...buildEnvelope(s), sections: b.sections };
 }
 
 // ── Section ───────────────────────────────────────────────────────────────────
@@ -820,7 +827,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const rightCol = makeCol(b, [countdownLabel, countdown, videoEl, videoNote], 45, { padH: 24, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
@@ -843,7 +850,7 @@ function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, con
   }
   const col = makeCol(b, elIds, 100, { align: "center", padH: 32 });
   const r = makeRow(b, [col], 720);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
+  makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
 }
 
 function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
@@ -870,7 +877,7 @@ function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const rightCol = makeCol(b, [img, imgNote], 45, { padH: 24, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
@@ -898,7 +905,7 @@ function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCo
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(13), textAlign: ss("center"), paddingTop: sv(4) });
   const rightCol = makeCol(b, [urgencyLabel, countdown, spotsNote], 45, { padH: 32, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
@@ -916,7 +923,7 @@ function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, co
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 16px 40px ${s.primary}66`) });
   const col = makeCol(b, [urgencyBadge, h1, sub, bullets, cta], 100, { align: "center", padH: 40 });
   const r = makeRow(b, [col], 800);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 104, pbD: 104, ptM: 64, pbM: 64 });
+  makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 104, pbD: 104, ptM: 64, pbM: 64 });
 }
 
 // ── Social proof bar layout variants ──────────────────────────────────────
@@ -1009,7 +1016,7 @@ function buildIncludedThreeColChecks(b: Builder, s: SchemeColors, lp: LandingPag
     });
     bulletRows.push(makeRow(b, colIds, 1200, 0));
   }
-  makeSection(b, [headerRow, ...bulletRows], { bgColor: "#ffffff", ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [headerRow, ...bulletRows], { bgColor: s.alt, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1032,7 +1039,7 @@ function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPage
   const leftCol  = makeListCol(allBullets.slice(0, half));
   const rightCol = makeListCol(allBullets.slice(half));
   const bulletsRow = makeRow(b, [leftCol, rightCol], 1100, 0);
-  makeSection(b, [headingRow, bulletsRow], { bgColor: "#ffffff", ptD: 88, pbD: 72, ptM: 56, pbM: 48 });
+  makeSection(b, [headingRow, bulletsRow], { bgColor: s.alt, ptD: 88, pbD: 72, ptM: 56, pbM: 48 });
 }
 
 function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1051,7 +1058,7 @@ function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPage
   ]);
   const textCol = makeCol(b, [eyebrow, h2, ...listItems], 55, { padH: 32, valign: "middle" });
   const r = makeRow(b, [imgCol, textCol], 1100, 0);
-  makeSection(b, [r], { bgColor: "#ffffff", ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bgColor: s.alt, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildIncludedSingleColNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1070,7 +1077,7 @@ function buildIncludedSingleColNumbered(b: Builder, s: SchemeColors, lp: Landing
   });
   const col = makeCol(b, [eyebrow, h2, ...itemEls], 100, { padH: 0 });
   const r = makeRow(b, [col], 640, 24);
-  makeSection(b, [r], { bgColor: "#ffffff", ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bgColor: s.alt, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1096,7 +1103,7 @@ function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPa
       ? makeRow(b, [imgCol, textCol], 1100, 0)
       : makeRow(b, [textCol, imgCol], 1100, 0);
   });
-  makeSection(b, [headingRow, ...altRows], { bgColor: "#ffffff", ptD: 80, pbD: 88, ptM: 48, pbM: 56 });
+  makeSection(b, [headingRow, ...altRows], { bgColor: s.alt, ptD: 80, pbD: 88, ptM: 48, pbM: 56 });
 }
 
 // ── FAQ layout variants ────────────────────────────────────────────────────
@@ -1112,7 +1119,7 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
   ]);
   const c = makeCol(b, [heading, ...faqEls], 100, { padH: 0 });
   const r = makeRow(b, [c], 680, 24);
-  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
@@ -1134,7 +1141,7 @@ function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void
   const leftCol  = makeQaCol(items.slice(0, half));
   const rightCol = makeQaCol(items.slice(half));
   const qaRow = makeRow(b, [leftCol, rightCol], 1100, 0);
-  makeSection(b, [headingRow, qaRow], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [headingRow, qaRow], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
@@ -1152,7 +1159,7 @@ function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): v
   ]);
   const textCol = makeCol(b, [heading, ...faqEls], 65, { padH: 24, valign: "top" });
   const r = makeRow(b, [imgCol, textCol], 1100, 0);
-  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
@@ -1167,7 +1174,7 @@ function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): vo
   ]);
   const c = makeCol(b, [heading, ...faqEls], 100, { padH: 0 });
   const r = makeRow(b, [c], 700, 24);
-  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1185,7 +1192,7 @@ function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy)
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 8px 24px ${s.primary}44`) });
   const c = makeCol(b, [heading, ...faqEls, urgency, cta], 100, { padH: 0, align: "center" });
   const r = makeRow(b, [c], 680, 24);
-  makeSection(b, [r], { bgColor: "#ffffff", ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
+  makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
 // ── Final CTA layout variants ──────────────────────────────────────────────
@@ -1243,7 +1250,7 @@ function buildCtaDarkMinimal(b: Builder, s: SchemeColors, lp: LandingPageCopy): 
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}44`) });
   const c = makeCol(b, [eyebrow, h2, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 600);
-  makeSection(b, [r], { bgColor: "#0f172a", ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
+  makeSection(b, [r], { bgColor: s.dark, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
 }
 
 function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1335,7 +1342,19 @@ function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, vari
 
 export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b       = createBuilder();
-  const s       = getScheme(data.colourScheme);
+  const s       = (() => {
+    const base = getScheme(data.colourScheme);
+    const d    = data.design;
+    if (!d) return base;
+    return {
+      primary:      d.primaryColor               || base.primary,
+      dark:         d.darkBackground             || base.dark,
+      mid:          d.midBackground              || base.mid,
+      accent:       d.accentColor                || base.accent,
+      alt:          d.alternateSectionBackground || base.alt,
+      heroGradient: d.heroGradient               || base.heroGradient,
+    };
+  })();
   const lp      = data.landingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
   const slv     = lp.sectionLayoutVariants ?? {};
@@ -1376,7 +1395,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   dispatchFinalCta(b, s, lp, slv["final-cta"] ?? "");
   countAfter(snap, slv["final-cta"] ?? "(none)");
 
-  const result = finalize(b, data.colourScheme);
+  const result = finalize(b, s);
   console.log("[diag] FINAL sections array (" + result.sections.length + " total):");
   result.sections.forEach((sec, i) => {
     const elemCount = sec.elements?.length ?? 0;
@@ -1477,7 +1496,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     ]);
     const c = makeCol(b, [eyebrow, h2, ...stepEls], 100, { padH: 0 });
     const r = makeRow(b, [c], 620, 24);
-    makeSection(b, [r], { bgColor: "#ffffff", ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
+    makeSection(b, [r], { bgColor: s.alt, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
   }
 
   // ── 3. BOOKING CTA ────────────────────────────────────────────────────────

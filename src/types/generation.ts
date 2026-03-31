@@ -80,6 +80,15 @@ export interface GeneratedAdImage {
   index: number;
 }
 
+export interface FunnelDesign {
+  heroGradient: string;
+  primaryColor: string;
+  accentColor: string;
+  darkBackground: string;
+  midBackground: string;
+  alternateSectionBackground: string;
+}
+
 export interface GeneratedFunnelAssets {
   offerSummary: OfferSummary;
   landingPage: LandingPageCopy;
@@ -94,6 +103,7 @@ export interface GeneratedFunnelAssets {
   generatedAdImages?: GeneratedAdImage[];
   colourScheme?: string;
   copywriterStyle?: string;
+  design?: FunnelDesign;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

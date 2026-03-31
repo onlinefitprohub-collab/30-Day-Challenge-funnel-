@@ -5,7 +5,7 @@
  * Each call has its own token budget and is validated independently.
  * If a group fails validation, its sections fall back to personalised mock data.
  *
- * Group 1 — Strategy & Pages: offerSummary, landingPage, optInForm, thankYouPage, bookingPage
+ * Group 1 — Strategy & Pages: offerSummary, landingPage, optInForm, thankYouPage, bookingPage, design
  * Group 2 — Follow-up Sequences: smsSequence, emailSequence
  * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
  *
@@ -37,7 +37,7 @@ const TEMPERATURE = 0.72;
 
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
-  offerPages:  3200,  // 5 sections, most complex
+  offerPages:  4000,  // 5 sections + design spec
   sequences:   2800,  // 5 SMS + 5 emails with subject + body
   adsCampaign: 2400,  // ad copy, creative prompts, campaign naming
 } as const;
@@ -175,5 +175,6 @@ export async function generateFunnelAssets(
     creativePrompts: adsCampaign.creativePrompts,
     campaignNaming:  adsCampaign.campaignNaming,
     copywriterStyle: `${style.name} — ${style.tagline}`,
+    design:          offerPages.design,
   };
 }
