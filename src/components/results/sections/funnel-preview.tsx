@@ -715,6 +715,9 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         <p className="text-sm text-gray-500 mt-0.5">
           A visual preview of each page using your AI-generated copy. Switch pages to review the full funnel flow.
         </p>
+        <p className="text-xs text-gray-400 italic mt-1">
+          Note: colours, fonts, and spacing may appear slightly different once injected into GHL.
+        </p>
       </div>
 
       {/* Page selector + Clone button */}

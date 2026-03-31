@@ -132,6 +132,7 @@ function buildEnvelope(schemeKey?: string): Omit<GhlPageData, "sections"> {
     ` --headlinefont:'Bebas Neue',sans-serif;`,
     ` --contentfont:'Poppins',sans-serif;`,
     `}`,
+    `body{background-color:${s.dark};color:#ffffff;}`,
   ].join("\n");
   const colors = [
     { label: "Primary",     value: s.primary },
@@ -151,7 +152,7 @@ function buildEnvelope(schemeKey?: string): Omit<GhlPageData, "sections"> {
         customFonts: [],
         fontsToLoad: STANDARD_FONTS,
         fontsToLoadForPreview: PREVIEW_FONTS,
-        pageStyles: `body { font-family: var(--contentfont, 'Poppins', sans-serif); }`,
+        pageStyles: `body { font-family: var(--contentfont, 'Poppins', sans-serif); background-color: var(--dark, #0f172a); color: #ffffff; }`,
       },
     },
     id: Math.random().toString(36).slice(2, 14),
@@ -795,7 +796,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
     { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(46), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(17), lineHeight: ss("1.7"), paddingBottom: sv(24) },
@@ -818,7 +819,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const rightCol = makeCol(b, [countdownLabel, countdown, videoEl, videoNote], 55, { padH: 24, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
@@ -840,14 +841,14 @@ function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, con
   }
   const col = makeCol(b, elIds, 100, { align: "center", padH: 32 });
   const r = makeRow(b, [col], 720);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
+  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
 }
 
 function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
     { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(44), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(16), lineHeight: ss("1.7"), paddingBottom: sv(24) },
@@ -866,14 +867,14 @@ function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const rightCol = makeCol(b, [img, imgNote], 50, { padH: 24, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
     { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(44), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(16), lineHeight: ss("1.7"), paddingBottom: sv(28) },
@@ -893,7 +894,7 @@ function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCo
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(13), textAlign: ss("center"), paddingTop: sv(4) });
   const rightCol = makeCol(b, [urgencyLabel, countdown, spotsNote], 50, { padH: 32, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
+  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
@@ -910,7 +911,7 @@ function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, co
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 16px 40px ${s.primary}66`) });
   const col = makeCol(b, [urgencyBadge, h1, sub, bullets, cta], 100, { align: "center", padH: 40 });
   const r = makeRow(b, [col], 800);
-  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, ptD: 104, pbD: 104, ptM: 64, pbM: 64 });
+  makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 104, pbD: 104, ptM: 64, pbM: 64 });
 }
 
 // ── Social proof bar layout variants ──────────────────────────────────────
@@ -1037,7 +1038,7 @@ function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPage
   const eyebrow = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) });
   const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
-    { color: ss("#111827"), fontSize: sv(32), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(16) },
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(16) },
     { fontSize: sv(22) });
   const listItems = lp.bulletPoints.slice(0, 6).flatMap((txt) => [
     makeParagraph(b, "✓", { color: ss(s.primary), fontSize: sv(16), fontWeight: ss("900"), paddingBottom: sv(2) }),
@@ -1097,7 +1098,7 @@ function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPa
 
 function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
-    { color: ss("#111827"), fontSize: sv(30), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
   const faqEls = lp.faqItems.slice(0, 5).flatMap((f) => [
     makeHeading(b, f.question, "h3", { color: ss("#111827"), fontSize: sv(16), fontWeight: ss("700"), paddingTop: sv(24), paddingBottom: sv(8) }),
@@ -1111,7 +1112,7 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
 
 function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
-    { color: ss("#111827"), fontSize: sv(30), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
   const headingCol = makeCol(b, [heading], 100, { align: "center" });
   const headingRow = makeRow(b, [headingCol], 800, 0);
@@ -1137,7 +1138,7 @@ function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): v
     { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const imgCol  = makeCol(b, [img, imgNote], 35, { padH: 24, valign: "top" });
   const heading = makeHeading(b, "Got Questions?", "h2",
-    { color: ss("#111827"), fontSize: sv(28), fontWeight: ss("900"), lineHeight: ss("1.2"), paddingBottom: sv(32) },
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), lineHeight: ss("1.2"), paddingBottom: sv(32) },
     { fontSize: sv(22) });
   const faqEls = lp.faqItems.slice(0, 5).flatMap((f) => [
     makeHeading(b, f.question, "h3", { color: ss("#111827"), fontSize: sv(15), fontWeight: ss("700"), paddingTop: sv(16), paddingBottom: sv(6) }),
@@ -1151,7 +1152,7 @@ function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): v
 
 function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
-    { color: ss("#111827"), fontSize: sv(30), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
   const faqEls = lp.faqItems.slice(0, 5).flatMap((f, i) => [
     makeHeading(b, `${String(i + 1).padStart(2, "0")}.  ${f.question}`, "h3",
@@ -1166,7 +1167,7 @@ function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): vo
 
 function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
-    { color: ss("#111827"), fontSize: sv(30), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
   const faqEls = lp.faqItems.slice(0, 5).flatMap((f) => [
     makeHeading(b, f.question, "h3", { color: ss("#111827"), fontSize: sv(16), fontWeight: ss("700"), paddingTop: sv(24), paddingBottom: sv(8) }),
@@ -1194,7 +1195,7 @@ function buildCtaCenteredColorBg(b: Builder, s: SchemeColors, lp: LandingPageCop
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
   const c = makeCol(b, [h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 88, pbD: 88 });
 }
 
 function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1210,7 +1211,7 @@ function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): v
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(12), textAlign: ss("center"), paddingTop: sv(12) });
   const rightCol = makeCol(b, [cta, note], 45, { padH: 32, valign: "middle", align: "center" });
   const r = makeRow(b, [leftCol, rightCol], 1000, 0);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
 }
 
 function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1224,7 +1225,7 @@ function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy)
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
   const c = makeCol(b, [h2, sub, countdown, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 88, pbD: 88 });
 }
 
 function buildCtaDarkMinimal(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1252,7 +1253,7 @@ function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
   const c = makeCol(b, [proof, h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 88, pbD: 88 });
 }
 
 // ── Layout variant dispatch ────────────────────────────────────────────────
@@ -1335,7 +1336,9 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const slv     = lp.sectionLayoutVariants ?? {};
 
   dispatchHero(b, s, lp, concept, slv["hero"] ?? "");
-  dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof-bar"] ?? "");
+  if (slv["final-cta"] !== "cta-social-proof-cta") {
+    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof-bar"] ?? "");
+  }
   dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "");
   if (lp.faqItems.length > 0) dispatchFaq(b, s, lp, slv["faq"] ?? "");
   dispatchFinalCta(b, s, lp, slv["final-cta"] ?? "");
