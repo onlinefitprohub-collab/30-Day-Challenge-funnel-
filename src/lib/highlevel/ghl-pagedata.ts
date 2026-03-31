@@ -1260,7 +1260,7 @@ function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy
 function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string, variant: string): void {
   const VALID = new Set(["hero-centered","hero-two-col-video","hero-two-col-image","hero-two-col-countdown","hero-full-width"]);
   const v = VALID.has(variant) ? variant : "hero-two-col-video";
-  if (variant && !VALID.has(variant)) console.warn(`[layout-variant] hero: unknown variant "${variant}", falling back to "${v}"`);
+  if (!VALID.has(variant)) console.warn(`[layout-variant] hero: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] hero → ${v}`);
   switch (v) {
     case "hero-centered":           return buildHeroCentered(b, s, lp, concept);
@@ -1274,7 +1274,7 @@ function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept:
 function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, variant: string): void {
   const VALID = new Set(["social-proof-stars-bullets","social-proof-centered-stat","social-proof-three-stats","social-proof-single-quote","social-proof-horizontal-badges"]);
   const v = VALID.has(variant) ? variant : "social-proof-stars-bullets";
-  if (variant && !VALID.has(variant)) console.warn(`[layout-variant] social-proof-bar: unknown variant "${variant}", falling back to "${v}"`);
+  if (!VALID.has(variant)) console.warn(`[layout-variant] social-proof-bar: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] social-proof-bar → ${v}`);
   switch (v) {
     case "social-proof-centered-stat":     return buildSocialProofCenteredStat(b, s, corePromise);
@@ -1288,7 +1288,7 @@ function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, v
 function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
   const VALID = new Set(["included-three-col-checks","included-two-col-bullets","included-image-left-list","included-single-col-numbered","included-alternating-rows"]);
   const v = VALID.has(variant) ? variant : "included-three-col-checks";
-  if (variant && !VALID.has(variant)) console.warn(`[layout-variant] whats-included: unknown variant "${variant}", falling back to "${v}"`);
+  if (!VALID.has(variant)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] whats-included → ${v}`);
   switch (v) {
     case "included-two-col-bullets":     return buildIncludedTwoColBullets(b, s, lp);
@@ -1302,7 +1302,7 @@ function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy,
 function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
   const VALID = new Set(["faq-single-col","faq-two-col","faq-image-left","faq-numbered","faq-with-inline-cta"]);
   const v = VALID.has(variant) ? variant : "faq-single-col";
-  if (variant && !VALID.has(variant)) console.warn(`[layout-variant] faq: unknown variant "${variant}", falling back to "${v}"`);
+  if (!VALID.has(variant)) console.warn(`[layout-variant] faq: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] faq → ${v}`);
   switch (v) {
     case "faq-two-col":         return buildFaqTwoCol(b, s, lp);
@@ -1316,7 +1316,7 @@ function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: 
 function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
   const VALID = new Set(["cta-centered-color-bg","cta-two-col-form","cta-with-countdown","cta-dark-minimal","cta-social-proof-cta"]);
   const v = VALID.has(variant) ? variant : "cta-centered-color-bg";
-  if (variant && !VALID.has(variant)) console.warn(`[layout-variant] final-cta: unknown variant "${variant}", falling back to "${v}"`);
+  if (!VALID.has(variant)) console.warn(`[layout-variant] final-cta: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] final-cta → ${v}`);
   switch (v) {
     case "cta-two-col-form":     return buildCtaTwoColForm(b, s, lp);
