@@ -793,13 +793,14 @@ function _heroCountdownEnd(): string {
 }
 
 function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
-    { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") });
+  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+  const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
-    { color: ss("#94a3b8"), fontSize: sv(17), lineHeight: ss("1.7"), paddingBottom: sv(24) },
+    { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24) },
     { fontSize: sv(15) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(28) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
@@ -809,7 +810,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     leftElIds.push(makeParagraph(b, lp.urgencyIdeas[0],
       { color: ss("#f87171"), fontSize: sv(13), fontWeight: ss("600"), paddingTop: sv(14) }));
   }
-  const leftCol = makeCol(b, leftElIds, 45, { padH: 24, valign: "middle" });
+  const leftCol = makeCol(b, leftElIds, 55, { padH: 24, valign: "middle" });
   const countdownLabel = makeParagraph(b, "Challenge starts in:",
     { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), paddingBottom: sv(4) });
   const countdown = makeCountdown(b, _heroCountdownEnd(), { paddingBottom: sv(20) });
@@ -817,19 +818,20 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     { borderRadius: sv(16), boxShadow: ss(`0 24px 64px rgba(0,0,0,0.5)`) });
   const videoNote = makeParagraph(b, "▶  Replace this video with your own challenge intro",
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
-  const rightCol = makeCol(b, [countdownLabel, countdown, videoEl, videoNote], 55, { padH: 24, valign: "middle" });
+  const rightCol = makeCol(b, [countdownLabel, countdown, videoEl, videoNote], 45, { padH: 24, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
   makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
-    { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase"), textAlign: ss("center") });
+  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+  const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), textAlign: ss("center") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.08"), paddingBottom: sv(16), textAlign: ss("center"), maxWidth: sv(800), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16), textAlign: ss("center"), maxWidth: sv(800), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
-    { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.7"), paddingBottom: sv(24), textAlign: ss("center"), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24), textAlign: ss("center"), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(15) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(32) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
@@ -845,13 +847,14 @@ function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, con
 }
 
 function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
-    { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") });
+  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+  const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
-    { color: ss("#94a3b8"), fontSize: sv(16), lineHeight: ss("1.7"), paddingBottom: sv(24) },
+    { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24) },
     { fontSize: sv(14) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(28) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
@@ -861,23 +864,24 @@ function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
     leftElIds.push(makeParagraph(b, lp.urgencyIdeas[0],
       { color: ss("#f87171"), fontSize: sv(13), fontWeight: ss("600"), paddingTop: sv(14) }));
   }
-  const leftCol = makeCol(b, leftElIds, 50, { padH: 24, valign: "middle" });
+  const leftCol = makeCol(b, leftElIds, 55, { padH: 24, valign: "middle" });
   const img = makeImage(b, { width: 520 });
   const imgNote = makeParagraph(b, "📸 Replace with your hero/result image",
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
-  const rightCol = makeCol(b, [img, imgNote], 50, { padH: 24, valign: "middle" });
+  const rightCol = makeCol(b, [img, imgNote], 45, { padH: 24, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
   makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
-    { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(16), letterSpacing: ss("0.08em"), textTransform: ss("uppercase") });
+  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+  const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(52), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
-    { color: ss("#94a3b8"), fontSize: sv(16), lineHeight: ss("1.7"), paddingBottom: sv(28) },
+    { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(28) },
     { fontSize: sv(14) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`) });
@@ -886,25 +890,26 @@ function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCo
     leftElIds.push(makeParagraph(b, lp.urgencyIdeas[0],
       { color: ss("#f87171"), fontSize: sv(13), fontWeight: ss("600"), paddingTop: sv(14) }));
   }
-  const leftCol = makeCol(b, leftElIds, 50, { padH: 24, valign: "middle" });
+  const leftCol = makeCol(b, leftElIds, 55, { padH: 24, valign: "middle" });
   const urgencyLabel = makeParagraph(b, "⚡  Cohort closes in:",
     { color: ss(s.primary), fontSize: sv(14), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.08em"), textTransform: ss("uppercase"), paddingBottom: sv(8) });
   const countdown = makeCountdown(b, _heroCountdownEnd(), { paddingBottom: sv(24) });
   const spotsNote = makeParagraph(b, "Only a handful of spots remaining",
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(13), textAlign: ss("center"), paddingTop: sv(4) });
-  const rightCol = makeCol(b, [urgencyLabel, countdown, spotsNote], 50, { padH: 32, valign: "middle" });
+  const rightCol = makeCol(b, [urgencyLabel, countdown, spotsNote], 45, { padH: 32, valign: "middle" });
   const r = makeRow(b, [leftCol, rightCol], 1200, 0);
   makeSection(b, [r], { bg: `linear-gradient(160deg, ${s.dark} 0%, ${s.mid} 55%, ${s.dark} 100%)`, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
 function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const urgencyBadge = makeParagraph(b, `🔥 Limited Spots — ${concept}`,
-    { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), paddingBottom: sv(20), letterSpacing: ss("0.08em"), textTransform: ss("uppercase"), textAlign: ss("center") });
+  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+  const urgencyBadge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), textAlign: ss("center") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.05"), paddingBottom: sv(20), textAlign: ss("center"), maxWidth: sv(900), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(20), textAlign: ss("center"), maxWidth: sv(900), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(32), paddingBottom: sv(14) });
   const sub = makeParagraph(b, lp.subheadline,
-    { color: ss("#94a3b8"), fontSize: sv(20), lineHeight: ss("1.65"), paddingBottom: sv(32), textAlign: ss("center"), maxWidth: sv(680), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(32), textAlign: ss("center"), maxWidth: sv(680), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(16) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 5), s.primary, { paddingBottom: sv(36) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
