@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.57.0 — Strip element-history fields + write-in-place with auto-reload. Press F5.");
+    console.log("[CF Funnel] Installed v2.58.0 — Write AI sections directly to Firebase. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.57.0 — Strip element-history fields + write-in-place with auto-reload.");
+    console.log("[CF Funnel] Updated to v2.58.0 — Write AI sections directly to Firebase.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -926,76 +926,36 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   diag.approach2.wipReadErr = String(_wipRe).slice(0, 80);
                 }
               }
-              diag.approach2.writeInPlace      = true;
-              diag.approach2.wipNativeSecCount = (wipPayload && Array.isArray(wipPayload.sections))
-                ? wipPayload.sections.length : 0;
+              diag.approach2.writeInPlace = true;
 
               if (!wipPayload || !Array.isArray(wipPayload.sections)) {
                 diag.approach2.writeInPlaceError = 'no-native-payload';
                 return JSON.stringify({ ok: false, error: 'write-in-place: no native Firebase payload', diag: diag });
               }
 
-              /* Step 2: Collect AI texts from pd (the AI-generated data), NOT from existing */
-              var aiTexts = [];
-              var _wipAiSections = pd.sections || [];
-              for (var _ais = 0; _ais < _wipAiSections.length; _ais++) {
-                var _aiSec  = _wipAiSections[_ais];
-                var _aiElems = Array.isArray(_aiSec.elements) ? _aiSec.elements : [];
-                for (var _aie = 0; _aie < _aiElems.length; _aie++) {
-                  var _aiEl  = _aiElems[_aie];
-                  var _aiTxt = (_aiEl && _aiEl.extra && _aiEl.extra.text) ? _aiEl.extra.text.value : undefined;
-                  if (typeof _aiTxt === 'string' && _aiTxt.trim().length > 0) {
-                    aiTexts.push(_aiTxt);
-                  }
-                }
+              /* Step 2: Deep-clone AI sections and patch target page metadata fields */
+              var aiSections     = JSON.parse(JSON.stringify(pd.sections));
+              var targetPageId   = (wipPayload && wipPayload.id) ? wipPayload.id : builderId;
+              var targetFunnelId = objectPath.split('/')[1] || '';
+              var targetLocId    = (wipPayload && wipPayload.sections && wipPayload.sections[0]
+                                   && wipPayload.sections[0].locationId)
+                                   ? wipPayload.sections[0].locationId : '';
+              for (var si = 0; si < aiSections.length; si++) {
+                aiSections[si].pageId   = targetPageId;
+                aiSections[si].funnelId = targetFunnelId;
+                if (targetLocId) aiSections[si].locationId = targetLocId;
+                aiSections[si].sequence = si;
               }
-              diag.approach2.aiTextCount = aiTexts.length;
+              diag.approach2.aiSectionsDirectWrite = true;
+              diag.approach2.aiSectionCount   = aiSections.length;
+              diag.approach2.aiSec0ElemCount  = aiSections[0] ? (aiSections[0].elements || []).length : 0;
+              diag.approach2.targetPageId     = targetPageId;
+              diag.approach2.targetFunnelId   = targetFunnelId;
+              diag.approach2.targetLocationId = targetLocId;
 
-              /* Step 3: Deep-clone native sections and replace text values sequentially */
-              var clonedSections  = JSON.parse(JSON.stringify(wipPayload.sections));
-              /* v2.57.0: Strip singular 'element' fields (GHL version-history snapshots)
-               * from every level of the cloned payload. These are NOT the 'elements' array
-               * on sections — they are stale per-element version refs that cause the builder
-               * to render the old page as an overlay alongside the new template structure. */
-              function stripElementFields(obj) {
-                if (Array.isArray(obj)) {
-                  for (var i = 0; i < obj.length; i++) stripElementFields(obj[i]);
-                } else if (obj !== null && typeof obj === 'object') {
-                  delete obj.element;
-                  var keys = Object.keys(obj);
-                  for (var k = 0; k < keys.length; k++) {
-                    if (keys[k] !== 'element') stripElementFields(obj[keys[k]]);
-                  }
-                }
-              }
-              stripElementFields(clonedSections);
-              diag.approach2.strippedElementFields = true;
-              var wipReplaceIdx   = 0;
-              var wipReplaceableCount = 0;
-              var wipReplacedCount    = 0;
-              var wipReplaceableMetas = ['heading', 'paragraph', 'button', 'text'];
-              for (var _wsi = 0; _wsi < clonedSections.length; _wsi++) {
-                var _wSecElems = Array.isArray(clonedSections[_wsi].elements) ? clonedSections[_wsi].elements : [];
-                for (var _wei = 0; _wei < _wSecElems.length; _wei++) {
-                  var _wel  = _wSecElems[_wei];
-                  var _wTxt = (_wel && _wel.extra && _wel.extra.text) ? _wel.extra.text.value : undefined;
-                  if (typeof _wTxt === 'string' && _wTxt.trim().length > 0
-                      && _wel.meta && wipReplaceableMetas.indexOf(_wel.meta) !== -1) {
-                    wipReplaceableCount++;
-                    if (wipReplaceIdx < aiTexts.length) {
-                      _wel.extra.text.value = aiTexts[wipReplaceIdx++];
-                      wipReplacedCount++;
-                    }
-                  }
-                }
-              }
-              diag.approach2.replaceableCount   = wipReplaceableCount;
-              diag.approach2.replacedCount       = wipReplacedCount;
-              diag.approach2.clonedSec0ElemCount = (clonedSections[0] && Array.isArray(clonedSections[0].elements))
-                ? clonedSections[0].elements.length : 0;
-
-              /* Step 4: Build write payload — preserve native structure, swap sections */
-              var wipWritePayload = Object.assign({}, wipPayload, { sections: clonedSections });
+              /* Step 3: Build write payload — existing top-level envelope + AI sections */
+              var wipWritePayload = JSON.parse(JSON.stringify(wipPayload));
+              wipWritePayload.sections = aiSections;
 
               /* Step 5: Construct Firebase upload endpoint (same objectPath already in scope) */
               var wipEncodedPath = encodeURIComponent(objectPath);

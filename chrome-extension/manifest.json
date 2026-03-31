@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Challenge Funnel in a Box",
   "short_name": "CF Funnel",
-  "version": "2.57.0",
-  "description": "GHL page inject — write-in-place with auto-reload and element-field strip",
+  "version": "2.58.0",
+  "description": "GHL page inject — write AI sections directly to Firebase",
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
