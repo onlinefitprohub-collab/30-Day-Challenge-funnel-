@@ -10,8 +10,9 @@
  * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
  *
  * Model routing:
- *   All 3 groups → Claude 3.5 Sonnet when ANTHROPIC_API_KEY is set (better persuasive copy)
- *                → GPT-4o fallback when ANTHROPIC_API_KEY is absent or Claude call fails
+ *   Group 1 & 3 → claude-sonnet-4-6 (persuasive copy)
+ *   Group 2     → claude-haiku-4-5-20251001 (sequences — coherent at lower cost)
+ *   All groups  → GPT-4o fallback when ANTHROPIC_API_KEY is absent or Claude fails
  */
 
 import { getOpenAIClient, SYSTEM_PROMPT } from "./client";
@@ -32,7 +33,10 @@ import { generateMockAssets } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
-const MODEL       = "gpt-4o";
+const MODEL_PRIMARY = "claude-sonnet-4-6";
+const MODEL_FAST    = "claude-haiku-4-5-20251001";
+
+const GPT_MODEL   = "gpt-4o";
 const TEMPERATURE = 0.72;
 
 // Token budgets per group — sized to comfortably fit each group's JSON
@@ -58,7 +62,7 @@ async function callGroup<T>(
 
   try {
     const response = await openai.chat.completions.create({
-      model: MODEL,
+      model: GPT_MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user",   content: prompt },
@@ -96,9 +100,11 @@ async function callCopyGroup<T>(
   schema: Parameters<typeof safeParse<T>>[0],
   groupName: string,
   maxTokens: number,
+  model: string,
 ): Promise<GroupResult<T>> {
   if (hasClaude()) {
-    const result = await callClaudeGroup<T>(prompt, schema, groupName, maxTokens);
+    console.log(`[generate] ${groupName} → ${model}`);
+    const result = await callClaudeGroup<T>(prompt, schema, groupName, maxTokens, model);
     if (result.data !== null) return result;
 
     // Claude call failed — fall through to GPT-4o with a warning
@@ -123,25 +129,28 @@ export async function generateFunnelAssets(
 
   console.log(`[generate] Copywriter style selected: ${style.name} — ${style.tagline}`);
 
-  // Fire all 3 groups in parallel — all through Claude (GPT-4o fallback on failure)
+  // Fire all 3 groups in parallel — Groups 1 & 3 use Sonnet, Group 2 uses Haiku
   const [offerPagesResult, sequencesResult, adsCampaignResult] = await Promise.all([
     callCopyGroup(
       buildOfferPagesPrompt(context, style.promptDescription),
       offerPagesResponseSchema,
       "offer-pages",
       TOKENS.offerPages,
+      MODEL_PRIMARY,
     ),
     callCopyGroup(
       buildSequencesPrompt(context, style.promptDescription),
       sequencesResponseSchema,
       "sequences",
       TOKENS.sequences,
+      MODEL_FAST,
     ),
     callCopyGroup(
       buildAdsCampaignPrompt(context, style.promptDescription),
       adsCampaignResponseSchema,
       "ads-campaign",
       TOKENS.adsCampaign,
+      MODEL_PRIMARY,
     ),
   ]);
 
