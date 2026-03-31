@@ -81,12 +81,12 @@ export interface GeneratedAdImage {
 }
 
 export interface FunnelDesign {
-  heroGradient: string;
-  primaryColor: string;
-  accentColor: string;
-  darkBackground: string;
-  midBackground: string;
-  alternateSectionBackground: string;
+  heroGradient?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  darkBackground?: string;
+  midBackground?: string;
+  alternateSectionBackground?: string;
 }
 
 export interface GeneratedFunnelAssets {

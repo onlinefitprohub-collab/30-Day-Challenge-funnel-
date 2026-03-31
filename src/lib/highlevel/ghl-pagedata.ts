@@ -1122,7 +1122,7 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
-function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
+function buildFaqTwoCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
@@ -1144,7 +1144,7 @@ function buildFaqTwoCol(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void
   makeSection(b, [headingRow, qaRow], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
-function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
+function buildFaqImageLeft(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const img     = makeImage(b, { width: 400 });
   const imgNote = makeParagraph(b, "📸 Replace with your coach photo",
     { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
@@ -1162,7 +1162,7 @@ function buildFaqImageLeft(b: Builder, _s: SchemeColors, lp: LandingPageCopy): v
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
 
-function buildFaqNumbered(b: Builder, _s: SchemeColors, lp: LandingPageCopy): void {
+function buildFaqNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
