@@ -1207,7 +1207,7 @@ function buildCtaCenteredColorBg(b: Builder, s: SchemeColors, lp: LandingPageCop
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
   const c = makeCol(b, [h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
 }
 
 function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1223,7 +1223,7 @@ function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): v
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(12), textAlign: ss("center"), paddingTop: sv(12) });
   const rightCol = makeCol(b, [cta, note], 45, { padH: 32, valign: "middle", align: "center" });
   const r = makeRow(b, [leftCol, rightCol], 1000, 0);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
 }
 
 function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1237,7 +1237,7 @@ function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy)
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
   const c = makeCol(b, [h2, sub, countdown, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
 }
 
 function buildCtaDarkMinimal(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1265,7 +1265,7 @@ function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
   const c = makeCol(b, [proof, h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.primary} 0%, ${s.accent} 100%)`, bgColor: s.primary, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
 }
 
 // ── Layout variant dispatch ────────────────────────────────────────────────
