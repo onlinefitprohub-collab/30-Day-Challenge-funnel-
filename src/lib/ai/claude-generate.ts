@@ -7,7 +7,7 @@
  * 2. JSON.parse with try/catch
  * 3. The same safeParse validator used by the GPT-4o path
  *
- * Model: claude-3-5-sonnet-20241022
+ * Model: claude-sonnet-4-6
  * Temperature: 0.72 (matches GPT-4o path for comparable creative variation)
  */
 
@@ -29,7 +29,7 @@ export async function callClaudeGroup<T>(
   try {
     const anthropic = getAnthropicClient();
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+      model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
       temperature: 0.72,
       system: CLAUDE_SYSTEM_PROMPT,
