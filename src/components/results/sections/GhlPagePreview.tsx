@@ -9,6 +9,22 @@ interface Props {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
+/*  HTML sanitizer (strips XSS vectors before dangerouslySetInnerHTML)        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<object[\s\S]*?<\/object>/gi, "")
+    .replace(/<embed[^>]*>/gi, "")
+    .replace(/<link[^>]*>/gi, "")
+    .replace(/\bon\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\bon\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript\s*:/gi, "");
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
 /*  CSS variable resolution                                                    */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
@@ -180,25 +196,27 @@ function RenderNode({
         typeof (extra.text as { value?: unknown })?.value === "string"
           ? ((extra.text as { value: string }).value)
           : "";
+      const sanitized = sanitizeHtml(rawHtml);
+      // Extract outer tag and inner HTML so styles apply to the semantic element,
+      // not a wrapper div (which would be overridden by browser UA heading styles).
+      const headingMatch = sanitized.match(/^<(h[1-4])[^>]*>([\s\S]*)<\/h[1-4]>$/i);
+      const TagName = (headingMatch?.[1] ?? node.tag ?? "h2") as
+        | "h1" | "h2" | "h3" | "h4";
+      const innerHtml = headingMatch?.[2] ?? sanitized;
+
       const fontSize =
         sv(s.fontSize, vars) ??
         sv(extra.desktopFontSize, vars) ??
         "36px";
-      const color =
-        sv(s.color, vars) ?? "#ffffff";
-      const fontWeight =
-        sv(s.fontWeight, vars) ?? "700";
-      const lineHeight =
-        sv(s.lineHeight, vars) ?? "1.2em";
+      const color = sv(s.color, vars) ?? "#ffffff";
+      const fontWeight = sv(s.fontWeight, vars) ?? "700";
+      const lineHeight = sv(s.lineHeight, vars) ?? "1.2em";
       const textAlign = sv(s.textAlign, vars);
       const letterSpacing = sv(s.letterSpacing, vars);
       const textTransform = sv(s.textTransform, vars);
       const paddingTop = sv(s.paddingTop, vars) ?? "0px";
       const paddingBottom = sv(s.paddingBottom, vars) ?? "0px";
-      const typography = sv(
-        (extra.typography as unknown),
-        vars,
-      );
+      const typography = sv(extra.typography as unknown, vars);
       const style: React.CSSProperties = {
         fontSize,
         color,
@@ -215,9 +233,9 @@ function RenderNode({
           : { fontFamily: "'Bebas Neue', 'Montserrat', sans-serif" }),
       };
       return (
-        <div
+        <TagName
           style={style}
-          dangerouslySetInnerHTML={{ __html: rawHtml }}
+          dangerouslySetInnerHTML={{ __html: innerHtml }}
         />
       );
     }
@@ -228,6 +246,12 @@ function RenderNode({
         typeof (extra.text as { value?: unknown })?.value === "string"
           ? ((extra.text as { value: string }).value)
           : "";
+      const sanitized = sanitizeHtml(rawHtml);
+      // Extract inner HTML from the outer <p> so styles apply to the <p> directly,
+      // not a wrapper div (which avoids UA margin/padding overrides).
+      const paraMatch = sanitized.match(/^<p[^>]*>([\s\S]*)<\/p>$/i);
+      const innerHtml = paraMatch?.[1] ?? sanitized;
+
       const fontSize =
         sv(s.fontSize, vars) ??
         sv(extra.desktopFontSize, vars) ??
@@ -257,9 +281,9 @@ function RenderNode({
           : { fontFamily: "'Poppins', sans-serif" }),
       };
       return (
-        <div
+        <p
           style={style}
-          dangerouslySetInnerHTML={{ __html: rawHtml }}
+          dangerouslySetInnerHTML={{ __html: innerHtml }}
         />
       );
     }
@@ -692,11 +716,8 @@ export function GhlPagePreview({ projectId, page }: Props) {
         }}
       >
         <div style={{ fontSize: "32px", marginBottom: "16px" }}>📄</div>
-        <div style={{ color: "rgba(255,255,255,0.7)", fontWeight: "600", marginBottom: "8px" }}>
-          Generate your funnel to see the GHL-accurate page preview
-        </div>
-        <div style={{ fontSize: "12px" }}>
-          Once generated, this preview will match the exact layout injected into the GHL page builder.
+        <div style={{ color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>
+          Generate your funnel to see the GHL-accurate page preview.
         </div>
       </div>
     );
