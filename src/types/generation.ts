@@ -13,6 +13,7 @@ export interface LandingPageCopy {
   sectionIdeas: string[];
   faqItems: Array<{ question: string; answer: string }>;
   urgencyIdeas: string[];
+  sectionLayoutVariants?: Record<string, string>;
 }
 
 export interface OptInFormSuggestions {

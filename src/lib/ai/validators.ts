@@ -10,13 +10,14 @@ export const offerSummarySchema = z.object({
 });
 
 export const landingPageSchema = z.object({
-  headlineOptions: z.array(z.string()).min(1),
-  subheadline:     z.string().min(1),
-  bulletPoints:    z.array(z.string()).min(1),
-  ctaText:         z.string().min(1),
-  sectionIdeas:    z.array(z.string()).min(1),
-  faqItems:        z.array(z.object({ question: z.string(), answer: z.string() })).min(1),
-  urgencyIdeas:    z.array(z.string()).min(1),
+  headlineOptions:       z.array(z.string()).min(1),
+  subheadline:           z.string().min(1),
+  bulletPoints:          z.array(z.string()).min(1),
+  ctaText:               z.string().min(1),
+  sectionIdeas:          z.array(z.string()).min(1),
+  faqItems:              z.array(z.object({ question: z.string(), answer: z.string() })).min(1),
+  urgencyIdeas:          z.array(z.string()).min(1),
+  sectionLayoutVariants: z.record(z.string()).optional(),
 });
 
 export const optInFormSchema = z.object({

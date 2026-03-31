@@ -52,6 +52,18 @@ LANDING PAGE
   * Urgency 2: Social proof momentum — others joining creates its own urgency
   * Urgency 3: Cost of inaction — what staying stuck actually costs them (time, money, self-respect)
   * Do NOT use fake urgency like "limited time" with no specific limit
+- sectionLayoutVariants: For each of the 5 page sections, select the single best layout variant from the lists below. Base your selection on the coach's niche, the content length, and whether visual proof elements (video/image/countdown) feel appropriate. You MUST vary your selections — do not default to the same variant across different generations or niches. Use the coach's context as a clear signal:
+  * hero: sports/fitness coaches → prefer `hero-two-col-video`; nutrition/lifestyle/mindset coaches → prefer `hero-centered`; online-only or cohort programmes with urgency → prefer `hero-two-col-countdown`; established coaches with a strong visual brand → consider `hero-two-col-image` or `hero-full-width`
+  * social-proof-bar: if the coach has specific result numbers → prefer `social-proof-three-stats` or `social-proof-centered-stat`; if a testimonial quote is available → prefer `social-proof-single-quote`; default for new coaches → `social-proof-stars-bullets`
+  * whats-included: long benefit lists (6+ items) → prefer `included-two-col-bullets` or `included-single-col-numbered`; visual/transformation programmes → prefer `included-alternating-rows` or `included-image-left-list`; quick scannable features → `included-three-col-checks`
+  * faq: 4+ FAQs and coaching niche → prefer `faq-two-col`; coach has a strong photo → `faq-image-left`; numbered/structured content → `faq-numbered`; you want a soft CTA close → `faq-with-inline-cta`; simple stacked → `faq-single-col`
+  * final-cta: programmes with limited intake → prefer `cta-with-countdown`; minimal premium feel → `cta-dark-minimal`; social proof close → `cta-social-proof-cta`; two-column with direct action → `cta-two-col-form`; default → `cta-centered-color-bg`
+  Available variant names (only output names from this list):
+  hero: hero-centered | hero-two-col-video | hero-two-col-image | hero-two-col-countdown | hero-full-width
+  social-proof-bar: social-proof-stars-bullets | social-proof-centered-stat | social-proof-three-stats | social-proof-single-quote | social-proof-horizontal-badges
+  whats-included: included-three-col-checks | included-two-col-bullets | included-image-left-list | included-single-col-numbered | included-alternating-rows
+  faq: faq-single-col | faq-two-col | faq-image-left | faq-numbered | faq-with-inline-cta
+  final-cta: cta-centered-color-bg | cta-two-col-form | cta-with-countdown | cta-dark-minimal | cta-social-proof-cta
 
 OPT-IN FORM
 - recommendedFields: The minimum fields needed for the CTA type. If CTA is booking, include phone. Don't over-collect.
@@ -91,7 +103,14 @@ Return ONLY this JSON structure. Every string field must contain actual copy, no
       { "question": "...", "answer": "..." },
       { "question": "...", "answer": "..." }
     ],
-    "urgencyIdeas": ["...", "...", "..."]
+    "urgencyIdeas": ["...", "...", "..."],
+    "sectionLayoutVariants": {
+      "hero": "hero-two-col-video",
+      "social-proof-bar": "social-proof-stars-bullets",
+      "whats-included": "included-three-col-checks",
+      "faq": "faq-single-col",
+      "final-cta": "cta-centered-color-bg"
+    }
   },
   "optInForm": {
     "recommendedFields": ["...", "..."],
