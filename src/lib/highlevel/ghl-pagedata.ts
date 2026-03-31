@@ -1496,7 +1496,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     ]);
     const c = makeCol(b, [eyebrow, h2, ...stepEls], 100, { padH: 0 });
     const r = makeRow(b, [c], 620, 24);
-    makeSection(b, [r], { bgColor: s.alt, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
+    makeSection(b, [r], { bgColor: "#ffffff", ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
   }
 
   // ── 3. BOOKING CTA ────────────────────────────────────────────────────────
