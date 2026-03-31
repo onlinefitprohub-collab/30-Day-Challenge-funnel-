@@ -470,10 +470,6 @@
           || "Pasted! Builder is reloading — your content will appear in a few seconds.";
         showToast("ok", msg);
         setTimeout(function() { resetFab(); hideToast(); }, 4000);
-      } else if ((result && result.injectResult && result.injectResult.method === "clipboard-ready") || (result && result.method === "clipboard-ready")) {
-        setFabText("V");
-        showToast("spin", "Content written to clipboard storage! Now press Ctrl+V inside the GHL builder to paste using GHL's own paste.");
-        setTimeout(function() { resetFab(); hideToast(); }, 12000);
       } else {
         var err = (result && result.error) || "Unknown error";
         setFabText("!");
