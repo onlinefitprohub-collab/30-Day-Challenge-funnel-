@@ -3,19 +3,21 @@
  *
  * Makes 3 focused API calls in parallel — one per section group.
  * Each call has its own token budget and is validated independently.
- * If a group fails validation, its sections fall back to personalised mock data.
+ * If a group fails (or ANTHROPIC_API_KEY is absent), it falls back to
+ * personalised mock data.
  *
  * Group 1 — Strategy & Pages: offerSummary, landingPage, optInForm, thankYouPage, bookingPage, design
  * Group 2 — Follow-up Sequences: smsSequence, emailSequence
  * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
  *
  * Model routing:
- *   Group 1 & 3 → claude-sonnet-4-6 (persuasive copy)
- *   Group 2     → claude-haiku-4-5-20251001 (sequences — coherent at lower cost)
- *   All groups  → GPT-4o fallback when ANTHROPIC_API_KEY is absent or Claude fails
+ *   Group 1 & 3 → claude-sonnet-4-6   (persuasive page + ad copy)
+ *   Group 2     → claude-haiku-4-5-20251001  (sequences — coherent at lower cost)
+ *
+ * Retry: claude-generate handles 529 overload errors automatically (3 attempts,
+ * 2-second delay). All other failures fall back to mock.
  */
 
-import { getOpenAIClient, SYSTEM_PROMPT } from "./client";
 import { hasClaude } from "./claude-client";
 import { callClaudeGroup } from "./claude-generate";
 import { buildCoachContext } from "./context";
@@ -27,7 +29,6 @@ import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
   adsCampaignResponseSchema,
-  safeParse,
 } from "./validators";
 import { generateMockAssets } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
@@ -35,9 +36,6 @@ import type { GeneratedFunnelAssets } from "@/types/generation";
 
 const MODEL_PRIMARY = "claude-sonnet-4-6";
 const MODEL_FAST    = "claude-haiku-4-5-20251001";
-
-const GPT_MODEL   = "gpt-4o";
-const TEMPERATURE = 0.72;
 
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
@@ -52,72 +50,25 @@ interface GroupResult<T> {
   usedFallback: boolean;
 }
 
-async function callGroup<T>(
-  prompt: string,
-  schema: Parameters<typeof safeParse<T>>[0],
-  groupName: string,
-  maxTokens: number,
-): Promise<GroupResult<T>> {
-  const openai = getOpenAIClient();
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: GPT_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user",   content: prompt },
-      ],
-      temperature: TEMPERATURE,
-      max_tokens:  maxTokens,
-      response_format: { type: "json_object" },
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      return { data: null, error: `${groupName}: empty response from AI`, usedFallback: false };
-    }
-
-    const parsed = safeParse(schema, content, groupName);
-    if (parsed.error) {
-      console.error(`[generate] ${parsed.error}`);
-      return { data: null, error: parsed.error, usedFallback: false };
-    }
-
-    return { data: parsed.data, error: null, usedFallback: false };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[generate] ${groupName} API call failed:`, message);
-    return { data: null, error: `${groupName}: ${message}`, usedFallback: false };
-  }
-}
-
 /**
- * Attempt Claude for a copy-heavy group; fall back to GPT-4o on any error.
- * This ensures existing users without an Anthropic key are unaffected.
+ * Call Claude for a group; fall back to mock (not another provider) on failure.
+ * When ANTHROPIC_API_KEY is absent, skips the API call entirely and returns null
+ * so the caller uses mock data.
  */
 async function callCopyGroup<T>(
   prompt: string,
-  schema: Parameters<typeof safeParse<T>>[0],
+  schema: Parameters<typeof callClaudeGroup<T>>[1],
   groupName: string,
   maxTokens: number,
   model: string,
 ): Promise<GroupResult<T>> {
-  if (hasClaude()) {
-    console.log(`[generate] ${groupName} → ${model}`);
-    const result = await callClaudeGroup<T>(prompt, schema, groupName, maxTokens, model);
-    if (result.data !== null) return result;
-
-    // Claude call failed — fall through to GPT-4o with a warning
-    console.warn(
-      `[generate] Claude failed for ${groupName} (${result.error}) — falling back to GPT-4o`,
-    );
-  } else {
-    console.warn(
-      `[generate] ANTHROPIC_API_KEY not set — using GPT-4o for ${groupName}`,
-    );
+  if (!hasClaude()) {
+    console.warn(`[generate] ANTHROPIC_API_KEY not set — using mock for ${groupName}`);
+    return { data: null, error: null, usedFallback: true };
   }
 
-  return callGroup<T>(prompt, schema, groupName, maxTokens);
+  console.log(`[generate] ${groupName} → ${model}`);
+  return callClaudeGroup<T>(prompt, schema, groupName, maxTokens, model);
 }
 
 export async function generateFunnelAssets(

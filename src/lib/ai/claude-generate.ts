@@ -1,22 +1,34 @@
 /**
- * Claude-powered group generation — mirrors callGroup in generate.ts but
- * uses the Anthropic messages API with the extended CRO system prompt.
+ * Claude-powered group generation.
  *
- * Claude does not support response_format: json_object, so we rely on:
- * 1. An explicit system prompt instruction (OUTPUT FORMAT section)
- * 2. JSON.parse with try/catch
- * 3. The same safeParse validator used by the GPT-4o path
+ * Handles transient 529 overload errors with automatic retry (up to 3 attempts,
+ * 2-second delay between each). Non-529 errors and exhausted retries return a
+ * null result so the caller can fall back to mock data.
  *
- * Temperature: 0.72 (matches GPT-4o path for comparable creative variation)
+ * Temperature: 0.72
  */
 
 import { getAnthropicClient, CLAUDE_SYSTEM_PROMPT } from "./claude-client";
 import { safeParse } from "./validators";
 
+const MAX_RETRIES  = 3;
+const RETRY_DELAY  = 2000; // ms
+
 interface GroupResult<T> {
   data: T | null;
   error: string | null;
   usedFallback: boolean;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function is529(err: unknown): boolean {
+  if (err instanceof Error) {
+    return err.message.includes("529") || err.message.toLowerCase().includes("overloaded");
+  }
+  return false;
 }
 
 export async function callClaudeGroup<T>(
@@ -26,39 +38,54 @@ export async function callClaudeGroup<T>(
   maxTokens: number,
   model = "claude-sonnet-4-6",
 ): Promise<GroupResult<T>> {
-  try {
-    const anthropic = getAnthropicClient();
-    const response = await anthropic.messages.create({
-      model,
-      max_tokens: maxTokens,
-      temperature: 0.72,
-      system: CLAUDE_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: prompt }],
-    });
+  const anthropic = getAnthropicClient();
 
-    const block = response.content[0];
-    const content = block?.type === "text" ? block.text : null;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await anthropic.messages.create({
+        model,
+        max_tokens: maxTokens,
+        temperature: 0.72,
+        system: CLAUDE_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: prompt }],
+      });
 
-    if (!content) {
-      return { data: null, error: `${groupName}: empty response from Claude`, usedFallback: false };
+      const block = response.content[0];
+      const content = block?.type === "text" ? block.text : null;
+
+      if (!content) {
+        return { data: null, error: `${groupName}: empty response from Claude`, usedFallback: false };
+      }
+
+      // Claude sometimes wraps JSON in ```json fences despite instructions — strip them
+      const cleaned = content
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```\s*$/, "")
+        .trim();
+
+      const parsed = safeParse(schema, cleaned, groupName);
+      if (parsed.error) {
+        console.error(`[claude-generate] ${parsed.error}`);
+        return { data: null, error: parsed.error, usedFallback: false };
+      }
+
+      return { data: parsed.data, error: null, usedFallback: false };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+
+      if (is529(err) && attempt < MAX_RETRIES) {
+        console.warn(
+          `[claude-generate] ${groupName} overloaded (attempt ${attempt}/${MAX_RETRIES}) — retrying in ${RETRY_DELAY / 1000}s`,
+        );
+        await sleep(RETRY_DELAY);
+        continue;
+      }
+
+      console.error(`[claude-generate] ${groupName} API call failed:`, message);
+      return { data: null, error: `${groupName}: ${message}`, usedFallback: false };
     }
-
-    // Claude sometimes wraps JSON in ```json fences despite instructions — strip them
-    const cleaned = content
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```\s*$/, "")
-      .trim();
-
-    const parsed = safeParse(schema, cleaned, groupName);
-    if (parsed.error) {
-      console.error(`[claude-generate] ${parsed.error}`);
-      return { data: null, error: parsed.error, usedFallback: false };
-    }
-
-    return { data: parsed.data, error: null, usedFallback: false };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[claude-generate] ${groupName} API call failed:`, message);
-    return { data: null, error: `${groupName}: ${message}`, usedFallback: false };
   }
+
+  // Should never reach here, but TypeScript needs it
+  return { data: null, error: `${groupName}: all retries exhausted`, usedFallback: false };
 }

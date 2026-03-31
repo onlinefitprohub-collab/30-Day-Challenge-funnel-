@@ -3,7 +3,7 @@ import type { GeneratedFunnelAssets } from "@/types/generation";
 
 /**
  * Mock generation — uses real wizard inputs to produce personalised placeholder output.
- * Shown when OPENAI_API_KEY is not set. Results page displays a banner indicating demo mode.
+ * Shown when ANTHROPIC_API_KEY is not set. Results page displays a banner indicating demo mode.
  */
 export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets {
   const {
