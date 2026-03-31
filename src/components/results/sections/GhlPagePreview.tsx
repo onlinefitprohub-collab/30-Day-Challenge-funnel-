@@ -65,26 +65,6 @@ function sv(v: unknown, vars: Record<string, string>): string | undefined {
   return withUnit.includes("var(") ? resolveVarStr(withUnit, vars) : withUnit;
 }
 
-function pick(
-  styles: Record<string, unknown>,
-  vars: Record<string, string>,
-  keys: string[],
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const key of keys) {
-    const val = sv(styles[key], vars);
-    if (
-      val !== undefined &&
-      val !== "none" &&
-      val !== "transparent" &&
-      val !== ""
-    ) {
-      out[key] = val;
-    }
-  }
-  return out;
-}
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  Typed node shape (subset of what finalize() produces)                     */
 /* ─────────────────────────────────────────────────────────────────────────── */
