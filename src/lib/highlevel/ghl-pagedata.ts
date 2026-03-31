@@ -1341,6 +1341,7 @@ function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, vari
 }
 
 export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
+  console.log("[design] applied design:", data.design);
   const b       = createBuilder();
   const s       = (() => {
     const base = getScheme(data.colourScheme);

@@ -154,6 +154,8 @@ export async function generateFunnelAssets(
     ),
   ]);
 
+  console.log("[design] Claude returned:", offerPagesResult.data?.design);
+
   // Log any errors for observability
   const errors = [
     offerPagesResult.error,
