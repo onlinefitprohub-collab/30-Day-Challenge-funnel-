@@ -900,14 +900,12 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
             /* v2.48.0: Store built sections for A5 executeScript pickup by background.js. */
             window.__cfLastSectionsWithContext = sectionsWithContext;
 
-            /* ── v2.55.0: Write-in-place inject ─────────────────────────────────────── *
-             * Replace text values in the current page's native Firebase structure      *
-             * with AI-generated copy, then POST back to the same Firebase path.        *
-             * No new pages, no clone API calls, no navigation to a new builder URL.    *
-             *                                                                          *
-             * AI texts  → collect from pd.sections[*].elements[*]  (AI data)          *
-             * Targets   → walk clonedSections (deep-clone of existing.sections)        *
-             * Never mix the two sources.                                               */
+            /* ── v2.58.0: Write AI sections directly to Firebase ────────────────────── *
+             * Deep-clone pd.sections (full GHL-native structure: rows, cols, elements) *
+             * patch per-section metadata (pageId, funnelId, locationId, sequence),    *
+             * then POST back to the same Firebase path using the existing top-level   *
+             * envelope (general, pageStyles, fonts, settings, trackingCode).          *
+             * No text replacement, no template overlay, no clone API calls.           */
             try {
               /* Step 1: Use probe-fetched native data, or re-fetch if probe failed */
               var wipPayload = (existing && existing.sections) ? existing : null;
@@ -934,6 +932,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
               }
 
               /* Step 2: Deep-clone AI sections and patch target page metadata fields */
+              if (!pd || !Array.isArray(pd.sections) || pd.sections.length === 0) {
+                diag.approach2.writeInPlaceError = 'no-ai-sections';
+                return JSON.stringify({ ok: false, error: 'write-in-place: pd.sections missing or empty', diag: diag });
+              }
               var aiSections     = JSON.parse(JSON.stringify(pd.sections));
               var targetPageId   = (wipPayload && wipPayload.id) ? wipPayload.id : builderId;
               var targetFunnelId = objectPath.split('/')[1] || '';
