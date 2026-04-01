@@ -179,6 +179,7 @@
                 capturedAt:     Date.now(),
               };
               window.__cfNativeFirebaseRaw = body;
+              window.postMessage({ source: "cf-bridge", type: "CF_NATIVE_FIREBASE_RAW", raw: body }, "*");
             } catch(fbErr) {
               window.__cfNativeFirebasePayload = { error: String(fbErr.message).slice(0, 200), raw: body.substring(0, 500) };
             }

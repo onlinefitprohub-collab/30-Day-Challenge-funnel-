@@ -206,6 +206,9 @@
     if (d.source === "cf-bridge") {
       if (d.type === "CF_OOFF_EVENT") _cfHandleOoffEvent(d);
       if (d.type === "CF_INJECT_DONE") _cfInjectDone = true;
+      if (d.type === "CF_NATIVE_FIREBASE_RAW" && typeof d.raw === "string") {
+        chrome.storage.local.set({ cfNativeFirebaseRaw: d.raw });
+      }
       return;
     }
 

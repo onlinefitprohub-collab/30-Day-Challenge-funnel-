@@ -3493,6 +3493,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  /* ── CF_GET_FULL_NATIVE_JSON ──────────────────────────────────────────────
+   * Returns the full, untruncated cfNativeFirebaseRaw string from
+   * chrome.storage.local — written by content.js whenever bridge.js fires
+   * CF_NATIVE_FIREBASE_RAW.  No page reload or executeScript needed.
+   * ─────────────────────────────────────────────────────────────────────── */
+  if (type === "CF_GET_FULL_NATIVE_JSON") {
+    chrome.storage.local.get(["cfNativeFirebaseRaw"], function(result) {
+      var raw = result.cfNativeFirebaseRaw ?? null;
+      if (raw) {
+        sendResponse({ ok: true, raw: raw, length: raw.length });
+      } else {
+        sendResponse({ ok: false, error: "No Firebase payload in storage yet. Load a GHL page in the builder first." });
+      }
+    });
+    return true;
+  }
+
   /* ── CF_GET_PAGE_META ─────────────────────────────────────────────────────
    * Returns window.__cfPageMetaParsed captured by bridge.js v2.12.0.
    * Contains GHL backend page meta: pageDataDownloadUrl, funnelId, locationId.

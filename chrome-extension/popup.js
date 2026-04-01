@@ -844,15 +844,22 @@ async function doNativeFirebasePayload() {
 }
 
 function doDownloadNativeFirebase() {
-  const json = _nativeFirebaseRaw;
-  if (!json) {
-    alert("No Firebase payload loaded yet — click \"Native Firebase Payload\" first.");
-    return;
-  }
-  const blob    = new Blob([json], { type: "application/json" });
-  const blobUrl = URL.createObjectURL(blob);
-  chrome.downloads.download({ url: blobUrl, filename: "ghl-payload.json", saveAs: false }, () => {
-    URL.revokeObjectURL(blobUrl);
+  const btn = document.getElementById("native-firebase-download");
+  if (btn) { btn.disabled = true; btn.textContent = "Fetching…"; }
+  sendMessage({ type: "CF_GET_FULL_NATIVE_JSON" }).then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = "Download JSON"; }
+    if (!res?.ok) {
+      alert(res?.error ?? "No Firebase payload in storage yet. Load a GHL builder page first, then try again.");
+      return;
+    }
+    const blob    = new Blob([res.raw], { type: "application/json" });
+    const blobUrl = URL.createObjectURL(blob);
+    chrome.downloads.download({ url: blobUrl, filename: "ghl-native.json", saveAs: false }, function() {
+      URL.revokeObjectURL(blobUrl);
+    });
+  }).catch(function(err) {
+    if (btn) { btn.disabled = false; btn.textContent = "Download JSON"; }
+    alert("Download failed: " + String(err));
   });
 }
 
