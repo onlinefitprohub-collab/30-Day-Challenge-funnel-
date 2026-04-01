@@ -203,14 +203,17 @@ function finalize(b: Builder, scheme?: SchemeColors | string): GhlPageData {
   for (const sec of b.sections) {
     const flat: GhlElem[] = [];
     const rootIds = (sec.metaData.child as string[]) ?? [];
-    function dfs(ids: string[]) {
+    const dfs = (ids: string[]): void => {
       for (const id of ids) {
         const node = b.nodes[id];
-        if (!node) continue;
+        if (!node) {
+          console.warn(`[diag] finalize: node id="${id}" not found in b.nodes (section ${sec.id}) — element will be skipped`);
+          continue;
+        }
         flat.push(node);
         dfs((node.child as string[]) ?? []);
       }
-    }
+    };
     dfs(rootIds);
     sec.elements = flat;
   }
@@ -225,6 +228,11 @@ interface SectionOpts {
 }
 
 function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void {
+  for (const rowId of rowIds) {
+    if (!b.nodes[rowId]) {
+      console.warn(`[diag] makeSection: row id="${rowId}" not found in b.nodes — this section will render blank`);
+    }
+  }
   const id = ghlId("section");
   const styles: GhlElem = {
     boxShadow:       { value: "none" },
@@ -1127,7 +1135,7 @@ function makeFaq(b: Builder, items: { question: string; answer: string }[]): str
       faqList: {
         value: items.map((item, i) => ({
           id: i + 1,
-          heading: item.question,
+          heading: `<h4>${item.question}</h4>`,
           text: `<p>${item.answer}</p>`,
           showImage: false,
           image: "",
@@ -1502,7 +1510,13 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s);
 
-  return finalize(b, s);
+  const optInResult = finalize(b, s);
+  console.log("[diag] OPT-IN FINAL sections array (" + optInResult.sections.length + " total):");
+  optInResult.sections.forEach((sec, i) => {
+    const elemCount = sec.elements?.length ?? 0;
+    console.log(`  [${i}] id=${sec.id} elements=${elemCount}`);
+  });
+  return optInResult;
 }
 
 // ── THANK YOU PAGE ────────────────────────────────────────────────────────────
@@ -1586,7 +1600,13 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 
   buildFooter(b, s);
 
-  return finalize(b, s);
+  const tyResult = finalize(b, s);
+  console.log("[diag] THANK-YOU FINAL sections array (" + tyResult.sections.length + " total):");
+  tyResult.sections.forEach((sec, i) => {
+    const elemCount = sec.elements?.length ?? 0;
+    console.log(`  [${i}] id=${sec.id} elements=${elemCount}`);
+  });
+  return tyResult;
 }
 
 // ── BOOKING PAGE ──────────────────────────────────────────────────────────────
@@ -1692,7 +1712,13 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s);
 
-  return finalize(b, s);
+  const bookingResult = finalize(b, s);
+  console.log("[diag] BOOKING FINAL sections array (" + bookingResult.sections.length + " total):");
+  bookingResult.sections.forEach((sec, i) => {
+    const elemCount = sec.elements?.length ?? 0;
+    console.log(`  [${i}] id=${sec.id} elements=${elemCount}`);
+  });
+  return bookingResult;
 }
 
 // ── All pages ─────────────────────────────────────────────────────────────────
