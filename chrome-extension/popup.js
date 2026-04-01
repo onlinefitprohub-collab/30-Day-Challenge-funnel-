@@ -817,6 +817,7 @@ async function doNativeFirebasePayload() {
       _nativeFirebaseRaw = res.raw ?? JSON.stringify(res.payload, null, 2);
       const p = res.payload;
       lines.push(`=== Native GHL Firebase Payload (captured ${new Date(p.capturedAt).toISOString().slice(11,23)}) ===`);
+      lines.push(`raw size: ${_nativeFirebaseRaw ? (_nativeFirebaseRaw.length).toLocaleString() + " chars" : "n/a"}`);
       lines.push(`sections: ${p.sectionCount}  rows: ${p.rowCount}  cols: ${p.colCount}  elems: ${p.elemCount}`);
       lines.push(`sec[0].elements exists: ${p.sec0HasElements}  len: ${p.sec0ElementsLen}`);
       lines.push(`sec[0].elements[0] keys: ${p.sec0ElemKeys}`);
