@@ -9,14 +9,18 @@ interface SchemeColors {
   accent: string;
   alt: string;
   heroGradient: string;
+  ctaSectionBackground: string;
+  socialProofBackground: string;
+  headlineFontWeight: string;
+  buttonBorderRadius: string;
 }
 
 const COLOUR_SCHEMES: Record<string, SchemeColors> = {
-  "navy-orange":  { primary: "#f97316", dark: "#0f172a", mid: "#1e293b", accent: "#ea580c", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%)" },
-  "rose-pink":    { primary: "#ec4899", dark: "#1a0010", mid: "#2d0420", accent: "#be185d", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #1a0010 0%, #2d0420 55%, #1a0010 100%)" },
-  "teal-forest":  { primary: "#14b8a6", dark: "#0a1f1e", mid: "#0f2f2e", accent: "#0d9488", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0a1f1e 0%, #0f2f2e 55%, #0a1f1e 100%)" },
-  "purple-lilac": { primary: "#a855f7", dark: "#1a0a2e", mid: "#2d1069", accent: "#9333ea", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #1a0a2e 0%, #2d1069 55%, #1a0a2e 100%)" },
-  "sky-blue":     { primary: "#38bdf8", dark: "#0f1b2d", mid: "#1e3a5f", accent: "#0ea5e9", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0f1b2d 0%, #1e3a5f 55%, #0f1b2d 100%)" },
+  "navy-orange":  { primary: "#f97316", dark: "#0f172a", mid: "#1e293b", accent: "#ea580c", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%)", ctaSectionBackground: "#f97316", socialProofBackground: "#0f172a", headlineFontWeight: "900", buttonBorderRadius: "8px" },
+  "rose-pink":    { primary: "#ec4899", dark: "#1a0010", mid: "#2d0420", accent: "#be185d", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #1a0010 0%, #2d0420 55%, #1a0010 100%)", ctaSectionBackground: "#ec4899", socialProofBackground: "#1a0010", headlineFontWeight: "900", buttonBorderRadius: "8px" },
+  "teal-forest":  { primary: "#14b8a6", dark: "#0a1f1e", mid: "#0f2f2e", accent: "#0d9488", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0a1f1e 0%, #0f2f2e 55%, #0a1f1e 100%)", ctaSectionBackground: "#14b8a6", socialProofBackground: "#0a1f1e", headlineFontWeight: "800", buttonBorderRadius: "8px" },
+  "purple-lilac": { primary: "#a855f7", dark: "#1a0a2e", mid: "#2d1069", accent: "#9333ea", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #1a0a2e 0%, #2d1069 55%, #1a0a2e 100%)", ctaSectionBackground: "#a855f7", socialProofBackground: "#1a0a2e", headlineFontWeight: "900", buttonBorderRadius: "12px" },
+  "sky-blue":     { primary: "#38bdf8", dark: "#0f1b2d", mid: "#1e3a5f", accent: "#0ea5e9", alt: "#ffffff", heroGradient: "linear-gradient(160deg, #0f1b2d 0%, #1e3a5f 55%, #0f1b2d 100%)", ctaSectionBackground: "#38bdf8", socialProofBackground: "#0f1b2d", headlineFontWeight: "800", buttonBorderRadius: "8px" },
 };
 
 function getScheme(key?: string): SchemeColors {
@@ -804,14 +808,14 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24) },
     { fontSize: sv(15) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(28) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`), borderRadius: ss(s.buttonBorderRadius) });
   const leftElIds: string[] = [badge, h1, sub, bullets, cta];
   if (lp.urgencyIdeas[0]) {
     leftElIds.push(makeParagraph(b, lp.urgencyIdeas[0],
@@ -835,14 +839,14 @@ function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, con
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), textAlign: ss("center") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16), textAlign: ss("center"), maxWidth: sv(800), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16), textAlign: ss("center"), maxWidth: sv(800), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24), textAlign: ss("center"), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(15) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(32) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`), borderRadius: ss(s.buttonBorderRadius) });
   const elIds: string[] = [badge, h1, sub, bullets, cta];
   if (lp.urgencyIdeas[0]) {
     elIds.push(makeParagraph(b, lp.urgencyIdeas[0],
@@ -858,14 +862,14 @@ function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24) },
     { fontSize: sv(14) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(28) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`), borderRadius: ss(s.buttonBorderRadius) });
   const leftElIds: string[] = [badge, h1, sub, bullets, cta];
   if (lp.urgencyIdeas[0]) {
     leftElIds.push(makeParagraph(b, lp.urgencyIdeas[0],
@@ -885,13 +889,13 @@ function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCo
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(16) },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(28) },
     { fontSize: sv(14) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}55`), borderRadius: ss(s.buttonBorderRadius) });
   const leftElIds: string[] = [badge, h1, sub, cta];
   if (lp.urgencyIdeas[0]) {
     leftElIds.push(makeParagraph(b, lp.urgencyIdeas[0],
@@ -913,14 +917,14 @@ function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, co
   const urgencyBadge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), textAlign: ss("center") });
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss("900"), lineHeight: ss("1.1"), paddingBottom: sv(20), textAlign: ss("center"), maxWidth: sv(900), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(20), textAlign: ss("center"), maxWidth: sv(900), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(32), paddingBottom: sv(14) });
   const sub = makeParagraph(b, lp.subheadline,
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(32), textAlign: ss("center"), maxWidth: sv(680), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(16) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 5), s.primary, { paddingBottom: sv(36) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 16px 40px ${s.primary}66`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 16px 40px ${s.primary}66`), borderRadius: ss(s.buttonBorderRadius) });
   const col = makeCol(b, [urgencyBadge, h1, sub, bullets, cta], 100, { align: "center", padH: 40 });
   const r = makeRow(b, [col], 800);
   makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 104, pbD: 104, ptM: 64, pbM: 64 });
@@ -1199,12 +1203,12 @@ function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy)
 
 function buildCtaCenteredColorBg(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const h2 = makeHeading(b, "Ready to start? Spots are limited.", "h2",
-    { color: ss("#ffffff"), fontSize: sv(40), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(40), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(26) });
   const urgency = makeParagraph(b, lp.urgencyIdeas[1] ?? "Claim your free spot before they're gone.",
     { color: ss("rgba(255,255,255,0.82)"), fontSize: sv(17), textAlign: ss("center"), paddingBottom: sv(36) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
+    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)"), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
   makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
@@ -1212,13 +1216,13 @@ function buildCtaCenteredColorBg(b: Builder, s: SchemeColors, lp: LandingPageCop
 
 function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const h2 = makeHeading(b, "Ready to start? Spots are limited.", "h2",
-    { color: ss("#ffffff"), fontSize: sv(36), fontWeight: ss("900"), lineHeight: ss("1.15"), paddingBottom: sv(12) },
+    { color: ss("#ffffff"), fontSize: sv(36), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.15"), paddingBottom: sv(12) },
     { fontSize: sv(24) });
   const sub = makeParagraph(b, lp.urgencyIdeas[1] ?? "Claim your free spot before they're gone.",
     { color: ss("rgba(255,255,255,0.8)"), fontSize: sv(16), lineHeight: ss("1.6") });
   const leftCol = makeCol(b, [h2, sub], 55, { padH: 32, valign: "middle" });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.2)") });
+    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.2)"), borderRadius: ss(s.buttonBorderRadius) });
   const note = makeParagraph(b, "🔒  Free · No credit card",
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(12), textAlign: ss("center"), paddingTop: sv(12) });
   const rightCol = makeCol(b, [cta, note], 45, { padH: 32, valign: "middle", align: "center" });
@@ -1228,13 +1232,13 @@ function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): v
 
 function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const h2 = makeHeading(b, "Ready to start? Spots are limited.", "h2",
-    { color: ss("#ffffff"), fontSize: sv(40), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(8), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(40), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(8), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(26) });
   const sub = makeParagraph(b, "Your spot expires when this timer runs out.",
     { color: ss("rgba(255,255,255,0.7)"), fontSize: sv(14), textAlign: ss("center"), paddingBottom: sv(20) });
   const countdown = makeCountdown(b, _heroCountdownEnd(), { paddingBottom: sv(28) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
+    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)"), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [h2, sub, countdown, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
   makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
@@ -1244,10 +1248,10 @@ function buildCtaDarkMinimal(b: Builder, s: SchemeColors, lp: LandingPageCopy): 
   const eyebrow = makeParagraph(b, "One last thing",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), paddingBottom: sv(16) });
   const h2 = makeHeading(b, "Ready to start? Spots are limited.", "h2",
-    { color: ss("#f8fafc"), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.1"), paddingBottom: sv(36), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#f8fafc"), fontSize: sv(44), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), lineHeight: ss("1.1"), paddingBottom: sv(36), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(26) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}44`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 12px 32px ${s.primary}44`), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [eyebrow, h2, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 600);
   makeSection(b, [r], { bgColor: s.dark, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
@@ -1257,12 +1261,12 @@ function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy
   const proof = makeParagraph(b, "⭐⭐⭐⭐⭐  Join 500+ coaches already inside",
     { color: ss("rgba(255,255,255,0.7)"), fontSize: sv(13), textAlign: ss("center"), paddingBottom: sv(16) });
   const h2 = makeHeading(b, "Ready to start? Spots are limited.", "h2",
-    { color: ss("#ffffff"), fontSize: sv(40), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss("#ffffff"), fontSize: sv(40), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(26) });
   const urgency = makeParagraph(b, lp.urgencyIdeas[1] ?? "Claim your free spot before they're gone.",
     { color: ss("rgba(255,255,255,0.82)"), fontSize: sv(16), textAlign: ss("center"), paddingBottom: sv(32) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)") });
+    { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)"), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [proof, h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
   makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
@@ -1286,9 +1290,9 @@ function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept:
 
 function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, variant: string): void {
   const VALID = new Set(["social-proof-stars-bullets","social-proof-centered-stat","social-proof-three-stats","social-proof-single-quote","social-proof-horizontal-badges"]);
-  const v = VALID.has(variant) ? variant : "social-proof-stars-bullets";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] social-proof-bar: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
-  console.log(`[layout-variant] social-proof-bar → ${v}`);
+  const v = VALID.has(variant) ? variant : "social-proof-three-stats";
+  if (!VALID.has(variant)) console.warn(`[layout-variant] social-proof: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  console.log(`[layout-variant] social-proof → ${v}`);
   switch (v) {
     case "social-proof-centered-stat":     return buildSocialProofCenteredStat(b, s, corePromise);
     case "social-proof-three-stats":       return buildSocialProofThreeStats(b, s, corePromise);
@@ -1348,17 +1352,23 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     const d    = data.design;
     if (!d) return base;
     return {
-      primary:      d.primaryColor               || base.primary,
-      dark:         d.darkBackground             || base.dark,
-      mid:          d.midBackground              || base.mid,
-      accent:       d.accentColor                || base.accent,
-      alt:          d.alternateSectionBackground || base.alt,
-      heroGradient: d.heroGradient               || base.heroGradient,
+      primary:               d.primaryColor               || base.primary,
+      dark:                  d.darkBackground             || base.dark,
+      mid:                   d.midBackground              || base.mid,
+      accent:                d.accentColor                || base.accent,
+      alt:                   d.alternateSectionBackground || base.alt,
+      heroGradient:          d.heroGradient               || base.heroGradient,
+      ctaSectionBackground:  d.ctaSectionBackground       || base.ctaSectionBackground,
+      socialProofBackground: d.socialProofBackground      || base.socialProofBackground,
+      headlineFontWeight:    d.headlineFontWeight         || base.headlineFontWeight,
+      buttonBorderRadius:    d.buttonBorderRadius         || base.buttonBorderRadius,
     };
   })();
   const lp      = data.landingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
-  const slv     = lp.sectionLayoutVariants ?? {};
+  // Top-level sectionLayoutVariants (new prompt) takes priority;
+  // fall back to landingPage.sectionLayoutVariants for backward compat with old records.
+  const slv     = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
 
   console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
 
@@ -1375,9 +1385,9 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
   if (!skipSocialProof) {
-    snap = countBefore("social-proof-bar");
-    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof-bar"] ?? "");
-    countAfter(snap, slv["social-proof-bar"] ?? "(none)");
+    snap = countBefore("social-proof");
+    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof"] ?? "");
+    countAfter(snap, slv["social-proof"] ?? "(none)");
   }
 
   snap = countBefore("whats-included");

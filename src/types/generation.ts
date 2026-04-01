@@ -87,6 +87,20 @@ export interface FunnelDesign {
   darkBackground?: string;
   midBackground?: string;
   alternateSectionBackground?: string;
+  ctaSectionBackground?: string;
+  socialProofBackground?: string;
+  textColorOnDark?: string;
+  textColorOnLight?: string;
+  headlineFontWeight?: string;
+  buttonBorderRadius?: string;
+}
+
+export interface SectionLayoutVariants {
+  hero?: string;
+  'social-proof'?: string;
+  'whats-included'?: string;
+  faq?: string;
+  'final-cta'?: string;
 }
 
 export interface GeneratedFunnelAssets {
@@ -103,7 +117,10 @@ export interface GeneratedFunnelAssets {
   generatedAdImages?: GeneratedAdImage[];
   colourScheme?: string;
   copywriterStyle?: string;
+  copywritingFramework?: string;
+  copywriterVoice?: string;
   design?: FunnelDesign;
+  sectionLayoutVariants?: SectionLayoutVariants;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

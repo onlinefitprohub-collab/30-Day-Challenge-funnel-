@@ -39,7 +39,7 @@ const MODEL_FAST    = "claude-haiku-4-5-20251001";
 
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
-  offerPages:  4000,  // 5 sections + design spec
+  offerPages:  5000,  // 5 sections + design spec + framework/voice/layout variants
   sequences:   2800,  // 5 SMS + 5 emails with subject + body
   adsCampaign: 2400,  // ad copy, creative prompts, campaign naming
 } as const;
@@ -83,7 +83,7 @@ export async function generateFunnelAssets(
   // Fire all 3 groups in parallel — Groups 1 & 3 use Sonnet, Group 2 uses Haiku
   const [offerPagesResult, sequencesResult, adsCampaignResult] = await Promise.all([
     callCopyGroup(
-      buildOfferPagesPrompt(context, style.promptDescription),
+      buildOfferPagesPrompt(context),
       offerPagesResponseSchema,
       "offer-pages",
       TOKENS.offerPages,
@@ -106,6 +106,7 @@ export async function generateFunnelAssets(
   ]);
 
   console.log("[design] Claude returned:", offerPagesResult.data?.design);
+  console.log("[framework] Claude selected:", offerPagesResult.data?.copywritingFramework, offerPagesResult.data?.copywriterVoice);
 
   // Log any errors for observability
   const errors = [
@@ -136,7 +137,10 @@ export async function generateFunnelAssets(
     adCopy:          adsCampaign.adCopy,
     creativePrompts: adsCampaign.creativePrompts,
     campaignNaming:  adsCampaign.campaignNaming,
-    copywriterStyle: `${style.name} — ${style.tagline}`,
-    design:          offerPages.design,
+    copywriterStyle:       `${style.name} — ${style.tagline}`,
+    copywritingFramework:  offerPages.copywritingFramework,
+    copywriterVoice:       offerPages.copywriterVoice,
+    design:                offerPages.design,
+    sectionLayoutVariants: offerPages.sectionLayoutVariants,
   };
 }

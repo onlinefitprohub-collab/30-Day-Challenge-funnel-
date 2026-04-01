@@ -87,17 +87,34 @@ export const designSchema = z.object({
   darkBackground:             z.string().optional(),
   midBackground:              z.string().optional(),
   alternateSectionBackground: z.string().optional(),
+  ctaSectionBackground:       z.string().optional(),
+  socialProofBackground:      z.string().optional(),
+  textColorOnDark:            z.string().optional(),
+  textColorOnLight:           z.string().optional(),
+  headlineFontWeight:         z.string().optional(),
+  buttonBorderRadius:         z.string().optional(),
+});
+
+export const sectionLayoutVariantsSchema = z.object({
+  hero:             z.string().optional(),
+  'social-proof':   z.string().optional(),
+  'whats-included': z.string().optional(),
+  faq:              z.string().optional(),
+  'final-cta':      z.string().optional(),
 });
 
 // ─── Group response schemas ──────────────────────────────────────────────────
 
 export const offerPagesResponseSchema = z.object({
-  offerSummary: offerSummarySchema,
-  landingPage:  landingPageSchema,
-  optInForm:    optInFormSchema,
-  thankYouPage: thankYouPageSchema,
-  bookingPage:  bookingPageSchema,
-  design:       designSchema.optional(),
+  copywritingFramework:  z.string().optional(),
+  copywriterVoice:       z.string().optional(),
+  design:                designSchema.optional(),
+  sectionLayoutVariants: sectionLayoutVariantsSchema.optional(),
+  offerSummary:          offerSummarySchema,
+  landingPage:           landingPageSchema,
+  optInForm:             optInFormSchema,
+  thankYouPage:          thankYouPageSchema,
+  bookingPage:           bookingPageSchema,
 });
 
 export const sequencesResponseSchema = z.object({

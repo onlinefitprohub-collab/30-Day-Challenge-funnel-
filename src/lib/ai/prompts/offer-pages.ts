@@ -1,102 +1,173 @@
 /**
  * Group 1: Strategy & Pages
- * Generates: offerSummary, landingPage, optInForm, thankYouPage, bookingPage, design
+ * Generates: copywritingFramework, copywriterVoice, design, sectionLayoutVariants,
+ *            offerSummary, landingPage, optInForm, thankYouPage, bookingPage
  *
  * The conversion assets — what the prospect sees before and just after opting in.
  * Every word here either earns trust or loses it. No filler.
  */
 
-export function buildOfferPagesPrompt(context: string, style: string): string {
-  return `You are a funnel designer and world-class direct response copywriter specialising in fitness coaching businesses.
+export function buildOfferPagesPrompt(context: string): string {
+  return `${context}
 
-As a funnel designer: based on the coach's brand tone and target audience below, choose a compelling colour scheme and typography scale. Pick colours that feel premium and on-brand — not generic. Use dark hero backgrounds with a strong vivid accent colour for fitness, sports, weight loss, and high-energy brands. Use lighter neutral tones with a softer accent for wellness, mindset, nutrition, and lifestyle brands. Your colour choices will be applied directly to the page — make them feel like a real designer chose them for this specific coach.
+=== YOUR ROLE ===
 
-${context}
+You are two things simultaneously:
+1. A world-class direct response copywriter trained in the methods of Dan Kennedy, Gary Halbert, Russell Brunson, Frank Kern, and Eugene Schwartz
+2. A professional funnel designer who understands colour psychology, visual hierarchy, and what makes high-converting landing pages look and feel premium in the GoHighLevel page builder
 
-=== COPYWRITING STYLE ===
+Your job is to generate a complete, high-converting 30-day challenge funnel AND a precise design specification. Every word, every colour choice, every layout decision must serve one goal: convert the right prospect into a lead or buyer.
 
-${style}
+=== STEP 1: CHOOSE YOUR COPYWRITING APPROACH ===
 
-=== YOUR TASK: STRATEGY & PAGES ===
+Select the most appropriate framework and voice for this specific offer and audience. Do not default — make a deliberate choice based on the context above.
 
-Write the five core funnel assets for this specific coach and challenge. Use the context above to make every piece of copy feel like it was written for this exact person and audience — not a generic fitness challenge template.
+FRAMEWORKS (pick one):
+- PAS: Problem → Agitate → Solution. Best for audiences who are frustrated, stuck, or have tried and failed. Name their exact problem, intensify the pain, present the challenge as the only logical solution.
+- AIDA: Attention → Interest → Desire → Action. Best for cold traffic. Hook with bold statement, build curiosity, layer desire through benefits and proof, drive action.
+- BAB: Before → After → Bridge. Best for transformation challenges where visual contrast is powerful. Paint the before state vividly, make the after state irresistible, position the challenge as the bridge.
+- STORY: Epiphany Bridge / Hero's Journey. Best for personal brand coaches with a compelling backstory. Coach shares their own transformation — audience sees themselves in the story.
+- DAN_KENNEDY_DIRECT: Interrupt → Engage → Educate → Offer. Best for sceptical, sophisticated buyers. Pattern-interrupt headline, specificity and proof, reason-why copy, no-brainer offer.
 
-─── ASSET-SPECIFIC RULES ───
+COPYWRITER VOICE (pick one that best matches the brand tone from context):
+- GARY_HALBERT: Raw, energetic, intensely personal. Writes as if speaking to one specific person. Extreme specificity ("If you're a 42-year-old dad with a beer belly and a packed calendar..."). Short punchy sentences. Urgency through vivid storytelling.
+- DAN_KENNEDY: Direct, no-nonsense, benefit-rich. Assumes the reader is smart and time-poor. Heavy on specificity, proof, reason-why copy. Unapologetic about selling. Makes the offer feel inevitable.
+- RUSSELL_BRUNSON: Story-driven, attractive character, epiphany bridge. Makes the coach the hero of a relatable journey. Conversational but structured. Helps readers see the world differently before they buy.
+- FRANK_KERN: Casual, future-pacing, results in advance. Writes like a trusted friend. Uses vivid mental imagery to put the reader into the desired future state. Disarms resistance through warmth and personality.
+- EUGENE_SCHWARTZ: Desire-focused, meets the market where it is. Writes to the reader's existing desires rather than creating new ones. Copy reads like it came from inside the reader's own head.
+
+=== STEP 2: DESIGN SPECIFICATION ===
+
+Choose a design that is visually compelling and on-brand for this specific coach, niche, and audience. Do not pick generic defaults — make deliberate choices based on the tone, audience, and niche from the context.
+
+DESIGN PRINCIPLES:
+- FITNESS / HIGH-ENERGY / TRANSFORMATION: Dark hero (deep navy, charcoal, or near-black), vivid high-contrast accent (orange, electric green, hot pink, electric blue). Creates energy, urgency, authority.
+- WELLNESS / MINDFULNESS / LIFESTYLE: Lighter base tones (warm white, cream, soft sage), muted but elegant accent (terracotta, dusty rose, forest green). Creates calm, trust, aspiration.
+- PREMIUM / HIGH-TICKET: Deep rich backgrounds (midnight navy, forest green, dark burgundy), gold or champagne accent. Creates exclusivity.
+- FEMALE-SKEWING AUDIENCE: Warmer tones, softer gradients, rose, coral, teal, or blush accents.
+- MALE-SKEWING AUDIENCE: Bold contrast, harder edges, electric, metallic, or vivid accent colours.
+
+Choose genuinely on-brand colours — not random. A hero gradient should feel designed, not default.
+
+=== STEP 3: SECTION LAYOUT VARIANTS ===
+
+Select the best layout variant for each section based on the coach's context and available assets.
+
+HERO — pick one:
+- 'hero-two-col-video': Left: headline + subheadline + CTA. Right: video embed. Best when coach has or can record an intro video. Highest-converting hero layout.
+- 'hero-centered': Full-width centred headline + subheadline + CTA. Best for bold single-hook offers. Clean and premium.
+- 'hero-two-col-image': Left: copy. Right: coach photo or result image. Best when no video available.
+- 'hero-two-col-countdown': Left: copy + CTA. Right: countdown timer. Best for cohort challenges with a real deadline.
+- 'hero-full-width': Full-width background image with centred copy overlay. Best for strong lifestyle photography.
+
+SOCIAL PROOF — pick one:
+- 'social-proof-three-stats': Three numbers side by side. Best when strong stats exist (clients, rating, results).
+- 'social-proof-stars-bullets': Star rating + 3 short proof bullets. Best for coaches with strong testimonial language.
+- 'social-proof-centered-stat': One dominant number centred. Best when one stat outweighs all others.
+- 'social-proof-single-quote': One killer client quote, large and centred. Best for high-trust personal brands.
+- 'social-proof-horizontal-badges': Row of trust badges or certification logos. Best for established coaches with credentials or press.
+
+WHAT'S INCLUDED — pick one:
+- 'included-three-col-checks': Three columns of check-mark benefits. Best for 6+ inclusions.
+- 'included-two-col-image': Image left, benefits list right. Best for visual offers with a strong programme image.
+- 'included-icon-grid': Icon grid with titles. Best for clean modern brands.
+- 'included-bold-list': Large numbered or bulleted list. Best for simple offers where clarity beats design.
+- 'included-alternating': Alternating image-text rows per inclusion. Best for premium offers where each item deserves a spotlight.
+
+FAQ — pick one:
+- 'faq-single-col': Single-column accordion. Clean and functional. Works for most cases.
+- 'faq-two-col': Two-column accordion. Best for 6+ FAQ items.
+- 'faq-image-left': Coach photo left, FAQ right. Best when social proof anchors the FAQ.
+- 'faq-numbered': Numbered FAQ items. Best for objection-heavy audiences needing structured reassurance.
+- 'faq-with-inline-cta': FAQ with CTA below. Best for long pages needing a mid-page conversion point.
+
+FINAL CTA — pick one:
+- 'cta-centered-color-bg': Centred headline + CTA on coloured background. Most conversion-tested.
+- 'cta-two-col-image': Image left, CTA right. Best when a strong result image can anchor the close.
+- 'cta-dark-minimal': Dark background, minimal copy, single large CTA. Best for premium feel.
+- 'cta-social-proof-cta': Stats or quote above the CTA. Best for sceptical audiences needing final reassurance.
+- 'cta-split-countdown': Countdown timer + CTA side by side. Best for deadline-driven cohort offers.
+
+=== STEP 4: COPY ASSETS ===
+
+Apply your selected framework and voice consistently across ALL copy below. The tone, structure, and personality must be coherent from headline to booking page.
+
+─── RULES ───
 
 OFFER SUMMARY
-- challengeConcept: 2–3 sentences. Say what it is, who runs it, how long, and what makes it work. Be concrete — name the duration, the format, the coach. No fluff.
-- targetAudienceSummary: Name the person this is for. Use their language for their frustration and their goal. If the context mentions demographic details, use them. Make the right person feel instantly seen.
-- offerPositioning: Why this vs doing nothing or buying a generic programme? Give a real reason — not "because it's the best". Be honest about what makes it different. Could be the coach's approach, the support structure, the format, the audience specificity.
-- corePromise: One sentence. The single most specific and believable outcome. Not the biggest claim — the most credible one.
+- challengeConcept: 2–3 sentences. What it is, who runs it, how it works. Concrete — name the format, duration, delivery. The elevator pitch.
+- targetAudienceSummary: The specific person this is for. Use their language for their frustration and goal. If demographics are in the context, use them.
+- offerPositioning: Why this over doing nothing, or a generic programme. Give a real reason — the coach's method, the support structure, the audience specificity.
+- corePromise: One sentence. The most specific, believable outcome. Not the biggest claim — the most credible one.
 
 LANDING PAGE
-- headlineOptions: Write 3 headlines, each taking a different angle. Rules:
-  * Angle 1: Outcome-led — the specific result they want, tied to the timeframe
-  * Angle 2: Pain-led or problem-framing — makes them feel understood
-  * Angle 3: Challenge-specific — references the format or structure in a compelling way
-  * No headline should start with "Are you..." or "Want to..."
-  * No headline should use any of the banned phrases
-  * Each headline should be testable on its own — different angle, not just rephrased
-- subheadline: 1–2 sentences that follow naturally from whichever headline they pick. Expands what the challenge is and who it's for. Sets up the opt-in without overselling.
-- bulletPoints: Write exactly 6. Format: "[specific benefit] — [brief reason it matters]". Rules:
-  * The benefit must be tied to what's in the inclusions or the challenge structure
-  * The reason must be specific to this audience's situation — not generic
-  * Don't start every bullet the same way
-  * At least one bullet should address a likely objection
-  * If bonuses exist in the context, include at least one
-- ctaText: The primary button text. Action verb first. Benefit-hinted or specificity-added. Under 6 words. Not "Click here" or "Get started".
-- sectionIdeas: 7 section briefs for the page builder. Each brief says what the section is, what goes in it, and one specific direction based on the coach's context. Not just section names — actual guidance.
-- faqItems: Write 4 FAQ pairs. Each must tackle a real objection from the context (check the "Their objections" field). Rules:
-  * Questions should sound like something the prospect would actually type or say
-  * Answers should be direct, honest, and specific — not reassuring in a vague way
-  * At least one answer should reference something specific from the inclusions or structure
-  * Don't use "Great question!" or similar opener
-- urgencyIdeas: 3 urgency tactics. Rules:
-  * Urgency 1: Real scarcity or deadline — something they can actually implement (cohort spots, intake dates, price increase)
-  * Urgency 2: Social proof momentum — others joining creates its own urgency
-  * Urgency 3: Cost of inaction — what staying stuck actually costs them (time, money, self-respect)
-  * Do NOT use fake urgency like "limited time" with no specific limit
-- sectionLayoutVariants: For each of the 5 page sections, select the single best layout variant from the lists below. Base your selection on the coach's niche, the content length, and whether visual proof elements (video/image/countdown) feel appropriate. You MUST vary your selections — do not default to the same variant across different generations or niches. Use the coach's context as a clear signal:
-  * hero: sports/fitness coaches → prefer 'hero-two-col-video'; nutrition/lifestyle/mindset coaches → prefer 'hero-centered'; online-only or cohort programmes with urgency → prefer 'hero-two-col-countdown'; established coaches with a strong visual brand → consider 'hero-two-col-image' or 'hero-full-width'
-  * social-proof-bar: if the coach has specific result numbers → prefer 'social-proof-three-stats' or 'social-proof-centered-stat'; if a testimonial quote is available → prefer 'social-proof-single-quote'; default for new coaches → 'social-proof-stars-bullets'
-  * whats-included: long benefit lists (6+ items) → prefer 'included-two-col-bullets' or 'included-single-col-numbered'; visual/transformation programmes → prefer 'included-alternating-rows' or 'included-image-left-list'; quick scannable features → 'included-three-col-checks'
-  * faq: 4+ FAQs and coaching niche → prefer 'faq-two-col'; coach has a strong photo → 'faq-image-left'; numbered/structured content → 'faq-numbered'; you want a soft CTA close → 'faq-with-inline-cta'; simple stacked → 'faq-single-col'
-  * final-cta: programmes with limited intake → prefer 'cta-with-countdown'; minimal premium feel → 'cta-dark-minimal'; social proof close → 'cta-social-proof-cta'; two-column with direct action → 'cta-two-col-form'; default → 'cta-centered-color-bg'
-  Available variant names (only output names from this list):
-  hero: hero-centered | hero-two-col-video | hero-two-col-image | hero-two-col-countdown | hero-full-width
-  social-proof-bar: social-proof-stars-bullets | social-proof-centered-stat | social-proof-three-stats | social-proof-single-quote | social-proof-horizontal-badges
-  whats-included: included-three-col-checks | included-two-col-bullets | included-image-left-list | included-single-col-numbered | included-alternating-rows
-  faq: faq-single-col | faq-two-col | faq-image-left | faq-numbered | faq-with-inline-cta
-  final-cta: cta-centered-color-bg | cta-two-col-form | cta-with-countdown | cta-dark-minimal | cta-social-proof-cta
+- headlineOptions: 3 headlines, each a different angle:
+  * Angle 1: Outcome-led — specific result tied to timeframe. Use numbers.
+  * Angle 2: Problem/identity-led — names who they are and what's holding them back. Makes them feel seen.
+  * Angle 3: Mechanism-led — what makes this challenge different from everything else they've tried.
+  Rules: No headline starts with "Are you..." or "Want to...". Each must be independently testable.
+- subheadline: 1–2 sentences. Answers "what is this and who is it for?" Reduces friction.
+- bulletPoints: Exactly 6. Format: "[specific outcome or inclusion] — [specific reason it matters to THIS audience]". At least one addresses an objection. At least one references a specific inclusion. Don't start every bullet the same way.
+- ctaText: Under 6 words. Action verb first. Benefit-hinted. Not "Get started" or "Click here".
+- sectionIdeas: Exactly 7 section briefs following this structure:
+  1. Hero — above-the-fold hook
+  2. Social proof bar — trust anchors immediately below hero
+  3. Problem/pain — agitate the struggle before presenting the solution
+  4. What's included — full offer breakdown
+  5. Testimonials/results — client wins, before/after, social proof stories
+  6. FAQ — top objections from the context
+  7. Final CTA — close with urgency and one clear action
+  Each brief includes what goes in it and one specific directional note from this coach's context.
+- faqItems: 4 FAQ pairs. Questions must sound like something the actual prospect would say out loud. Pull from the objections in the context. Answers are direct, specific, honest — no "Great question!" openers.
+- urgencyIdeas: 3 tactics for the COACH TO IMPLEMENT — these are instructions, not page copy:
+  * Real scarcity or deadline with specific mechanic
+  * Social momentum (others joining creates pull)
+  * Cost of inaction (time, money, or identity cost of staying stuck)
+  No fake urgency.
 
 OPT-IN FORM
-- recommendedFields: The minimum fields needed for the CTA type. If CTA is booking, include phone. Don't over-collect.
-- formIntroText: 1–2 lines above the form. Reinforces the main promise, reduces friction. Should feel like the coach speaking, not a UI label.
-- ctaButtonText: Matches the landing page CTA in tone and style. Same action, same voice.
+- recommendedFields: Minimum fields for the CTA type. If booking, include phone.
+- formIntroText: 1–2 lines above the form. Reinforces main promise. Coach's voice.
+- ctaButtonText: Match landing page CTA voice.
 
 THANK YOU PAGE
-- confirmationMessage: First thing they see after opting in. Warm and specific — confirms what they just signed up for. Uses {first_name} naturally. Sets the right expectation immediately.
-- nextSteps: 3 steps, ordered by priority. The most important action first. Each step is clear and specific — not "check your inbox" as a standalone instruction. Tell them what they'll find there.
-- bookingEncouragement: If CTA is booking — make skipping the call feel like a mistake. Specific about what they'll get from the call. If direct sign-up — tell them the most valuable next thing to do (join community, watch intro video, etc.).
+- confirmationMessage: First thing after opt-in. Warm, specific, uses {first_name}. Confirms exactly what they signed up for.
+- nextSteps: 3 steps, ordered by priority. Specific — not "check your inbox" as a standalone.
+- bookingEncouragement: If booking CTA — make skipping the call feel like a real mistake. If direct sign-up — the most valuable next action.
 
 BOOKING PAGE
-- shortIntro: 2–3 sentences at the top of the booking calendar page. Reassures them they made the right decision. Sets expectations without overselling the call. Acknowledges they're about to book something.
-- whyBook: 3 specific reasons to book. Each should be concrete — what they'll walk away with, not just "get expert advice".
-- expectationSetting: What happens on the call. Duration, format (Zoom/phone), rough agenda, what they don't need to prepare. Should make the call feel low-effort and high-value.
-
-DESIGN SPEC
-- heroGradient: A CSS gradient string for the hero section background. Examples: "linear-gradient(135deg, #0d1f2d 0%, #1a3a4a 100%)" for dark fitness, "linear-gradient(135deg, #fdfaf6 0%, #f0ede8 100%)" for light wellness. Make it feel premium, not generic.
-- primaryColor: The main brand colour used for buttons, accents, and highlights. A bold, vivid hex that works on both dark and light backgrounds.
-- accentColor: A slightly deeper or shifted shade of primaryColor for gradients and hover states.
-- darkBackground: The deep background colour for the hero and dark sections (e.g. "#0d1117" for near-black, "#1a0a2e" for deep purple).
-- midBackground: A step lighter than darkBackground — used for social proof bars and mid-page dark sections (e.g. "#1e2d40", "#2d1069").
-- alternateSectionBackground: A soft, light neutral for the "what's included" and FAQ sections. Should contrast cleanly with dark sections without feeling cold (e.g. "#f7f4f1" for warm cream, "#f0f6ff" for cool off-white, "#f5faf7" for soft sage).
+- shortIntro: 2–3 sentences. Reassures them, sets expectation, acknowledges they're about to book.
+- whyBook: 3 concrete reasons — what they walk away with, not "expert advice".
+- expectationSetting: Duration, format, rough agenda, what they don't need to prepare. Low-effort, high-value.
 
 ─── OUTPUT FORMAT ───
 
-Return ONLY this JSON structure. Every string field must contain actual copy, not a description of what to write:
+Return ONLY this JSON. Every string must contain actual copy — no placeholders:
 
 {
+  "copywritingFramework": "PAS",
+  "copywriterVoice": "DAN_KENNEDY",
+  "design": {
+    "heroGradient": "linear-gradient(135deg, #0d1f2d 0%, #1a3a4a 100%)",
+    "primaryColor": "#f97316",
+    "accentColor": "#f97316",
+    "darkBackground": "#0d1f2d",
+    "midBackground": "#1a2e3b",
+    "alternateSectionBackground": "#f8fafc",
+    "ctaSectionBackground": "#f97316",
+    "socialProofBackground": "#0f172a",
+    "textColorOnDark": "#ffffff",
+    "textColorOnLight": "#111827",
+    "headlineFontWeight": "900",
+    "buttonBorderRadius": "8px"
+  },
+  "sectionLayoutVariants": {
+    "hero": "hero-two-col-video",
+    "social-proof": "social-proof-three-stats",
+    "whats-included": "included-three-col-checks",
+    "faq": "faq-single-col",
+    "final-cta": "cta-centered-color-bg"
+  },
   "offerSummary": {
     "challengeConcept": "...",
     "targetAudienceSummary": "...",
@@ -115,14 +186,7 @@ Return ONLY this JSON structure. Every string field must contain actual copy, no
       { "question": "...", "answer": "..." },
       { "question": "...", "answer": "..." }
     ],
-    "urgencyIdeas": ["...", "...", "..."],
-    "sectionLayoutVariants": {
-      "hero": "hero-two-col-video",
-      "social-proof-bar": "social-proof-stars-bullets",
-      "whats-included": "included-three-col-checks",
-      "faq": "faq-single-col",
-      "final-cta": "cta-centered-color-bg"
-    }
+    "urgencyIdeas": ["...", "...", "..."]
   },
   "optInForm": {
     "recommendedFields": ["...", "..."],
@@ -138,14 +202,6 @@ Return ONLY this JSON structure. Every string field must contain actual copy, no
     "shortIntro": "...",
     "whyBook": ["...", "...", "..."],
     "expectationSetting": "..."
-  },
-  "design": {
-    "heroGradient": "linear-gradient(135deg, #0d1f2d 0%, #1a3a4a 100%)",
-    "primaryColor": "#f97316",
-    "accentColor": "#ea580c",
-    "darkBackground": "#0d1117",
-    "midBackground": "#1e293b",
-    "alternateSectionBackground": "#f7f4f1"
   }
 }`;
 }
