@@ -178,7 +178,7 @@
                 elemCount:      parsed.elements? Object.keys(parsed.elements).length: 0,
                 capturedAt:     Date.now(),
               };
-              window.__cfNativeFirebaseRaw = body.substring(0, 8000);
+              window.__cfNativeFirebaseRaw = body;
             } catch(fbErr) {
               window.__cfNativeFirebasePayload = { error: String(fbErr.message).slice(0, 200), raw: body.substring(0, 500) };
             }
