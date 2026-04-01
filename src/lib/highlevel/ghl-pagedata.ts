@@ -29,6 +29,26 @@ function getScheme(key?: string): SchemeColors {
   return COLOUR_SCHEMES[key ?? "navy-orange"] ?? COLOUR_SCHEMES["navy-orange"];
 }
 
+function resolveScheme(data: GeneratedFunnelAssets): SchemeColors {
+  const base = getScheme(data.colourScheme);
+  const d    = data.design;
+  if (!d) return base;
+  return {
+    primary:               d.primaryColor               || base.primary,
+    dark:                  d.darkBackground             || base.dark,
+    mid:                   d.midBackground              || base.mid,
+    accent:                d.accentColor                || base.accent,
+    alt:                   d.alternateSectionBackground || base.alt,
+    heroGradient:          d.heroGradient               || base.heroGradient,
+    ctaSectionBackground:  d.ctaSectionBackground       || base.ctaSectionBackground,
+    socialProofBackground: d.socialProofBackground      || base.socialProofBackground,
+    headlineFontWeight:    d.headlineFontWeight         || base.headlineFontWeight,
+    buttonBorderRadius:    d.buttonBorderRadius         || base.buttonBorderRadius,
+    textColorOnDark:       d.textColorOnDark            || base.textColorOnDark,
+    textColorOnLight:      d.textColorOnLight           || base.textColorOnLight,
+  };
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type SV  = { value: string | number | boolean | null | unknown[]; unit?: string };
@@ -1112,7 +1132,7 @@ function makeFaq(b: Builder, items: { question: string; answer: string }[]): str
       faqList: {
         value: items.map((item, i) => ({
           id: i + 1,
-          heading: `<h4>${item.question}</h4>`,
+          heading: item.question,
           text: `<p>${item.answer}</p>`,
           showImage: false,
           image: "",
@@ -1131,7 +1151,7 @@ function makeFaq(b: Builder, items: { question: string; answer: string }[]): str
       visibility: { value: { hideDesktop: false, hideMobile: false } },
       customClass: { value: [] },
     },
-    class: {},
+    class: { ...BORDER_CLASS },
     styles: {},
     wrapper: {
       marginTop: { unit: "px", value: 0 }, marginBottom: { unit: "px", value: 0 },
@@ -1285,10 +1305,15 @@ function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy
 
 // ── Layout variant dispatch ────────────────────────────────────────────────
 
+function pick(valid: readonly string[], provided?: string): string {
+  if (provided && valid.includes(provided)) return provided;
+  return valid[Math.floor(Math.random() * valid.length)];
+}
+
 function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string, variant: string): void {
-  const VALID = new Set(["hero-centered","hero-two-col-video","hero-two-col-image","hero-two-col-countdown","hero-full-width"]);
-  const v = VALID.has(variant) ? variant : "hero-two-col-video";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] hero: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  const VALID = ["hero-centered","hero-two-col-video","hero-two-col-image","hero-two-col-countdown","hero-full-width"] as const;
+  const v = pick(VALID, variant);
+  if (!VALID.includes(variant as never)) console.warn(`[layout-variant] hero: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] hero → ${v}`);
   switch (v) {
     case "hero-centered":           return buildHeroCentered(b, s, lp, concept);
@@ -1300,9 +1325,9 @@ function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept:
 }
 
 function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, variant: string): void {
-  const VALID = new Set(["social-proof-stars-bullets","social-proof-centered-stat","social-proof-three-stats","social-proof-single-quote","social-proof-horizontal-badges"]);
-  const v = VALID.has(variant) ? variant : "social-proof-three-stats";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] social-proof: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  const VALID = ["social-proof-stars-bullets","social-proof-centered-stat","social-proof-three-stats","social-proof-single-quote","social-proof-horizontal-badges"] as const;
+  const v = pick(VALID, variant);
+  if (!VALID.includes(variant as never)) console.warn(`[layout-variant] social-proof: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] social-proof → ${v}`);
   switch (v) {
     case "social-proof-centered-stat":     return buildSocialProofCenteredStat(b, s, corePromise);
@@ -1322,9 +1347,9 @@ function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy,
     "included-alternating":     "included-alternating-rows",
   };
   const resolved = ALIAS[variant] ?? variant;
-  const VALID = new Set(["included-three-col-checks","included-two-col-bullets","included-image-left-list","included-single-col-numbered","included-alternating-rows"]);
-  const v = VALID.has(resolved) ? resolved : "included-three-col-checks";
-  if (!VALID.has(resolved)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  const VALID = ["included-three-col-checks","included-two-col-bullets","included-image-left-list","included-single-col-numbered","included-alternating-rows"] as const;
+  const v = pick(VALID, resolved);
+  if (!VALID.includes(resolved as never)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] whats-included → ${v}${resolved !== variant ? ` (alias for "${variant}")` : ""}`);
   switch (v) {
     case "included-two-col-bullets":     return buildIncludedTwoColBullets(b, s, lp);
@@ -1336,9 +1361,9 @@ function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy,
 }
 
 function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
-  const VALID = new Set(["faq-single-col","faq-two-col","faq-image-left","faq-numbered","faq-with-inline-cta"]);
-  const v = VALID.has(variant) ? variant : "faq-single-col";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] faq: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  const VALID = ["faq-single-col","faq-two-col","faq-image-left","faq-numbered","faq-with-inline-cta"] as const;
+  const v = pick(VALID, variant);
+  if (!VALID.includes(variant as never)) console.warn(`[layout-variant] faq: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] faq → ${v}`);
   switch (v) {
     case "faq-two-col":         return buildFaqTwoCol(b, s, lp);
@@ -1356,9 +1381,9 @@ function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, vari
     "cta-split-countdown": "cta-with-countdown",
   };
   const resolved = ALIAS[variant] ?? variant;
-  const VALID = new Set(["cta-centered-color-bg","cta-two-col-form","cta-with-countdown","cta-dark-minimal","cta-social-proof-cta"]);
-  const v = VALID.has(resolved) ? resolved : "cta-centered-color-bg";
-  if (!VALID.has(resolved)) console.warn(`[layout-variant] final-cta: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  const VALID = ["cta-centered-color-bg","cta-two-col-form","cta-with-countdown","cta-dark-minimal","cta-social-proof-cta"] as const;
+  const v = pick(VALID, resolved);
+  if (!VALID.includes(resolved as never)) console.warn(`[layout-variant] final-cta: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] final-cta → ${v}${resolved !== variant ? ` (alias for "${variant}")` : ""}`);
   switch (v) {
     case "cta-two-col-form":     return buildCtaTwoColForm(b, s, lp);
@@ -1384,26 +1409,8 @@ function buildFooter(b: Builder, s: SchemeColors, brandName: string): void {
 
 export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   console.log("[design] applied design:", data.design);
-  const b       = createBuilder();
-  const s       = (() => {
-    const base = getScheme(data.colourScheme);
-    const d    = data.design;
-    if (!d) return base;
-    return {
-      primary:               d.primaryColor               || base.primary,
-      dark:                  d.darkBackground             || base.dark,
-      mid:                   d.midBackground              || base.mid,
-      accent:                d.accentColor                || base.accent,
-      alt:                   d.alternateSectionBackground || base.alt,
-      heroGradient:          d.heroGradient               || base.heroGradient,
-      ctaSectionBackground:  d.ctaSectionBackground       || base.ctaSectionBackground,
-      socialProofBackground: d.socialProofBackground      || base.socialProofBackground,
-      headlineFontWeight:    d.headlineFontWeight         || base.headlineFontWeight,
-      buttonBorderRadius:    d.buttonBorderRadius         || base.buttonBorderRadius,
-      textColorOnDark:       d.textColorOnDark            || base.textColorOnDark,
-      textColorOnLight:      d.textColorOnLight           || base.textColorOnLight,
-    };
-  })();
+  const b = createBuilder();
+  const s = resolveScheme(data);
   const lp      = data.landingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
   // Top-level sectionLayoutVariants (new prompt) takes priority;
@@ -1462,8 +1469,8 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
 export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
-  const s       = getScheme(data.colourScheme);
-  const form    = data.optInForm;
+  const s    = resolveScheme(data);
+  const form = data.optInForm;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
   const badge  = makeParagraph(b,
@@ -1494,14 +1501,14 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s, concept);
 
-  return finalize(b, data.colourScheme);
+  return finalize(b, s);
 }
 
 // ── THANK YOU PAGE ────────────────────────────────────────────────────────────
 
 export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
-  const s       = getScheme(data.colourScheme);
+  const s = resolveScheme(data);
   const ty      = data.thankYouPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
@@ -1541,17 +1548,17 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     );
     const stepEls = ty.nextSteps.flatMap((step, i) => [
       makeParagraph(b, `${i + 1}. ${step}`, {
-        color: ss("#374151"), fontSize: sv(15), lineHeight: ss("1.65"),
+        color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.65"),
         paddingTop: sv(16), paddingBottom: sv(16),
         paddingLeft: sv(20), paddingRight: sv(20),
-        backgroundColor: ss("#f8fafc"),
+        backgroundColor: ss(s.alt),
         borderRadius: sv(12),
         marginBottom: sv(10),
       }),
     ]);
     const c = makeCol(b, [eyebrow, h2, ...stepEls], 100, { padH: 0 });
     const r = makeRow(b, [c], 620, 24);
-    makeSection(b, [r], { bgColor: "#ffffff", ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
+    makeSection(b, [r], { bgColor: s.alt, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
   }
 
   // ── 3. BOOKING CTA ────────────────────────────────────────────────────────
@@ -1579,14 +1586,14 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 
   buildFooter(b, s, concept);
 
-  return finalize(b, data.colourScheme);
+  return finalize(b, s);
 }
 
 // ── BOOKING PAGE ──────────────────────────────────────────────────────────────
 
 export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
-  const s       = getScheme(data.colourScheme);
+  const s = resolveScheme(data);
   const bk      = data.bookingPage;
   const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
 
@@ -1621,7 +1628,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const whyItems = bk.whyBook.map((reason) =>
       makeParagraph(b, `✓  ${reason}`, {
-        color: ss("#374151"), fontSize: sv(15), lineHeight: ss("1.65"), paddingBottom: sv(12),
+        color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.65"), paddingBottom: sv(12),
       })
     );
     const expectLabel = makeParagraph(b,
@@ -1630,7 +1637,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const expectText = makeParagraph(b,
       bk.expectationSetting,
-      { color: ss("#374151"), fontSize: sv(13), lineHeight: ss("1.6") },
+      { color: ss(s.textColorOnLight), fontSize: sv(13), lineHeight: ss("1.6") },
     );
     const trustItems = ["Free 30-minute call", "No sales pressure", "100% confidential"].map((t) =>
       makeParagraph(b, `✓  ${t}`, { color: ss("#6b7280"), fontSize: sv(13), paddingBottom: sv(6) })
@@ -1652,7 +1659,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
       "📅  Drag your GHL Calendar element from the Elements panel into this column",
       { color: ss("#9ca3af"), fontSize: sv(13), textAlign: ss("center"), lineHeight: ss("1.6"),
         paddingTop: sv(32), paddingBottom: sv(32), paddingLeft: sv(24), paddingRight: sv(24),
-        backgroundColor: ss("#f8fafc"), borderRadius: sv(12) },
+        backgroundColor: ss(s.alt), borderRadius: sv(12) },
     );
     const confirmBtn = makeButton(b,
       "Confirm My Spot →", "next-step", "",
@@ -1668,7 +1675,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
 
     const r = makeRow(b, [leftCol, rightCol], 1100, 0);
-    makeSection(b, [r], { bgColor: "#f8fafc", ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
+    makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
   }
 
   // ── 3. TRUST BAR ──────────────────────────────────────────────────────────
@@ -1683,7 +1690,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s, concept);
 
-  return finalize(b, data.colourScheme);
+  return finalize(b, s);
 }
 
 // ── All pages ─────────────────────────────────────────────────────────────────
