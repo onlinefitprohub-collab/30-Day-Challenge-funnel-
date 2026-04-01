@@ -790,7 +790,6 @@ async function doNativeFirebasePayload() {
     div.textContent = "";
     btn.textContent = "Native Firebase Payload";
     hideCopyBtn("native-firebase-copy");
-    hideCopyBtn("native-firebase-download");
     _nativeFirebaseRaw = null;
     return;
   }
@@ -832,7 +831,6 @@ async function doNativeFirebasePayload() {
       div.className   = "paste-result ok";
     }
     showCopyBtn("native-firebase-copy");
-    if (_nativeFirebaseRaw) showCopyBtn("native-firebase-download");
   } catch(e) {
     div.textContent = `Error: ${e.message}`;
     div.className   = "paste-result err";
