@@ -1408,8 +1408,8 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
   const s = resolveScheme(data);
   const lp = data.landingPage;
-  // Derive a short badge label from corePromise (one sentence, ≤50 chars)
-  // challengeConcept is a multi-sentence description — never use it for labels/headings.
+  // Derive a short badge label from corePromise (8 words / ≤50 chars).
+  // corePromise is a terse outcome statement — safe for badges and hero labels.
   const badgeLabel = (data.offerSummary.corePromise ?? "Free Challenge")
     .split(" ").slice(0, 8).join(" ").slice(0, 50);
   // Top-level sectionLayoutVariants (new prompt) takes priority;
