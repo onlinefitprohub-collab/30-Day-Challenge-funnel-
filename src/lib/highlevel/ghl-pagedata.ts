@@ -944,7 +944,7 @@ function buildSocialProofStarsBullets(b: Builder, s: SchemeColors, corePromise: 
   const c4 = makeCol(b, [sep2],     4, { align: "center" });
   const c5 = makeCol(b, [noCard],  33, { align: "center" });
   const r  = makeRow(b, [c1, c2, c3, c4, c5], 1200, 24);
-  makeSection(b, [r], { bgColor: s.mid, ptD: 20, pbD: 20, ptM: 16, pbM: 16 });
+  makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 20, pbD: 20, ptM: 16, pbM: 16 });
 }
 
 function buildSocialProofCenteredStat(b: Builder, s: SchemeColors, _corePromise: string): void {
@@ -954,7 +954,7 @@ function buildSocialProofCenteredStat(b: Builder, s: SchemeColors, _corePromise:
     { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center") });
   const col = makeCol(b, [stat, label], 100, { align: "center" });
   const r = makeRow(b, [col], 480, 24);
-  makeSection(b, [r], { bgColor: s.mid, ptD: 24, pbD: 24, ptM: 16, pbM: 16 });
+  makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 24, pbD: 24, ptM: 16, pbM: 16 });
 }
 
 function buildSocialProofThreeStats(b: Builder, s: SchemeColors, _corePromise: string): void {
@@ -967,7 +967,7 @@ function buildSocialProofThreeStats(b: Builder, s: SchemeColors, _corePromise: s
   const c2 = makeStatCol("4.9★", "Average Rating");
   const c3 = makeStatCol("100%", "Free to Join");
   const r = makeRow(b, [c1, c2, c3], 800, 24);
-  makeSection(b, [r], { bgColor: s.mid, ptD: 24, pbD: 24, ptM: 16, pbM: 16 });
+  makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 24, pbD: 24, ptM: 16, pbM: 16 });
 }
 
 function buildSocialProofSingleQuote(b: Builder, s: SchemeColors, corePromise: string): void {
@@ -979,7 +979,7 @@ function buildSocialProofSingleQuote(b: Builder, s: SchemeColors, corePromise: s
     { color: ss("#64748b"), fontSize: sv(12), textAlign: ss("center") });
   const col = makeCol(b, [openQuote, quote, attr], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [col], 700, 24);
-  makeSection(b, [r], { bgColor: s.mid, ptD: 28, pbD: 28, ptM: 20, pbM: 20 });
+  makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 28, pbD: 28, ptM: 20, pbM: 20 });
 }
 
 function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromise: string): void {
@@ -990,7 +990,7 @@ function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromi
   const c2 = makeCol(b, [t2], 34, { align: "center", padH: 24 });
   const c3 = makeCol(b, [t3], 32, { align: "center", padH: 24 });
   const r = makeRow(b, [c1, c2, c3], 1100, 24);
-  makeSection(b, [r], { bgColor: s.mid, ptD: 20, pbD: 20, ptM: 16, pbM: 16 });
+  makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 20, pbD: 20, ptM: 16, pbM: 16 });
 }
 
 // ── What's included layout variants ────────────────────────────────────────
@@ -1193,7 +1193,7 @@ function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy)
   const urgency = makeParagraph(b, lp.urgencyIdeas[0] ?? "Spots are filling fast.",
     { color: ss("#374151"), fontSize: sv(15), textAlign: ss("center"), paddingTop: sv(32), paddingBottom: sv(16) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
-    { backgroundColor: ss(s.primary), boxShadow: ss(`0 8px 24px ${s.primary}44`) });
+    { backgroundColor: ss(s.primary), boxShadow: ss(`0 8px 24px ${s.primary}44`), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [heading, ...faqEls, urgency, cta], 100, { padH: 0, align: "center" });
   const r = makeRow(b, [c], 680, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1211,7 +1211,7 @@ function buildCtaCenteredColorBg(b: Builder, s: SchemeColors, lp: LandingPageCop
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)"), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bgColor: s.ctaSectionBackground, ptD: 88, pbD: 88 });
 }
 
 function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1227,7 +1227,7 @@ function buildCtaTwoColForm(b: Builder, s: SchemeColors, lp: LandingPageCopy): v
     { color: ss("rgba(255,255,255,0.6)"), fontSize: sv(12), textAlign: ss("center"), paddingTop: sv(12) });
   const rightCol = makeCol(b, [cta, note], 45, { padH: 32, valign: "middle", align: "center" });
   const r = makeRow(b, [leftCol, rightCol], 1000, 0);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
+  makeSection(b, [r], { bgColor: s.ctaSectionBackground, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
 }
 
 function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1241,7 +1241,7 @@ function buildCtaWithCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy)
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)"), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [h2, sub, countdown, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bgColor: s.ctaSectionBackground, ptD: 88, pbD: 88 });
 }
 
 function buildCtaDarkMinimal(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
@@ -1269,7 +1269,7 @@ function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy
     { backgroundColor: ss("#ffffff"), color: ss(s.primary), boxShadow: ss("0 8px 24px rgba(0,0,0,0.18)"), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [proof, h2, urgency, cta], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [c], 640);
-  makeSection(b, [r], { bg: `linear-gradient(135deg, ${s.accent} 0%, ${s.primary} 100%)`, bgColor: s.accent, ptD: 88, pbD: 88 });
+  makeSection(b, [r], { bgColor: s.ctaSectionBackground, ptD: 88, pbD: 88 });
 }
 
 // ── Layout variant dispatch ────────────────────────────────────────────────
@@ -1303,10 +1303,18 @@ function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, v
 }
 
 function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
+  // Accept both new prompt names and legacy names for backward compat
+  const ALIAS: Record<string, string> = {
+    "included-two-col-image":   "included-two-col-bullets",
+    "included-icon-grid":       "included-three-col-checks",
+    "included-bold-list":       "included-single-col-numbered",
+    "included-alternating":     "included-alternating-rows",
+  };
+  const resolved = ALIAS[variant] ?? variant;
   const VALID = new Set(["included-three-col-checks","included-two-col-bullets","included-image-left-list","included-single-col-numbered","included-alternating-rows"]);
-  const v = VALID.has(variant) ? variant : "included-three-col-checks";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
-  console.log(`[layout-variant] whats-included → ${v}`);
+  const v = VALID.has(resolved) ? resolved : "included-three-col-checks";
+  if (!VALID.has(resolved)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  console.log(`[layout-variant] whats-included → ${v}${resolved !== variant ? ` (alias for "${variant}")` : ""}`);
   switch (v) {
     case "included-two-col-bullets":     return buildIncludedTwoColBullets(b, s, lp);
     case "included-image-left-list":     return buildIncludedImageLeftList(b, s, lp);
@@ -1331,10 +1339,16 @@ function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: 
 }
 
 function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
+  // Accept both new prompt names and legacy names for backward compat
+  const ALIAS: Record<string, string> = {
+    "cta-two-col-image":  "cta-two-col-form",
+    "cta-split-countdown": "cta-with-countdown",
+  };
+  const resolved = ALIAS[variant] ?? variant;
   const VALID = new Set(["cta-centered-color-bg","cta-two-col-form","cta-with-countdown","cta-dark-minimal","cta-social-proof-cta"]);
-  const v = VALID.has(variant) ? variant : "cta-centered-color-bg";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] final-cta: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
-  console.log(`[layout-variant] final-cta → ${v}`);
+  const v = VALID.has(resolved) ? resolved : "cta-centered-color-bg";
+  if (!VALID.has(resolved)) console.warn(`[layout-variant] final-cta: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  console.log(`[layout-variant] final-cta → ${v}${resolved !== variant ? ` (alias for "${variant}")` : ""}`);
   switch (v) {
     case "cta-two-col-form":     return buildCtaTwoColForm(b, s, lp);
     case "cta-with-countdown":   return buildCtaWithCountdown(b, s, lp);
