@@ -5,7 +5,7 @@ import type { GhlSection, GhlPageData } from "@/lib/highlevel/ghl-pagedata";
 
 interface Props {
   projectId: string;
-  page: "landing";
+  page: "landing" | "optin" | "thankyou" | "booking";
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */

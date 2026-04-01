@@ -838,11 +838,10 @@ function _heroCountdownEnd(): string {
   return d.toISOString().slice(0, 16);
 }
 
-function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, badgeLabel: string): void {
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
-  const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
+  const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
@@ -865,11 +864,10 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
-function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, badgeLabel: string): void {
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), textAlign: ss("center") });
-  const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
+  const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16), textAlign: ss("center"), maxWidth: sv(800), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(30), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
@@ -884,11 +882,10 @@ function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, con
   makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 96, pbD: 96, ptM: 64, pbM: 64 });
 }
 
-function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, badgeLabel: string): void {
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
-  const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
+  const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
@@ -907,11 +904,10 @@ function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
-function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCopy, badgeLabel: string): void {
   const badge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase") });
-  const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
+  const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
   const sub = makeParagraph(b, lp.subheadline,
@@ -931,11 +927,10 @@ function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCo
   makeSection(b, [r], { bg: s.heroGradient, bgColor: s.dark, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
-function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
-  const badgeLabel = concept.replace(/^\d+-Day\s+/i, "").slice(0, 35);
+function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, badgeLabel: string): void {
   const urgencyBadge = makeParagraph(b, `🔥 ${badgeLabel} — Limited Spots`,
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), paddingTop: sv(6), paddingBottom: sv(6), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), textAlign: ss("center") });
-  const h1 = makeHeading(b, lp.headlineOptions[0] ?? `Join the Free ${concept}`, "h1",
+  const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(20), textAlign: ss("center"), maxWidth: sv(900), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(32), paddingBottom: sv(14) });
   const sub = makeParagraph(b, lp.subheadline,
@@ -1310,17 +1305,17 @@ function pick(valid: readonly string[], provided?: string): string {
   return valid[Math.floor(Math.random() * valid.length)];
 }
 
-function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string, variant: string): void {
+function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, badgeLabel: string, variant: string): void {
   const VALID = ["hero-centered","hero-two-col-video","hero-two-col-image","hero-two-col-countdown","hero-full-width"] as const;
   const v = pick(VALID, variant);
   if (!VALID.includes(variant as never)) console.warn(`[layout-variant] hero: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] hero → ${v}`);
   switch (v) {
-    case "hero-centered":           return buildHeroCentered(b, s, lp, concept);
-    case "hero-two-col-image":      return buildHeroTwoColImage(b, s, lp, concept);
-    case "hero-two-col-countdown":  return buildHeroTwoColCountdown(b, s, lp, concept);
-    case "hero-full-width":         return buildHeroFullWidth(b, s, lp, concept);
-    default:                        return buildHeroTwoColVideo(b, s, lp, concept);
+    case "hero-centered":           return buildHeroCentered(b, s, lp, badgeLabel);
+    case "hero-two-col-image":      return buildHeroTwoColImage(b, s, lp, badgeLabel);
+    case "hero-two-col-countdown":  return buildHeroTwoColCountdown(b, s, lp, badgeLabel);
+    case "hero-full-width":         return buildHeroFullWidth(b, s, lp, badgeLabel);
+    default:                        return buildHeroTwoColVideo(b, s, lp, badgeLabel);
   }
 }
 
@@ -1394,10 +1389,11 @@ function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, vari
   }
 }
 
-function buildFooter(b: Builder, s: SchemeColors, brandName: string): void {
+// TODO: replace with data.businessName once added to GeneratedFunnelAssets
+function buildFooter(b: Builder, s: SchemeColors): void {
   const year = new Date().getFullYear();
   const copy = makeParagraph(b,
-    `© ${year} ${brandName}. All rights reserved. | Privacy Policy | Terms of Service`,
+    `© ${year} All rights reserved. | Privacy Policy | Terms of Service`,
     { color: ss("rgba(255,255,255,0.5)"), fontSize: sv(12), textAlign: ss("center"), paddingBottom: sv(4) });
   const disclaimer = makeParagraph(b,
     "Results may vary. This challenge is for informational purposes only.",
@@ -1411,11 +1407,14 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   console.log("[design] applied design:", data.design);
   const b = createBuilder();
   const s = resolveScheme(data);
-  const lp      = data.landingPage;
-  const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
+  const lp = data.landingPage;
+  // Derive a short badge label from corePromise (one sentence, ≤50 chars)
+  // challengeConcept is a multi-sentence description — never use it for labels/headings.
+  const badgeLabel = (data.offerSummary.corePromise ?? "Free Challenge")
+    .split(" ").slice(0, 8).join(" ").slice(0, 50);
   // Top-level sectionLayoutVariants (new prompt) takes priority;
   // fall back to landingPage.sectionLayoutVariants for backward compat with old records.
-  const slv     = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
+  const slv = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
 
   console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
 
@@ -1426,7 +1425,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   };
 
   let snap = countBefore("hero");
-  dispatchHero(b, s, lp, concept, slv["hero"] ?? "");
+  dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");
   countAfter(snap, slv["hero"] ?? "(none)");
 
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
@@ -1453,7 +1452,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   dispatchFinalCta(b, s, lp, slv["final-cta"] ?? "");
   countAfter(snap, slv["final-cta"] ?? "(none)");
 
-  buildFooter(b, s, concept);
+  buildFooter(b, s);
 
   const result = finalize(b, s);
   console.log("[diag] FINAL sections array (" + result.sections.length + " total):");
@@ -1471,14 +1470,16 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
   const s    = resolveScheme(data);
   const form = data.optInForm;
-  const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
+  // Use formIntroText (first sentence, ≤80 chars) as the hero headline
+  const optInHeadline = (form.formIntroText ?? "")
+    .split(/[.!?]/)[0].trim().slice(0, 80) || "Claim Your Free Spot";
 
   const badge  = makeParagraph(b,
     "Step 1 of 2 — Claim Your Free Spot",
     { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
   );
   const h1 = makeHeading(b,
-    `Join the ${concept} — Free`, "h1",
+    optInHeadline, "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(28) },
   );
@@ -1499,7 +1500,7 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
     ptD: 88, pbD: 88, ptM: 56, pbM: 56,
   });
 
-  buildFooter(b, s, concept);
+  buildFooter(b, s);
 
   return finalize(b, s);
 }
@@ -1509,13 +1510,12 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
 export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
   const s = resolveScheme(data);
-  const ty      = data.thankYouPage;
-  const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
+  const ty = data.thankYouPage;
 
   // ── 1. HERO ──────────────────────────────────────────────────────────────
   {
     const badge = makeParagraph(b,
-      `🎉  You're in — Welcome to the ${concept}`,
+      "🎉  You're in — Welcome aboard!",
       { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     );
     const h1 = makeHeading(b,
@@ -1584,7 +1584,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     });
   }
 
-  buildFooter(b, s, concept);
+  buildFooter(b, s);
 
   return finalize(b, s);
 }
@@ -1594,8 +1594,10 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const b = createBuilder();
   const s = resolveScheme(data);
-  const bk      = data.bookingPage;
-  const concept = data.offerSummary.challengeConcept ?? "30-Day Challenge";
+  const bk = data.bookingPage;
+  // Use first sentence of shortIntro (≤80 chars) as the hero headline
+  const bookingHeadline = (bk.shortIntro ?? "")
+    .split(/[.!?]/)[0].trim().slice(0, 80) || "Book Your Free Strategy Call";
 
   // ── 1. HERO ──────────────────────────────────────────────────────────────
   {
@@ -1604,7 +1606,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
       { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("600"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     );
     const h1 = makeHeading(b,
-      `Book Your Free ${concept} Strategy Call`, "h1",
+      bookingHeadline, "h1",
       { color: ss(s.textColorOnDark), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(640), marginLeft: ss("auto"), marginRight: ss("auto") },
       { fontSize: sv(27) },
     );
@@ -1688,7 +1690,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     makeSection(b, [r], { bgColor: s.dark, ptD: 24, pbD: 24, ptM: 20, pbM: 20 });
   }
 
-  buildFooter(b, s, concept);
+  buildFooter(b, s);
 
   return finalize(b, s);
 }
