@@ -124,7 +124,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
             <p className="font-semibold text-amber-900">Demo content — based on your inputs</p>
             <p className="text-sm text-amber-700">
               This funnel was generated without an AI key, so the copy is structured but not fully AI-written.
-              Add <code className="rounded bg-amber-100 px-1 font-mono text-xs">OPENAI_API_KEY</code> to your
+              Add <code className="rounded bg-amber-100 px-1 font-mono text-xs">ANTHROPIC_API_KEY</code> to your
               environment and regenerate for fully tailored copy.
             </p>
           </div>

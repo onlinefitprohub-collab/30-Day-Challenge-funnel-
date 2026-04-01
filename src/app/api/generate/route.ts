@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     runId = (runData as GenerationRunRow).id;
 
     // Use real AI if API key is present, otherwise mock
-    const isMockMode = !process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY;
+    const isMockMode = !process.env.ANTHROPIC_API_KEY;
     const assets = isMockMode
       ? generateMockAssets(validatedInputs)
       : await generateFunnelAssets(validatedInputs);
