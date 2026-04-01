@@ -228,10 +228,16 @@ interface SectionOpts {
 }
 
 function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void {
-  for (const rowId of rowIds) {
-    if (!b.nodes[rowId]) {
-      console.warn(`[diag] makeSection: row id="${rowId}" not found in b.nodes — this section will render blank`);
+  const validRowIds = rowIds.filter((rowId) => {
+    if (!rowId || !b.nodes[rowId]) {
+      console.warn(`[diag] makeSection: row id="${rowId}" not found in b.nodes — skipped`);
+      return false;
     }
+    return true;
+  });
+  if (validRowIds.length === 0) {
+    console.warn(`[diag] makeSection: all ${rowIds.length} row ID(s) were invalid — section skipped to avoid blank render`);
+    return;
   }
   const id = ghlId("section");
   const styles: GhlElem = {
@@ -256,7 +262,7 @@ function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void
     metaData: {
       id,
       type:  "section",
-      child: rowIds,
+      child: validRowIds,
       class: {
         width:        { value: "fullSection" },
         borders:      { value: "noBorder" },
@@ -1533,12 +1539,12 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
       { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     );
     const h1 = makeHeading(b,
-      ty.confirmationMessage, "h1",
+      ty.confirmationMessage ?? "You're registered — we'll see you inside!", "h1",
       { color: ss(s.textColorOnDark), fontSize: sv(46), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(20), maxWidth: sv(740), marginLeft: ss("auto"), marginRight: ss("auto") },
       { fontSize: sv(28) },
     );
     const sub = makeParagraph(b,
-      ty.bookingEncouragement,
+      ty.bookingEncouragement ?? "Book your free kick-off call below to get started.",
       { color: ss("rgba(255,255,255,0.75)"), fontSize: sv(17), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(540), marginLeft: ss("auto"), marginRight: ss("auto") },
     );
     const c = makeCol(b, [badge, h1, sub], 100, { align: "center", padH: 32 });
@@ -1560,7 +1566,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
       { color: ss(s.textColorOnLight), fontSize: sv(32), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(40) },
       { fontSize: sv(22) },
     );
-    const stepEls = ty.nextSteps.flatMap((step, i) => [
+    const stepEls = (ty.nextSteps ?? []).flatMap((step, i) => [
       makeParagraph(b, `${i + 1}. ${step}`, {
         color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.65"),
         paddingTop: sv(16), paddingBottom: sv(16),
@@ -1648,7 +1654,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
       "Why Book a Call",
       { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(16) },
     );
-    const whyItems = bk.whyBook.map((reason) =>
+    const whyItems = (bk.whyBook ?? []).map((reason) =>
       makeParagraph(b, `✓  ${reason}`, {
         color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.65"), paddingBottom: sv(12),
       })
@@ -1658,7 +1664,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
       { color: ss(s.accent), fontSize: sv(13), fontWeight: ss("700"), paddingTop: sv(20), paddingBottom: sv(6) },
     );
     const expectText = makeParagraph(b,
-      bk.expectationSetting,
+      bk.expectationSetting ?? "We'll walk you through your challenge plan step by step.",
       { color: ss(s.textColorOnLight), fontSize: sv(13), lineHeight: ss("1.6") },
     );
     const trustItems = ["Free 30-minute call", "No sales pressure", "100% confidential"].map((t) =>
