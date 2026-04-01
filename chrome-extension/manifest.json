@@ -45,7 +45,8 @@
     "activeTab",
     "tabs",
     "scripting",
-    "clipboardWrite"
+    "clipboardWrite",
+    "downloads"
   ],
   "host_permissions": [
     "https://app.gohighlevel.com/*",

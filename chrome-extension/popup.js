@@ -4,6 +4,10 @@
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
 
 const PAGES = ["landing", "optin", "thankyou", "booking"];
+
+// Stores the full (untruncated) raw JSON from the last Native Firebase fetch
+let _nativeFirebaseRaw = null;
+
 const PAGE_LABELS = {
   landing:  "Landing Page",
   optin:    "Opt-In Page",
@@ -110,6 +114,7 @@ function initCopyPaste() {
   document.getElementById("api-log-copy").addEventListener("click", () => copyDebugResult("api-log-result", "api-log-copy"));
   document.getElementById("capture-clone-baseline-copy").addEventListener("click", () => copyDebugResult("capture-clone-baseline-result", "capture-clone-baseline-copy"));
   document.getElementById("native-firebase-copy").addEventListener("click", () => copyDebugResult("native-firebase-result", "native-firebase-copy"));
+  document.getElementById("native-firebase-download").addEventListener("click", doDownloadNativeFirebase);
   document.getElementById("page-load-errors-copy").addEventListener("click", () => copyDebugResult("page-load-errors-result", "page-load-errors-copy"));
   document.getElementById("page-meta-copy").addEventListener("click", () => copyDebugResult("page-meta-result", "page-meta-copy"));
 
@@ -807,6 +812,7 @@ async function doNativeFirebasePayload() {
       div.textContent = lines.join("\n");
       div.className   = "paste-result info";
     } else {
+      _nativeFirebaseRaw = res.raw ?? null;
       const p = res.payload;
       lines.push(`=== Native GHL Firebase Payload (captured ${new Date(p.capturedAt).toISOString().slice(11,23)}) ===`);
       lines.push(`sections: ${p.sectionCount}  rows: ${p.rowCount}  cols: ${p.colCount}  elems: ${p.elemCount}`);
@@ -831,6 +837,19 @@ async function doNativeFirebasePayload() {
     btn.disabled    = false;
     btn.textContent = "Native Firebase Payload";
   }
+}
+
+function doDownloadNativeFirebase() {
+  const json = _nativeFirebaseRaw;
+  if (!json) {
+    alert("No Firebase payload loaded yet — click \"Native Firebase Payload\" first.");
+    return;
+  }
+  const blob    = new Blob([json], { type: "application/json" });
+  const blobUrl = URL.createObjectURL(blob);
+  chrome.downloads.download({ url: blobUrl, filename: "ghl-payload.json", saveAs: false }, () => {
+    URL.revokeObjectURL(blobUrl);
+  });
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
