@@ -814,7 +814,7 @@ async function doNativeFirebasePayload() {
       div.textContent = lines.join("\n");
       div.className   = "paste-result info";
     } else {
-      _nativeFirebaseRaw = res.raw ?? null;
+      _nativeFirebaseRaw = res.raw ?? JSON.stringify(res.payload, null, 2);
       const p = res.payload;
       lines.push(`=== Native GHL Firebase Payload (captured ${new Date(p.capturedAt).toISOString().slice(11,23)}) ===`);
       lines.push(`sections: ${p.sectionCount}  rows: ${p.rowCount}  cols: ${p.colCount}  elems: ${p.elemCount}`);
