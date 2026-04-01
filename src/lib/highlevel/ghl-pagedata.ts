@@ -1125,9 +1125,6 @@ function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPa
 
 function makeFaq(b: Builder, items: { question: string; answer: string }[]): string {
   const id = ghlId("faq");
-  // GHL c-faq schema: faqList items use { heading (plain text question), text (HTML answer) }
-  // heading must be plain text — GHL's accordion header renders it; HTML tags break rendering.
-  console.log("[faq] makeFaq id:", id, "items:", items.length);
   b.nodes[id] = {
     extra: {
       nodeId: `c${id}`,
@@ -1180,7 +1177,6 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
   const faqEl = makeFaq(b, lp.faqItems.slice(0, 5));
-  console.log("[faq] buildFaqSingleCol col children:", [heading, faqEl]);
   const c = makeCol(b, [heading, faqEl], 100, { padH: 0 });
   const r = makeRow(b, [c], 680, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1644,7 +1640,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
       { color: ss(s.textColorOnLight), fontSize: sv(13), lineHeight: ss("1.6") },
     );
     const trustItems = ["Free 30-minute call", "No sales pressure", "100% confidential"].map((t) =>
-      makeParagraph(b, `✓  ${t}`, { color: ss("#6b7280"), fontSize: sv(13), paddingBottom: sv(6) })
+      makeParagraph(b, `✓  ${t}`, { color: ss(s.textColorOnLight), fontSize: sv(13), paddingBottom: sv(6) })
     );
     const leftCol = makeCol(b,
       [whyLabel, ...whyItems, expectLabel, expectText, makeDivider(b), ...trustItems],
@@ -1657,11 +1653,11 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const calSub = makeParagraph(b,
       "Connect your GHL Calendar element here after import.",
-      { color: ss("#9ca3af"), fontSize: sv(12), textAlign: ss("center"), paddingBottom: sv(24) },
+      { color: ss(s.textColorOnLight), fontSize: sv(12), textAlign: ss("center"), paddingBottom: sv(24) },
     );
     const calPlaceholder = makeParagraph(b,
       "📅  Drag your GHL Calendar element from the Elements panel into this column",
-      { color: ss("#9ca3af"), fontSize: sv(13), textAlign: ss("center"), lineHeight: ss("1.6"),
+      { color: ss(s.textColorOnLight), fontSize: sv(13), textAlign: ss("center"), lineHeight: ss("1.6"),
         paddingTop: sv(32), paddingBottom: sv(32), paddingLeft: sv(24), paddingRight: sv(24),
         backgroundColor: ss(s.alt), borderRadius: sv(12) },
     );
@@ -1671,7 +1667,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const calMicro = makeParagraph(b,
       "You'll receive a confirmation email immediately after booking.",
-      { color: ss("#9ca3af"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(10) },
+      { color: ss(s.textColorOnLight), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(10) },
     );
     const rightCol = makeCol(b,
       [calLabel, calSub, calPlaceholder, confirmBtn, calMicro],
@@ -1685,7 +1681,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   // ── 3. TRUST BAR ──────────────────────────────────────────────────────────
   {
     const items = ["Free 30-min call", "No sales pressure", "100% confidential"].map((t) =>
-      makeParagraph(b, `✓  ${t}`, { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center") })
+      makeParagraph(b, `✓  ${t}`, { color: ss(s.textColorOnDark), fontSize: sv(13), textAlign: ss("center") })
     );
     const cols = items.map((id) => makeCol(b, [id], 33, { align: "center" }));
     const r    = makeRow(b, cols, 720, 24);
