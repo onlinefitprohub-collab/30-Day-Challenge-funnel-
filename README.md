@@ -69,7 +69,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Your Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Your Supabase service role key (server-only) |
-| `OPENAI_API_KEY` | Yes* | OpenAI API key. If absent, mock data is used instead. |
+| `ANTHROPIC_API_KEY` | Yes* | Anthropic API key. If absent, mock data is used instead. |
 | `NEXT_PUBLIC_APP_URL` | No | Base URL of your app (e.g. `https://yourapp.com`) |
 
 ### 3. Supabase database setup
@@ -195,7 +195,7 @@ The app is already configured for Replit:
 
 ## AI fallback / mock mode
 
-If `OPENAI_API_KEY` is not set (or is over quota), the app automatically falls back to **mock mode**. Mock outputs are personalised using the wizard inputs — they follow the same structure as real AI output and are useful for demos or development.
+If `ANTHROPIC_API_KEY` is not set, the app automatically falls back to **mock mode**. Mock outputs are personalised using the wizard inputs — they follow the same structure as real AI output and are useful for demos or development.
 
 A banner is shown on the results page when mock mode is active.
 
