@@ -1125,6 +1125,9 @@ function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPa
 
 function makeFaq(b: Builder, items: { question: string; answer: string }[]): string {
   const id = ghlId("faq");
+  // GHL c-faq schema: faqList items use { heading (plain text question), text (HTML answer) }
+  // heading must be plain text — GHL's accordion header renders it; HTML tags break rendering.
+  console.log("[faq] makeFaq id:", id, "items:", items.length);
   b.nodes[id] = {
     extra: {
       nodeId: `c${id}`,
@@ -1177,6 +1180,7 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
   const faqEl = makeFaq(b, lp.faqItems.slice(0, 5));
+  console.log("[faq] buildFaqSingleCol col children:", [heading, faqEl]);
   const c = makeCol(b, [heading, faqEl], 100, { padH: 0 });
   const r = makeRow(b, [c], 680, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1479,7 +1483,7 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
   );
   const h1 = makeHeading(b,
     `Join the ${concept} — Free`, "h1",
-    { color: ss("#ffffff"), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
+    { color: ss(s.textColorOnDark), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(28) },
   );
   const intro = makeParagraph(b,
@@ -1520,7 +1524,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     );
     const h1 = makeHeading(b,
       ty.confirmationMessage, "h1",
-      { color: ss("#ffffff"), fontSize: sv(46), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(20), maxWidth: sv(740), marginLeft: ss("auto"), marginRight: ss("auto") },
+      { color: ss(s.textColorOnDark), fontSize: sv(46), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(20), maxWidth: sv(740), marginLeft: ss("auto"), marginRight: ss("auto") },
       { fontSize: sv(28) },
     );
     const sub = makeParagraph(b,
@@ -1565,7 +1569,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
   {
     const h2 = makeHeading(b,
       "One more step — book your kick-off call", "h2",
-      { color: ss("#ffffff"), fontSize: sv(36), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.15"), paddingBottom: sv(14), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
+      { color: ss(s.textColorOnDark), fontSize: sv(36), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.15"), paddingBottom: sv(14), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
       { fontSize: sv(24) },
     );
     const sub = makeParagraph(b,
@@ -1605,7 +1609,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const h1 = makeHeading(b,
       `Book Your Free ${concept} Strategy Call`, "h1",
-      { color: ss("#ffffff"), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(640), marginLeft: ss("auto"), marginRight: ss("auto") },
+      { color: ss(s.textColorOnDark), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(640), marginLeft: ss("auto"), marginRight: ss("auto") },
       { fontSize: sv(27) },
     );
     const sub = makeParagraph(b,
