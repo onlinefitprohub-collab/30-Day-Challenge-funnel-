@@ -796,6 +796,19 @@ function makeBulletList(b: Builder, items: string[], primary: string, styles: St
   return id;
 }
 
+function makeVerticalDivider(b: Builder): string {
+  return makeParagraph(b, "\u00A0", {
+    width:           ss("1px"),
+    height:          ss("40px"),
+    backgroundColor: ss("rgba(255,255,255,0.2)"),
+    marginLeft:      ss("auto"),
+    marginRight:     ss("auto"),
+    display:         ss("block"),
+    paddingTop:      sv(0),
+    paddingBottom:   sv(0),
+  });
+}
+
 // ── LANDING PAGE ──────────────────────────────────────────────────────────────
 
 // ── Hero layout variants ───────────────────────────────────────────────────
@@ -920,9 +933,9 @@ function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, co
 
 function buildSocialProofStarsBullets(b: Builder, s: SchemeColors, corePromise: string): void {
   const stars   = makeParagraph(b, "★★★★★  500+ clients", { color: ss("#fbbf24"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("600") });
-  const div1    = makeParagraph(b, "|", { color: ss("rgba(255,255,255,0.2)"), fontSize: sv(28), textAlign: ss("center"), lineHeight: ss("40px") });
+  const div1    = makeVerticalDivider(b);
   const promise = makeParagraph(b, corePromise.split(" ").slice(0, 8).join(" "), { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center") });
-  const div2    = makeParagraph(b, "|", { color: ss("rgba(255,255,255,0.2)"), fontSize: sv(28), textAlign: ss("center"), lineHeight: ss("40px") });
+  const div2    = makeVerticalDivider(b);
   const noCard  = makeParagraph(b, "Free to join — no card required", { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center") });
   const c1 = makeCol(b, [stars],   33, { align: "center" });
   const c2 = makeCol(b, [div1],     4, { align: "center" });
@@ -969,13 +982,17 @@ function buildSocialProofSingleQuote(b: Builder, s: SchemeColors, corePromise: s
 }
 
 function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromise: string): void {
-  const t1 = makeParagraph(b, "★★★★★  500+ clients", { color: ss("#fbbf24"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("600") });
-  const t2 = makeParagraph(b, corePromise.split(" ").slice(0, 8).join(" "), { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("500") });
-  const t3 = makeParagraph(b, "Free to join — no card required", { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("500") });
-  const c1 = makeCol(b, [t1], 34, { align: "center", padH: 24 });
-  const c2 = makeCol(b, [t2], 34, { align: "center", padH: 24 });
-  const c3 = makeCol(b, [t3], 32, { align: "center", padH: 24 });
-  const r = makeRow(b, [c1, c2, c3], 1100, 24);
+  const t1  = makeParagraph(b, "★★★★★  500+ clients", { color: ss("#fbbf24"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("600") });
+  const t2  = makeParagraph(b, corePromise.split(" ").slice(0, 8).join(" "), { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("500") });
+  const t3  = makeParagraph(b, "Free to join — no card required", { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center"), fontWeight: ss("500") });
+  const d1  = makeVerticalDivider(b);
+  const d2  = makeVerticalDivider(b);
+  const c1  = makeCol(b, [t1], 32, { align: "center", padH: 24 });
+  const cd1 = makeCol(b, [d1],  4, { align: "center" });
+  const c2  = makeCol(b, [t2], 28, { align: "center", padH: 24 });
+  const cd2 = makeCol(b, [d2],  4, { align: "center" });
+  const c3  = makeCol(b, [t3], 32, { align: "center", padH: 24 });
+  const r   = makeRow(b, [c1, cd1, c2, cd2, c3], 1100, 24);
   makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 28, pbD: 28, ptM: 20, pbM: 20 });
 }
 
@@ -991,9 +1008,9 @@ function buildIncludedThreeColChecks(b: Builder, s: SchemeColors, lp: LandingPag
   const headingRow = makeRow(b, [headingCol], 800, 0);
   const allBullets = lp.bulletPoints.slice(0, 9);
   const third      = Math.ceil(allBullets.length / 3);
-  const bl1        = makeBulletList(b, allBullets.slice(0, third),         s.primary);
-  const bl2        = makeBulletList(b, allBullets.slice(third, third * 2), s.primary);
-  const bl3        = makeBulletList(b, allBullets.slice(third * 2),        s.primary);
+  const bl1        = makeBulletList(b, allBullets.slice(0, third),         s.primary, { color: ss(s.textColorOnLight) });
+  const bl2        = makeBulletList(b, allBullets.slice(third, third * 2), s.primary, { color: ss(s.textColorOnLight) });
+  const bl3        = makeBulletList(b, allBullets.slice(third * 2),        s.primary, { color: ss(s.textColorOnLight) });
   const col1 = makeCol(b, [bl1], 33, { padH: 24, padV: 16 });
   const col2 = makeCol(b, [bl2], 33, { padH: 24, padV: 16 });
   const col3 = makeCol(b, [bl3], 34, { padH: 24, padV: 16 });
@@ -1011,8 +1028,8 @@ function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPage
   const headingRow = makeRow(b, [headingCol], 800, 0);
   const allBullets = lp.bulletPoints.slice(0, 8);
   const half       = Math.ceil(allBullets.length / 2);
-  const bl1        = makeBulletList(b, allBullets.slice(0, half), s.primary);
-  const bl2        = makeBulletList(b, allBullets.slice(half),    s.primary);
+  const bl1        = makeBulletList(b, allBullets.slice(0, half), s.primary, { color: ss(s.textColorOnLight) });
+  const bl2        = makeBulletList(b, allBullets.slice(half),    s.primary, { color: ss(s.textColorOnLight) });
   const leftCol    = makeCol(b, [bl1], 50, { padH: 32, padV: 16 });
   const rightCol   = makeCol(b, [bl2], 50, { padH: 32, padV: 16 });
   const bulletsRow = makeRow(b, [leftCol, rightCol], 1100, 0);
@@ -1031,7 +1048,7 @@ function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPage
   const imgNote    = makeParagraph(b, "📸 Replace with your programme photo",
     { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const imgCol     = makeCol(b, [img, imgNote], 45, { padH: 24, valign: "middle" });
-  const bl         = makeBulletList(b, lp.bulletPoints.slice(0, 6), s.primary);
+  const bl         = makeBulletList(b, lp.bulletPoints.slice(0, 6), s.primary, { color: ss(s.textColorOnLight) });
   const textCol    = makeCol(b, [bl], 55, { padH: 32, valign: "middle" });
   const contentRow = makeRow(b, [imgCol, textCol], 1100, 0);
   makeSection(b, [headingRow, contentRow], { bgColor: s.alt, ptD: 48, pbD: 64, ptM: 32, pbM: 48 });
