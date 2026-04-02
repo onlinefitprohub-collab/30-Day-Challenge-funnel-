@@ -840,7 +840,6 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 pageId:     builderId,
                 funnelId:   funnelIdFromPath,
                 locationId: "",
-                general:    {},
               };
             });
 
@@ -2957,7 +2956,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               pageId:     "(builder-target)",
               funnelId:   "(from-path)",
               locationId: "",
-              general:    {},
             };
           });
 

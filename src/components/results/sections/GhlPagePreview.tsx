@@ -114,7 +114,8 @@ function FaqAccordion({ node, vars }: { node: GhlNode; vars: Record<string, stri
 
   if (!items.length) return null;
 
-  const textColor = vars["--text-color"] ?? "#000000";
+  const rawColor = vars["--text-color"];
+  const textColor = rawColor && !rawColor.startsWith("var(") ? rawColor : "#1a1a2e";
 
   return (
     <div style={{ width: "100%" }}>
@@ -540,7 +541,7 @@ function RenderNode({
       const items = (
         extra.items as { value?: Array<{ text?: string }> }
       )?.value ?? [];
-      const color = sv(s.color, vars) ?? "#e2e8f0";
+      const color = sv(s.color, vars) ?? "#1a1a2e";
       const fontSize = sv(s.fontSize, vars) ?? "16px";
       const lineHeight = sv(s.lineHeight, vars) ?? "1.7em";
       const iconColor =
