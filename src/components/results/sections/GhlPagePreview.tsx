@@ -83,9 +83,102 @@ interface GhlNode {
 
 type NodeMap = Map<string, GhlNode>;
 
+interface FaqItem {
+  id: number;
+  heading: string;
+  text: string;
+  active: boolean;
+  showImage?: boolean;
+  image?: string;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  Element renderers                                                          */
 /* ─────────────────────────────────────────────────────────────────────────── */
+
+function stripTag(html: string, tag: string): string {
+  const open = `<${tag}>`;
+  const close = `</${tag}>`;
+  let s = html.trim();
+  if (s.startsWith(open)) s = s.slice(open.length);
+  if (s.endsWith(close)) s = s.slice(0, s.length - close.length);
+  return s.trim();
+}
+
+function FaqAccordion({ node, vars }: { node: GhlNode; vars: Record<string, string> }) {
+  const items: FaqItem[] = (node.extra?.faqList as { value?: FaqItem[] })?.value ?? [];
+  const initialOpen = items.findIndex((item) => item.active);
+  const [openIdx, setOpenIdx] = useState<number | null>(
+    initialOpen >= 0 ? initialOpen : null,
+  );
+
+  if (!items.length) return null;
+
+  const textColor = vars["--text-color"] ?? "#000000";
+
+  return (
+    <div style={{ width: "100%" }}>
+      {items.map((item, idx) => {
+        const isOpen = openIdx === idx;
+        const isLast = idx === items.length - 1;
+        const questionText = stripTag(item.heading, "h4");
+        const answerHtml = sanitizeHtml(stripTag(item.text, "p"));
+        return (
+          <div
+            key={item.id}
+            style={{
+              borderBottom: isLast ? "none" : "1px solid rgba(0,0,0,0.12)",
+            }}
+          >
+            <button
+              onClick={() => setOpenIdx(isOpen ? null : idx)}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                padding: "14px 0",
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+                textAlign: "left",
+                color: textColor,
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.4 }}>
+                {questionText}
+              </span>
+              <span
+                style={{
+                  marginLeft: 12,
+                  fontSize: 12,
+                  flexShrink: 0,
+                  display: "inline-block",
+                  transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
+              >
+                ▼
+              </span>
+            </button>
+            {isOpen && (
+              <div
+                style={{
+                  padding: "0 0 14px",
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  color: textColor,
+                  opacity: 0.85,
+                }}
+                dangerouslySetInnerHTML={{ __html: answerHtml }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function RenderChildren({
   childIds,
@@ -548,6 +641,10 @@ function RenderNode({
         </div>
       );
     }
+
+    /* ── FAQ Accordion ───────────────────────────────────────────────────── */
+    case "c-faq":
+      return <FaqAccordion node={node} vars={vars} />;
 
     default:
       return null;
