@@ -1,9 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-export function CaptureActions({ context, onCapture, onCaptureNative, onInspectPayload, loading }) {
-    if (!context)
-        return null;
-    const isPublic = context.pageType === "public-page";
-    const isEditor = context.pageType === "editor-page";
-    return (_jsxs("div", { className: "card", children: [_jsx("div", { className: "card-title", children: "Capture" }), _jsxs("div", { className: "actions-grid", children: [isPublic && (_jsxs("button", { className: "btn btn-primary", onClick: onCapture, disabled: loading, "data-testid": "btn-capture-public", children: [loading ? _jsx("div", { className: "spinner" }) : _jsx("span", { className: "btn-icon", children: "\uD83D\uDCC4" }), "Capture Public Page"] })), isEditor && (_jsxs(_Fragment, { children: [_jsxs("button", { className: "btn", onClick: onCaptureNative, disabled: true, "data-testid": "btn-capture-native", children: [_jsx("span", { className: "btn-icon", children: "\uD83D\uDD27" }), "Capture Native Page Data", _jsx("span", { style: { fontSize: "9px", color: "var(--text-muted)" }, children: "(soon)" })] }), _jsxs("button", { className: "btn", onClick: onInspectPayload, disabled: true, "data-testid": "btn-inspect-payload", children: [_jsx("span", { className: "btn-icon", children: "\uD83D\uDD0D" }), "Inspect Save Payload", _jsx("span", { style: { fontSize: "9px", color: "var(--text-muted)" }, children: "(soon)" })] })] })), !isPublic && !isEditor && (_jsxs("button", { className: "btn btn-primary", onClick: onCapture, disabled: loading, "data-testid": "btn-capture-unknown", children: [loading ? _jsx("div", { className: "spinner" }) : _jsx("span", { className: "btn-icon", children: "\uD83D\uDCC4" }), "Capture Page (Best Effort)"] }))] })] }));
-}
-//# sourceMappingURL=CaptureActions.js.map
