@@ -46,7 +46,7 @@ export async function callClaudeGroup<T>(
         model,
         max_tokens: maxTokens,
         temperature: 0.72,
-        system: CLAUDE_SYSTEM_PROMPT,
+        system: [{ type: "text", text: CLAUDE_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: prompt }],
       });
 

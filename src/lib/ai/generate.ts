@@ -11,8 +11,9 @@
  * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
  *
  * Model routing:
- *   Group 1 & 3 → claude-sonnet-4-6   (persuasive page + ad copy)
- *   Group 2     → claude-haiku-4-5-20251001  (sequences — coherent at lower cost)
+ *   Group 1 → claude-sonnet-4-6              (offer pages — most complex)
+ *   Group 2 → claude-haiku-4-5-20251001      (sequences — mechanical/templated)
+ *   Group 3 → claude-haiku-4-5-20251001      (ads campaign — structured JSON)
  *
  * Retry: claude-generate handles 529 overload errors automatically (3 attempts,
  * 2-second delay). All other failures fall back to mock.
@@ -39,7 +40,7 @@ const MODEL_FAST    = "claude-haiku-4-5-20251001";
 
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
-  offerPages:  5000,  // 5 sections + design spec + framework/voice/layout variants
+  offerPages:  2800,  // 5 sections + design spec + framework/voice/layout variants
   sequences:   2800,  // 5 SMS + 5 emails with subject + body
   adsCampaign: 2400,  // ad copy, creative prompts, campaign naming
 } as const;
@@ -101,7 +102,7 @@ export async function generateFunnelAssets(
       adsCampaignResponseSchema,
       "ads-campaign",
       TOKENS.adsCampaign,
-      MODEL_PRIMARY,
+      MODEL_FAST,
     ),
   ]);
 
