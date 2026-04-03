@@ -677,7 +677,7 @@ function makeImage(b: Builder, opts: { url?: string; width?: number } = {}): str
 
 // ── Divider ───────────────────────────────────────────────────────────────────
 
-function makeDivider(b: Builder): string {
+function makeDivider(b: Builder, styles: StyleMap = {}): string {
   const id = ghlId("el");
   b.nodes[id] = {
     extra: {
@@ -687,7 +687,7 @@ function makeDivider(b: Builder): string {
       elementVersion: { value: 2 },
     },
     class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
-    styles:        {},
+    styles:        { ...styles },
     wrapper:       { ...ELEM_WRAPPER },
     customCss:     [],
     id,
@@ -1170,33 +1170,11 @@ function makeFaqPlain(
     ids.push(q, a);
 
     if (!isLast) {
-      const divId = ghlId("el");
-      b.nodes[divId] = {
-        extra: {
-          nodeId:         `c${divId}`,
-          visibility:     VISIBILITY,
-          customClass:    { value: [] },
-          elementVersion: { value: 2 },
-        },
-        class:         { ...BORDER_CLASS, ...ANIMATION_CLASS },
-        styles: {
-          paddingTop:    { value: 8,   unit: "px" },
-          paddingBottom: { value: 0,   unit: "px" },
-          borderColor:   { value: "rgba(0,0,0,0.1)" },
-        },
-        wrapper:       { ...ELEM_WRAPPER },
-        customCss:     [],
-        id:            divId,
-        mobileStyles:  {},
-        mobileWrapper: {},
-        type:          "element",
-        child:         [],
-        meta:          "divider",
-        tagName:       "c-divider",
-        title:         "Divider",
-        tag:           "",
-      };
-      ids.push(divId);
+      ids.push(makeDivider(b, {
+        paddingTop:    sv(8),
+        paddingBottom: sv(0),
+        borderColor:   ss("rgba(0,0,0,0.1)"),
+      }));
     }
   });
 
