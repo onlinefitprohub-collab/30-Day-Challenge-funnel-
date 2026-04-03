@@ -1132,60 +1132,83 @@ function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPa
 
 // ── FAQ layout variants ────────────────────────────────────────────────────
 
-function makeFaq(b: Builder, items: { question: string; answer: string }[]): string {
-  const id = ghlId("faq");
-  b.nodes[id] = {
-    extra: {
-      nodeId: `c${id}`,
-      faqType: { value: "separated" },
-      faqList: {
-        value: items.map((item, i) => ({
-          id: i + 1,
-          heading: `<h4>${item.question}</h4>`,
-          text: `<p>${item.answer}</p>`,
-          showImage: false,
-          image: "",
-          active: i === 0,
-        })),
-      },
-      typography: { value: "var(--contentfont)" },
-      inlineTypographies: { value: [] },
-      faqCustomOptions: {
-        value: {
-          openIcon: { color: "var(--black)", fontFamily: "Font Awesome 5 Free", name: "chevron-down", unicode: "f078" },
-          closeIcon: { color: "var(--black)", fontFamily: "Font Awesome 5 Free", name: "chevron-up", unicode: "f077" },
+/**
+ * Renders FAQ items as plain paragraph + divider elements instead of the
+ * native c-faq accordion. This avoids GHL's publish hang caused by the
+ * c-faq SSR renderer processing raw HTML strings in faqList[].heading.
+ *
+ * Each item:  bold question paragraph → muted answer paragraph → subtle divider
+ * Divider is omitted after the last item.
+ * Returns a flat array of element IDs to spread into the parent column's children.
+ */
+function makeFaqPlain(
+  b: Builder,
+  items: { question: string; answer: string }[],
+  headingColor: string,
+): string[] {
+  const ids: string[] = [];
+
+  items.forEach((item, i) => {
+    const isLast = i === items.length - 1;
+
+    const q = makeParagraph(b, item.question, {
+      fontWeight:    ss("700"),
+      fontSize:      sv(16),
+      paddingTop:    sv(20),
+      paddingBottom: sv(4),
+      color:         ss(headingColor),
+    });
+
+    const a = makeParagraph(b, item.answer, {
+      fontWeight:    ss("400"),
+      fontSize:      sv(15),
+      paddingTop:    sv(0),
+      paddingBottom: sv(8),
+      color:         ss("#3a3a5c"),
+    });
+
+    ids.push(q, a);
+
+    if (!isLast) {
+      const divId = ghlId("el");
+      b.nodes[divId] = {
+        extra: {
+          nodeId:         `c${divId}`,
+          visibility:     VISIBILITY,
+          customClass:    { value: [] },
+          elementVersion: { value: 2 },
         },
-      },
-      visibility: { value: { hideDesktop: false, hideMobile: false } },
-      customClass: { value: [] },
-    },
-    class: { ...BORDER_CLASS },
-    styles: {},
-    wrapper: {
-      marginTop: { unit: "px", value: 0 }, marginBottom: { unit: "px", value: 0 },
-      marginLeft: { unit: "px", value: 0 }, marginRight: { unit: "px", value: 0 },
-      width: { value: "auto", unit: "" }, height: { value: "auto", unit: "" },
-    },
-    customCss: [],
-    id,
-    mobileStyles: {},
-    mobileWrapper: {},
-    type: "element",
-    child: [],
-    meta: "faq",
-    tagName: "c-faq",
-    title: "FAQ",
-    tag: "",
-  };
-  return id;
+        class:         { ...BORDER_CLASS, ...ANIMATION_CLASS },
+        styles: {
+          paddingTop:    { value: 8,   unit: "px" },
+          paddingBottom: { value: 0,   unit: "px" },
+          borderColor:   { value: "rgba(0,0,0,0.1)" },
+        },
+        wrapper:       { ...ELEM_WRAPPER },
+        customCss:     [],
+        id:            divId,
+        mobileStyles:  {},
+        mobileWrapper: {},
+        type:          "element",
+        child:         [],
+        meta:          "divider",
+        tagName:       "c-divider",
+        title:         "Divider",
+        tag:           "",
+      };
+      ids.push(divId);
+    }
+  });
+
+  return ids;
 }
 
 function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
-  const faqEl = makeFaq(b, lp.faqItems.slice(0, 5));
-  const c = makeCol(b, [heading, faqEl], 100, { padH: 0 });
+  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const c = makeCol(b, [heading, ...faqIds], 100, { padH: 0 });
   const r = makeRow(b, [c], 680, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
@@ -1196,8 +1219,8 @@ function buildFaqTwoCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void 
     { fontSize: sv(22) });
   const headingCol = makeCol(b, [heading], 100, { align: "center" });
   const headingRow = makeRow(b, [headingCol], 800, 0);
-  const faqEl      = makeFaq(b, lp.faqItems.slice(0, 5));
-  const faqCol     = makeCol(b, [faqEl], 100, { padH: 24 });
+  const faqIds     = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const faqCol     = makeCol(b, [...faqIds], 100, { padH: 24 });
   const faqRow     = makeRow(b, [faqCol], 1100, 0);
   makeSection(b, [headingRow, faqRow], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
@@ -1210,8 +1233,8 @@ function buildFaqImageLeft(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
   const heading = makeHeading(b, "Got Questions?", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), lineHeight: ss("1.2"), paddingBottom: sv(32) },
     { fontSize: sv(22) });
-  const faqEl   = makeFaq(b, lp.faqItems.slice(0, 5));
-  const textCol = makeCol(b, [heading, faqEl], 65, { padH: 24, valign: "top" });
+  const faqIds  = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const textCol = makeCol(b, [heading, ...faqIds], 65, { padH: 24, valign: "top" });
   const r = makeRow(b, [imgCol, textCol], 1100, 0);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
@@ -1220,8 +1243,8 @@ function buildFaqNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy): voi
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
-  const faqEl = makeFaq(b, lp.faqItems.slice(0, 5));
-  const c = makeCol(b, [heading, faqEl], 100, { padH: 0 });
+  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const c = makeCol(b, [heading, ...faqIds], 100, { padH: 0 });
   const r = makeRow(b, [c], 700, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
@@ -1230,10 +1253,10 @@ function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy)
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
-  const faqEl = makeFaq(b, lp.faqItems.slice(0, 5));
+  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 8px 24px ${s.primary}44`), borderRadius: ss(s.buttonBorderRadius) });
-  const c = makeCol(b, [heading, faqEl, cta], 100, { padH: 0, align: "center" });
+  const c = makeCol(b, [heading, ...faqIds, cta], 100, { padH: 0, align: "center" });
   const r = makeRow(b, [c], 680, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
 }
