@@ -63,22 +63,31 @@ export async function callClaudeGroup<T>(
         .replace(/\s*```\s*$/, "")
         .trim();
 
-      // If fence stripping isn't enough (e.g. Claude added preamble prose), extract
-      // the JSON object by finding the outermost { … } brackets.
-      let cleaned = fenceStripped;
-      {
+      // Step 1: parse the fence-stripped string directly
+      let parsed = safeParse(schema, fenceStripped, groupName);
+
+      // Step 2: if that fails, try extracting the outermost { … } — handles preamble
+      // prose or trailing text Claude occasionally adds despite system prompt instructions
+      if (parsed.error) {
+        console.error(
+          `[claude-generate] ${groupName} primary parse failed: ${parsed.error} | raw[0..300]: ${content.slice(0, 300).replace(/\n/g, " ")}`,
+        );
         const first = fenceStripped.indexOf("{");
         const last  = fenceStripped.lastIndexOf("}");
         if (first !== -1 && last > first) {
-          cleaned = fenceStripped.slice(first, last + 1);
+          const bracketSlice = fenceStripped.slice(first, last + 1);
+          const fallbackParsed = safeParse(schema, bracketSlice, groupName);
+          if (!fallbackParsed.error) {
+            parsed = fallbackParsed;
+          } else {
+            console.error(
+              `[claude-generate] ${groupName} bracket-extraction fallback also failed: ${fallbackParsed.error}`,
+            );
+          }
         }
       }
 
-      const parsed = safeParse(schema, cleaned, groupName);
       if (parsed.error) {
-        console.error(
-          `[claude-generate] ${parsed.error} | raw[0..300]: ${content.slice(0, 300).replace(/\n/g, " ")}`,
-        );
         return { data: null, error: parsed.error, usedFallback: false };
       }
 
