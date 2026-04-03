@@ -316,8 +316,8 @@ async function showInjectDebug() {
   let lines = [];
 
   /* ── Extension version ── */
-  lines.push("=== CF Extension v2.59.0 ===");
-  lines.push("REMINDER: If version above is NOT 2.59.0, reload the extension in chrome://extensions then hard-refresh GHL.");
+  lines.push("=== CF Extension v2.60.0 ===");
+  lines.push("REMINDER: If version above is NOT 2.60.0, reload the extension in chrome://extensions then hard-refresh GHL.");
 
   /* ── Active tab info ── */
   const tabUrl = tab?.url ?? "(unknown)";
@@ -459,6 +459,20 @@ async function showInjectDebug() {
           if (a4.patched) lines.push(`A4 patched: ${JSON.stringify(a4.patched)}`);
           lines.push(`A4 result: ${a4.result ?? "ok"} forced=${a4.forced ?? "?"}`);
           if (a4.iframeA4Error) lines.push(`A4 iframeErr: ${a4.iframeA4Error}`);
+        }
+        if (d.approach4b) {
+          const a4b = d.approach4b;
+          if (a4b.skip !== undefined) {
+            lines.push(`A4B skip: ${a4b.skip}`);
+          } else if (a4b.ok) {
+            lines.push(`A4B sync/changes: HTTP ${a4b.status} ✓ — GHL backend now has pageData`);
+          } else {
+            lines.push(`A4B sync/changes: HTTP ${a4b.status ?? "?"} error: ${a4b.error ?? "unknown"}`);
+          }
+          if (a4b.retry422) {
+            const r = a4b.retry422;
+            lines.push(`A4B retry422: HTTP ${r.status ?? "?"} ${r.ok ? "✓ ok" : `error: ${r.error ?? "?"}`}`);
+          }
         }
       } catch(_) { lines.push(`diag: ${JSON.stringify(inject.diag).slice(0, 300)}`); }
     }

@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.58.0 — Write AI sections directly to Firebase. Press F5.");
+    console.log("[CF Funnel] Installed v2.60.0 — POST pageData to GHL sync endpoint after inject. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.58.0 — Write AI sections directly to Firebase.");
+    console.log("[CF Funnel] Updated to v2.60.0 — POST pageData to GHL sync endpoint after inject.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -1033,6 +1033,60 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 }
               } else {
                 diag.approach2.clonePatchToken = 'no-old-token';
+              }
+
+              /* ── APPROACH 4B: POST pageData to GHL sync endpoint ─────────────────── *
+               * GHL Publish calls POST /prebuilt-section/sync/changes with pageData.    *
+               * Our Firebase write updates the visual rendering but NOT GHL's backend   *
+               * copy of pageData, so Publish 422s ("pageData should not be empty").     *
+               * Fix: call the same endpoint directly using revexBackendService so        *
+               * GHL's backend stores our data and Publish works.                        */
+              try {
+                if (revex && typeof revex.post === 'function') {
+                  var a4bPayload = {
+                    pageData:   wipWritePayload,
+                    locationId: locationId || targetLocId || '',
+                    pageId:     builderId,
+                  };
+                  var a4bResp   = await revex.post(
+                    'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes',
+                    a4bPayload
+                  );
+                  var a4bStatus = (typeof a4bResp?.status === 'number') ? a4bResp.status : 200;
+                  diag.approach4b = { status: a4bStatus, ok: true };
+                } else {
+                  diag.approach4b = { skip: 'revex-null-or-no-post' };
+                }
+              } catch (a4bErr) {
+                var a4bErrStatus = a4bErr?.response?.status ?? null;
+                var a4bErrMsg    = a4bErr?.response?.data?.message ?? String(a4bErr).slice(0, 120);
+                diag.approach4b = { status: a4bErrStatus, error: a4bErrMsg };
+                /* If 422 (field-shape mismatch), retry with only core page data fields */
+                if (a4bErrStatus === 422) {
+                  try {
+                    var a4bPayload2 = {
+                      pageData: {
+                        sections:   wipWritePayload.sections,
+                        settings:   wipWritePayload.settings,
+                        general:    wipWritePayload.general,
+                        pageStyles: wipWritePayload.pageStyles,
+                      },
+                      locationId: locationId || targetLocId || '',
+                      pageId:     builderId,
+                    };
+                    var a4bResp2   = await revex.post(
+                      'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes',
+                      a4bPayload2
+                    );
+                    var a4bStatus2 = (typeof a4bResp2?.status === 'number') ? a4bResp2.status : 200;
+                    diag.approach4b.retry422 = { status: a4bStatus2, ok: true };
+                  } catch (a4bErr2) {
+                    diag.approach4b.retry422 = {
+                      status: a4bErr2?.response?.status ?? null,
+                      error:  String(a4bErr2).slice(0, 80),
+                    };
+                  }
+                }
               }
 
               setTimeout(function() { window.location.reload(); }, 400);
