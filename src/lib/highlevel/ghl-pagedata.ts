@@ -109,7 +109,7 @@ const BORDER_CLASS = {
 };
 
 const ANIMATION_CLASS = {
-  entranceAnimation: { value: null },
+  entranceAnimation: { value: "" },
   animationScale:    { value: 1 },
   animationDuration: { value: 1 },
   animationDelay:    { value: 0 },
@@ -561,7 +561,7 @@ function makeButton(
       buttonBgStyle:  { value: "custom" },
       buttonVp:       { value: "btn-vp" },
       buttonHp:       { value: "btn-hp" },
-      hoverAnimation: { value: null },
+      hoverAnimation: { value: "" },
       borders:        { value: "borderFull" },
       borderRadius:   { value: "radius5" },
       radiusEdge:     { value: "none" },
@@ -1146,7 +1146,6 @@ function makeFaq(b: Builder, items: { question: string; answer: string }[]): str
           showImage: false,
           image: "",
           active: i === 0,
-          compression: false,
         })),
       },
       typography: { value: "var(--contentfont)" },
