@@ -1088,12 +1088,12 @@ function buildIncludedSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy
 // ── FAQ layout variants ────────────────────────────────────────────────────
 
 /**
- * Renders FAQ items as plain paragraph + divider elements instead of the
- * native c-faq accordion. This avoids GHL's publish hang caused by the
- * c-faq SSR renderer processing raw HTML strings in faqList[].heading.
+ * Renders FAQ items as plain paragraphs instead of the native c-faq accordion.
+ * Avoids GHL's publish hang caused by the c-faq SSR renderer processing raw
+ * HTML strings in faqList[].heading.
  *
- * Each item: bold question paragraph + muted answer paragraph.
- * No dividers — omitted to keep element count low for GHL publish.
+ * Each item: bold question paragraph + muted answer paragraph (no dividers).
+ * Dividers were removed to keep the section under 9 elements.
  * Returns a flat array of element IDs to spread into the parent column's children.
  */
 function makeFaqPlain(
@@ -1301,17 +1301,11 @@ function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy,
 }
 
 function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
-  const VALID = ["faq-single-col","faq-two-col","faq-image-left","faq-numbered","faq-with-inline-cta"] as const;
-  const v = pick(VALID, variant);
-  if (!VALID.includes(variant as never)) console.warn(`[layout-variant] faq: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
-  console.log(`[layout-variant] faq → ${v}`);
-  switch (v) {
-    case "faq-two-col":         return buildFaqTwoCol(b, s, lp);
-    case "faq-image-left":      return buildFaqImageLeft(b, s, lp);
-    case "faq-numbered":        return buildFaqNumbered(b, s, lp);
-    case "faq-with-inline-cta": return buildFaqWithInlineCta(b, s, lp);
-    default:                    return buildFaqSingleCol(b, s, lp);
-  }
+  // All variants consolidated into buildFaqSingleCol (9 elements: heading + 3×(q+a) + col + row).
+  // Other variants (two-col, image-left, with-inline-cta) exceed 9 elements due to extra
+  // structural wrappers/images/CTAs and were causing GHL publish timeouts.
+  console.log(`[layout-variant] faq → faq-single-col (AI variant "${variant || "(none)"}" ignored)`);
+  return buildFaqSingleCol(b, s, lp);
 }
 
 function dispatchFinalCta(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
