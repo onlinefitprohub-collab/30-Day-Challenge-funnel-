@@ -184,7 +184,7 @@ function buildEnvelope(s: SchemeColors): Omit<GhlPageData, "sections"> {
         customFonts: [],
         fontsToLoad: STANDARD_FONTS,
         fontsToLoadForPreview: PREVIEW_FONTS,
-        pageStyles: `body { font-family: var(--contentfont, 'Poppins', sans-serif); background-color: var(--dark, #0f172a); color: #ffffff; }`,
+        pageStyles,
       },
     },
     id: Math.random().toString(36).slice(2, 14),
@@ -218,6 +218,48 @@ function finalize(b: Builder, scheme?: SchemeColors | string): GhlPageData {
     sec.elements = flat;
   }
   return { ...buildEnvelope(s), sections: b.sections };
+}
+
+/**
+ * Post-processor: eliminates null values from animation fields and style fields
+ * on every element in every section.
+ *
+ * Root cause: GHL's own native schema uses null for un-animated elements. When
+ * the Chrome extension reads an existing GHL page from Firebase as a baseline,
+ * those native nulls flow into the write payload. This sanitizer ensures no
+ * null animation or style values escape into the final JSON regardless of source.
+ *
+ * - element.class animation fields → specific typed defaults (string / number)
+ * - element.styles fields          → any { value: null } → { value: "" }
+ */
+const ANIMATION_DEFAULTS: Record<string, string | number> = {
+  entranceAnimation: "",
+  hoverAnimation:    "",
+  animationScale:    1,
+  animationDuration: 1,
+  animationDelay:    0,
+  animationEasing:   "linear",
+};
+
+function sanitizePageData(data: GhlPageData): GhlPageData {
+  for (const section of data.sections) {
+    for (const element of section.elements) {
+      // Fix known animation fields in class with typed defaults
+      for (const [field, defaultVal] of Object.entries(ANIMATION_DEFAULTS)) {
+        const classField = (element.class as Record<string, { value: unknown }>)?.[field];
+        if (classField && classField.value === null) {
+          classField.value = defaultVal;
+        }
+      }
+      // Fix any remaining nulls in styles with generic "" fallback
+      for (const styleField of Object.values((element.styles as Record<string, { value: unknown }>) ?? {})) {
+        if (styleField && typeof styleField === "object" && styleField.value === null) {
+          styleField.value = "";
+        }
+      }
+    }
+  }
+  return data;
 }
 
 // ── Section ───────────────────────────────────────────────────────────────────
@@ -1468,7 +1510,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s);
 
-  const result = finalize(b, s);
+  const result = sanitizePageData(finalize(b, s));
   console.log("[diag] FINAL sections array (" + result.sections.length + " total):");
   result.sections.forEach((sec, i) => {
     const elemCount = sec.elements?.length ?? 0;
@@ -1516,7 +1558,7 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s);
 
-  const optInResult = finalize(b, s);
+  const optInResult = sanitizePageData(finalize(b, s));
   console.log("[diag] OPT-IN FINAL sections array (" + optInResult.sections.length + " total):");
   optInResult.sections.forEach((sec, i) => {
     const elemCount = sec.elements?.length ?? 0;
@@ -1606,7 +1648,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 
   buildFooter(b, s);
 
-  const tyResult = finalize(b, s);
+  const tyResult = sanitizePageData(finalize(b, s));
   console.log("[diag] THANK-YOU FINAL sections array (" + tyResult.sections.length + " total):");
   tyResult.sections.forEach((sec, i) => {
     const elemCount = sec.elements?.length ?? 0;
@@ -1718,7 +1760,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
 
   buildFooter(b, s);
 
-  const bookingResult = finalize(b, s);
+  const bookingResult = sanitizePageData(finalize(b, s));
   console.log("[diag] BOOKING FINAL sections array (" + bookingResult.sections.length + " total):");
   bookingResult.sections.forEach((sec, i) => {
     const elemCount = sec.elements?.length ?? 0;
