@@ -44,9 +44,9 @@ supabase/                 # DB migrations/schema
 scripts/                  # Test/generation scripts
 ```
 
-## Chrome Extension (v2.7.0)
+## Chrome Extension (v2.60.0)
 
-`chrome-extension/` is a Manifest V3 extension (v2.7.0) with two core features:
+`chrome-extension/` is a Manifest V3 extension (v2.60.0) with two core features:
 1. **AI Inject** — inject AI-generated native GHL pages directly via `revex.put()` (no API key needed)
 2. **Clone/Paste** — copy any GHL page and paste it into another builder via `clone-funnel-step`
 

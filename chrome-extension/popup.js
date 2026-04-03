@@ -474,6 +474,11 @@ async function showInjectDebug() {
             lines.push(`A4B retry422: HTTP ${r.status ?? "?"} ${r.ok ? "✓ ok" : `error: ${r.error ?? "?"}`}`);
           }
         }
+        if (d.approach4c) {
+          const a4c = d.approach4c;
+          lines.push(`A4c ok=${a4c.ok ?? "?"} result=${a4c.result ?? "?"}`);
+          if (a4c.error !== undefined) lines.push(`A4c error: ${a4c.error}`);
+        }
       } catch(_) { lines.push(`diag: ${JSON.stringify(inject.diag).slice(0, 300)}`); }
     }
   }

@@ -498,7 +498,7 @@ async function _cf_injectPageData(builderId, locationId, pageData) {
  * Returns { ok, method, diag, error? } serialised as JSON.
  * ─────────────────────────────────────────────────────────────────────────── */
 async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedBucket) {
-  var diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null };
+  var diag = { approach0: null, approach1: null, approach2: null, approach2b: null, approach3: null, approach4b: null, approach4c: null };
   try {
     /* ════════════════════════════════════════════════════════════════════════
        APPROACH 0: Write AI content to every likely GHL clipboard localStorage key.
@@ -1042,27 +1042,39 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                * Fix: call the same endpoint directly using revexBackendService so        *
                * GHL's backend stores our data and Publish works.                        */
               try {
+                var syncEndpoint4b = 'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes';
+                var tabLocId4b = (window.location.href.match(/\/location\/([^/]+)\//) || [])[1] || locationId || targetLocId || '';
+                var funnelId4b = objectPath.split('/')[1] || (wipPayload && wipPayload.funnelId) || '';
                 if (revex && typeof revex.post === 'function') {
                   var a4bPayload = {
                     pageData:   wipWritePayload,
-                    locationId: locationId || targetLocId || '',
+                    locationId: tabLocId4b,
                     pageId:     builderId,
+                    funnelId:   funnelId4b,
                   };
-                  var a4bResp   = await revex.post(
-                    'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes',
-                    a4bPayload
-                  );
+                  var a4bResp   = await revex.post(syncEndpoint4b, a4bPayload);
                   var a4bStatus = (typeof a4bResp?.status === 'number') ? a4bResp.status : 200;
                   diag.approach4b = { status: a4bStatus, ok: true };
                 } else {
-                  diag.approach4b = { skip: 'revex-null-or-no-post' };
+                  /* Fallback: direct fetch with session cookies when revex is absent */
+                  var a4bFetchRes = await fetch(syncEndpoint4b, {
+                    method:      'POST',
+                    headers:     { 'Content-Type': 'application/json' },
+                    body:        JSON.stringify({ pageData: wipWritePayload, locationId: tabLocId4b, pageId: builderId, funnelId: funnelId4b }),
+                    credentials: 'include',
+                    signal:      AbortSignal.timeout(10000),
+                  });
+                  diag.approach4b = { status: a4bFetchRes.status, ok: a4bFetchRes.ok, result: a4bFetchRes.ok ? 'fetch-sync-ok' : 'fetch-sync-err' };
+                  if (!a4bFetchRes.ok) {
+                    diag.approach4b.skip = 'revex-null-or-no-post';
+                  }
                 }
               } catch (a4bErr) {
                 var a4bErrStatus = a4bErr?.response?.status ?? null;
                 var a4bErrMsg    = a4bErr?.response?.data?.message ?? String(a4bErr).slice(0, 120);
                 diag.approach4b = { status: a4bErrStatus, error: a4bErrMsg };
                 /* If 422 (field-shape mismatch), retry with only core page data fields */
-                if (a4bErrStatus === 422) {
+                if (a4bErrStatus === 422 && revex && typeof revex.post === 'function') {
                   try {
                     var a4bPayload2 = {
                       pageData: {
@@ -1071,13 +1083,10 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                         general:    wipWritePayload.general,
                         pageStyles: wipWritePayload.pageStyles,
                       },
-                      locationId: locationId || targetLocId || '',
+                      locationId: tabLocId4b,
                       pageId:     builderId,
                     };
-                    var a4bResp2   = await revex.post(
-                      'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes',
-                      a4bPayload2
-                    );
+                    var a4bResp2   = await revex.post(syncEndpoint4b, a4bPayload2);
                     var a4bStatus2 = (typeof a4bResp2?.status === 'number') ? a4bResp2.status : 200;
                     diag.approach4b.retry422 = { status: a4bStatus2, ok: true };
                   } catch (a4bErr2) {
@@ -1089,7 +1098,37 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                 }
               }
 
-              setTimeout(function() { window.location.reload(); }, 400);
+              /* ── APPROACH 4C: Ctrl+S synthetic keydown fallback ──────────────────── *
+               * If approach 4B returned a non-200, dispatch a synthetic Ctrl+S         *
+               * keydown to the active document element. This triggers GHL's native     *
+               * save handler which serializes Vuex sections into pageData and calls     *
+               * the sync endpoint itself.                                               */
+              var reloadDelay = 400;
+              if (!diag.approach4b || !diag.approach4b.ok) {
+                try {
+                  var ctrlSTarget = document.activeElement || document.body || document.documentElement;
+                  var ctrlSEvent = new KeyboardEvent('keydown', {
+                    key:        's',
+                    code:       'KeyS',
+                    keyCode:    83,
+                    which:      83,
+                    ctrlKey:    true,
+                    metaKey:    false,
+                    bubbles:    true,
+                    cancelable: true,
+                  });
+                  ctrlSTarget.dispatchEvent(ctrlSEvent);
+                  diag.approach4c = { ok: true, result: 'ctrlS-dispatched', target: ctrlSTarget.tagName || 'unknown' };
+                  /* Give GHL's native save handler time to complete before reload */
+                  reloadDelay = 1500;
+                } catch (_a4c) {
+                  diag.approach4c = { ok: false, result: 'ctrlS-err', error: String(_a4c).slice(0, 80) };
+                }
+              } else {
+                diag.approach4c = { ok: false, result: 'skipped-4b-succeeded' };
+              }
+
+              setTimeout(function() { window.location.reload(); }, reloadDelay);
               return JSON.stringify({ ok: true, method: 'write-in-place', diag: diag });
             } catch(_wipErr) {
               diag.approach2.wipErr = String(_wipErr).slice(0, 120);
