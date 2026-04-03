@@ -1068,108 +1068,21 @@ function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromi
 }
 
 // ── What's included layout variants ────────────────────────────────────────
+// Single consolidated layout: eyebrow + h2 + ONE c-bullet-list = 5 elements total.
+// All AI-suggested variant names route here; multi-column variants removed to
+// eliminate the element-count explosion that caused GHL publish timeouts.
 
-function buildIncludedThreeColChecks(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
-  const eyebrow    = makeParagraph(b, "What You'll Get",
-    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2         = makeHeading(b, "Everything included in your free challenge", "h2",
-    { color: ss(s.textColorOnLight), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
-    { fontSize: sv(24), paddingBottom: sv(12) });
-  const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
-  const headingRow = makeRow(b, [headingCol], 800, 0);
-  const allBullets = lp.bulletPoints.slice(0, 9);
-  const third      = Math.ceil(allBullets.length / 3);
-  const bl1        = makeBulletList(b, allBullets.slice(0, third),         s.primary, { color: ss(s.textColorOnLight) });
-  const bl2        = makeBulletList(b, allBullets.slice(third, third * 2), s.primary, { color: ss(s.textColorOnLight) });
-  const bl3        = makeBulletList(b, allBullets.slice(third * 2),        s.primary, { color: ss(s.textColorOnLight) });
-  const col1 = makeCol(b, [bl1], 33, { padH: 24, padV: 16 });
-  const col2 = makeCol(b, [bl2], 33, { padH: 24, padV: 16 });
-  const col3 = makeCol(b, [bl3], 34, { padH: 24, padV: 16 });
-  const bulletsRow = makeRow(b, [col1, col2, col3], 1200, 0);
-  makeSection(b, [headingRow, bulletsRow], { bgColor: s.alt, ptD: 48, pbD: 64, ptM: 32, pbM: 48 });
-}
-
-function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+function buildIncludedSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
   const eyebrow = makeParagraph(b, "What You'll Get",
-    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
+    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(12), textAlign: ss("center") });
   const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
-    { color: ss(s.textColorOnLight), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
-    { fontSize: sv(24) });
-  const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
-  const headingRow = makeRow(b, [headingCol], 800, 0);
-  const allBullets = lp.bulletPoints.slice(0, 8);
-  const half       = Math.ceil(allBullets.length / 2);
-  const bl1        = makeBulletList(b, allBullets.slice(0, half), s.primary, { color: ss(s.textColorOnLight) });
-  const bl2        = makeBulletList(b, allBullets.slice(half),    s.primary, { color: ss(s.textColorOnLight) });
-  const leftCol    = makeCol(b, [bl1], 50, { padH: 32, padV: 16 });
-  const rightCol   = makeCol(b, [bl2], 50, { padH: 32, padV: 16 });
-  const bulletsRow = makeRow(b, [leftCol, rightCol], 1100, 0);
-  makeSection(b, [headingRow, bulletsRow], { bgColor: s.alt, ptD: 48, pbD: 64, ptM: 32, pbM: 48 });
-}
-
-function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
-  const eyebrow    = makeParagraph(b, "What You'll Get",
-    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2         = makeHeading(b, "Everything included in your free challenge", "h2",
-    { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
-    { fontSize: sv(22) });
-  const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
-  const headingRow = makeRow(b, [headingCol], 800, 0);
-  const img        = makeImage(b, { width: 520 });
-  const imgNote    = makeParagraph(b, "📸 Replace with your programme photo",
-    { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
-  const imgCol     = makeCol(b, [img, imgNote], 45, { padH: 24, valign: "middle" });
-  const bl         = makeBulletList(b, lp.bulletPoints.slice(0, 6), s.primary, { color: ss(s.textColorOnLight) });
-  const textCol    = makeCol(b, [bl], 55, { padH: 32, valign: "middle" });
-  const contentRow = makeRow(b, [imgCol, textCol], 1100, 0);
-  makeSection(b, [headingRow, contentRow], { bgColor: s.alt, ptD: 48, pbD: 64, ptM: 32, pbM: 48 });
-}
-
-function buildIncludedSingleColNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
-  const eyebrow    = makeParagraph(b, "What You'll Get",
-    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2         = makeHeading(b, "Everything included in your free challenge", "h2",
-    { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
-    { fontSize: sv(22) });
-  const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
-  const headingRow = makeRow(b, [headingCol], 800, 0);
-  const bullets    = lp.bulletPoints.slice(0, 6);
-  const itemEls    = bullets.flatMap((txt, i) => {
-    const num   = makeParagraph(b, String(i + 1).padStart(2, "0"),
-      { color: ss(s.primary), fontSize: sv(28), fontWeight: ss("900"), lineHeight: ss("1"), paddingBottom: sv(4) });
-    const label = makeParagraph(b, txt,
-      { color: ss(s.textColorOnLight), fontSize: sv(16), lineHeight: ss("1.6"), paddingBottom: sv(24) });
-    return i < bullets.length - 1 ? [num, label, makeDivider(b)] : [num, label];
-  });
-  const contentCol = makeCol(b, itemEls, 100, { padH: 0 });
-  const contentRow = makeRow(b, [contentCol], 640, 24);
-  makeSection(b, [headingRow, contentRow], { bgColor: s.alt, ptD: 48, pbD: 64, ptM: 32, pbM: 48 });
-}
-
-function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
-  const eyebrow    = makeParagraph(b, "What You'll Get",
-    { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2         = makeHeading(b, "Everything included in your free challenge", "h2",
-    { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
-    { fontSize: sv(22) });
-  const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
-  const headingRow = makeRow(b, [headingCol], 800, 0);
-  const pairs = lp.bulletPoints.slice(0, 3);
-  const altRows = pairs.map((txt, i) => {
-    const img     = makeImage(b, { width: 420 });
-    const imgNote = makeParagraph(b, "📸 Replace with your programme photo",
-      { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
-    const imgCol  = makeCol(b, [img, imgNote], 45, { padH: 24, valign: "middle" });
-    const num     = makeParagraph(b, String(i + 1).padStart(2, "0"),
-      { color: ss(s.primary), fontSize: sv(24), fontWeight: ss("900"), paddingBottom: sv(4) });
-    const label   = makeParagraph(b, txt,
-      { color: ss(s.textColorOnLight), fontSize: sv(16), lineHeight: ss("1.65") });
-    const textCol = makeCol(b, [num, label], 55, { padH: 32, valign: "middle" });
-    return i % 2 === 0
-      ? makeRow(b, [imgCol, textCol], 1100, 0)
-      : makeRow(b, [textCol, imgCol], 1100, 0);
-  });
-  makeSection(b, [headingRow, ...altRows], { bgColor: s.alt, ptD: 48, pbD: 64, ptM: 32, pbM: 48 });
+    { color: ss(s.textColorOnLight), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(32), textAlign: ss("center") },
+    { fontSize: sv(24), paddingBottom: sv(20) });
+  const bl = makeBulletList(b, lp.bulletPoints.slice(0, 6), s.primary,
+    { color: ss(s.textColorOnLight), fontSize: sv(16) });
+  const c = makeCol(b, [eyebrow, h2, bl], 100, { align: "center", padH: 32 });
+  const r = makeRow(b, [c], 720, 24);
+  makeSection(b, [r], { bgColor: s.alt, ptD: 56, pbD: 64, ptM: 40, pbM: 48 });
 }
 
 // ── FAQ layout variants ────────────────────────────────────────────────────
@@ -1179,8 +1092,8 @@ function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPa
  * native c-faq accordion. This avoids GHL's publish hang caused by the
  * c-faq SSR renderer processing raw HTML strings in faqList[].heading.
  *
- * Each item:  bold question paragraph → muted answer paragraph → subtle divider
- * Divider is omitted after the last item.
+ * Each item: bold question paragraph + muted answer paragraph.
+ * No dividers — omitted to keep element count low for GHL publish.
  * Returns a flat array of element IDs to spread into the parent column's children.
  */
 function makeFaqPlain(
@@ -1190,9 +1103,7 @@ function makeFaqPlain(
 ): string[] {
   const ids: string[] = [];
 
-  items.forEach((item, i) => {
-    const isLast = i === items.length - 1;
-
+  items.forEach((item) => {
     const q = makeParagraph(b, item.question, {
       fontWeight:    ss("700"),
       fontSize:      sv(16),
@@ -1210,14 +1121,6 @@ function makeFaqPlain(
     });
 
     ids.push(q, a);
-
-    if (!isLast) {
-      ids.push(makeDivider(b, {
-        paddingTop:    sv(8),
-        paddingBottom: sv(0),
-        borderColor:   ss("rgba(0,0,0,0.1)"),
-      }));
-    }
   });
 
   return ids;
@@ -1227,7 +1130,7 @@ function buildFaqSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
-  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 3), s.textColorOnLight);
   const c = makeCol(b, [heading, ...faqIds], 100, { padH: 0 });
   const r = makeRow(b, [c], 680, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1239,7 +1142,7 @@ function buildFaqTwoCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void 
     { fontSize: sv(22) });
   const headingCol = makeCol(b, [heading], 100, { align: "center" });
   const headingRow = makeRow(b, [headingCol], 800, 0);
-  const faqIds     = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const faqIds     = makeFaqPlain(b, lp.faqItems.slice(0, 3), s.textColorOnLight);
   const faqCol     = makeCol(b, [...faqIds], 100, { padH: 24 });
   const faqRow     = makeRow(b, [faqCol], 1100, 0);
   makeSection(b, [headingRow, faqRow], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1253,7 +1156,7 @@ function buildFaqImageLeft(b: Builder, s: SchemeColors, lp: LandingPageCopy): vo
   const heading = makeHeading(b, "Got Questions?", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), lineHeight: ss("1.2"), paddingBottom: sv(32) },
     { fontSize: sv(22) });
-  const faqIds  = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const faqIds  = makeFaqPlain(b, lp.faqItems.slice(0, 3), s.textColorOnLight);
   const textCol = makeCol(b, [heading, ...faqIds], 65, { padH: 24, valign: "top" });
   const r = makeRow(b, [imgCol, textCol], 1100, 0);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1263,7 +1166,7 @@ function buildFaqNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy): voi
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
-  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 3), s.textColorOnLight);
   const c = makeCol(b, [heading, ...faqIds], 100, { padH: 0 });
   const r = makeRow(b, [c], 700, 24);
   makeSection(b, [r], { bgColor: s.alt, ptD: 72, pbD: 80, ptM: 48, pbM: 56 });
@@ -1273,7 +1176,7 @@ function buildFaqWithInlineCta(b: Builder, s: SchemeColors, lp: LandingPageCopy)
   const heading = makeHeading(b, "Frequently Asked Questions", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(34), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
     { fontSize: sv(22) });
-  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 5), s.textColorOnLight);
+  const faqIds = makeFaqPlain(b, lp.faqItems.slice(0, 3), s.textColorOnLight);
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
     { backgroundColor: ss(s.primary), boxShadow: ss(`0 8px 24px ${s.primary}44`), borderRadius: ss(s.buttonBorderRadius) });
   const c = makeCol(b, [heading, ...faqIds, cta], 100, { padH: 0, align: "center" });
@@ -1390,25 +1293,11 @@ function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, v
 }
 
 function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
-  // Accept both new prompt names and legacy names for backward compat
-  const ALIAS: Record<string, string> = {
-    "included-two-col-image":   "included-two-col-bullets",
-    "included-icon-grid":       "included-three-col-checks",
-    "included-bold-list":       "included-single-col-numbered",
-    "included-alternating":     "included-alternating-rows",
-  };
-  const resolved = ALIAS[variant] ?? variant;
-  const VALID = ["included-three-col-checks","included-two-col-bullets","included-image-left-list","included-single-col-numbered","included-alternating-rows"] as const;
-  const v = pick(VALID, resolved);
-  if (!VALID.includes(resolved as never)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
-  console.log(`[layout-variant] whats-included → ${v}${resolved !== variant ? ` (alias for "${variant}")` : ""}`);
-  switch (v) {
-    case "included-two-col-bullets":     return buildIncludedTwoColBullets(b, s, lp);
-    case "included-image-left-list":     return buildIncludedImageLeftList(b, s, lp);
-    case "included-single-col-numbered": return buildIncludedSingleColNumbered(b, s, lp);
-    case "included-alternating-rows":    return buildIncludedAlternatingRows(b, s, lp);
-    default:                             return buildIncludedThreeColChecks(b, s, lp);
-  }
+  // All variants consolidated into one single-col bullet-list layout (5 elements).
+  // Multi-column variants were removed — they produced 11–25 elements and caused
+  // GHL publish timeouts at 121KB / 63 total elements.
+  console.log(`[layout-variant] whats-included → included-single-col (AI variant "${variant || "(none)"}" ignored)`);
+  return buildIncludedSingleCol(b, s, lp);
 }
 
 function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
