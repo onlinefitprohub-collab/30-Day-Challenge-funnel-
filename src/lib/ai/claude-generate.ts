@@ -58,14 +58,27 @@ export async function callClaudeGroup<T>(
       }
 
       // Claude sometimes wraps JSON in ```json fences despite instructions — strip them
-      const cleaned = content
+      const fenceStripped = content
         .replace(/^```(?:json)?\s*/i, "")
         .replace(/\s*```\s*$/, "")
         .trim();
 
+      // If fence stripping isn't enough (e.g. Claude added preamble prose), extract
+      // the JSON object by finding the outermost { … } brackets.
+      let cleaned = fenceStripped;
+      {
+        const first = fenceStripped.indexOf("{");
+        const last  = fenceStripped.lastIndexOf("}");
+        if (first !== -1 && last > first) {
+          cleaned = fenceStripped.slice(first, last + 1);
+        }
+      }
+
       const parsed = safeParse(schema, cleaned, groupName);
       if (parsed.error) {
-        console.error(`[claude-generate] ${parsed.error}`);
+        console.error(
+          `[claude-generate] ${parsed.error} | raw[0..300]: ${content.slice(0, 300).replace(/\n/g, " ")}`,
+        );
         return { data: null, error: parsed.error, usedFallback: false };
       }
 
