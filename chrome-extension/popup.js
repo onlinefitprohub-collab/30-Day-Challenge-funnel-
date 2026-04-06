@@ -541,21 +541,26 @@ async function showInjectDebug() {
     } else {
       lines.push(`oOffError: none captured`);
     }
+  }
 
-    /* ── Builder Errors (Vue console.warn/error) ── */
-    const vueErr = tabId ? lsDiag[`cf_vue_err_${tabId}`] : undefined;
-    lines.push(`\n--- Builder Errors (Vue console) ---`);
-    if (vueErr && vueErr.errors && vueErr.errors.length > 0) {
-      const age3 = vueErr.ts ? `${Math.round((Date.now() - vueErr.ts) / 1000)}s ago` : "?";
-      lines.push(`${vueErr.errors.length} Vue error(s) captured (last update: ${age3})`);
-      vueErr.errors.forEach((e, i) => {
-        lines.push(`  [${i + 1}] [${e.level ?? "?"}] ${(e.msg ?? "").slice(0, 300)}`);
-        if (e.errMsg)   lines.push(`       message: ${e.errMsg}`);
-        if (e.errStack) lines.push(`       stack:   ${e.errStack.slice(0, 200)}`);
-      });
-    } else {
-      lines.push(`None captured — Vue setup errors will appear here after inject`);
-    }
+  /* ── Builder Errors (Vue console.warn/error) — always shown ─────────────
+   * Shown regardless of whether an inject has been attempted, so Vue crashes
+   * surfaced by bridge.js are visible even on first use.                   */
+  const vueErr = tabId ? lsDiag[`cf_vue_err_${tabId}`] : undefined;
+  lines.push(`\n--- Builder Errors (Vue console) ---`);
+  if (vueErr && vueErr.errors && vueErr.errors.length > 0) {
+    const age3 = vueErr.ts ? `${Math.round((Date.now() - vueErr.ts) / 1000)}s ago` : "?";
+    lines.push(`${vueErr.errors.length} Vue error(s) captured (last update: ${age3})`);
+    vueErr.errors.forEach((e, i) => {
+      /* Try to extract component name from Vue warn text e.g. "at <c-column>" */
+      const componentMatch = (e.msg ?? "").match(/at\s+<([^>]+)>/);
+      const component = componentMatch ? componentMatch[1] : null;
+      lines.push(`  [${i + 1}] [${e.level ?? "?"}]${component ? ` <${component}>` : ""} ${(e.msg ?? "").slice(0, 300)}`);
+      if (e.errMsg)   lines.push(`       message: ${e.errMsg}`);
+      if (e.errStack) lines.push(`       stack:   ${e.errStack.slice(0, 200)}`);
+    });
+  } else {
+    lines.push(`None captured — Vue setup errors will appear here after inject`);
   }
 
   div.textContent = lines.join("\n");
