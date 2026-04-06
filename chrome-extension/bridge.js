@@ -41,23 +41,51 @@
   (function () {
     var origWarn  = console.warn;
     var origError = console.error;
+
+    /* Serialize a single console arg, handling Error objects explicitly so
+     * we preserve .message and .stack (JSON.stringify({}) drops them). */
+    function _cfSerializeArg(a) {
+      if (a instanceof Error) {
+        return "Error: " + (a.message || "?") + " | stack: " + (a.stack || "").slice(0, 300);
+      }
+      if (typeof a === "object" && a !== null) {
+        try { return JSON.stringify(a).slice(0, 200); } catch (_) { return "[obj]"; }
+      }
+      return String(a).slice(0, 400);
+    }
+
     function _cfCaptureConsole(level, args) {
       try {
-        var msg = Array.prototype.map.call(args, function (a) {
-          try { return (typeof a === "object") ? JSON.stringify(a).slice(0, 200) : String(a).slice(0, 400); }
-          catch (_) { return "[unserializable]"; }
-        }).join(" ");
-        if (msg.indexOf("Unhandled error during") !== -1 ||
-            msg.indexOf("Cannot read properties of undefined") !== -1 ||
-            msg.indexOf("Cannot read property") !== -1 ||
-            msg.indexOf("[Vue warn]") !== -1 ||
-            msg.indexOf("vue-app") !== -1 ||
-            msg.indexOf("setup (index.") !== -1) {
-          var entry = { level: level, msg: msg.slice(0, 400), ts: Date.now() };
-          window.__cfVueErrors.push(entry);
-          if (window.__cfVueErrors.length > 20) window.__cfVueErrors.shift();
-          window.postMessage({ source: "cf-bridge", type: "CF_VUE_ERRORS", errors: window.__cfVueErrors }, "*");
+        var msg = Array.prototype.map.call(args, _cfSerializeArg).join(" ");
+
+        /* Vue patterns + explicit GHL builder asset URL (appears in Error stacks
+         * from GHL's compiled JS files served from app.gohighlevel.com/assets/) */
+        var isVueOrBuilder =
+          msg.indexOf("Unhandled error during") !== -1 ||
+          msg.indexOf("Cannot read properties of undefined") !== -1 ||
+          msg.indexOf("Cannot read property") !== -1 ||
+          msg.indexOf("[Vue warn]") !== -1 ||
+          msg.indexOf("vue-app") !== -1 ||
+          msg.indexOf("setup (index.") !== -1 ||
+          msg.indexOf("app.gohighlevel.com/assets") !== -1 ||
+          msg.indexOf("leadconnectorhq.com/assets") !== -1;
+
+        if (!isVueOrBuilder) return;
+
+        /* Build a structured entry with separate fields for the first Error arg */
+        var entry = { level: level, msg: msg.slice(0, 400), ts: Date.now() };
+        for (var i = 0; i < args.length; i++) {
+          var a = args[i];
+          if (a instanceof Error) {
+            entry.errMsg   = (a.message || "").slice(0, 200);
+            entry.errStack = (a.stack   || "").slice(0, 200);
+            break;
+          }
         }
+
+        window.__cfVueErrors.push(entry);
+        if (window.__cfVueErrors.length > 20) window.__cfVueErrors.shift();
+        window.postMessage({ source: "cf-bridge", type: "CF_VUE_ERRORS", errors: window.__cfVueErrors }, "*");
       } catch (_) {}
     }
     console.warn = function () { _cfCaptureConsole("warn", arguments);  return origWarn.apply(console, arguments); };

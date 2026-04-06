@@ -550,6 +550,8 @@ async function showInjectDebug() {
       lines.push(`${vueErr.errors.length} Vue error(s) captured (last update: ${age3})`);
       vueErr.errors.forEach((e, i) => {
         lines.push(`  [${i + 1}] [${e.level ?? "?"}] ${(e.msg ?? "").slice(0, 300)}`);
+        if (e.errMsg)   lines.push(`       message: ${e.errMsg}`);
+        if (e.errStack) lines.push(`       stack:   ${e.errStack.slice(0, 200)}`);
       });
     } else {
       lines.push(`None captured — Vue setup errors will appear here after inject`);
