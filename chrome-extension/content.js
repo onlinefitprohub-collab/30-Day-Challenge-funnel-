@@ -209,6 +209,9 @@
       if (d.type === "CF_NATIVE_FIREBASE_RAW" && typeof d.raw === "string") {
         chrome.storage.local.set({ cfNativeFirebaseRaw: d.raw });
       }
+      if (d.type === "CF_VUE_ERRORS" && Array.isArray(d.errors)) {
+        try { chrome.runtime.sendMessage({ type: "CF_VUE_ERRORS", errors: d.errors }); } catch (_) {}
+      }
       return;
     }
 

@@ -61,6 +61,7 @@ async function doCopyAllDebug() {
     await doNativeFirebasePayload();
     await doPageLoadErrors();
     await doPageMeta();
+    await doValidateAISchema();
 
     /* Collect text from each result div */
     const sections = [
@@ -72,6 +73,7 @@ async function doCopyAllDebug() {
       ["=== NATIVE FIREBASE ===",    "native-firebase-result"],
       ["=== PAGE LOAD ERRORS ===",   "page-load-errors-result"],
       ["=== PAGE METADATA ===",      "page-meta-result"],
+      ["=== AI SCHEMA VALIDATION ===", "validate-schema-result"],
     ];
     const blob = sections
       .map(([header, divId]) => {
@@ -105,6 +107,7 @@ function initCopyPaste() {
   document.getElementById("native-firebase-btn").addEventListener("click", doNativeFirebasePayload);
   document.getElementById("page-load-errors-btn").addEventListener("click", doPageLoadErrors);
   document.getElementById("page-meta-btn").addEventListener("click", doPageMeta);
+  document.getElementById("validate-schema-btn").addEventListener("click", doValidateAISchema);
   document.getElementById("copy-all-debug-btn").addEventListener("click", doCopyAllDebug);
 
   /* Wire copy buttons */
@@ -117,6 +120,7 @@ function initCopyPaste() {
   document.getElementById("native-firebase-download").addEventListener("click", doDownloadNativeFirebase);
   document.getElementById("page-load-errors-copy").addEventListener("click", () => copyDebugResult("page-load-errors-result", "page-load-errors-copy"));
   document.getElementById("page-meta-copy").addEventListener("click", () => copyDebugResult("page-meta-result", "page-meta-copy"));
+  document.getElementById("validate-schema-copy").addEventListener("click", () => copyDebugResult("validate-schema-result", "validate-schema-copy"));
 
   // Refresh when storage changes in another context (e.g. content.js cleared it)
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -309,7 +313,7 @@ async function showInjectDebug() {
   const tabId  = tab?.id;
 
   /* Fetch tab-keyed diagnostic records using the active tab's ID */
-  const diagKeys = tabId ? [`cf_ghl_err_${tabId}`, `cf_ooff_err_${tabId}`] : [];
+  const diagKeys = tabId ? [`cf_ghl_err_${tabId}`, `cf_ooff_err_${tabId}`, `cf_vue_err_${tabId}`] : [];
   const lsDiag   = diagKeys.length ? await new Promise((r) => chrome.storage.local.get(diagKeys, r)) : {};
 
   const ls     = { ...lsBase, ...lsDiag };
@@ -473,9 +477,11 @@ async function showInjectDebug() {
           } else {
             lines.push(`A4B sync/changes: HTTP ${a4b.status ?? "?"} error: ${a4b.error ?? "unknown"}`);
           }
+          if (a4b.responseBody) lines.push(`A4B response body: ${a4b.responseBody}`);
           if (a4b.retry422) {
             const r = a4b.retry422;
             lines.push(`A4B retry422: HTTP ${r.status ?? "?"} ${r.ok ? "✓ ok" : `error: ${r.error ?? "?"}`}`);
+            if (r.responseBody) lines.push(`A4B retry422 body: ${r.responseBody}`);
           }
         }
         if (d.approach4c) {
@@ -535,11 +541,183 @@ async function showInjectDebug() {
     } else {
       lines.push(`oOffError: none captured`);
     }
+
+    /* ── Builder Errors (Vue console.warn/error) ── */
+    const vueErr = tabId ? lsDiag[`cf_vue_err_${tabId}`] : undefined;
+    lines.push(`\n--- Builder Errors (Vue console) ---`);
+    if (vueErr && vueErr.errors && vueErr.errors.length > 0) {
+      const age3 = vueErr.ts ? `${Math.round((Date.now() - vueErr.ts) / 1000)}s ago` : "?";
+      lines.push(`${vueErr.errors.length} Vue error(s) captured (last update: ${age3})`);
+      vueErr.errors.forEach((e, i) => {
+        lines.push(`  [${i + 1}] [${e.level ?? "?"}] ${(e.msg ?? "").slice(0, 300)}`);
+      });
+    } else {
+      lines.push(`None captured — Vue setup errors will appear here after inject`);
+    }
   }
 
   div.textContent = lines.join("\n");
   div.className = inject?.ok ? "paste-result ok" : "paste-result info";
   showCopyBtn("debug-inject-copy");
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   VALIDATE AI SCHEMA
+   Reads queued AI sections from storage and checks every element against the
+   required-field spec derived from the native GHL JSON. Results listed per
+   element: ✓ if all fields present, ✗ with missing field list otherwise.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+async function doValidateAISchema() {
+  const div = document.getElementById("validate-schema-result");
+  const btn = document.getElementById("validate-schema-btn");
+  if (!div) return;
+
+  if (div.className.includes("ok") || div.className.includes("err") || div.className.includes("info") || div.className.includes("warn")) {
+    div.className = "paste-result";
+    div.textContent = "";
+    btn.textContent = "Validate AI Schema";
+    hideCopyBtn("validate-schema-copy");
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "Validating…";
+
+  try {
+    const [ls, ss] = await Promise.all([
+      new Promise((r) => chrome.storage.local.get(["cfReady"], r)),
+      new Promise((r) => chrome.storage.session.get(["cf_copied_page"], r)),
+    ]);
+
+    const ready  = ls.cfReady;
+    const copied = ss.cf_copied_page;
+    const pageData = (copied && copied.pageData) || (ready && ready.pageData) || null;
+
+    if (!pageData || !pageData.sections) {
+      div.className   = "paste-result err";
+      div.textContent = "No AI pageData found in storage.\nClick Clone to GHL / Load first.";
+      btn.disabled    = false;
+      btn.textContent = "Validate AI Schema";
+      return;
+    }
+
+    /* ── Required-field schema derived from native GHL JSON ── */
+
+    /* Keys every element must have at the top level */
+    const TOP_ALL = ["child", "class", "extra", "id", "meta", "mobileStyles", "mobileWrapper", "styles", "tagName", "title", "type", "wrapper"];
+    const TOP_COLUMN = ["noOfColumns"];
+    const TOP_LEAF   = ["customCss", "tag"]; /* c-paragraph, c-heading, c-image, c-button, c-bullet-list, c-countdown */
+
+    /* styles keys */
+    const STYLES_ALL    = ["fontFamily", "opacity", "borderRadius", "iconColor", "boldTextColor", "italicTextColor", "underlineTextColor", "linkTextColor", "inlineColors", "boxShadow", "borderColor", "borderWidth", "borderStyle", "backgroundColor"];
+    const STYLES_ROW    = ["maxWidth", "background", "backdropFilter"];
+    const STYLES_COL    = ["verticalAlign", "width"];
+    const STYLES_TEXT   = ["fontSize", "fontWeight", "color", "lineHeight", "textAlign", "letterSpacing", "textTransform", "textShadow"]; /* paragraph, heading, bullet-list */
+
+    /* class keys */
+    const CLASS_ALL   = ["borders", "borderRadius", "radiusEdge"];
+    const CLASS_ROW   = ["alignRow"];
+    const CLASS_LEAF  = ["entranceAnimation", "animationScale", "animationDuration", "animationDelay", "animationEasing"];
+
+    /* wrapper keys */
+    const WRAPPER_ALL  = ["marginTop", "marginBottom", "marginLeft", "marginRight"];
+    const WRAPPER_LEAF = ["width", "height"];
+
+    /* extra keys */
+    const EXTRA_ALL    = ["visibility"];
+    const EXTRA_ROW    = ["bgImage", "customClass", "rowWidth"];
+    const EXTRA_COL    = ["bgImage", "customClass", "columnLayout", "justifyContentColumnLayout", "alignContentColumnLayout", "forceColumnLayoutForMobile", "elementVersion"];
+    const EXTRA_LEAF   = ["nodeId", "customClass", "elementVersion"];
+    const EXTRA_TEXTISH = ["text", "typography", "inlineTypographies", "icon", "mobileFontSize", "desktopFontSize"]; /* paragraph + heading */
+
+    const LEAF_TYPES = new Set(["c-paragraph", "c-heading", "c-image", "c-button", "c-bullet-list", "c-countdown"]);
+    const TEXT_TYPES = new Set(["c-paragraph", "c-heading"]);
+
+    function checkEl(el, secIdx, elIdx) {
+      const t = el.type || el.tagName || "?";
+      const id = el.id || `el[${elIdx}]`;
+      const label = `sec${secIdx}.el[${elIdx}] ${t} (${id})`;
+      const missing = [];
+
+      function chk(obj, keys, prefix) {
+        if (!obj || typeof obj !== "object") {
+          missing.push(`${prefix}.(object missing)`);
+          return;
+        }
+        keys.forEach((k) => { if (!(k in obj)) missing.push(`${prefix}.${k}`); });
+      }
+
+      const isLeaf   = LEAF_TYPES.has(t);
+      const isRow    = t === "c-row";
+      const isCol    = t === "c-column";
+      const isTextish = TEXT_TYPES.has(t);
+      const isBullet = t === "c-bullet-list";
+
+      /* Top-level */
+      chk(el, TOP_ALL, "top");
+      if (isCol)  chk(el, TOP_COLUMN, "top");
+      if (isLeaf) chk(el, TOP_LEAF,   "top");
+
+      /* styles */
+      chk(el.styles, STYLES_ALL, "styles");
+      if (isRow)  chk(el.styles, STYLES_ROW,  "styles");
+      if (isCol)  chk(el.styles, STYLES_COL,  "styles");
+      if (isTextish || isBullet) chk(el.styles, STYLES_TEXT, "styles");
+
+      /* class */
+      chk(el.class, CLASS_ALL, "class");
+      if (isRow)  chk(el.class, CLASS_ROW,  "class");
+      if (isLeaf) chk(el.class, CLASS_LEAF, "class");
+
+      /* wrapper */
+      chk(el.wrapper, WRAPPER_ALL, "wrapper");
+      if (isLeaf) chk(el.wrapper, WRAPPER_LEAF, "wrapper");
+
+      /* extra */
+      chk(el.extra, EXTRA_ALL, "extra");
+      if (isRow)  chk(el.extra, EXTRA_ROW,    "extra");
+      if (isCol)  chk(el.extra, EXTRA_COL,    "extra");
+      if (isLeaf) chk(el.extra, EXTRA_LEAF,   "extra");
+      if (isTextish) chk(el.extra, EXTRA_TEXTISH, "extra");
+
+      return { label, missing };
+    }
+
+    const lines = [];
+    let passCount = 0;
+    let failCount = 0;
+    let elTotal   = 0;
+
+    pageData.sections.forEach((sec, si) => {
+      const elements = Array.isArray(sec.elements) ? sec.elements : [];
+      if (elements.length === 0) {
+        lines.push(`sec${si}: no elements array`);
+      }
+      elements.forEach((el, ei) => {
+        elTotal++;
+        const { label, missing } = checkEl(el, si, ei);
+        if (missing.length === 0) {
+          lines.push(`✓ ${label}`);
+          passCount++;
+        } else {
+          lines.push(`✗ ${label}: missing ${missing.join(", ")}`);
+          failCount++;
+        }
+      });
+    });
+
+    const summary = `Checked ${elTotal} element(s) across ${pageData.sections.length} section(s): ${passCount} pass, ${failCount} fail`;
+    div.textContent = [summary, "", ...lines].join("\n");
+    div.className   = failCount > 0 ? "paste-result warn" : "paste-result ok";
+    showCopyBtn("validate-schema-copy");
+  } catch (err) {
+    div.className   = "paste-result err";
+    div.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "Validate AI Schema";
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

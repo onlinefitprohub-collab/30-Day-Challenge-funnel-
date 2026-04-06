@@ -1,4 +1,4 @@
-// bridge.js v2.49.4 — Injected into the GHL page (MAIN world via content_scripts).
+// bridge.js v2.49.5 — Injected into the GHL page (MAIN world via content_scripts).
 // Detects the page-builder URL context and emits CONTEXT_DETECTED to content.js.
 // Copy/paste is now handled by background.js via chrome.scripting.executeScript().
 // v2.8.0: GHL API interceptor captures fetch/XHR responses including 500 error bodies.
@@ -32,6 +32,37 @@
     });
     if (window.__cfPageLoadErrors.length > 50) window.__cfPageLoadErrors.shift();
   });
+
+  /* ─── Vue console error interceptor (v2.49.5) ──────────────────────────── *
+   * Vue 3 catches component setup crashes via callWithErrorHandling and logs  *
+   * them to console.warn — they never reach window.onerror. Intercept both   *
+   * console.warn and console.error to surface Vue-sourced crashes.            */
+  window.__cfVueErrors = window.__cfVueErrors || [];
+  (function () {
+    var origWarn  = console.warn;
+    var origError = console.error;
+    function _cfCaptureConsole(level, args) {
+      try {
+        var msg = Array.prototype.map.call(args, function (a) {
+          try { return (typeof a === "object") ? JSON.stringify(a).slice(0, 200) : String(a).slice(0, 400); }
+          catch (_) { return "[unserializable]"; }
+        }).join(" ");
+        if (msg.indexOf("Unhandled error during") !== -1 ||
+            msg.indexOf("Cannot read properties of undefined") !== -1 ||
+            msg.indexOf("Cannot read property") !== -1 ||
+            msg.indexOf("[Vue warn]") !== -1 ||
+            msg.indexOf("vue-app") !== -1 ||
+            msg.indexOf("setup (index.") !== -1) {
+          var entry = { level: level, msg: msg.slice(0, 400), ts: Date.now() };
+          window.__cfVueErrors.push(entry);
+          if (window.__cfVueErrors.length > 20) window.__cfVueErrors.shift();
+          window.postMessage({ source: "cf-bridge", type: "CF_VUE_ERRORS", errors: window.__cfVueErrors }, "*");
+        }
+      } catch (_) {}
+    }
+    console.warn = function () { _cfCaptureConsole("warn", arguments);  return origWarn.apply(console, arguments); };
+    console.error = function () { _cfCaptureConsole("error", arguments); return origError.apply(console, arguments); };
+  })();
 
   /* ─── URL parsing ──────────────────────────────────────────────────────── */
   function parseBuilderUrl(url) {

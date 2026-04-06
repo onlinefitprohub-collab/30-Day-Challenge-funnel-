@@ -1067,12 +1067,19 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                   diag.approach4b = { status: a4bFetchRes.status, ok: a4bFetchRes.ok, result: a4bFetchRes.ok ? 'fetch-sync-ok' : 'fetch-sync-err' };
                   if (!a4bFetchRes.ok) {
                     diag.approach4b.skip = 'revex-null-or-no-post';
+                    try {
+                      var a4bFetchBody = await a4bFetchRes.text();
+                      diag.approach4b.responseBody = a4bFetchBody.slice(0, 500);
+                    } catch (_) {}
                   }
                 }
               } catch (a4bErr) {
                 var a4bErrStatus = a4bErr?.response?.status ?? null;
                 var a4bErrMsg    = a4bErr?.response?.data?.message ?? String(a4bErr).slice(0, 120);
-                diag.approach4b = { status: a4bErrStatus, error: a4bErrMsg };
+                var a4bErrBody   = a4bErr?.response?.data
+                  ? JSON.stringify(a4bErr.response.data).slice(0, 500)
+                  : String(a4bErr).slice(0, 500);
+                diag.approach4b = { status: a4bErrStatus, error: a4bErrMsg, responseBody: a4bErrBody };
                 /* If 422 (field-shape mismatch), retry with only core page data fields */
                 if (a4bErrStatus === 422 && revex && typeof revex.post === 'function') {
                   try {
@@ -1090,9 +1097,13 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     var a4bStatus2 = (typeof a4bResp2?.status === 'number') ? a4bResp2.status : 200;
                     diag.approach4b.retry422 = { status: a4bStatus2, ok: true };
                   } catch (a4bErr2) {
+                    var a4bErr2Body = a4bErr2?.response?.data
+                      ? JSON.stringify(a4bErr2.response.data).slice(0, 500)
+                      : String(a4bErr2).slice(0, 500);
                     diag.approach4b.retry422 = {
-                      status: a4bErr2?.response?.status ?? null,
-                      error:  String(a4bErr2).slice(0, 80),
+                      status:       a4bErr2?.response?.status ?? null,
+                      error:        String(a4bErr2).slice(0, 80),
+                      responseBody: a4bErr2Body,
                     };
                   }
                 }
@@ -3459,6 +3470,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     var storeKey = `cf_ghl_err_${senderTabId}`;
     chrome.storage.local.set({ [storeKey]: { status, url, body, tabId: senderTabId, ts: Date.now() } });
     setTimeout(() => chrome.storage.local.remove(storeKey), 60000);
+    return false;
+  }
+
+  /* ── CF_VUE_ERRORS — Vue console.warn/error relay from bridge.js ──────────
+   * Stored per-tab so popup can read them keyed by the active GHL tab.      */
+  if (type === "CF_VUE_ERRORS") {
+    var senderTabId = sender?.tab?.id;
+    if (!senderTabId) return false;
+    var storeKey = `cf_vue_err_${senderTabId}`;
+    chrome.storage.local.set({ [storeKey]: { errors: msg.errors || [], tabId: senderTabId, ts: Date.now() } });
     return false;
   }
 
