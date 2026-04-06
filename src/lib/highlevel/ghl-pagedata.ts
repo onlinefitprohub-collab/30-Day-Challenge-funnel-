@@ -241,6 +241,15 @@ const ANIMATION_DEFAULTS: Record<string, string | number> = {
   animationEasing:   "linear",
 };
 
+const REQUIRED_TEXT_STYLES: Record<string, unknown> = {
+  iconColor:          { value: "var(--text-color)" },
+  boldTextColor:      { value: "var(--text-color)" },
+  italicTextColor:    { value: "var(--text-color)" },
+  underlineTextColor: { value: "var(--text-color)" },
+  linkTextColor:      { value: "var(--link-color)" },
+  inlineColors:       { value: [] },
+};
+
 function sanitizePageData(data: GhlPageData): GhlPageData {
   for (const section of data.sections) {
     for (const element of section.elements) {
@@ -263,6 +272,16 @@ function sanitizePageData(data: GhlPageData): GhlPageData {
         for (const key of Object.keys(stylesObj)) {
           if (stylesObj[key] === undefined) {
             stylesObj[key] = { value: "" };
+          }
+        }
+        // Inject required text-style keys if entirely absent (!(key in obj) catches absent keys
+        // that Object.keys iteration above cannot see). Covers c-bullet-list, c-button, c-heading,
+        // c-paragraph, and any future element whose make*() omits one of these six properties.
+        if (element.type === "element") {
+          for (const [key, defaultVal] of Object.entries(REQUIRED_TEXT_STYLES)) {
+            if (!(key in stylesObj)) {
+              stylesObj[key] = defaultVal;
+            }
           }
         }
       }
