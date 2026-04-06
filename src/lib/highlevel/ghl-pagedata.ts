@@ -285,17 +285,14 @@ function patchStyles(stylesObj: Record<string, unknown>, label: string): void {
 
 function sanitizePageData(data: GhlPageData): GhlPageData {
   for (const section of data.sections) {
-    // ── Patch the section's own metaData.styles ────────────────────────────────
-    // c-section is the FIRST Vue component rendered; its setup() reads the same
-    // style properties as every other node type.  The sanitize guard must cover
-    // section.metaData.styles, not only section.elements.
+    // Diagnostic: log section metaData.styles keys so we can verify they match native.
+    // Native sections carry only layout styles (padding/margin/bg/border) — NO fontFamily etc.
+    // Do NOT run patchStyles() here; c-section does not read the text-style props.
     const sectionMeta = section.metaData as Record<string, unknown>;
     if (sectionMeta) {
       const secStylesObj = sectionMeta.styles as Record<string, unknown>;
       if (secStylesObj && typeof secStylesObj === "object") {
-        const secStyleKeys = Object.keys(secStylesObj).join(",");
-        console.log(`[page-data] section ${section.id} metaData.styles=[${secStyleKeys}]`);
-        patchStyles(secStylesObj, `section-${section.id} (c-section)`);
+        console.log(`[page-data] section ${section.id} metaData.styles=[${Object.keys(secStylesObj).join(",")}]`);
       }
     }
 
@@ -337,7 +334,6 @@ function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void
   }
   const id = ghlId("section");
   const styles: GhlElem = {
-    // Layout
     boxShadow:       { value: "none" },
     paddingLeft:     { value: 0,  unit: "px" },
     paddingRight:    { value: 0,  unit: "px" },
@@ -353,16 +349,6 @@ function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void
     borderColor:     { value: "var(--black)" },
     borderWidth:     { value: "2", unit: "px" },
     borderStyle:     { value: "solid" },
-    borderRadius:    { value: 0, unit: "px" },
-    // Base properties GHL's c-section setup() reads on every node during render
-    fontFamily:         { value: "var(--bodyfont)" },
-    opacity:            { value: 1 },
-    iconColor:          { value: "var(--text-color)" },
-    boldTextColor:      { value: "var(--text-color)" },
-    italicTextColor:    { value: "var(--text-color)" },
-    underlineTextColor: { value: "var(--text-color)" },
-    linkTextColor:      { value: "var(--link-color)" },
-    inlineColors:       { value: [] },
   };
   b.sections.push({
     id,
@@ -468,9 +454,10 @@ function makeCol(
     borderWidth:     { value: "2", unit: "px" },
     borderStyle:     { value: "solid" },
     width:           { value: widthPct, unit: "%" },
+    // GHL's c-column setup() reads verticalAlign unconditionally — must always be present
+    verticalAlign:   { value: opts.valign ?? "top" },
   };
-  if (opts.align)  styles.textAlign     = { value: opts.align };
-  if (opts.valign) styles.verticalAlign = { value: opts.valign };
+  if (opts.align) styles.textAlign = { value: opts.align };
 
   b.nodes[id] = {
     id,
@@ -535,6 +522,7 @@ function makeHeading(
       linkTextColor:      { value: "var(--link-color)" },
       iconColor:          { value: "var(--text-color)" },
       fontFamily:         { value: "" },
+      fontSize:           { value: defaultFontSzDesktop, unit: "px" },
       fontWeight:         { desktop: "700", value: "normal" },
       boxShadow:          { value: "none" },
       paddingLeft:        { value: 0, unit: "px" },
@@ -595,6 +583,7 @@ function makeParagraph(b: Builder, text: string, styles: StyleMap, mobileStyles:
       linkTextColor:      { value: "var(--link-color)" },
       iconColor:          { value: "var(--text-color)" },
       fontFamily:         { value: "" },
+      fontSize:           { value: 16, unit: "px" },
       fontWeight:         { desktop: "400", value: "normal" },
       boxShadow:          { value: "none" },
       paddingLeft:        { value: 0, unit: "px" },
