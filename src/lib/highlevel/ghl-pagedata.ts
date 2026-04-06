@@ -274,17 +274,15 @@ function sanitizePageData(data: GhlPageData): GhlPageData {
             stylesObj[key] = { value: "" };
           }
         }
-        // Inject required text-style keys if entirely absent (!(key in obj) catches absent keys
-        // that Object.keys iteration above cannot see). Covers c-bullet-list, c-button, c-heading,
-        // c-paragraph, and any future element whose make*() omits one of these six properties.
-        if (element.type === "element") {
-          for (const [key, defaultVal] of Object.entries(REQUIRED_TEXT_STYLES)) {
-            if (!(key in stylesObj)) {
-              stylesObj[key] = defaultVal;
-              const elemId = (element.id as string) ?? "?";
-              const tag = (element.tagName as string) ?? "?";
-              console.log(`[sanitize] patched ${elemId} (${tag}): ${key}`);
-            }
+        // Inject required text-style keys if entirely absent into ALL nodes (rows, cols, elements).
+        // GHL's Vue setup reads these properties on every node type during render; any missing key
+        // produces "Cannot read properties of undefined (reading 'value')".
+        for (const [key, defaultVal] of Object.entries(REQUIRED_TEXT_STYLES)) {
+          if (!(key in stylesObj)) {
+            stylesObj[key] = defaultVal;
+            const elemId = (element.id as string) ?? "?";
+            const tag = (element.tagName as string) ?? "?";
+            console.log(`[sanitize] patched ${elemId} (${tag}): ${key}`);
           }
         }
       }

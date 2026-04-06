@@ -44,6 +44,8 @@ export async function GET(request: Request) {
 
   const assets = data.outputs as unknown as GeneratedFunnelAssets;
 
+  console.log(`[page-data] REQUEST page=${page} projectId=${projectId}`);
+
   let pageData;
   switch (page) {
     case "landing":  pageData = buildLandingPageData(assets);  break;
@@ -52,6 +54,15 @@ export async function GET(request: Request) {
     case "booking":  pageData = buildBookingPageData(assets);  break;
     default:         return NextResponse.json({ error: "Invalid page" }, { status: 400 });
   }
+
+  // Diagnostic: dump every element's meta, tagName, and styles keys so we can spot missing props
+  pageData.sections.forEach((sec, si) => {
+    (sec.elements ?? []).forEach((el, ei) => {
+      const e = el as Record<string, unknown>;
+      const sk = Object.keys((e.styles as Record<string, unknown>) ?? {}).join(",");
+      console.log(`[page-data] sec${si}.el[${ei}] type=${e.type} meta=${e.meta} tag=${e.tagName} styles=[${sk}]`);
+    });
+  });
 
   return NextResponse.json({
     pageData,
