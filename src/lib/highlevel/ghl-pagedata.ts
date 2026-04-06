@@ -281,6 +281,9 @@ function sanitizePageData(data: GhlPageData): GhlPageData {
           for (const [key, defaultVal] of Object.entries(REQUIRED_TEXT_STYLES)) {
             if (!(key in stylesObj)) {
               stylesObj[key] = defaultVal;
+              const elemId = (element.id as string) ?? "?";
+              const tag = (element.tagName as string) ?? "?";
+              console.log(`[sanitize] patched ${elemId} (${tag}): ${key}`);
             }
           }
         }
@@ -655,7 +658,12 @@ function makeButton(
       width:           { value: "auto", unit: "%" },
       boxShadow:       { value: "none" },
       textShadow:      { value: "none" },
-      iconColor:       { value: "var(--white)" },
+      iconColor:          { value: "var(--white)" },
+      boldTextColor:      { value: "var(--white)" },
+      italicTextColor:    { value: "var(--white)" },
+      underlineTextColor: { value: "var(--white)" },
+      linkTextColor:      { value: "var(--white)" },
+      inlineColors:       { value: [] },
       ...styles,
     },
     wrapper: {
