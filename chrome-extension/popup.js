@@ -173,9 +173,13 @@ function refreshCopiedCard() {
           const label = PAGE_LABELS[ready.page] || "AI Page";
           const ago   = timeSince(ready.loadedAt);
           card.className = "copied-card has";
-          card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Loaded ${ago} — open a GHL builder tab and click the orange CF button to paste.`;
+          card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Loaded ${ago} — open a GHL builder tab and click the orange CF button to paste.<br><button id="cf-reload-btn" style="margin-top:6px;font-size:11px;padding:3px 10px;cursor:pointer;background:#1d4ed8;color:#fff;border:none;border-radius:5px;font-weight:700;">↺ Reload from server</button>`;
           clearBtn.style.display = "";
           pasteBtn.disabled      = false;
+          const reloadBtn = document.getElementById("cf-reload-btn");
+          if (reloadBtn) {
+            reloadBtn.addEventListener("click", () => loadPage(ready.page, reloadBtn, ready));
+          }
         } else {
           card.className = "copied-card none";
           card.innerHTML = `<strong>Nothing copied yet</strong>Go to your Challenge Funnel results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
