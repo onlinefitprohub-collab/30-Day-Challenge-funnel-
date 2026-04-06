@@ -242,12 +242,23 @@ const ANIMATION_DEFAULTS: Record<string, string | number> = {
 };
 
 const REQUIRED_TEXT_STYLES: Record<string, unknown> = {
+  // Text-style properties — GHL's bootstrapTextElementStyle reads these on all element types
   iconColor:          { value: "var(--text-color)" },
   boldTextColor:      { value: "var(--text-color)" },
   italicTextColor:    { value: "var(--text-color)" },
   underlineTextColor: { value: "var(--text-color)" },
   linkTextColor:      { value: "var(--link-color)" },
   inlineColors:       { value: [] },
+  // Base style properties — GHL's element setup() reads these on every node type during render.
+  // Elements that already define them are unaffected (guard only injects when absent).
+  fontFamily:         { value: "var(--bodyfont)" },
+  backgroundColor:    { value: "var(--transparent)" },
+  opacity:            { value: 1 },
+  boxShadow:          { value: "none" },
+  borderRadius:       { value: 0, unit: "px" },
+  borderColor:        { value: "var(--black)" },
+  borderWidth:        { value: "0", unit: "px" },
+  borderStyle:        { value: "solid" },
 };
 
 function sanitizePageData(data: GhlPageData): GhlPageData {
@@ -697,7 +708,16 @@ function makeForm(b: Builder): string {
       elementVersion: { value: 2 },
     },
     class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
-    styles:        {},
+    styles: {
+      fontFamily:      { value: "var(--bodyfont)" },
+      backgroundColor: { value: "var(--transparent)" },
+      opacity:         { value: 1 },
+      boxShadow:       { value: "none" },
+      borderRadius:    { value: 0, unit: "px" },
+      borderColor:     { value: "var(--black)" },
+      borderWidth:     { value: "0", unit: "px" },
+      borderStyle:     { value: "solid" },
+    },
     wrapper:       { ...ELEM_WRAPPER },
     customCss:     [],
     id,
@@ -735,7 +755,17 @@ function makeImage(b: Builder, opts: { url?: string; width?: number } = {}): str
       elementVersion: { value: 2 },
     },
     class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
-    styles:        {},
+    styles: {
+      width:           { value: opts.width ?? 100, unit: "%" },
+      fontFamily:      { value: "var(--bodyfont)" },
+      backgroundColor: { value: "var(--transparent)" },
+      opacity:         { value: 1 },
+      boxShadow:       { value: "none" },
+      borderRadius:    { value: 0, unit: "px" },
+      borderColor:     { value: "var(--black)" },
+      borderWidth:     { value: "0", unit: "px" },
+      borderStyle:     { value: "solid" },
+    },
     wrapper:       { ...ELEM_WRAPPER },
     customCss:     [],
     id,
@@ -885,16 +915,36 @@ function makeBulletList(b: Builder, items: string[], primary: string, styles: St
     },
     class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
     styles: {
+      // Text-style properties
       iconColor:          { value: "var(--text-color)" },
       boldTextColor:      { value: "var(--text-color)" },
       italicTextColor:    { value: "var(--text-color)" },
       underlineTextColor: { value: "var(--text-color)" },
       linkTextColor:      { value: "var(--link-color)" },
       inlineColors:       { value: [] },
+      // Typography
+      fontFamily:         { value: "var(--bodyfont)" },
       fontSize:           { value: 16, unit: "px" },
+      fontWeight:         { value: "400" },
       color:              { value: "#e2e8f0" },
       lineHeight:         { value: 1.7, unit: "em" },
+      textAlign:          { value: "left" },
+      textTransform:      { value: "none" },
+      letterSpacing:      { value: 0, unit: "px" },
+      textShadow:         { value: "none" },
+      // Spacing
+      paddingTop:         { value: 0, unit: "px" },
+      paddingRight:       { value: 0, unit: "px" },
       paddingBottom:      { value: 8, unit: "px" },
+      paddingLeft:        { value: 0, unit: "px" },
+      // Base element styles
+      backgroundColor:    { value: "var(--transparent)" },
+      opacity:            { value: 1 },
+      boxShadow:          { value: "none" },
+      borderRadius:       { value: 0, unit: "px" },
+      borderColor:        { value: "var(--black)" },
+      borderWidth:        { value: "0", unit: "px" },
+      borderStyle:        { value: "solid" },
       ...styles,
     },
     wrapper:       { ...ELEM_WRAPPER },
