@@ -257,6 +257,15 @@ function sanitizePageData(data: GhlPageData): GhlPageData {
           styleField.value = "";
         }
       }
+      // Fix any style property whose entire value is undefined (strict check — must not touch nulls)
+      const stylesObj = element.styles as Record<string, unknown>;
+      if (stylesObj && typeof stylesObj === "object") {
+        for (const key of Object.keys(stylesObj)) {
+          if (stylesObj[key] === undefined) {
+            stylesObj[key] = { value: "" };
+          }
+        }
+      }
     }
   }
   return data;
@@ -851,10 +860,16 @@ function makeBulletList(b: Builder, items: string[], primary: string, styles: St
     },
     class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
     styles: {
-      fontSize:      { value: 16, unit: "px" },
-      color:         { value: "#e2e8f0" },
-      lineHeight:    { value: 1.7, unit: "em" },
-      paddingBottom: { value: 8, unit: "px" },
+      iconColor:          { value: "var(--text-color)" },
+      boldTextColor:      { value: "var(--text-color)" },
+      italicTextColor:    { value: "var(--text-color)" },
+      underlineTextColor: { value: "var(--text-color)" },
+      linkTextColor:      { value: "var(--link-color)" },
+      inlineColors:       { value: [] },
+      fontSize:           { value: 16, unit: "px" },
+      color:              { value: "#e2e8f0" },
+      lineHeight:         { value: 1.7, unit: "em" },
+      paddingBottom:      { value: 8, unit: "px" },
       ...styles,
     },
     wrapper:       { ...ELEM_WRAPPER },
