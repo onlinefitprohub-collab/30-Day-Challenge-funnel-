@@ -261,8 +261,44 @@ const REQUIRED_TEXT_STYLES: Record<string, unknown> = {
   borderStyle:        { value: "solid" },
 };
 
+function patchStyles(stylesObj: Record<string, unknown>, label: string): void {
+  // Null → "" fallback
+  for (const styleField of Object.values(stylesObj)) {
+    if (styleField && typeof styleField === "object" && (styleField as Record<string,unknown>).value === null) {
+      (styleField as Record<string,unknown>).value = "";
+    }
+  }
+  // Undefined entry → { value: "" }
+  for (const key of Object.keys(stylesObj)) {
+    if (stylesObj[key] === undefined) {
+      stylesObj[key] = { value: "" };
+    }
+  }
+  // Inject every required key that is entirely absent
+  for (const [key, defaultVal] of Object.entries(REQUIRED_TEXT_STYLES)) {
+    if (!(key in stylesObj)) {
+      stylesObj[key] = defaultVal;
+      console.log(`[sanitize] patched ${label}: ${key}`);
+    }
+  }
+}
+
 function sanitizePageData(data: GhlPageData): GhlPageData {
   for (const section of data.sections) {
+    // ── Patch the section's own metaData.styles ────────────────────────────────
+    // c-section is the FIRST Vue component rendered; its setup() reads the same
+    // style properties as every other node type.  The sanitize guard must cover
+    // section.metaData.styles, not only section.elements.
+    const sectionMeta = section.metaData as Record<string, unknown>;
+    if (sectionMeta) {
+      const secStylesObj = sectionMeta.styles as Record<string, unknown>;
+      if (secStylesObj && typeof secStylesObj === "object") {
+        const secStyleKeys = Object.keys(secStylesObj).join(",");
+        console.log(`[page-data] section ${section.id} metaData.styles=[${secStyleKeys}]`);
+        patchStyles(secStylesObj, `section-${section.id} (c-section)`);
+      }
+    }
+
     for (const element of section.elements) {
       // Fix known animation fields in class with typed defaults
       for (const [field, defaultVal] of Object.entries(ANIMATION_DEFAULTS)) {
@@ -271,31 +307,9 @@ function sanitizePageData(data: GhlPageData): GhlPageData {
           classField.value = defaultVal;
         }
       }
-      // Fix any remaining nulls in styles with generic "" fallback
-      for (const styleField of Object.values((element.styles as Record<string, { value: unknown }>) ?? {})) {
-        if (styleField && typeof styleField === "object" && styleField.value === null) {
-          styleField.value = "";
-        }
-      }
-      // Fix any style property whose entire value is undefined (strict check — must not touch nulls)
       const stylesObj = element.styles as Record<string, unknown>;
       if (stylesObj && typeof stylesObj === "object") {
-        for (const key of Object.keys(stylesObj)) {
-          if (stylesObj[key] === undefined) {
-            stylesObj[key] = { value: "" };
-          }
-        }
-        // Inject required text-style keys if entirely absent into ALL nodes (rows, cols, elements).
-        // GHL's Vue setup reads these properties on every node type during render; any missing key
-        // produces "Cannot read properties of undefined (reading 'value')".
-        for (const [key, defaultVal] of Object.entries(REQUIRED_TEXT_STYLES)) {
-          if (!(key in stylesObj)) {
-            stylesObj[key] = defaultVal;
-            const elemId = (element.id as string) ?? "?";
-            const tag = (element.tagName as string) ?? "?";
-            console.log(`[sanitize] patched ${elemId} (${tag}): ${key}`);
-          }
-        }
+        patchStyles(stylesObj, `${(element.id as string) ?? "?"} (${(element.tagName as string) ?? "?"})`);
       }
     }
   }
@@ -323,6 +337,7 @@ function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void
   }
   const id = ghlId("section");
   const styles: GhlElem = {
+    // Layout
     boxShadow:       { value: "none" },
     paddingLeft:     { value: 0,  unit: "px" },
     paddingRight:    { value: 0,  unit: "px" },
@@ -338,6 +353,16 @@ function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void
     borderColor:     { value: "var(--black)" },
     borderWidth:     { value: "2", unit: "px" },
     borderStyle:     { value: "solid" },
+    borderRadius:    { value: 0, unit: "px" },
+    // Base properties GHL's c-section setup() reads on every node during render
+    fontFamily:         { value: "var(--bodyfont)" },
+    opacity:            { value: 1 },
+    iconColor:          { value: "var(--text-color)" },
+    boldTextColor:      { value: "var(--text-color)" },
+    italicTextColor:    { value: "var(--text-color)" },
+    underlineTextColor: { value: "var(--text-color)" },
+    linkTextColor:      { value: "var(--link-color)" },
+    inlineColors:       { value: [] },
   };
   b.sections.push({
     id,
