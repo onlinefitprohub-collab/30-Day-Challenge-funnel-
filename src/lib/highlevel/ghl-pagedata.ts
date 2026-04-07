@@ -921,6 +921,7 @@ function makeBulletList(b: Builder, items: string[], primary: string, styles: St
       items:           { value: items.map(t => ({ text: t, icon: "check" })) },
       listType:        { value: "icon" },
       iconType:        { value: "check" },
+      icon:            { value: { fontFamily: "", name: "", unicode: "" } },
       iconColor:       { value: primary },
       iconSize:        { value: "18px" },
       listItemSpacing: { value: "10px" },
