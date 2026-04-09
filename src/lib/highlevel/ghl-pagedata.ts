@@ -318,6 +318,7 @@ function sanitizePageData(data: GhlPageData): GhlPageData {
 interface SectionOpts {
   bg?: string; bgColor?: string;
   ptD?: number; pbD?: number; ptM?: number; pbM?: number;
+  sticky?: string;
 }
 
 function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void {
@@ -364,7 +365,7 @@ function makeSection(b: Builder, rowIds: string[], opts: SectionOpts = {}): void
       },
       styles,
       extra: {
-        sticky:            { value: "noneSticky" },
+        sticky:            { value: opts.sticky ?? "noneSticky" },
         visibility:        VISIBILITY,
         bgImage:           BG_IMAGE,
         allowRowMaxWidth:  { value: false },
@@ -995,7 +996,7 @@ function makeVerticalDivider(b: Builder): string {
 // Verify against a live GHL payload if this element type does not render correctly.
 // Expected GHL schema: extra.code.value = raw HTML string, meta = "customCode".
 
-function makeCustomCode(b: Builder, html: string): string {
+function makeCustomCode(b: Builder, html: string, styles: StyleMap = {}): string {
   const id = ghlId("el");
   b.nodes[id] = {
     extra: {
@@ -1007,21 +1008,22 @@ function makeCustomCode(b: Builder, html: string): string {
     },
     class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
     styles: {
-      fontFamily:      { value: "var(--bodyfont)" },
-      backgroundColor: { value: "var(--transparent)" },
-      opacity:         { value: 1 },
-      boxShadow:       { value: "none" },
-      borderRadius:    { value: 0, unit: "px" },
-      borderColor:     { value: "var(--black)" },
-      borderWidth:     { value: "0", unit: "px" },
-      borderStyle:     { value: "solid" },
-      width:           { value: 100, unit: "%" },
+      fontFamily:         { value: "var(--bodyfont)" },
+      backgroundColor:    { value: "var(--transparent)" },
+      opacity:            { value: 1 },
+      boxShadow:          { value: "none" },
+      borderRadius:       { value: 0, unit: "px" },
+      borderColor:        { value: "var(--black)" },
+      borderWidth:        { value: "0", unit: "px" },
+      borderStyle:        { value: "solid" },
+      width:              { value: 100, unit: "%" },
       iconColor:          { value: "var(--text-color)" },
       boldTextColor:      { value: "var(--text-color)" },
       italicTextColor:    { value: "var(--text-color)" },
       underlineTextColor: { value: "var(--text-color)" },
       linkTextColor:      { value: "var(--link-color)" },
       inlineColors:       { value: [] },
+      ...styles,
     },
     wrapper:       { ...ELEM_WRAPPER },
     customCss:     [],
@@ -1222,8 +1224,11 @@ function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromi
 
 // ── Variant-B: animated social-proof stat bar (custom HTML) ──────────────────
 
-function buildSocialProofStatBar(b: Builder, s: SchemeColors, participantCount?: string): void {
-  const count  = participantCount ?? "1,200+";
+function buildSocialProofStatBar(b: Builder, s: SchemeColors, corePromise?: string): void {
+  // Extract a number from corePromise if it contains one (e.g. "500 coaches", "1,200 members"),
+  // otherwise fall back to "1,200+"
+  const numMatch = corePromise ? corePromise.match(/[\d,]+\+?/) : null;
+  const count    = numMatch ? numMatch[0] + (numMatch[0].endsWith("+") ? "" : "+") : "1,200+";
   const elId   = ghlId("el");
   const prefix = `cf-spb-${elId.replace(/[^a-z0-9]/gi, "")}`;
   const html = [
@@ -1288,7 +1293,9 @@ function buildUrgencyBar(b: Builder, s: SchemeColors): void {
   const elIdNode = makeCustomCode(b, html);
   const col = makeCol(b, [elIdNode], 100, { align: "center", padH: 0 });
   const row = makeRow(b, [col], 1400, 0);
-  makeSection(b, [row], { ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+  // sticky: "stickyTop" uses GHL's native section sticky setting so the bar
+  // persists at the top of the viewport as the user scrolls the page.
+  makeSection(b, [row], { ptD: 0, pbD: 0, ptM: 0, pbM: 0, sticky: "stickyTop" });
 }
 
 // ── What's included layout variants ────────────────────────────────────────
@@ -1608,7 +1615,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   countAfter(snap, slv["hero"] ?? "(none)");
 
   if (landingVariant === "variant-b") {
-    buildSocialProofStatBar(b, s);
+    buildSocialProofStatBar(b, s, data.offerSummary.corePromise);
   } else if (landingVariant === "variant-c") {
     buildUrgencyBar(b, s);
   }
