@@ -991,6 +991,43 @@ function makeVerticalDivider(b: Builder): string {
   });
 }
 
+// ── Custom Code ───────────────────────────────────────────────────────────────
+// Schema verified from live GHL payload (forclaude/makeCustomCode-smoketest.ts).
+// styles and class MUST be empty — GHL ignores them on this element type.
+// All visual control comes from inline styles inside rawCustomCode HTML.
+
+function makeCustomCode(b: Builder, html: string, marginTop = 24): string {
+  const suffix = Math.random().toString(36).slice(2, 12);
+  const id     = `custom-code-${suffix}`;
+  const nid    = `c${id}`;
+  b.nodes[id] = {
+    child:       [],
+    class:       {},
+    customCss:   [],
+    extra: {
+      customClass: { value: [] },
+      customCode:  { value: { rawCustomCode: html } },
+      nodeId:      nid,
+      visibility:  { value: { hideDesktop: false, hideMobile: false } },
+    },
+    id,
+    meta:          "custom-code",
+    mobileWrapper: { marginTop: { unit: "px", value: marginTop } },
+    styles:        {},
+    tag:           "",
+    tagName:       "c-custom-code",
+    title:         "Custom Code",
+    type:          "element",
+    wrapper: {
+      marginBottom: { unit: "px", value: 0 },
+      marginLeft:   { unit: "px", value: 0 },
+      marginRight:  { unit: "px", value: 0 },
+      marginTop:    { unit: "px", value: marginTop },
+    },
+  };
+  return id;
+}
+
 // ── LANDING PAGE ──────────────────────────────────────────────────────────────
 
 // ── Hero layout variants ───────────────────────────────────────────────────
@@ -1481,9 +1518,26 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     console.log(`[diag] dispatch:${snap.label} variant="${variant}" added=${added} section(s)`);
   };
 
-  let snap = countBefore("hero");
-  dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");
-  countAfter(snap, slv["hero"] ?? "(none)");
+  // ── SMOKE TEST: c-custom-code — REMOVE after GHL render confirmed ────────────
+  // Replace dispatchHero with a single custom-code element to verify the
+  // c-custom-code schema is accepted by GHL's page builder.
+  {
+    const smokeHtml = [
+      '<div style="background:#1e293b;padding:60px 20px;text-align:center;">',
+      '  <h1 style="color:#f97316;font-size:48px;margin:0;">Smoke Test</h1>',
+      '  <p style="color:white;font-size:18px;">Custom code element is working</p>',
+      '</div>',
+    ].join("\n");
+    const ccId = makeCustomCode(b, smokeHtml, 0);
+    const col  = makeCol(b, [ccId], 100, {});
+    const row  = makeRow(b, [col], 1200, 0);
+    makeSection(b, [row], { bgColor: s.dark, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+  }
+  // ── END SMOKE TEST ─────────────────────────────────────────────────────────
+
+  let snap = countBefore("hero"); // snap still used for remainder diagnostic
+  // dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");  // disabled during smoke test
+  countAfter(snap, "smoke-test-custom-code");
 
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
