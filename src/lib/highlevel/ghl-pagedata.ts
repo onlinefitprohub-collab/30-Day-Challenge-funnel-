@@ -1518,26 +1518,9 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     console.log(`[diag] dispatch:${snap.label} variant="${variant}" added=${added} section(s)`);
   };
 
-  // ── SMOKE TEST: c-custom-code — REMOVE after GHL render confirmed ────────────
-  // Replace dispatchHero with a single custom-code element to verify the
-  // c-custom-code schema is accepted by GHL's page builder.
-  {
-    const smokeHtml = [
-      '<div style="background:#1e293b;padding:60px 20px;text-align:center;">',
-      '  <h1 style="color:#f97316;font-size:48px;margin:0;">Smoke Test</h1>',
-      '  <p style="color:white;font-size:18px;">Custom code element is working</p>',
-      '</div>',
-    ].join("\n");
-    const ccId = makeCustomCode(b, smokeHtml, 0);
-    const col  = makeCol(b, [ccId], 100, {});
-    const row  = makeRow(b, [col], 1200, 0);
-    makeSection(b, [row], { bgColor: s.dark, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
-  // ── END SMOKE TEST ─────────────────────────────────────────────────────────
-
-  let snap = countBefore("hero"); // snap still used for remainder diagnostic
-  // dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");  // disabled during smoke test
-  countAfter(snap, "smoke-test-custom-code");
+  let snap = countBefore("hero");
+  dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");
+  countAfter(snap, slv["hero"] ?? "(none)");
 
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
