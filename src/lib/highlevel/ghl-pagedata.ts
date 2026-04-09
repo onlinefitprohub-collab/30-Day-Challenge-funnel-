@@ -1448,11 +1448,10 @@ function buildFooter(b: Builder, s: SchemeColors): void {
   makeSection(b, [row], { bgColor: s.dark, ptD: 32, pbD: 32, ptM: 24, pbM: 24 });
 }
 
-// ── Landing page top-level layout variants ─────────────────────────────────
-// These 3 variants control the overall section structure of the landing page.
-// Only the standard layout is used. The variant field is retained in the
-// persisted outputs for forward compatibility when new native-element variants
-// are introduced, but all current runs emit "variant-a".
+// ── Landing page layout variant ─────────────────────────────────────────────
+// Currently only variant-a (standard layout) is active. The variant field is
+// retained in persisted outputs for forward compatibility when new native-GHL
+// element variants are added in future. All runs emit "variant-a".
 
 const LANDING_VARIANTS = ["variant-a"] as const;
 export type LandingVariant = typeof LANDING_VARIANTS[number];
