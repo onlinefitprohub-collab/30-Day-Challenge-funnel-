@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Jc5pFTQtHo7TNp1mRLK_h"
+uri = "file://public/exports/wizard-templates.json"
+type = "unspecified"
+title = "Wizard Templates — All Steps & Styles"
