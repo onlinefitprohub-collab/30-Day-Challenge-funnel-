@@ -121,6 +121,7 @@ export interface GeneratedFunnelAssets {
   copywriterVoice?: string;
   design?: FunnelDesign;
   sectionLayoutVariants?: SectionLayoutVariants;
+  landingVariant?: string;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

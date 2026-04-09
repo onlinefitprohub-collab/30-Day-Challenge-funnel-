@@ -1584,7 +1584,7 @@ function buildFooter(b: Builder, s: SchemeColors): void {
 const LANDING_VARIANTS = ["variant-a", "variant-b", "variant-c"] as const;
 type LandingVariant = typeof LANDING_VARIANTS[number];
 
-function pickLandingVariant(): LandingVariant {
+export function pickLandingVariant(): LandingVariant {
   return LANDING_VARIANTS[Math.floor(Math.random() * LANDING_VARIANTS.length)];
 }
 
@@ -1601,9 +1601,13 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   // fall back to landingPage.sectionLayoutVariants for backward compat with old records.
   const slv = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
 
-  const landingVariant = pickLandingVariant();
+  // Use the variant saved with this generation run; fall back to random for old records.
+  const landingVariant: LandingVariant =
+    (LANDING_VARIANTS as readonly string[]).includes(data.landingVariant ?? "")
+      ? (data.landingVariant as LandingVariant)
+      : pickLandingVariant();
   console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
-  console.log("[diag] landing-variant:", landingVariant);
+  console.log("[diag] landing-variant:", landingVariant, data.landingVariant ? "(persisted)" : "(random fallback)");
 
   const countBefore = (label: string) => ({ label, before: b.sections.length });
   const countAfter  = (snap: { label: string; before: number }, variant: string) => {

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateFunnelAssets } from "@/lib/ai/generate";
 import { generateAdImages } from "@/lib/ai/image-generation";
 import { generateMockAssets } from "@/lib/ai/mock";
+import { pickLandingVariant } from "@/lib/highlevel/ghl-pagedata";
 import { wizardInputsSchema } from "@/types/wizard";
 import type { GenerationRunRow, ProjectRow } from "@/types/project";
 
@@ -68,6 +69,11 @@ export async function POST(request: Request) {
       }
     }
 
+    // Pick the landing variant once per run and persist it so all subsequent
+    // inject/preview calls for this run always use the same template.
+    const landingVariant = pickLandingVariant();
+    console.log(`[generate] landing-variant: ${landingVariant}`);
+
     // Save outputs — include mock flag so results page can show a banner
     await supabase.from("project_outputs").insert({
       project_id: projectId,
@@ -76,6 +82,7 @@ export async function POST(request: Request) {
         ...assets,
         generatedAdImages,
         colourScheme: validatedInputs.colourScheme ?? "navy-orange",
+        landingVariant,
         _isMock: isMockMode,
       } as Record<string, unknown>,
     });
