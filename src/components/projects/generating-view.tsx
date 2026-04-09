@@ -60,7 +60,7 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
 
       if (projectStatus === "complete") {
         setStatus("complete");
-        setTimeout(() => router.push(`/projects/${projectId}/results`), 800);
+        setTimeout(() => { router.refresh(); router.push(`/projects/${projectId}/results`); }, 800);
       } else if (projectStatus === "error") {
         setStatus("error");
       } else {
@@ -115,7 +115,7 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Button
             variant="gradient"
-            onClick={() => router.push(`/projects/${projectId}/results`)}
+            onClick={() => { router.refresh(); router.push(`/projects/${projectId}/results`); }}
           >
             Check results
           </Button>
