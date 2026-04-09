@@ -1582,7 +1582,7 @@ function buildFooter(b: Builder, s: SchemeColors): void {
 //   variant-c: hero + sticky urgency bar (custom HTML) + standard sections
 
 const LANDING_VARIANTS = ["variant-a", "variant-b", "variant-c"] as const;
-type LandingVariant = typeof LANDING_VARIANTS[number];
+export type LandingVariant = typeof LANDING_VARIANTS[number];
 
 export function pickLandingVariant(): LandingVariant {
   return LANDING_VARIANTS[Math.floor(Math.random() * LANDING_VARIANTS.length)];
