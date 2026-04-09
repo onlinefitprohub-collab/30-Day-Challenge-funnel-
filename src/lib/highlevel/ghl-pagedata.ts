@@ -990,6 +990,54 @@ function makeVerticalDivider(b: Builder): string {
   });
 }
 
+// ── Custom Code ───────────────────────────────────────────────────────────────
+// NOTE: tagName "c-custom-code" is inferred from GHL element naming conventions.
+// Verify against a live GHL payload if this element type does not render correctly.
+// Expected GHL schema: extra.code.value = raw HTML string, meta = "customCode".
+
+function makeCustomCode(b: Builder, html: string): string {
+  const id = ghlId("el");
+  b.nodes[id] = {
+    extra: {
+      nodeId:         `c${id}`,
+      visibility:     VISIBILITY,
+      code:           { value: html },
+      customClass:    { value: [] },
+      elementVersion: { value: 2 },
+    },
+    class: { ...BORDER_CLASS, ...ANIMATION_CLASS },
+    styles: {
+      fontFamily:      { value: "var(--bodyfont)" },
+      backgroundColor: { value: "var(--transparent)" },
+      opacity:         { value: 1 },
+      boxShadow:       { value: "none" },
+      borderRadius:    { value: 0, unit: "px" },
+      borderColor:     { value: "var(--black)" },
+      borderWidth:     { value: "0", unit: "px" },
+      borderStyle:     { value: "solid" },
+      width:           { value: 100, unit: "%" },
+      iconColor:          { value: "var(--text-color)" },
+      boldTextColor:      { value: "var(--text-color)" },
+      italicTextColor:    { value: "var(--text-color)" },
+      underlineTextColor: { value: "var(--text-color)" },
+      linkTextColor:      { value: "var(--link-color)" },
+      inlineColors:       { value: [] },
+    },
+    wrapper:       { ...ELEM_WRAPPER },
+    customCss:     [],
+    id,
+    mobileStyles:  {},
+    mobileWrapper: {},
+    type:          "element",
+    child:         [],
+    meta:          "customCode",
+    tagName:       "c-custom-code",
+    title:         "Custom Code",
+    tag:           "",
+  };
+  return id;
+}
+
 // ── LANDING PAGE ──────────────────────────────────────────────────────────────
 
 // ── Hero layout variants ───────────────────────────────────────────────────
@@ -1170,6 +1218,77 @@ function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromi
   const c3  = makeCol(b, [t3], 32, { align: "center", padH: 24 });
   const r   = makeRow(b, [c1, cd1, c2, cd2, c3], 1100, 24);
   makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 28, pbD: 28, ptM: 20, pbM: 20 });
+}
+
+// ── Variant-B: animated social-proof stat bar (custom HTML) ──────────────────
+
+function buildSocialProofStatBar(b: Builder, s: SchemeColors, participantCount?: string): void {
+  const count  = participantCount ?? "1,200+";
+  const elId   = ghlId("el");
+  const prefix = `cf-spb-${elId.replace(/[^a-z0-9]/gi, "")}`;
+  const html = [
+    `<div class="${prefix}">`,
+    `<style>`,
+    `.${prefix}{display:flex;align-items:center;justify-content:center;gap:12px;`,
+    `padding:14px 24px;background:rgba(255,255,255,0.06);border-radius:40px;`,
+    `max-width:640px;margin:0 auto;opacity:0;`,
+    `animation:${prefix}-fadein 0.7s ease 0.2s forwards;}`,
+    `@keyframes ${prefix}-fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`,
+    `.${prefix} .avatar{display:flex;gap:-6px;}`,
+    `.${prefix} .dot{width:32px;height:32px;border-radius:50%;`,
+    `background:linear-gradient(135deg,${s.primary},${s.accent});`,
+    `border:2px solid rgba(255,255,255,0.15);display:inline-block;margin-left:-6px;}`,
+    `.${prefix} .dot:first-child{margin-left:0;}`,
+    `.${prefix} .label{font-family:var(--contentfont,"Poppins",sans-serif);`,
+    `font-size:14px;color:rgba(255,255,255,0.85);line-height:1.4;}`,
+    `.${prefix} .count{font-weight:700;color:${s.primary};}`,
+    `</style>`,
+    `<div class="avatar">`,
+    `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`,
+    `</div>`,
+    `<span class="label">`,
+    `Join <span class="count">${count} people</span> who&#39;ve already started`,
+    `</span>`,
+    `</div>`,
+  ].join("");
+  const elIdNode = makeCustomCode(b, html);
+  const col = makeCol(b, [elIdNode], 100, { align: "center", padH: 24 });
+  const row = makeRow(b, [col], 800, 0);
+  makeSection(b, [row], { bgColor: s.dark, ptD: 24, pbD: 24, ptM: 16, pbM: 16 });
+}
+
+// ── Variant-C: sticky urgency bar (custom HTML) ───────────────────────────────
+
+function buildUrgencyBar(b: Builder, s: SchemeColors): void {
+  const prefix = `cf-urg-${ghlId("el").replace(/[^a-z0-9]/gi, "")}`;
+  const html = [
+    `<div class="${prefix}">`,
+    `<style>`,
+    `.${prefix}{position:sticky;top:0;z-index:999;`,
+    `background:linear-gradient(90deg,${s.primary},${s.accent});`,
+    `padding:10px 24px;text-align:center;}`,
+    `.${prefix} .inner{display:flex;align-items:center;justify-content:center;`,
+    `gap:8px;max-width:960px;margin:0 auto;}`,
+    `.${prefix} .fire{font-size:18px;`,
+    `animation:${prefix}-pulse 2s ease-in-out infinite;}`,
+    `@keyframes ${prefix}-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}`,
+    `.${prefix} .msg{font-family:var(--contentfont,"Poppins",sans-serif);`,
+    `font-size:14px;font-weight:600;color:#ffffff;letter-spacing:0.01em;}`,
+    `.${prefix} .em{font-weight:800;}`,
+    `</style>`,
+    `<div class="inner">`,
+    `<span class="fire">🔥</span>`,
+    `<span class="msg">`,
+    `Only <span class="em">8 spots remaining</span> this week &mdash; closes Friday`,
+    `</span>`,
+    `<span class="fire">🔥</span>`,
+    `</div>`,
+    `</div>`,
+  ].join("");
+  const elIdNode = makeCustomCode(b, html);
+  const col = makeCol(b, [elIdNode], 100, { align: "center", padH: 0 });
+  const row = makeRow(b, [col], 1400, 0);
+  makeSection(b, [row], { ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
 }
 
 // ── What's included layout variants ────────────────────────────────────────
@@ -1447,6 +1566,20 @@ function buildFooter(b: Builder, s: SchemeColors): void {
   makeSection(b, [row], { bgColor: s.dark, ptD: 32, pbD: 32, ptM: 24, pbM: 24 });
 }
 
+// ── Landing page top-level layout variants ─────────────────────────────────
+// These 3 variants control the overall section structure of the landing page.
+// Picked once per buildLandingPageData() call — independent of sectionLayoutVariants.
+//   variant-a: standard layout (hero + social-proof + included + FAQ + CTA + footer)
+//   variant-b: hero + animated social-proof stat bar (custom HTML) + standard sections
+//   variant-c: hero + sticky urgency bar (custom HTML) + standard sections
+
+const LANDING_VARIANTS = ["variant-a", "variant-b", "variant-c"] as const;
+type LandingVariant = typeof LANDING_VARIANTS[number];
+
+function pickLandingVariant(): LandingVariant {
+  return LANDING_VARIANTS[Math.floor(Math.random() * LANDING_VARIANTS.length)];
+}
+
 export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   console.log("[design] applied design:", data.design);
   const b = createBuilder();
@@ -1460,7 +1593,9 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   // fall back to landingPage.sectionLayoutVariants for backward compat with old records.
   const slv = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
 
+  const landingVariant = pickLandingVariant();
   console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
+  console.log("[diag] landing-variant:", landingVariant);
 
   const countBefore = (label: string) => ({ label, before: b.sections.length });
   const countAfter  = (snap: { label: string; before: number }, variant: string) => {
@@ -1471,6 +1606,12 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   let snap = countBefore("hero");
   dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");
   countAfter(snap, slv["hero"] ?? "(none)");
+
+  if (landingVariant === "variant-b") {
+    buildSocialProofStatBar(b, s);
+  } else if (landingVariant === "variant-c") {
+    buildUrgencyBar(b, s);
+  }
 
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
