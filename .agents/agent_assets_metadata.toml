@@ -6,3 +6,9 @@ id = "Jc5pFTQtHo7TNp1mRLK_h"
 uri = "file://public/exports/wizard-templates.json"
 type = "unspecified"
 title = "Wizard Templates — All Steps & Styles"
+
+[[outputs]]
+id = "6X6uzyOpdG1TTQF3q53Az"
+uri = "file://public/exports/ghl-page-templates.json"
+type = "unspecified"
+title = "GHL Page Templates — All 4 Pages & Section Variants"
