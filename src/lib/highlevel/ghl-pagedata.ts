@@ -1229,8 +1229,9 @@ function buildSocialProofStatBar(b: Builder, s: SchemeColors, corePromise?: stri
   // otherwise fall back to "1,200+"
   const numMatch = corePromise ? corePromise.match(/[\d,]+\+?/) : null;
   const count    = numMatch ? numMatch[0] + (numMatch[0].endsWith("+") ? "" : "+") : "1,200+";
-  const elId   = ghlId("el");
-  const prefix = `cf-spb-${elId.replace(/[^a-z0-9]/gi, "")}`;
+  // Unique scope prefix for CSS isolation. Independent random suffix prevents
+  // class-name collisions when multiple variants appear across pages.
+  const prefix = `cf-spb-${ghlId("el").replace(/[^a-z0-9]/gi, "")}`;
   const html = [
     `<div class="${prefix}">`,
     `<style>`,
