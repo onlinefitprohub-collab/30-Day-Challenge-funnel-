@@ -1502,15 +1502,27 @@ export function pickLandingVariant(): LandingVariant {
 // injected via makeCustomCode() → c-custom-code elements. No <script> tags.
 // Font: system stack only. All colour values come from the active SchemeColors.
 
+/** Minimal HTML entity escape for AI-generated text interpolated into raw HTML. */
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildStatsHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const lp = data.landingPage;
-  const headline   = lp.headlineOptions[0] ?? "Join the Free Challenge";
-  const subheadline = lp.subheadline ?? "";
-  const ctaText    = lp.ctaText ?? "Claim Your Spot";
+  const headline   = escHtml(lp.headlineOptions[0] ?? "Join the Free Challenge");
+  const subheadline = escHtml(lp.subheadline ?? "");
+  const ctaText    = escHtml(lp.ctaText ?? "Claim Your Spot");
 
   // Eyebrow label: first 3 words of challengeConcept, fallback to "30-DAY CHALLENGE"
-  const conceptWords = (data.offerSummary.challengeConcept ?? "")
-    .split(/\s+/).slice(0, 3).join(" ").trim().toUpperCase();
+  const conceptWords = escHtml(
+    (data.offerSummary.challengeConcept ?? "")
+      .split(/\s+/).slice(0, 3).join(" ").trim().toUpperCase()
+  );
   const eyebrowConcept = conceptWords || "30-DAY CHALLENGE";
 
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
