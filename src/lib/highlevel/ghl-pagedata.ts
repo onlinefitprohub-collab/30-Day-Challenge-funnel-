@@ -1497,6 +1497,81 @@ export function pickLandingVariant(): LandingVariant {
   return "variant-a";
 }
 
+// ── Custom-code template builders ─────────────────────────────────────────────
+// These functions return self-contained inline-styled HTML strings that are
+// injected via makeCustomCode() → c-custom-code elements. No <script> tags.
+// Font: system stack only. All colour values come from the active SchemeColors.
+
+function buildStatsHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
+  const lp = data.landingPage;
+  const headline   = lp.headlineOptions[0] ?? "Join the Free Challenge";
+  const subheadline = lp.subheadline ?? "";
+  const ctaText    = lp.ctaText ?? "Claim Your Spot";
+
+  // Eyebrow label: first 3 words of challengeConcept, fallback to "30-DAY CHALLENGE"
+  const conceptWords = (data.offerSummary.challengeConcept ?? "")
+    .split(/\s+/).slice(0, 3).join(" ").trim().toUpperCase();
+  const eyebrowConcept = conceptWords || "30-DAY CHALLENGE";
+
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+  return `<div style="background:${s.heroGradient};padding:80px 24px;text-align:center;font-family:${font};">
+  <div style="max-width:860px;margin:0 auto;">
+    <p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">⚡ LIMITED SPOTS — ${eyebrowConcept} NOW OPEN</p>
+    <h1 style="color:#ffffff;font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.1;margin:0 0 20px;">${headline}</h1>
+    <p style="color:rgba(255,255,255,0.82);font-size:18px;line-height:1.6;margin:0 0 40px;">${subheadline}</p>
+    <div style="display:flex;justify-content:center;gap:48px;flex-wrap:wrap;margin-bottom:40px;">
+      <div style="text-align:center;">
+        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;">500+</div>
+        <div style="color:rgba(255,255,255,0.65);font-size:13px;letter-spacing:1px;margin-top:6px;">Members Transformed</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;">30</div>
+        <div style="color:rgba(255,255,255,0.65);font-size:13px;letter-spacing:1px;margin-top:6px;">Day Challenge</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;">97%</div>
+        <div style="color:rgba(255,255,255,0.65);font-size:13px;letter-spacing:1px;margin-top:6px;">See Results</div>
+      </div>
+    </div>
+    <a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:8px;font-size:17px;font-weight:700;font-family:${font};">${ctaText}</a>
+  </div>
+</div>`;
+}
+
+function buildSocialProofGridHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
+  const bg   = s.alt || "#f8fafc";
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+  const cards = [
+    { initial: "S", name: "Sarah M.",    badge: "Lost 12 lbs in 30 days",  quote: "This challenge completely changed my relationship with fitness. I never thought I could stick to a program for a month — but here I am!" },
+    { initial: "J", name: "Jennifer K.", badge: "Down 2 dress sizes",       quote: "I've tried everything before, but this was the first program where I actually looked forward to showing up every single day." },
+    { initial: "R", name: "Rachel T.",   badge: "Lost 18 lbs",              quote: "The daily structure and the community accountability made all the difference. I finally feel like myself again." },
+    { initial: "M", name: "Maria L.",    badge: "Gained real strength",     quote: "I wasn't just losing weight — I was building real confidence. That's worth more than any number on a scale." },
+  ];
+
+  const cardHtml = cards.map(c => `<div style="background:#ffffff;border-radius:14px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${c.initial}</div>
+        <div>
+          <div style="font-weight:700;color:#0f172a;font-size:15px;">${c.name}</div>
+          <div style="font-size:13px;color:${s.primary};margin-top:2px;">${c.badge}</div>
+        </div>
+      </div>
+      <p style="color:#475569;font-size:15px;line-height:1.65;margin:0;">"${c.quote}"</p>
+    </div>`).join("\n    ");
+
+  return `<div style="background:${bg};padding:64px 24px;font-family:${font};">
+  <div style="max-width:860px;margin:0 auto;text-align:center;">
+    <h2 style="color:#0f172a;font-size:clamp(28px,4vw,42px);font-weight:900;margin:0 0 8px;">Real Results. Real Women.</h2>
+    <p style="color:#64748b;font-size:17px;margin:0 0 40px;">Here's what happened when they committed to 30 days...</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;max-width:900px;margin:0 auto;">
+    ${cardHtml}
+  </div>
+</div>`;
+}
+
 export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   console.log("[design] applied design:", data.design);
   const b = createBuilder();
@@ -1510,6 +1585,17 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   // fall back to landingPage.sectionLayoutVariants for backward compat with old records.
   const slv = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
 
+  // ── Template variant selector ────────────────────────────────────────────────
+  // Weighted pool: ~55% standard (native GHL elements), ~33% stats-hero, ~11% social-proof-grid.
+  // Only affects hero and social-proof sections; all other sections are always native elements.
+  const TEMPLATE_VARIANTS = [
+    "standard", "standard", "standard", "standard", "standard",
+    "stats-hero", "stats-hero", "stats-hero",
+    "social-proof-grid",
+  ] as const;
+  const templateVariant = TEMPLATE_VARIANTS[Math.floor(Math.random() * TEMPLATE_VARIANTS.length)];
+  console.log(`[template-variant] selected: ${templateVariant}`);
+
   console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
 
   const countBefore = (label: string) => ({ label, before: b.sections.length });
@@ -1518,13 +1604,36 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
     console.log(`[diag] dispatch:${snap.label} variant="${variant}" added=${added} section(s)`);
   };
 
+  // snap is reused throughout for countBefore/countAfter diagnostics
   let snap = countBefore("hero");
-  dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");
-  countAfter(snap, slv["hero"] ?? "(none)");
 
+  // ── Hero ─────────────────────────────────────────────────────────────────────
+  if (templateVariant === "stats-hero") {
+    const html = buildStatsHeroHtml(data, s);
+    const ccId = makeCustomCode(b, html, 0);
+    const col  = makeCol(b, [ccId], 100, {});
+    const row  = makeRow(b, [col], 1200, 0);
+    makeSection(b, [row], { bgColor: s.dark, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+    countAfter(snap, "stats-hero (custom-code)");
+  } else {
+    dispatchHero(b, s, lp, badgeLabel, slv["hero"] ?? "");
+    countAfter(snap, slv["hero"] ?? "(none)");
+  }
+
+  // ── Social Proof ──────────────────────────────────────────────────────────────
+  // social-proof-grid always renders (overrides skipSocialProof guard).
+  // standard path respects the guard: skipped when final-cta = cta-social-proof-cta.
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
-  if (!skipSocialProof) {
+  if (templateVariant === "social-proof-grid") {
+    snap = countBefore("social-proof");
+    const html = buildSocialProofGridHtml(data, s);
+    const ccId = makeCustomCode(b, html, 0);
+    const col  = makeCol(b, [ccId], 100, {});
+    const row  = makeRow(b, [col], 1200, 0);
+    makeSection(b, [row], { bgColor: s.alt, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+    countAfter(snap, "social-proof-grid (custom-code)");
+  } else if (!skipSocialProof) {
     snap = countBefore("social-proof");
     dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof"] ?? "");
     countAfter(snap, slv["social-proof"] ?? "(none)");
