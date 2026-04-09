@@ -1552,7 +1552,7 @@ function buildSocialProofGridHtml(data: GeneratedFunnelAssets, s: SchemeColors):
 
   const cardHtml = cards.map(c => `<div style="background:#ffffff;border-radius:14px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <div style="width:48px;height:48px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${c.initial}</div>
+        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,${s.primary},${s.accent});color:#ffffff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${c.initial}</div>
         <div>
           <div style="font-weight:700;color:#0f172a;font-size:15px;">${c.name}</div>
           <div style="font-size:13px;color:${s.primary};margin-top:2px;">${c.badge}</div>
