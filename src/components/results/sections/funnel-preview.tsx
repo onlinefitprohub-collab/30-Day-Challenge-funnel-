@@ -204,7 +204,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
             <button
               onClick={handleRefresh}
               className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-              title="Re-generate the preview — picks a new random template variant"
+              title="Reload this page preview (landing page also picks a new template variant)"
             >
               <RefreshCw className="h-3 w-3" />
               Refresh Preview

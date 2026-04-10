@@ -55,12 +55,12 @@ export async function GET(request: Request) {
   console.log(`[page-data] REQUEST page=${page} projectId=${projectId}`);
 
   let pageData;
-  let templateVariant: string | undefined;
+  let templateVariant: TemplateVariant | undefined;
   switch (page) {
     case "landing": {
       templateVariant = pickTemplateVariant();
       console.log(`[page-data] templateVariant=${templateVariant}`);
-      pageData = buildLandingPageData(assets, templateVariant as TemplateVariant);
+      pageData = buildLandingPageData(assets, templateVariant);
       break;
     }
     case "optin":    pageData = buildOptInPageData(assets);    break;
