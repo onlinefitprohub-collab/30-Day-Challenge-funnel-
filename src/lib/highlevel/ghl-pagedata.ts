@@ -1610,7 +1610,7 @@ export function buildFaqHtml(data: GeneratedFunnelAssets, s: SchemeColors): stri
       <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">${num}</div>
       <div style="flex:1;">
         <p style="color:#ffffff;font-size:18px;font-weight:600;margin:0 0 10px;line-height:1.4;">${q}</p>
-        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;">${a}</p>
+        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;padding-left:48px;">${a}</p>
       </div>
       <div style="flex-shrink:0;color:${s.primary};font-size:22px;font-weight:300;line-height:1;margin-top:6px;">+</div>
     </div>`;
@@ -1619,7 +1619,7 @@ export function buildFaqHtml(data: GeneratedFunnelAssets, s: SchemeColors): stri
       <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">01</div>
       <div style="flex:1;">
         <p style="color:#ffffff;font-size:18px;font-weight:600;margin:0 0 10px;">FAQ content will appear here.</p>
-        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;">Your frequently asked questions will be displayed in this section once generated.</p>
+        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;padding-left:48px;">Your frequently asked questions will be displayed in this section once generated.</p>
       </div>
       <div style="flex-shrink:0;color:${s.primary};font-size:22px;font-weight:300;line-height:1;margin-top:6px;">+</div>
     </div>`;
