@@ -1540,8 +1540,8 @@ function buildStatsHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): strin
 
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-  return `<div style="background:${s.heroGradient};padding:80px 24px;text-align:center;font-family:${font};">
-  <div style="max-width:860px;margin:0 auto;">
+  return `<div style="background:${s.heroGradient};min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;text-align:center;font-family:${font};box-sizing:border-box;">
+  <div style="max-width:860px;margin:0 auto;width:100%;">
     <p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-variant:small-caps;margin:0 0 24px;">⚡ LIMITED SPOTS — ${eyebrowConcept} NOW OPEN</p>
     <h1 style="color:#ffffff;font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.1;margin:0 0 20px;">${headline}</h1>
     <p style="color:rgba(255,255,255,0.82);font-size:18px;line-height:1.6;margin:0 0 40px;">${subheadline}</p>
