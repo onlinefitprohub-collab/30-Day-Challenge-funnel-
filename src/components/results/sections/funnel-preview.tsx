@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Globe, Check, ExternalLink, Loader2, X, Download } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import { GhlPagePreview } from "./GhlPagePreview";
 
@@ -70,6 +70,11 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
   const [cloneStatus, setCloneStatus] = useState<"idle" | "loading" | "saved" | "no-ext" | "error">("idle");
   const [cloneMsg, setCloneMsg]       = useState("");
 
+  // Refresh: incrementing refreshKey remounts GhlPagePreview → triggers a fresh fetch
+  const [refreshKey, setRefreshKey] = useState(0);
+  // Template label: set by GhlPagePreview after a successful landing-page fetch
+  const [templateLabel, setTemplateLabel] = useState<string>("");
+
   const scheme = getScheme(data.colourScheme);
   const activeMeta = PAGES.find((p) => p.id === activePage)!;
 
@@ -80,12 +85,17 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
     booking:  "yourfunnel.com/book",
   };
 
-  const pageContent: Record<PageId, React.ReactNode> = {
-    landing:  <GhlPagePreview projectId={projectId ?? ""} page="landing" />,
-    optin:    <GhlPagePreview projectId={projectId ?? ""} page="optin" />,
-    thankyou: <GhlPagePreview projectId={projectId ?? ""} page="thankyou" />,
-    booking:  <GhlPagePreview projectId={projectId ?? ""} page="booking" />,
-  };
+  const handleLandingLoad = useCallback(
+    ({ templateLabel: label }: { templateLabel?: string }) => {
+      setTemplateLabel(label ?? "");
+    },
+    [],
+  );
+
+  function handleRefresh() {
+    setTemplateLabel("");
+    setRefreshKey((k) => k + 1);
+  }
 
   async function handleDownloadJson() {
     try {
@@ -192,6 +202,14 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         <div className="ml-auto flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
             <button
+              onClick={handleRefresh}
+              className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+              title="Re-generate the preview — picks a new random template variant"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Refresh Preview
+            </button>
+            <button
               onClick={handleDownloadJson}
               className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
               title="Download this page's GHL JSON — import manually or inspect the schema"
@@ -217,6 +235,20 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
           </p>
         </div>
       </div>
+
+      {/* Template label badge — only shown on the landing page */}
+      {activePage === "landing" && templateLabel && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Template:</span>
+          <span
+            className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+            style={{ backgroundColor: scheme.primary }}
+          >
+            {templateLabel}
+          </span>
+          <span className="text-[10px] text-gray-400">Click "Refresh Preview" to pick a different one</span>
+        </div>
+      )}
 
       {/* Clone-to-GHL status strip */}
       {cloneStatus === "saved" && (
@@ -267,9 +299,14 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         </div>
       )}
 
-      {/* Browser preview */}
+      {/* Browser preview — key includes refreshKey so each refresh remounts the component */}
       <BrowserFrame url={pageUrls[activeMeta.id]}>
-        {pageContent[activePage]}
+        <GhlPagePreview
+          key={`${activePage}-${refreshKey}`}
+          projectId={projectId ?? ""}
+          page={activePage}
+          onLoad={activePage === "landing" ? handleLandingLoad : undefined}
+        />
       </BrowserFrame>
     </div>
   );

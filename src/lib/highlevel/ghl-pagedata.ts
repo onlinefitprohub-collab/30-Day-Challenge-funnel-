@@ -1497,6 +1497,19 @@ export function pickLandingVariant(): LandingVariant {
   return "variant-a";
 }
 
+// ── Template variant pool (exported so the API route can pick & name the variant) ──
+// Weighted: ~55% standard / ~33% stats-hero / ~11% social-proof-grid.
+export const TEMPLATE_VARIANTS_POOL = [
+  "standard", "standard", "standard", "standard", "standard",
+  "stats-hero", "stats-hero", "stats-hero",
+  "social-proof-grid",
+] as const;
+export type TemplateVariant = typeof TEMPLATE_VARIANTS_POOL[number];
+
+export function pickTemplateVariant(): TemplateVariant {
+  return TEMPLATE_VARIANTS_POOL[Math.floor(Math.random() * TEMPLATE_VARIANTS_POOL.length)];
+}
+
 // ── Custom-code template builders ─────────────────────────────────────────────
 // These functions return self-contained inline-styled HTML strings that are
 // injected via makeCustomCode() → c-custom-code elements. No <script> tags.
@@ -1584,7 +1597,7 @@ function buildSocialProofGridHtml(data: GeneratedFunnelAssets, s: SchemeColors):
 </div>`;
 }
 
-export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
+export function buildLandingPageData(data: GeneratedFunnelAssets, templateVariant?: TemplateVariant): GhlPageData {
   console.log("[design] applied design:", data.design);
   const b = createBuilder();
   const s = resolveScheme(data);
@@ -1597,16 +1610,11 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   // fall back to landingPage.sectionLayoutVariants for backward compat with old records.
   const slv = data.sectionLayoutVariants ?? lp.sectionLayoutVariants ?? {};
 
-  // ── Template variant selector ────────────────────────────────────────────────
-  // Weighted pool: ~55% standard (native GHL elements), ~33% stats-hero, ~11% social-proof-grid.
-  // Only affects hero and social-proof sections; all other sections are always native elements.
-  const TEMPLATE_VARIANTS = [
-    "standard", "standard", "standard", "standard", "standard",
-    "stats-hero", "stats-hero", "stats-hero",
-    "social-proof-grid",
-  ] as const;
-  const templateVariant = TEMPLATE_VARIANTS[Math.floor(Math.random() * TEMPLATE_VARIANTS.length)];
-  console.log(`[template-variant] selected: ${templateVariant}`);
+  // ── Template variant ─────────────────────────────────────────────────────────
+  // Caller may pass a pre-selected variant (so the API route can log & surface it).
+  // If not provided, fall back to picking from the weighted pool.
+  const resolvedVariant: TemplateVariant = templateVariant ?? pickTemplateVariant();
+  console.log(`[template-variant] selected: ${resolvedVariant}`);
 
   console.log("[diag] sectionLayoutVariants:", JSON.stringify(slv));
 
@@ -1620,7 +1628,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   let snap = countBefore("hero");
 
   // ── Hero ─────────────────────────────────────────────────────────────────────
-  if (templateVariant === "stats-hero") {
+  if (resolvedVariant === "stats-hero") {
     const html = buildStatsHeroHtml(data, s);
     const ccId = makeCustomCode(b, html, 0);
     const col  = makeCol(b, [ccId], 100, {});
@@ -1637,7 +1645,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   // standard path respects the guard: skipped when final-cta = cta-social-proof-cta.
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
-  if (templateVariant === "social-proof-grid") {
+  if (resolvedVariant === "social-proof-grid") {
     snap = countBefore("social-proof");
     const html = buildSocialProofGridHtml(data, s);
     const ccId = makeCustomCode(b, html, 0);

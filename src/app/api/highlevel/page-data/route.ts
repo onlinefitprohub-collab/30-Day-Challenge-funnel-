@@ -5,8 +5,16 @@ import {
   buildOptInPageData,
   buildThankYouPageData,
   buildBookingPageData,
+  pickTemplateVariant,
+  type TemplateVariant,
 } from "@/lib/highlevel/ghl-pagedata";
 import type { GeneratedFunnelAssets } from "@/types/generation";
+
+const TEMPLATE_LABELS: Record<string, string> = {
+  "standard":          "Standard Hero",
+  "stats-hero":        "Stats Hero",
+  "social-proof-grid": "Social Proof Grid",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -47,8 +55,14 @@ export async function GET(request: Request) {
   console.log(`[page-data] REQUEST page=${page} projectId=${projectId}`);
 
   let pageData;
+  let templateVariant: string | undefined;
   switch (page) {
-    case "landing":  pageData = buildLandingPageData(assets);  break;
+    case "landing": {
+      templateVariant = pickTemplateVariant();
+      console.log(`[page-data] templateVariant=${templateVariant}`);
+      pageData = buildLandingPageData(assets, templateVariant as TemplateVariant);
+      break;
+    }
     case "optin":    pageData = buildOptInPageData(assets);    break;
     case "thankyou": pageData = buildThankYouPageData(assets); break;
     case "booking":  pageData = buildBookingPageData(assets);  break;
@@ -69,5 +83,6 @@ export async function GET(request: Request) {
     colourScheme: assets.colourScheme ?? "navy-orange",
     page,
     projectId,
+    templateLabel: templateVariant ? (TEMPLATE_LABELS[templateVariant] ?? templateVariant) : undefined,
   });
 }

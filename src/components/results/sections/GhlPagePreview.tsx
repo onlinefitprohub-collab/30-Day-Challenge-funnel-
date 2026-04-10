@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { GhlSection, GhlPageData } from "@/lib/highlevel/ghl-pagedata";
 
 interface Props {
   projectId: string;
   page: "landing" | "optin" | "thankyou" | "booking";
+  onLoad?: (info: { templateLabel?: string }) => void;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -536,6 +537,20 @@ function RenderNode({
       );
     }
 
+    /* ── Custom Code ─────────────────────────────────────────────────────── */
+    case "c-custom-code": {
+      const rawHtml =
+        (extra.customCode as { value?: { rawCustomCode?: string } } | undefined)
+          ?.value?.rawCustomCode ?? "";
+      const safe = sanitizeHtml(rawHtml);
+      return (
+        <div
+          style={{ width: "100%" }}
+          dangerouslySetInnerHTML={{ __html: safe }}
+        />
+      );
+    }
+
     /* ── Bullet List ─────────────────────────────────────────────────────── */
     case "c-bullet-list": {
       const items = (
@@ -548,6 +563,20 @@ function RenderNode({
         typeof extra.iconColor === "string"
           ? extra.iconColor
           : sv(extra.iconColor as unknown, vars) ?? "#f97316";
+      if (items.length === 0) {
+        return (
+          <p
+            style={{
+              color: "rgba(0,0,0,0.35)",
+              fontStyle: "italic",
+              fontSize: "13px",
+              margin: "8px 0",
+            }}
+          >
+            Bullet points will appear here once generated.
+          </p>
+        );
+      }
       return (
         <ul
           style={{
@@ -734,12 +763,17 @@ function LoadingSkeleton() {
 /*  Main component                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-export function GhlPagePreview({ projectId, page }: Props) {
+export function GhlPagePreview({ projectId, page, onLoad }: Props) {
   const [status, setStatus] = useState<"loading" | "ok" | "empty" | "error">(
     "loading",
   );
   const [sections, setSections] = useState<GhlSection[]>([]);
   const [vars, setVars] = useState<Record<string, string>>({});
+
+  // Keep a ref to onLoad so it never becomes a useEffect dependency
+  // (avoids infinite re-fetch loops when the parent passes an inline function).
+  const onLoadRef = useRef(onLoad);
+  useEffect(() => { onLoadRef.current = onLoad; });
 
   useEffect(() => {
     if (!projectId) {
@@ -758,7 +792,7 @@ export function GhlPagePreview({ projectId, page }: Props) {
           setStatus(res.status === 404 ? "empty" : "error");
           return;
         }
-        const json = (await res.json()) as { pageData?: GhlPageData };
+        const json = (await res.json()) as { pageData?: GhlPageData; templateLabel?: string };
         if (cancelled) return;
         const pd = json.pageData;
         if (!pd?.sections?.length) {
@@ -769,6 +803,7 @@ export function GhlPagePreview({ projectId, page }: Props) {
         setSections(pd.sections);
         setVars(cssVars);
         setStatus("ok");
+        onLoadRef.current?.({ templateLabel: json.templateLabel });
       })
       .catch(() => {
         if (!cancelled) setStatus("error");
