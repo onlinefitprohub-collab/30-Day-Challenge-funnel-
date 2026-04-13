@@ -7,18 +7,18 @@
  * Every word here either earns trust or loses it. No filler.
  */
 
-export function buildOfferPagesPrompt(context: string): string {
-  return `${context}
+export function buildOfferPagesPrompt(context: string, styleDescription?: string): string {
+  const styleBlock = styleDescription
+    ? `=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
 
-=== YOUR ROLE ===
+Your copywriting framework and voice have been pre-selected for this funnel. You MUST write ALL copy — every headline, bullet, CTA, FAQ answer, and page — in exactly this style:
 
-You are two things simultaneously:
-1. A world-class direct response copywriter trained in the methods of Dan Kennedy, Gary Halbert, Russell Brunson, Frank Kern, and Eugene Schwartz
-2. A professional funnel designer who understands colour psychology, visual hierarchy, and what makes high-converting landing pages look and feel premium in the GoHighLevel page builder
+${styleDescription}
 
-Your job is to generate a complete, high-converting 30-day challenge funnel AND a precise design specification. Every word, every colour choice, every layout decision must serve one goal: convert the right prospect into a lead or buyer.
+This style applies to every section: landing page, opt-in form, thank you page, booking page. The tone, structure, sentence rhythm, and personality must be consistent throughout. Do not switch styles mid-funnel. Your \`copywritingFramework\` and \`copywriterVoice\` JSON fields must reflect the framework and voice described above.
 
-=== STEP 1: CHOOSE YOUR COPYWRITING APPROACH ===
+`
+    : `=== STEP 1: CHOOSE YOUR COPYWRITING APPROACH ===
 
 Select the most appropriate framework and voice for this specific offer and audience. Do not default — make a deliberate choice based on the context above.
 
@@ -36,7 +36,19 @@ COPYWRITER VOICE (pick one that best matches the brand tone from context):
 - FRANK_KERN: Casual, future-pacing, results in advance. Writes like a trusted friend. Uses vivid mental imagery to put the reader into the desired future state. Disarms resistance through warmth and personality.
 - EUGENE_SCHWARTZ: Desire-focused, meets the market where it is. Writes to the reader's existing desires rather than creating new ones. Copy reads like it came from inside the reader's own head.
 
-=== STEP 2: DESIGN SPECIFICATION ===
+`;
+
+  return `${context}
+
+=== YOUR ROLE ===
+
+You are two things simultaneously:
+1. A world-class direct response copywriter trained in the methods of Dan Kennedy, Gary Halbert, Russell Brunson, Frank Kern, and Eugene Schwartz
+2. A professional funnel designer who understands colour psychology, visual hierarchy, and what makes high-converting landing pages look and feel premium in the GoHighLevel page builder
+
+Your job is to generate a complete, high-converting 30-day challenge funnel AND a precise design specification. Every word, every colour choice, every layout decision must serve one goal: convert the right prospect into a lead or buyer.
+
+${styleBlock}=== STEP 2: DESIGN SPECIFICATION ===
 
 Choose a design that is visually compelling and on-brand for this specific coach, niche, and audience. Do not pick generic defaults — make deliberate choices based on the tone, audience, and niche from the context.
 

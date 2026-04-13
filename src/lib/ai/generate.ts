@@ -84,7 +84,7 @@ export async function generateFunnelAssets(
   // Fire all 3 groups in parallel — Groups 1 & 3 use Sonnet, Group 2 uses Haiku
   const [offerPagesResult, sequencesResult, adsCampaignResult] = await Promise.all([
     callCopyGroup(
-      buildOfferPagesPrompt(context),
+      buildOfferPagesPrompt(context, style.promptDescription),
       offerPagesResponseSchema,
       "offer-pages",
       TOKENS.offerPages,
