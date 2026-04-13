@@ -122,6 +122,12 @@ export interface GeneratedFunnelAssets {
   design?: FunnelDesign;
   sectionLayoutVariants?: SectionLayoutVariants;
   landingVariant?: "variant-a";
+  // Wizard-sourced fields for template personalisation (persisted alongside AI assets)
+  coachVideoUrl?:  string;
+  coachPhotoUrl?:  string;
+  clientCount?:    string;
+  yearsCoaching?:  string;
+  templateVariant?: string;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

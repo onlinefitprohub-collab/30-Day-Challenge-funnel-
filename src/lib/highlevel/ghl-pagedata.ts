@@ -1539,6 +1539,18 @@ export function pickTemplateVariant(): TemplateVariant {
 // injected via makeCustomCode() → c-custom-code elements. No <script> tags.
 // Font: system stack only. All colour values come from the active SchemeColors.
 
+// ── Premium CSS design tokens ─────────────────────────────────────────────────
+// Shared across all template builders for visual consistency.
+const DOT_BG   = "radial-gradient(circle,rgba(255,255,255,0.07) 1px,transparent 1px) center/24px 24px";
+const SHADOW_XL = "0 20px 25px -5px rgba(0,0,0,0.18),0 8px 10px -6px rgba(0,0,0,0.12)";
+const SHADOW_SM = "0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.06)";
+function glowStyle(hex: string): string {
+  return `box-shadow:0 0 28px ${hex}55,0 4px 16px ${hex}33`;
+}
+function gradientText(from: string, to: string): string {
+  return `background:linear-gradient(135deg,${from} 0%,${to} 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block`;
+}
+
 /** Minimal HTML entity escape for AI-generated text interpolated into raw HTML. */
 function escHtml(s: string): string {
   return s
@@ -1551,39 +1563,42 @@ function escHtml(s: string): string {
 
 function buildStatsHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const lp = data.landingPage;
-  const headline   = escHtml(lp.headlineOptions[0] ?? "Join the Free Challenge");
+  const headline    = escHtml(lp.headlineOptions[0] ?? "Join the Free Challenge");
   const subheadline = escHtml(lp.subheadline ?? "");
-  const ctaText    = escHtml(lp.ctaText ?? "Claim Your Spot");
+  const ctaText     = escHtml(lp.ctaText ?? "Claim Your Spot");
+  const clientCount = data.clientCount ? escHtml(data.clientCount) : "500+";
 
-  // Eyebrow label: first 3 words of challengeConcept, fallback to "30-DAY CHALLENGE"
   const conceptWords = escHtml(
     (data.offerSummary.challengeConcept ?? "")
       .split(/\s+/).slice(0, 3).join(" ").trim().toUpperCase()
   );
   const eyebrowConcept = conceptWords || "30-DAY CHALLENGE";
-
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const videoLink = data.coachVideoUrl
+    ? `<a href="${escHtml(data.coachVideoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,0.7);font-size:14px;text-decoration:none;margin-top:16px;">▶ Watch my story</a>`
+    : "";
 
-  return `<div style="background:${s.heroGradient};min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;text-align:center;font-family:${font};box-sizing:border-box;">
+  return `<div style="background:${s.heroGradient};background-image:${DOT_BG};min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;text-align:center;font-family:${font};box-sizing:border-box;">
   <div style="max-width:860px;margin:0 auto;width:100%;">
     <p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-variant:small-caps;margin:0 0 24px;">⚡ LIMITED SPOTS — ${eyebrowConcept} NOW OPEN</p>
-    <h1 style="color:#ffffff;font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.1;margin:0 0 20px;">${headline}</h1>
+    <h1 style="font-size:clamp(32px,5vw,54px);font-weight:900;line-height:1.1;margin:0 0 20px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.75)") }">${headline}</span></h1>
     <p style="color:rgba(255,255,255,0.82);font-size:18px;line-height:1.6;margin:0 0 40px;">${subheadline}</p>
     <div style="display:flex;justify-content:center;gap:48px;flex-wrap:wrap;margin-bottom:40px;">
       <div style="text-align:center;">
-        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;">500+</div>
+        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;text-shadow:0 0 40px ${s.primary}88;">${clientCount}</div>
         <div style="color:rgba(255,255,255,0.65);font-size:13px;letter-spacing:1px;margin-top:6px;">Members Transformed</div>
       </div>
       <div style="text-align:center;">
-        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;">30</div>
+        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;text-shadow:0 0 40px ${s.primary}88;">30</div>
         <div style="color:rgba(255,255,255,0.65);font-size:13px;letter-spacing:1px;margin-top:6px;">Day Challenge</div>
       </div>
       <div style="text-align:center;">
-        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;">97%</div>
+        <div style="color:${s.primary};font-size:52px;font-weight:900;line-height:1;text-shadow:0 0 40px ${s.primary}88;">97%</div>
         <div style="color:rgba(255,255,255,0.65);font-size:13px;letter-spacing:1px;margin-top:6px;">See Results</div>
       </div>
     </div>
-    <a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:8px;font-size:17px;font-weight:700;font-family:${font};">${ctaText}</a>
+    <a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;font-family:${font};${glowStyle(s.primary)}">${ctaText}</a>
+    ${videoLink}
   </div>
 </div>`;
 }
@@ -1664,7 +1679,7 @@ function buildAudienceBannerHtml(data: GeneratedFunnelAssets, s: SchemeColors): 
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const targetFirst8 = escHtml((data.offerSummary?.targetAudienceSummary ?? "").split(/\s+/).slice(0, 8).join(" "));
   const promiseFirst6 = escHtml((data.offerSummary?.corePromise ?? "").split(/\s+/).slice(0, 6).join(" "));
-  return `<div style="background:${s.primary};padding:14px 24px;text-align:center;font-family:${font};"><span style="color:#ffffff;font-size:15px;font-weight:600;letter-spacing:0.5px;">📍 Designed specifically for ${targetFirst8} — ${promiseFirst6}</span></div>`;
+  return `<div style="background:linear-gradient(90deg,${s.primary} 0%,${s.accent} 100%);padding:14px 24px;text-align:center;font-family:${font};box-shadow:0 2px 8px ${s.primary}66;"><span style="color:#ffffff;font-size:15px;font-weight:600;letter-spacing:0.5px;">📍 Designed specifically for ${targetFirst8} — ${promiseFirst6}</span></div>`;
 }
 
 // ── Template 17: free-value-first value stack ─────────────────────────────────
@@ -1678,8 +1693,8 @@ function buildValueStackHtml(data: GeneratedFunnelAssets, s: SchemeColors): stri
     { num: "03", title: "Private Community Access", desc: "Support from coaches + challenge community", value: "$37" },
     { num: "04", title: "30-Day Action Calendar", desc: "Day-by-day plan so you never guess what's next", value: "$27" },
   ];
-  const stackHtml = items.map(item => `<div style="display:flex;align-items:center;gap:20px;padding:20px;background:#ffffff;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);"><div style="flex-shrink:0;width:48px;height:48px;background:${s.primary};border-radius:8px;color:#ffffff;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;">${item.num}</div><div style="flex:1;"><div style="font-weight:700;color:#0f172a;font-size:17px;">${item.title}</div><div style="color:#64748b;font-size:14px;margin-top:2px;">${item.desc}</div></div><div style="flex-shrink:0;color:#94a3b8;font-size:14px;text-decoration:line-through;">(${item.value} value)</div></div>`).join("");
-  return `<div style="background:${bg};padding:64px 24px;font-family:${font};"><div style="max-width:680px;margin:0 auto;"><h2 style="color:#0f172a;font-size:clamp(24px,3.5vw,32px);font-weight:900;text-align:center;margin:0 0 40px;">Here's everything you get — completely free:</h2>${stackHtml}<p style="text-align:center;color:${s.primary};font-weight:700;font-size:18px;margin:8px 0 0;">Total value: $208+ — Yours today when you join</p></div></div>`;
+  const stackHtml = items.map(item => `<div style="display:flex;align-items:center;gap:20px;padding:20px;background:#ffffff;border-radius:12px;margin-bottom:16px;box-shadow:${SHADOW_XL};border:1px solid rgba(0,0,0,0.04);"><div style="flex-shrink:0;width:48px;height:48px;background:${s.primary};border-radius:8px;color:#ffffff;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px ${s.primary}44;">${item.num}</div><div style="flex:1;"><div style="font-weight:700;color:#0f172a;font-size:17px;">${item.title}</div><div style="color:#64748b;font-size:14px;margin-top:2px;">${item.desc}</div></div><div style="flex-shrink:0;color:#94a3b8;font-size:14px;text-decoration:line-through;">(${item.value} value)</div></div>`).join("");
+  return `<div style="background:${bg};padding:64px 24px;font-family:${font};"><div style="max-width:680px;margin:0 auto;"><h2 style="color:#0f172a;font-size:clamp(24px,3.5vw,32px);font-weight:900;text-align:center;margin:0 0 40px;">Here's everything you get — completely free:</h2>${stackHtml}<div style="background:${s.primary}15;border-radius:12px;padding:16px;text-align:center;margin-top:8px;"><p style="color:${s.primary};font-weight:700;font-size:18px;margin:0;">Total value: $208+ — Yours today when you join</p></div></div></div>`;
 }
 
 // ── Template 18: application-style hero ──────────────────────────────────────
@@ -1694,7 +1709,7 @@ function buildApplicationHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors):
     targetFirst || "You're serious about achieving real, lasting results",
     "You understand that real results take real effort — and you're ready",
   ].map(r => `<li style="color:#ffffff;font-size:16px;line-height:1.8;list-style:none;display:flex;gap:12px;"><span style="color:${s.primary};font-weight:700;flex-shrink:0;">→</span><span>${escHtml(r)}</span></li>`).join("");
-  return `<div style="background:${s.dark};min-height:80vh;display:flex;align-items:center;padding:80px 24px;font-family:${font};box-sizing:border-box;"><div style="max-width:860px;margin:0 auto;width:100%;"><p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;">⬡ EXCLUSIVE APPLICATION — LIMITED TO 20 SPOTS</p><h1 style="color:#ffffff;font-size:clamp(30px,5vw,50px);font-weight:900;line-height:1.1;margin:0 0 16px;">Apply for ${h1Text}</h1><p style="color:rgba(255,255,255,0.75);font-size:17px;margin:0 0 32px;">This isn't for everyone. Here's who we're looking for:</p><ul style="padding:0;margin:0 0 36px;">${reqs}</ul><a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;">Submit Your Application →</a><p style="color:rgba(255,255,255,0.45);font-size:13px;margin:12px 0 0;">No payment required. We'll review and confirm your spot.</p></div></div>`;
+  return `<div style="background:${s.dark};background-image:${DOT_BG};min-height:80vh;display:flex;align-items:center;padding:80px 24px;font-family:${font};box-sizing:border-box;"><div style="max-width:860px;margin:0 auto;width:100%;"><p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;">⬡ EXCLUSIVE APPLICATION — LIMITED TO 20 SPOTS</p><h1 style="color:#ffffff;font-size:clamp(30px,5vw,50px);font-weight:900;line-height:1.1;margin:0 0 16px;text-shadow:0 2px 32px rgba(0,0,0,0.4);">Apply for ${h1Text}</h1><p style="color:rgba(255,255,255,0.75);font-size:17px;margin:0 0 32px;">This isn't for everyone. Here's who we're looking for:</p><div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:36px;"><ul style="padding:0;margin:0;">${reqs}</ul></div><a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;${glowStyle(s.primary)}">Submit Your Application →</a><p style="color:rgba(255,255,255,0.45);font-size:13px;margin:12px 0 0;">No payment required. We'll review and confirm your spot.</p></div></div>`;
 }
 
 // ── Template 19: story-journey milestone timeline ─────────────────────────────
@@ -1708,8 +1723,8 @@ function buildJourneyTimelineHtml(data: GeneratedFunnelAssets, s: SchemeColors):
     { day: "Day 30", title: "Your Transformation", desc: corePromiseShort },
   ];
   const sep = `<div style="flex-shrink:0;width:40px;height:2px;background:rgba(255,255,255,0.15);align-self:flex-start;margin-top:32px;"></div>`;
-  const nodes = milestones.map(m => `<div style="text-align:center;flex:1;min-width:130px;"><div style="width:64px;height:64px;border-radius:50%;border:2px solid ${s.primary};background:${s.dark};color:#ffffff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">${m.day}</div><div style="color:#ffffff;font-size:16px;font-weight:700;margin-bottom:6px;">${m.title}</div><div style="color:rgba(255,255,255,0.6);font-size:13px;line-height:1.5;">${m.desc}</div></div>`).join(sep);
-  return `<div style="background:${s.mid};padding:72px 24px;font-family:${font};"><h2 style="color:#ffffff;font-size:clamp(28px,4vw,38px);font-weight:900;text-align:center;margin:0 0 56px;">What Happens When You Join</h2><div style="max-width:900px;margin:0 auto;display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:center;gap:16px;">${nodes}</div></div>`;
+  const nodes = milestones.map(m => `<div style="text-align:center;flex:1;min-width:130px;"><div style="width:64px;height:64px;border-radius:50%;border:2px solid ${s.primary};background:${s.dark};color:#ffffff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 0 20px ${s.primary}55;">${m.day}</div><div style="color:#ffffff;font-size:16px;font-weight:700;margin-bottom:6px;letter-spacing:-0.5px;">${m.title}</div><div style="color:rgba(255,255,255,0.6);font-size:13px;line-height:1.5;">${m.desc}</div></div>`).join(sep);
+  return `<div style="background:${s.mid};background-image:${DOT_BG};padding:72px 24px;font-family:${font};"><h2 style="color:#ffffff;font-size:clamp(28px,4vw,38px);font-weight:900;text-align:center;margin:0 0 56px;letter-spacing:-0.5px;">What Happens When You Join</h2><div style="max-width:900px;margin:0 auto;display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:center;gap:16px;">${nodes}</div></div>`;
 }
 
 // ── Template 20: results-first stat-led hero ──────────────────────────────────
@@ -1720,7 +1735,7 @@ function buildResultsHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): str
   const subheadline = escHtml(lp?.subheadline ?? "");
   const ctaText = escHtml(lp?.ctaText ?? "Claim Your Spot");
   const conceptFirst4 = escHtml((data.offerSummary?.challengeConcept ?? "our 30-day challenge").split(/\s+/).slice(0, 4).join(" "));
-  return `<div style="background:${s.dark};font-family:${font};"><div style="background:${s.primary};padding:20px 24px;text-align:center;"><div style="color:#ffffff;font-size:clamp(24px,4vw,38px);font-weight:900;">Over 2,400 lbs Lost by Our Community</div><div style="color:rgba(255,255,255,0.85);font-size:16px;margin-top:6px;">...and ${conceptFirst4} is how they did it</div></div><div style="padding:60px 24px;text-align:center;max-width:860px;margin:0 auto;"><h1 style="color:#ffffff;font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.1;margin:0 0 20px;">${headline}</h1><p style="color:rgba(255,255,255,0.82);font-size:18px;margin:0 0 36px;line-height:1.6;">${subheadline}</p><div style="background:rgba(255,255,255,0.06);border-radius:16px;padding:24px 32px;max-width:560px;margin:0 auto 36px;"><span style="color:${s.primary};font-size:48px;line-height:0.5;display:block;">"</span><p style="color:#ffffff;font-size:17px;font-style:italic;line-height:1.7;margin:0 0 12px;">I lost 16 lbs in my first 30 days and finally feel confident in my own skin.</p><span style="color:rgba(255,255,255,0.55);font-size:14px;">— Jessica M., challenge participant</span></div><a href="#optin" style="display:block;max-width:400px;margin:0 auto;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;text-align:center;">${ctaText}</a></div></div>`;
+  return `<div style="background:${s.dark};background-image:${DOT_BG};font-family:${font};"><div style="background:linear-gradient(135deg,${s.primary} 0%,${s.accent} 100%);padding:20px 24px;text-align:center;"><div style="color:#ffffff;font-size:clamp(24px,4vw,38px);font-weight:900;">Over 2,400 lbs Lost by Our Community</div><div style="color:rgba(255,255,255,0.85);font-size:16px;margin-top:6px;">...and ${conceptFirst4} is how they did it</div></div><div style="padding:60px 24px;text-align:center;max-width:860px;margin:0 auto;"><h1 style="font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.1;margin:0 0 20px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.8)") }">${headline}</span></h1><p style="color:rgba(255,255,255,0.82);font-size:18px;margin:0 0 36px;line-height:1.6;">${subheadline}</p><div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px 32px;max-width:560px;margin:0 auto 36px;box-shadow:${SHADOW_XL};"><span style="color:${s.primary};font-size:48px;line-height:0.5;display:block;">"</span><p style="color:#ffffff;font-size:17px;font-style:italic;line-height:1.7;margin:0 0 12px;">I lost 16 lbs in my first 30 days and finally feel confident in my own skin.</p><span style="color:rgba(255,255,255,0.55);font-size:14px;">— Jessica M., challenge participant</span></div><a href="#optin" style="display:block;max-width:400px;margin:0 auto;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;text-align:center;${glowStyle(s.primary)}">${ctaText}</a></div></div>`;
 }
 
 // ── Template 11: vsl-focused "What You'll Discover" strip ───────────────────
@@ -1749,7 +1764,7 @@ function buildTransformationWallHtml(data: GeneratedFunnelAssets, s: SchemeColor
     { name: "Linda K.", loc: "Toronto, CA", badge: "Lost 18 lbs + kept it off", quote: "Six months later and I've kept every pound off. This wasn't a diet — it was a lifestyle shift." },
     { name: "Tasha M.", loc: "Miami, FL", badge: "Went from size 16 → 10", quote: "My confidence is completely transformed. I walk differently. I show up differently." },
   ];
-  const cardHtml = results.map(r => `<div style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);"><div style="height:6px;background:${s.primary};"></div><div style="padding:20px;"><div style="font-weight:700;font-size:15px;color:#0f172a;">${r.name}</div><div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">${r.loc}</div><div style="display:inline-block;background:${s.primary};color:#ffffff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;margin-bottom:10px;">${r.badge}</div><p style="color:#475569;font-size:14px;line-height:1.6;font-style:italic;margin:0;">"${r.quote}"</p></div></div>`).join("");
+  const cardHtml = results.map(r => `<div style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:${SHADOW_XL};"><div style="height:6px;background:linear-gradient(90deg,${s.primary},${s.accent});"></div><div style="padding:20px;"><div style="font-weight:700;font-size:15px;color:#0f172a;">${r.name}</div><div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">${r.loc}</div><div style="display:inline-block;background:linear-gradient(135deg,${s.primary},${s.accent});color:#ffffff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;margin-bottom:10px;box-shadow:0 2px 8px ${s.primary}44;">${r.badge}</div><p style="color:#475569;font-size:14px;line-height:1.6;font-style:italic;margin:0;">"${r.quote}"</p></div></div>`).join("");
   return `<div style="background:${bg};padding:64px 24px;font-family:${font};"><div style="text-align:center;margin-bottom:40px;"><h2 style="color:#0f172a;font-size:clamp(28px,4vw,36px);font-weight:900;margin:0 0 10px;">The Results Speak for Themselves</h2><p style="color:#64748b;font-size:16px;margin:0;">Real clients. Real results. No photoshop.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:960px;margin:0 auto;">${cardHtml}</div></div>`;
 }
 
@@ -1761,7 +1776,7 @@ function buildIsThisForYouHtml(data: GeneratedFunnelAssets, s: SchemeColors): st
   const conceptWords = escHtml((data.offerSummary?.challengeConcept ?? "30-Day Challenge").split(/\s+/).slice(0, 3).join(" "));
   const forItems = bullets.slice(0, 5).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="color:${s.primary};font-weight:700;flex-shrink:0;margin-top:1px;">✓</span><span style="color:#1e293b;font-size:15px;line-height:1.6;">${escHtml(b)}</span></div>`).join("");
   const notForItems = ["You're not ready to commit 30 days", "You want instant results with no effort", "You're not open to changing your habits", "You're looking for a magic pill"].map(item => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="color:#ef4444;font-weight:700;flex-shrink:0;margin-top:1px;">✕</span><span style="color:#374151;font-size:15px;line-height:1.6;">${item}</span></div>`).join("");
-  return `<style>@media(max-width:640px){.itfy-grid{flex-direction:column!important}}</style><div style="background:${s.mid};padding:56px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;"><h2 style="color:#ffffff;font-size:clamp(24px,3.5vw,32px);font-weight:800;text-align:center;margin:0 0 36px;">Is the ${conceptWords} right for you?</h2><div class="itfy-grid" style="display:flex;gap:24px;"><div style="flex:1;background:${bg};border-radius:16px;padding:28px;"><div style="color:${s.primary};font-size:18px;font-weight:700;margin-bottom:20px;">✓ This IS for you if...</div>${forItems}</div><div style="flex:1;background:#ffffff;border-radius:16px;padding:28px;"><div style="color:#ef4444;font-size:18px;font-weight:700;margin-bottom:20px;">✕ This is NOT for you if...</div>${notForItems}</div></div></div></div>`;
+  return `<style>@media(max-width:640px){.itfy-grid{flex-direction:column!important}}</style><div style="background:${s.mid};background-image:${DOT_BG};padding:56px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;"><h2 style="color:#ffffff;font-size:clamp(24px,3.5vw,32px);font-weight:800;text-align:center;margin:0 0 36px;">Is the ${conceptWords} right for you?</h2><div class="itfy-grid" style="display:flex;gap:24px;"><div style="flex:1;background:${bg};border-radius:16px;padding:28px;box-shadow:${SHADOW_XL};border-top:3px solid ${s.primary};"><div style="color:${s.primary};font-size:18px;font-weight:700;margin-bottom:20px;">✓ This IS for you if...</div>${forItems}</div><div style="flex:1;background:#ffffff;border-radius:16px;padding:28px;box-shadow:${SHADOW_XL};border-top:3px solid #ef4444;"><div style="color:#ef4444;font-size:18px;font-weight:700;margin-bottom:20px;">✕ This is NOT for you if...</div>${notForItems}</div></div></div></div>`;
 }
 
 // ── Template 14: event-agenda journey timeline ────────────────────────────────
@@ -1775,8 +1790,8 @@ function buildEventAgendaHtml(data: GeneratedFunnelAssets, s: SchemeColors): str
     { dayLabel: "Week 2", title: "Breaking Through", desc: "Halfway mark. Most people quit here. You won't." },
     { dayLabel: "Day 30", title: "Your Transformation", desc: corePromiseShort },
   ];
-  const steps = milestones.map((m, i) => `<div style="display:flex;align-items:flex-start;gap:24px;margin-bottom:${i < 3 ? "40px" : "0"};"><div style="flex-shrink:0;width:48px;height:48px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;">${i + 1}</div><div><div style="color:${s.primary};font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">${m.dayLabel}</div><div style="color:#ffffff;font-size:20px;font-weight:700;margin-bottom:6px;">${m.title}</div><div style="color:rgba(255,255,255,0.65);font-size:15px;line-height:1.7;">${m.desc}</div></div></div>`).join("");
-  return `<div style="background:${s.dark};padding:72px 24px;font-family:${font};"><div style="max-width:700px;margin:0 auto;"><h2 style="color:#ffffff;font-size:clamp(28px,4vw,36px);font-weight:900;text-align:center;margin:0 0 48px;">Your 30-Day Journey, Step by Step</h2>${steps}</div></div>`;
+  const steps = milestones.map((m, i) => `<div style="display:flex;align-items:flex-start;gap:24px;margin-bottom:${i < 3 ? "40px" : "0"};"><div style="flex-shrink:0;width:48px;height:48px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px ${s.primary}55;">${i + 1}</div><div><div style="color:${s.primary};font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">${m.dayLabel}</div><div style="color:#ffffff;font-size:20px;font-weight:700;margin-bottom:6px;letter-spacing:-0.5px;">${m.title}</div><div style="color:rgba(255,255,255,0.65);font-size:15px;line-height:1.7;">${m.desc}</div></div></div>`).join("");
+  return `<div style="background:${s.dark};background-image:${DOT_BG};padding:72px 24px;font-family:${font};"><div style="max-width:700px;margin:0 auto;"><h2 style="color:#ffffff;font-size:clamp(28px,4vw,36px);font-weight:900;text-align:center;margin:0 0 48px;letter-spacing:-0.5px;">Your 30-Day Journey, Step by Step</h2>${steps}</div></div>`;
 }
 
 // ── Template 15: executive-clean "Why This Works" grid ───────────────────────
@@ -1787,8 +1802,8 @@ function buildWhyThisWorksHtml(data: GeneratedFunnelAssets, s: SchemeColors): st
     { icon: "🎯", title: "Proven System", body: "A structured 30-day framework built around daily actions that compound. No guesswork — just a clear path from where you are to where you want to be." },
     { icon: "📊", title: "Measurable Results", body: "Every milestone is trackable. You'll know exactly what progress looks like at Day 7, Day 14, and Day 30 — no vague promises." },
     { icon: "🔄", title: "Built to Last", body: "The habits you build in 30 days become the foundation for the results you keep for life. This is a reset, not a quick fix." },
-  ].map(col => `<div style="text-align:center;padding:24px;"><div style="width:64px;height:64px;border-radius:50%;background:${s.primary};font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">${col.icon}</div><div style="color:#0f172a;font-size:20px;font-weight:700;margin-bottom:10px;">${col.title}</div><div style="color:#64748b;font-size:15px;line-height:1.7;">${col.body}</div></div>`).join("");
-  return `<div style="background:#ffffff;padding:72px 24px;border-bottom:1px solid #e2e8f0;font-family:${font};"><div style="max-width:900px;margin:0 auto;text-align:center;"><h2 style="color:#0f172a;font-size:clamp(28px,4vw,36px);font-weight:900;margin:0 0 12px;">Why This Method Actually Works</h2><p style="color:#64748b;font-size:18px;max-width:620px;margin:0 auto 48px;line-height:1.6;">${positioning}</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;">${cols}</div></div></div>`;
+  ].map(col => `<div style="text-align:center;padding:24px;"><div style="width:64px;height:64px;border-radius:50%;background:${s.primary};font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 0 24px ${s.primary}44;">${col.icon}</div><div style="color:#0f172a;font-size:20px;font-weight:700;margin-bottom:10px;">${col.title}</div><div style="color:#64748b;font-size:15px;line-height:1.7;">${col.body}</div></div>`).join("");
+  return `<div style="background:#ffffff;padding:72px 24px;border-top:4px solid ${s.primary};border-bottom:1px solid #e2e8f0;font-family:${font};"><div style="max-width:900px;margin:0 auto;text-align:center;"><h2 style="color:#0f172a;font-size:clamp(28px,4vw,36px);font-weight:900;margin:0 0 12px;">Why This Method Actually Works</h2><p style="color:#64748b;font-size:18px;max-width:620px;margin:0 auto 48px;line-height:1.6;">${positioning}</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;">${cols}</div></div></div>`;
 }
 
 // ── Template 4: transformation-split hero ────────────────────────────────────
@@ -1796,20 +1811,27 @@ function buildTransformationSplitHtml(data: GeneratedFunnelAssets, s: SchemeColo
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const bullets = data.landingPage?.bulletPoints ?? [];
   const corePromise = escHtml(data.offerSummary?.corePromise ?? "Transform your body in 30 days");
-  const painItems = bullets.slice(0, 3).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;"><span style="color:${s.primary};font-size:20px;line-height:1.2;flex-shrink:0;">•</span><span style="color:rgba(255,255,255,0.88);font-size:15px;line-height:1.6;">${escHtml(b)}</span></div>`).join("") || `<div style="color:rgba(255,255,255,0.7);font-size:15px;">You're stuck in the same cycle</div>`;
+  const painItems = bullets.slice(0, 3).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;"><span style="color:${s.primary};font-size:18px;line-height:1.3;flex-shrink:0;text-shadow:0 0 8px ${s.primary};">◆</span><span style="color:rgba(255,255,255,0.88);font-size:15px;line-height:1.6;">${escHtml(b)}</span></div>`).join("") || `<div style="color:rgba(255,255,255,0.7);font-size:15px;">You're stuck in the same cycle</div>`;
   const gainItems = bullets.slice(3, 6).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;"><span style="color:${s.dark};font-size:20px;line-height:1.2;flex-shrink:0;">✓</span><span style="color:${s.dark};font-size:15px;line-height:1.6;font-weight:500;">${escHtml(b)}</span></div>`).join("") || `<div style="color:${s.dark};font-size:15px;">Real, lasting transformation awaits</div>`;
   return `<style>@media(max-width:640px){.ts-split{flex-direction:column!important}.ts-panel{min-height:280px!important}}</style>
-<div class="ts-split" style="display:flex;min-height:60vh;font-family:${font};"><div class="ts-panel" style="flex:1;background:${s.dark};padding:56px 40px;display:flex;flex-direction:column;justify-content:center;"><p style="color:${s.primary};font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;">Where you are now</p><h2 style="color:#ffffff;font-size:clamp(24px,3vw,34px);font-weight:900;margin:0 0 28px;line-height:1.2;">Are you stuck here?</h2>${painItems}</div><div class="ts-panel" style="flex:1;background:${s.primary};padding:56px 40px;display:flex;flex-direction:column;justify-content:center;"><p style="color:${s.dark};font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;opacity:0.7;">Where you could be</p><h2 style="color:${s.dark};font-size:clamp(24px,3vw,34px);font-weight:900;margin:0 0 28px;line-height:1.2;">Imagine this instead</h2>${gainItems}</div></div>
-<div style="background:${s.dark};padding:24px;text-align:center;font-family:${font};border-top:1px solid rgba(255,255,255,0.08);"><p style="color:rgba(255,255,255,0.9);font-size:18px;font-style:italic;margin:0;">${corePromise}</p></div>`;
+<div class="ts-split" style="display:flex;min-height:60vh;font-family:${font};"><div class="ts-panel" style="flex:1;background:${s.dark};background-image:${DOT_BG};padding:56px 40px;display:flex;flex-direction:column;justify-content:center;"><p style="color:${s.primary};font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;">Where you are now</p><h2 style="color:#ffffff;font-size:clamp(24px,3vw,34px);font-weight:900;margin:0 0 28px;line-height:1.2;letter-spacing:-1px;text-shadow:0 2px 16px rgba(0,0,0,0.3);">Are you stuck here?</h2>${painItems}</div><div class="ts-panel" style="flex:1;background:${s.primary};padding:56px 40px;display:flex;flex-direction:column;justify-content:center;"><p style="color:${s.dark};font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;opacity:0.7;">Where you could be</p><h2 style="color:${s.dark};font-size:clamp(24px,3vw,34px);font-weight:900;margin:0 0 28px;line-height:1.2;letter-spacing:-1px;text-shadow:0 2px 16px rgba(0,0,0,0.3);">Imagine this instead</h2>${gainItems}</div></div>
+<div style="background:${s.dark};padding:24px;text-align:center;font-family:${font};box-shadow:inset 0 1px 0 rgba(255,255,255,0.08);"><p style="color:rgba(255,255,255,0.9);font-size:20px;font-style:italic;margin:0;">${corePromise}</p></div>`;
 }
 
 // ── Template 5: authority-builder credentials strip ──────────────────────────
 function buildCredentialsStripHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const positioning = escHtml((data.offerSummary?.offerPositioning ?? "").split(/[.!?]/)[0].slice(0, 80));
-  const pills = ["Certified Fitness Coach", "1,000+ Clients Transformed", "30-Day Method Creator", "Featured in Forbes Health"];
-  const pillsHtml = pills.map(p => `<div style="border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:10px 20px;color:#ffffff;font-size:14px;font-weight:500;white-space:nowrap;"><span style="color:${s.primary};margin-right:6px;">✓</span>${p}</div>`).join("");
-  return `<div style="background:${s.mid};padding:32px 24px;font-family:${font};"><div style="max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;">${pillsHtml}${positioning ? `<p style="color:rgba(255,255,255,0.55);font-size:13px;font-style:italic;margin:0 0 0 16px;max-width:280px;">${positioning}</p>` : ""}</div></div>`;
+  const clientCount  = data.clientCount  ? escHtml(data.clientCount) + " Clients Transformed" : "1,000+ Clients Transformed";
+  const yearsCoaching = data.yearsCoaching ? escHtml(data.yearsCoaching) + " Years Coaching" : null;
+  const pills = [
+    "Certified Fitness Coach",
+    clientCount,
+    "30-Day Method Creator",
+    yearsCoaching ?? "Featured in Forbes Health",
+  ];
+  const pillsHtml = pills.map(p => `<div style="border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:10px 20px;color:#ffffff;font-size:14px;font-weight:500;white-space:nowrap;box-shadow:${SHADOW_SM};background:rgba(255,255,255,0.04);"><span style="color:${s.primary};margin-right:6px;">✓</span>${p}</div>`).join("");
+  return `<div style="background:linear-gradient(135deg,${s.mid} 0%,${s.dark} 100%);padding:32px 24px;font-family:${font};"><div style="max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;">${pillsHtml}${positioning ? `<p style="color:rgba(255,255,255,0.55);font-size:13px;font-style:italic;margin:0 0 0 16px;max-width:280px;">${positioning}</p>` : ""}</div></div>`;
 }
 
 // ── Template 7: bold-impact hero ─────────────────────────────────────────────
@@ -1820,15 +1842,24 @@ function buildBoldImpactHtml(data: GeneratedFunnelAssets, s: SchemeColors): stri
   const firstThreeWords = escHtml(headline.split(/\s+/).slice(0, 3).join(" "));
   const subheadline = escHtml(lp?.subheadline ?? "");
   const ctaText = escHtml(lp?.ctaText ?? "Claim Your Spot");
-  return `<div style="background:${s.dark};min-height:92vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><div style="max-width:900px;margin:0 auto;"><div style="font-size:clamp(72px,12vw,120px);font-weight:900;color:#ffffff;letter-spacing:-4px;line-height:0.9;margin:0 0 32px;">${firstThreeWords}</div><div style="width:80px;height:4px;background:${s.primary};margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.7);font-size:20px;max-width:560px;margin:0 auto 40px;line-height:1.6;">${subheadline}</p><a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 48px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;font-family:${font};">${ctaText}</a></div></div>`;
+  return `<div style="background:${s.dark};background-image:${DOT_BG};min-height:92vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><div style="max-width:900px;margin:0 auto;"><div style="font-size:clamp(72px,12vw,120px);font-weight:900;letter-spacing:-4px;line-height:0.9;margin:0 0 32px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.6)") }">${firstThreeWords}</span></div><div style="width:80px;height:4px;background:linear-gradient(90deg,transparent,${s.primary},transparent);margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.7);font-size:20px;max-width:560px;margin:0 auto 40px;line-height:1.6;">${subheadline}</p><a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 48px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;font-family:${font};${glowStyle(s.primary)}">${ctaText}</a></div></div>`;
 }
 
 // ── Template 8: community-proof stats bar ────────────────────────────────────
 function buildCommunityStatsHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const stats = [{ n: "2,847", l: "Active Members" }, { n: "17", l: "Countries" }, { n: "94%", l: "Complete 30 Days" }, { n: "4.9★", l: "Average Rating" }];
-  const statsHtml = stats.map((st, i) => `<div style="text-align:center;padding:24px 32px;${i < stats.length - 1 ? `border-right:1px solid rgba(255,255,255,0.1);` : ""}"><div style="color:${s.primary};font-size:42px;font-weight:900;line-height:1;">${st.n}</div><div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:6px;letter-spacing:0.5px;">${st.l}</div></div>`).join("");
-  return `<div style="background:${s.mid};padding:0 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;">${statsHtml}</div></div>`;
+  const memberCount = data.clientCount ? escHtml(data.clientCount) : "2,847";
+  const statsBase = [
+    { n: memberCount, l: "Active Members" },
+    { n: "17",        l: "Countries" },
+    { n: "94%",       l: "Complete 30 Days" },
+    { n: "4.9★",      l: "Average Rating" },
+  ];
+  const stats = data.yearsCoaching
+    ? [...statsBase, { n: escHtml(data.yearsCoaching) + " Yrs", l: "Experience" }]
+    : statsBase;
+  const statsHtml = stats.map((st, i) => `<div style="text-align:center;padding:24px 32px;${i < stats.length - 1 ? `border-right:1px solid rgba(255,255,255,0.1);` : ""}"><div style="color:${s.primary};font-size:42px;font-weight:900;line-height:1;text-shadow:0 0 32px ${s.primary}66;">${st.n}</div><div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:6px;letter-spacing:0.5px;">${st.l}</div></div>`).join("");
+  return `<div style="background:linear-gradient(180deg,${s.mid} 0%,${s.dark} 100%);padding:40px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;">${statsHtml}</div></div>`;
 }
 
 // ── Template 9: video-authority feature strip ─────────────────────────────────
@@ -1840,9 +1871,9 @@ function buildFeatureStripHtml(data: GeneratedFunnelAssets, s: SchemeColors): st
     const parts = bullet.split(" — ");
     const title = escHtml((parts[0] ?? bullet).trim());
     const reason = escHtml((parts[1] ?? "").trim());
-    return `<div style="background:#ffffff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);"><div style="width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:16px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">✓</div><div style="font-weight:700;color:#111827;font-size:16px;margin-bottom:6px;">${title}</div>${reason ? `<div style="color:#64748b;font-size:14px;line-height:1.6;">${reason}</div>` : ""}</div>`;
+    return `<div style="background:#ffffff;border-radius:12px;padding:24px;box-shadow:${SHADOW_XL};border:1px solid rgba(0,0,0,0.04);"><div style="width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:16px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:0 0 16px ${s.primary}44;">✓</div><div style="font-weight:800;color:${s.dark};font-size:16px;margin-bottom:6px;">${title}</div>${reason ? `<div style="color:#64748b;font-size:14px;line-height:1.6;">${reason}</div>` : ""}</div>`;
   }).join("");
-  return `<div style="background:${bg};padding:48px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;"><h2 style="color:#111827;font-size:28px;font-weight:800;text-align:center;margin:0 0 32px;">Everything you get:</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">${cardHtml}</div></div></div>`;
+  return `<div style="background:${bg};padding:48px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;"><h2 style="color:${s.dark};font-size:28px;font-weight:800;text-align:center;margin:0 0 32px;">Everything you get:</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">${cardHtml}</div></div></div>`;
 }
 
 // ── Template 10: minimalist-elite hero ───────────────────────────────────────
@@ -1859,14 +1890,14 @@ function buildMinimalistEliteHtml(data: GeneratedFunnelAssets, s: SchemeColors):
   const fontSize = mainWord.length > 10 ? "72px" : "96px";
   const targetWords = (data.offerSummary?.targetAudienceSummary ?? "").split(/\s+/).slice(0, 4).join(" ").toUpperCase();
   const programLabel = escHtml(targetWords || "30-DAY CHALLENGE") + " PROGRAM";
-  return `<div style="background:${s.dark};min-height:95vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><p style="color:${s.primary};font-size:12px;letter-spacing:4px;text-transform:uppercase;font-weight:600;margin:0 0 48px;">${programLabel}</p><div style="font-size:${fontSize};font-weight:900;color:#ffffff;letter-spacing:-6px;line-height:0.9;margin:0 0 24px;">${mainWordEsc}</div><div style="width:60px;height:3px;background:${s.primary};margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.55);font-size:17px;max-width:500px;margin:0 auto 48px;line-height:1.8;">${subheadline}</p><a href="#optin" style="display:inline-block;border:2px solid ${s.primary};color:${s.primary};background:transparent;text-decoration:none;padding:16px 44px;border-radius:${s.buttonBorderRadius};font-size:16px;font-weight:600;">${ctaText}</a></div>`;
+  return `<div style="background:${s.dark};background-image:${DOT_BG};min-height:95vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><p style="color:${s.primary};font-size:12px;letter-spacing:4px;text-transform:uppercase;font-weight:600;margin:0 0 48px;">${programLabel}</p><div style="font-size:${fontSize};font-weight:900;letter-spacing:-6px;line-height:0.9;margin:0 0 24px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.5)") }">${mainWordEsc}</span></div><div style="width:60px;height:3px;background:${s.primary};margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.55);font-size:17px;max-width:500px;margin:0 auto 48px;line-height:1.8;">${subheadline}</p><a href="#optin" style="display:inline-block;border:2px solid ${s.primary};color:${s.primary};background:transparent;text-decoration:none;padding:16px 44px;border-radius:${s.buttonBorderRadius};font-size:16px;font-weight:600;box-shadow:0 0 24px ${s.primary}33;">${ctaText}</a></div>`;
 }
 
 // ── Template 6: urgency-driven banner strip ──────────────────────────────────
 function buildUrgencyBannerHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const urgencyText = escHtml((data.landingPage?.urgencyIdeas ?? [])[0] ?? "Limited spots available — secure yours now");
-  return `<div style="background:${s.primary};padding:16px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;"><span style="color:#ffffff;font-size:16px;font-weight:700;">⚡ ${urgencyText}</span><a href="#optin" style="color:#ffffff;font-size:15px;font-weight:600;text-decoration:underline;white-space:nowrap;">CLAIM YOUR SPOT →</a></div></div>`;
+  return `<div style="background:linear-gradient(90deg,${s.primary} 0%,${s.accent} 100%);padding:16px 24px;font-family:${font};box-shadow:0 4px 16px ${s.primary}66;"><div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;"><span style="color:#ffffff;font-size:16px;font-weight:700;">⚡ ${urgencyText}</span><a href="#optin" style="color:#ffffff;font-size:15px;font-weight:600;text-decoration:underline;white-space:nowrap;">CLAIM YOUR SPOT →</a></div></div>`;
 }
 
 export function buildLandingPageData(data: GeneratedFunnelAssets, templateVariant?: TemplateVariant): GhlPageData {

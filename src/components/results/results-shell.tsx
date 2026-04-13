@@ -142,7 +142,15 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
           </Link>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-sm text-gray-500">Your complete challenge funnel</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-gray-500">Your complete challenge funnel</p>
+              {outputs.templateVariant && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 border border-indigo-200">
+                  <LayoutTemplate className="h-3 w-3" />
+                  {String(outputs.templateVariant).replace(/-/g, " ")}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">

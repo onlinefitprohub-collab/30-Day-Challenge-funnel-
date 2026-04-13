@@ -23,6 +23,7 @@ export const offerBasicsSchema = z.object({
   }),
   inclusions: z.string().min(10, "Please list what's included"),
   bonuses: z.string().optional(),
+  videoUrl: z.string().optional(), // YouTube/Vimeo embed URL for hero-two-col-video templates
 });
 
 // Step 3: Audience Pain Points
@@ -42,6 +43,7 @@ export const brandVoiceSchema = z.object({
   colourScheme: z.enum(["navy-orange", "rose-pink", "teal-forest", "purple-lilac", "sky-blue"]).default("navy-orange"),
   phrasesToInclude: z.string().optional(),
   phrasesToAvoid: z.string().optional(),
+  coachPhotoUrl: z.string().optional(), // Coach headshot URL for image-hero templates
 });
 
 // Step 5: Traffic Inputs
@@ -61,6 +63,8 @@ export const socialProofSchema = z.object({
   caseStudySnippets: z.string().optional(),
   resultsHighlights: z.string().optional(),
   hasBeforeAfter: z.boolean().default(false),
+  clientCount: z.string().optional(),   // e.g. "500+" — shown in community stats bar
+  yearsCoaching: z.string().optional(), // e.g. "7" — shown in credentials strip
   // caseStudySnippets and resultsHighlights kept optional for backward compat
 });
 

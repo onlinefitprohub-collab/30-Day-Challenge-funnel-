@@ -86,6 +86,11 @@ export async function POST(request: Request) {
         colourScheme: validatedInputs.colourScheme ?? "navy-orange",
         landingVariant,
         templateVariant,
+        // Wizard-sourced fields for template personalisation
+        coachVideoUrl:  validatedInputs.videoUrl,
+        coachPhotoUrl:  validatedInputs.coachPhotoUrl,
+        clientCount:    validatedInputs.clientCount,
+        yearsCoaching:  validatedInputs.yearsCoaching,
         _isMock: isMockMode,
       } as Record<string, unknown>,
     });

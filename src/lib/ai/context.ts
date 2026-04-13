@@ -23,11 +23,12 @@ export function buildCoachContext(inputs: WizardInputs): string {
     businessName, coachName, location, deliveryMode,
     targetAudience, demographicDetails,
     challengeName, challengeType, mainGoal, duration, price, ctaType,
-    inclusions, bonuses,
+    inclusions, bonuses, videoUrl,
     biggestStruggle, desiredOutcome, objections,
-    toneOfVoice, phrasesToInclude, phrasesToAvoid,
+    toneOfVoice, phrasesToInclude, phrasesToAvoid, coachPhotoUrl,
     trafficSources, utmNamingPreference, adBudgetRange,
     testimonials, caseStudySnippets, resultsHighlights, hasBeforeAfter,
+    clientCount, yearsCoaching,
   } = inputs;
 
   const isFree = price.toLowerCase().includes("free");
@@ -88,6 +89,14 @@ export function buildCoachContext(inputs: WizardInputs): string {
     if (caseStudySnippets)  lines.push(`Case study/story:\n${caseStudySnippets}`);
     if (resultsHighlights)  lines.push(`Results/stats: ${resultsHighlights}`);
     if (hasBeforeAfter)     lines.push(`Before/after content: available`);
+  }
+
+  if (clientCount || yearsCoaching || videoUrl || coachPhotoUrl) {
+    lines.push(``, `=== COACH CREDIBILITY ===`);
+    if (clientCount)    lines.push(`Clients helped: ${clientCount}`);
+    if (yearsCoaching)  lines.push(`Years coaching: ${yearsCoaching}`);
+    if (videoUrl)       lines.push(`Intro video URL: ${videoUrl}`);
+    if (coachPhotoUrl)  lines.push(`Coach photo URL: ${coachPhotoUrl}`);
   }
 
   return lines.join("\n");
