@@ -82,7 +82,15 @@ export async function GET(request: Request) {
       const persisted = assets.templateVariant as TemplateVariant | undefined;
       templateVariant = (isValid ? (requested as TemplateVariant) : undefined) ?? persisted ?? pickTemplateVariant();
       console.log(`[page-data] templateVariant=${templateVariant} (requested=${requested ?? "none"}, persisted=${persisted ?? "none"})`);
-      pageData = buildLandingPageData(assets, templateVariant);
+      try {
+        pageData = buildLandingPageData(assets, templateVariant);
+      } catch (err) {
+        console.error(`[page-data] buildLandingPageData threw for variant "${templateVariant}":`, err);
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Page build failed" },
+          { status: 500 },
+        );
+      }
       break;
     }
     case "optin":    pageData = buildOptInPageData(assets);    break;

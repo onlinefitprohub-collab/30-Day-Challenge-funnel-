@@ -1527,7 +1527,8 @@ export const TEMPLATE_VARIANTS_POOL: TemplateVariant[] = [
   // "minimalist-elite","vsl-focused","transformation-wall",
   // "is-this-for-you","event-agenda","executive-clean",
   // "local-demographic","free-value-first","application-style",
-  // "story-journey","results-first",
+  "story-journey",
+  // "results-first",
 ];
 
 export function pickTemplateVariant(): TemplateVariant {
