@@ -1211,21 +1211,54 @@ function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromi
 }
 
 // ── What's included layout variants ────────────────────────────────────────
-// Single consolidated layout: eyebrow + h2 + ONE c-bullet-list = 5 elements total.
+// Single consolidated layout: eyebrow + h2 + ONE c-custom-code = 5 elements total.
 // All AI-suggested variant names route here; multi-column variants removed to
 // eliminate the element-count explosion that caused GHL publish timeouts.
+//
+// NOTE: The native c-bullet-list (tagName "c-bullet-list" / meta "bulletList") is
+// NOT used here because GHL's page renderer expects tagName "bullet-list" / meta
+// "bullet-list" (no c- prefix), causing silent blank rendering on published pages.
+// We use a self-contained c-custom-code block instead (same fix as the FAQ section).
 
-function buildIncludedSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+/**
+ * Builds the raw HTML for the "Everything Included" bullet list section body.
+ * Used inside a makeCustomCode block so GHL renders it reliably on published pages.
+ */
+export function buildIncludedHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
+  const font   = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const points = data.landingPage?.bulletPoints?.slice(0, 6) ?? [];
+
+  const itemsHtml = points.length > 0
+    ? points.map((pt) => {
+        const text = escHtml(typeof pt === "string" ? pt : String(pt ?? ""));
+        return `<div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;">
+      <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${s.primary};color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">✓</div>
+      <p style="margin:0;color:${s.textColorOnLight};font-size:18px;line-height:1.6;font-family:${font};">${text}</p>
+    </div>`;
+      }).join("\n    ")
+    : `<div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;">
+      <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${s.primary};color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">✓</div>
+      <p style="margin:0;color:${s.textColorOnLight};font-size:18px;line-height:1.6;font-family:${font};">Challenge details will appear here.</p>
+    </div>`;
+
+  return `<div style="background:${s.alt};padding:0 24px 40px;font-family:${font};">
+  <div style="max-width:720px;margin:0 auto;">
+    ${itemsHtml}
+  </div>
+</div>`;
+}
+
+function buildIncludedSingleCol(b: Builder, s: SchemeColors, lp: LandingPageCopy, data: GeneratedFunnelAssets): void {
   const eyebrow = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(12), textAlign: ss("center") });
   const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
     { color: ss(s.textColorOnLight), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(32), textAlign: ss("center") },
     { fontSize: sv(24), paddingBottom: sv(20) });
-  const bl = makeBulletList(b, lp.bulletPoints.slice(0, 6), s.primary,
-    { color: ss(s.textColorOnLight), fontSize: sv(16) });
-  const c = makeCol(b, [eyebrow, h2, bl], 100, { align: "center", padH: 32 });
-  const r = makeRow(b, [c], 720, 24);
-  makeSection(b, [r], { bgColor: s.alt, ptD: 56, pbD: 64, ptM: 40, pbM: 48 });
+  const ccHtml = buildIncludedHtml(data, s);
+  const ccId   = makeCustomCode(b, ccHtml, 0);
+  const col    = makeCol(b, [eyebrow, h2, ccId], 100, { align: "center", padH: 32 });
+  const row    = makeRow(b, [col], 720, 24);
+  makeSection(b, [row], { bgColor: s.alt, ptD: 56, pbD: 64, ptM: 40, pbM: 48 });
 }
 
 // ── FAQ layout variants ────────────────────────────────────────────────────
@@ -1435,12 +1468,12 @@ function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, v
   }
 }
 
-function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
-  // All variants consolidated into one single-col bullet-list layout (5 elements).
+function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string, data: GeneratedFunnelAssets): void {
+  // All variants consolidated into one single-col layout (5 elements).
   // Multi-column variants were removed — they produced 11–25 elements and caused
   // GHL publish timeouts at 121KB / 63 total elements.
   console.log(`[layout-variant] whats-included → included-single-col (AI variant "${variant || "(none)"}" ignored)`);
-  return buildIncludedSingleCol(b, s, lp);
+  return buildIncludedSingleCol(b, s, lp, data);
 }
 
 function dispatchFaq(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
@@ -2096,7 +2129,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
     makeSection(b, [row], { bgColor: resolvedVariant === "event-agenda" ? s.dark : s.mid, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
     countAfter(snap, `${resolvedVariant} (custom-code whats-included)`);
   } else {
-    dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "");
+    dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "", data);
     countAfter(snap, slv["whats-included"] ?? "(none)");
   }
 
