@@ -4,7 +4,7 @@ const TONE_GUIDE: Record<string, string> = {
   friendly:     "warm and supportive — like a knowledgeable friend who happens to be a coach. Approachable, never pushy.",
   bold:         "direct and punchy — short sentences, no waffle. Confident without being arrogant. Respects the reader's time.",
   motivational: "energetic and inspiring — but grounded in real outcomes, not empty hype. Pushes people toward action.",
-  premium:      "polished and elevated — positions the coach as a serious expert. Calm confidence. Avoid discounting language.",
+  premium:      "polished and elevated — positions the programme as seriously expert-designed. Calm confidence. Avoid discounting language.",
   simple:       "plain English only — no jargon, no fitness buzzwords. Anyone could read this and understand it immediately.",
 };
 

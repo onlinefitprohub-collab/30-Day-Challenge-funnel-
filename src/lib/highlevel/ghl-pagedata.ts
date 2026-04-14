@@ -1163,7 +1163,7 @@ function buildSocialProofStarsBullets(b: Builder, s: SchemeColors, corePromise: 
 function buildSocialProofCenteredStat(b: Builder, s: SchemeColors, _corePromise: string): void {
   const stat  = makeParagraph(b, "500+",
     { color: ss(s.primary), fontSize: sv(48), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1"), paddingBottom: sv(4) });
-  const label = makeParagraph(b, "coaches have launched their challenge with us — free",
+  const label = makeParagraph(b, "people have completed this challenge — free to join",
     { color: ss("#94a3b8"), fontSize: sv(13), textAlign: ss("center") });
   const col = makeCol(b, [stat, label], 100, { align: "center" });
   const r = makeRow(b, [col], 480, 24);
@@ -1176,7 +1176,7 @@ function buildSocialProofThreeStats(b: Builder, s: SchemeColors, _corePromise: s
     const t = makeParagraph(b, text, { color: ss("#94a3b8"), fontSize: sv(12), textAlign: ss("center") });
     return makeCol(b, [n, t], 33, { align: "center", padH: 16 });
   };
-  const c1 = makeStatCol("500+", "Coaches Launched");
+  const c1 = makeStatCol("500+", "Members Joined");
   const c2 = makeStatCol("4.9★", "Average Rating");
   const c3 = makeStatCol("100%", "Free to Join");
   const r = makeRow(b, [c1, c2, c3], 800, 24);
@@ -1188,7 +1188,7 @@ function buildSocialProofSingleQuote(b: Builder, s: SchemeColors, corePromise: s
     { color: ss(s.primary), fontSize: sv(48), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1"), paddingBottom: sv(0) });
   const quote = makeParagraph(b, corePromise,
     { color: ss("#e2e8f0"), fontSize: sv(18), lineHeight: ss("1.6"), textAlign: ss("center"), fontStyle: ss("italic"), paddingBottom: sv(8), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") });
-  const attr = makeParagraph(b, "— 500+ coaches already on board",
+  const attr = makeParagraph(b, "— 500+ participants already inside",
     { color: ss("#64748b"), fontSize: sv(12), textAlign: ss("center") });
   const col = makeCol(b, [openQuote, quote, attr], 100, { align: "center", padH: 32 });
   const r = makeRow(b, [col], 700, 24);
@@ -1419,7 +1419,7 @@ function buildCtaDarkMinimal(b: Builder, s: SchemeColors, lp: LandingPageCopy): 
 }
 
 function buildCtaSocialProofCta(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
-  const proof = makeParagraph(b, "⭐⭐⭐⭐⭐  Join 500+ coaches already inside",
+  const proof = makeParagraph(b, "⭐⭐⭐⭐⭐  Join 500+ members already inside",
     { color: ss("rgba(255,255,255,0.7)"), fontSize: sv(13), textAlign: ss("center"), paddingBottom: sv(16) });
   const h2 = makeHeading(b, "Ready to start? Spots are limited.", "h2",
     { color: ss(s.textColorOnDark), fontSize: sv(40), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },

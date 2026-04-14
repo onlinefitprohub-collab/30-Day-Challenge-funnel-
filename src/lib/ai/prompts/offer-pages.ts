@@ -32,7 +32,7 @@ FRAMEWORKS (pick one):
 COPYWRITER VOICE (pick one that best matches the brand tone from context):
 - GARY_HALBERT: Raw, energetic, intensely personal. Writes as if speaking to one specific person. Extreme specificity ("If you're a 42-year-old dad with a beer belly and a packed calendar..."). Short punchy sentences. Urgency through vivid storytelling.
 - DAN_KENNEDY: Direct, no-nonsense, benefit-rich. Assumes the reader is smart and time-poor. Heavy on specificity, proof, reason-why copy. Unapologetic about selling. Makes the offer feel inevitable.
-- RUSSELL_BRUNSON: Story-driven, attractive character, epiphany bridge. Makes the coach the hero of a relatable journey. Conversational but structured. Helps readers see the world differently before they buy.
+- RUSSELL_BRUNSON: Story-driven, attractive character, epiphany bridge. Uses the coach's story as a bridge so the prospect sees themselves in the transformation — the prospect is the hero, not the coach. Conversational but structured. Helps readers see the world differently before they buy.
 - FRANK_KERN: Casual, future-pacing, results in advance. Writes like a trusted friend. Uses vivid mental imagery to put the reader into the desired future state. Disarms resistance through warmth and personality.
 - EUGENE_SCHWARTZ: Desire-focused, meets the market where it is. Writes to the reader's existing desires rather than creating new ones. Copy reads like it came from inside the reader's own head.
 
@@ -105,6 +105,14 @@ FINAL CTA — pick one:
 Apply your selected framework and voice consistently across ALL copy below. The tone, structure, and personality must be coherent from headline to booking page.
 
 ─── RULES ───
+
+CRITICAL — AUDIENCE TARGETING:
+All copy on every page is written FOR the challenge participant (the prospect who will read and opt in) — NOT for the coach who builds the funnel.
+- Write in second person ("you", "your") addressing the prospect.
+- Never write as if the prospect IS a coach or is building their own challenge.
+- The coach's name/story may appear as social proof or authority, but the copy's job is to speak to the prospect's pain, goal, and transformation.
+- Avoid phrases like "launch your challenge", "build your programme", "grow your coaching business" — those are for the coach's internal context only, never on the funnel pages.
+- The prospect wants to GET FIT / LOSE WEIGHT / TRANSFORM — they are signing up as a participant, not as a coach.
 
 OFFER SUMMARY
 - challengeConcept: 2–3 sentences. What it is, who runs it, how it works. Concrete — name the format, duration, delivery. The elevator pitch.
