@@ -1922,9 +1922,8 @@ function buildTransformationSplitHtml(data: GeneratedFunnelAssets, s: SchemeColo
 // ── Template 5: authority-builder credentials strip ──────────────────────────
 function buildCredentialsStripHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const positioning = escHtml((data.offerSummary?.offerPositioning ?? "").split(/[.!?]/)[0].slice(0, 80));
-  const clientCount  = data.clientCount  ? escHtml(data.clientCount) + " Clients Transformed" : "1,000+ Clients Transformed";
-  const yearsCoaching = data.yearsCoaching ? escHtml(data.yearsCoaching) + " Years Coaching" : null;
+  const clientCount   = data.clientCount   ? escHtml(data.clientCount) + " Clients Transformed" : "1,000+ Clients Transformed";
+  const yearsCoaching = data.yearsCoaching ? escHtml(data.yearsCoaching) + " Years Coaching"     : null;
   const pills = [
     "Certified Fitness Coach",
     clientCount,
@@ -1932,7 +1931,7 @@ function buildCredentialsStripHtml(data: GeneratedFunnelAssets, s: SchemeColors)
     yearsCoaching ?? "Featured in Forbes Health",
   ];
   const pillsHtml = pills.map(p => `<div style="border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:10px 20px;color:#ffffff;font-size:14px;font-weight:500;white-space:nowrap;box-shadow:${SHADOW_SM};background:rgba(255,255,255,0.04);"><span style="color:${s.primary};margin-right:6px;">✓</span>${p}</div>`).join("");
-  return `<div style="background:linear-gradient(135deg,${s.mid} 0%,${s.dark} 100%);padding:32px 24px;font-family:${font};"><div style="max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;">${pillsHtml}${positioning ? `<p style="color:rgba(255,255,255,0.55);font-size:13px;font-style:italic;margin:0 0 0 16px;max-width:280px;">${positioning}</p>` : ""}</div></div>`;
+  return `<div style="background:linear-gradient(135deg,${s.mid} 0%,${s.dark} 100%);padding:32px 24px;font-family:${font};"><div style="max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;">${pillsHtml}</div></div>`;
 }
 
 // ── Template 7: bold-impact hero ─────────────────────────────────────────────
