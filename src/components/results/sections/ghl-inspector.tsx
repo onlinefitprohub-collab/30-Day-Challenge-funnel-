@@ -193,7 +193,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
     window.addEventListener("message", onMsg);
     window.postMessage({ source: "cf-app", type: "CF_PING" }, "*");
     return () => { window.removeEventListener("message", onMsg); clearTimeout(timeout); };
-  }, [extPresent]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Load captured GHL pageData from extension */
   const loadCaptured = useCallback(() => {

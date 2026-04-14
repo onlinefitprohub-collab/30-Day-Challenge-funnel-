@@ -21,9 +21,22 @@ function sanitizeHtml(html: string): string {
     .replace(/<object[\s\S]*?<\/object>/gi, "")
     .replace(/<embed[^>]*>/gi, "")
     .replace(/<link[^>]*>/gi, "")
+    // Strip <svg> blocks (can contain onload/onclick handlers)
+    .replace(/<svg[\s\S]*?<\/svg>/gi, "")
+    // Strip <style> blocks (CSS expression() / -moz-binding XSS)
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    // Strip unquoted event handlers (on* = ...)
+    .replace(/\bon\w+\s*=\s*[^\s>]*/gi, "")
+    // Strip double-quoted event handlers
     .replace(/\bon\w+\s*=\s*"[^"]*"/gi, "")
+    // Strip single-quoted event handlers
     .replace(/\bon\w+\s*=\s*'[^']*'/gi, "")
-    .replace(/javascript\s*:/gi, "");
+    // Strip javascript: URIs (including entity-encoded variants)
+    .replace(/javascript\s*:/gi, "")
+    // Strip HTML-entity encoded javascript: (&amp;#...; patterns)
+    .replace(/j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, "")
+    // Strip data: URIs (potential vector for scripts in some browsers)
+    .replace(/data\s*:[^,]*;base64/gi, "");
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */

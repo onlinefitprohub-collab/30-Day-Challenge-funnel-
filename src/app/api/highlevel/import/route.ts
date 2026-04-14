@@ -46,7 +46,18 @@ export async function POST(request: Request) {
     );
   }
 
-  // Fetch the latest project output (verifying ownership via RLS)
+  // Verify the project belongs to this user, then fetch its outputs
+  const { data: projectCheck } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!projectCheck) {
+    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+
   const { data: outputData } = await supabase
     .from("project_outputs")
     .select("outputs")

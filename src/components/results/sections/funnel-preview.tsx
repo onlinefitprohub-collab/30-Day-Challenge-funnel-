@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw, Shuffle } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import { GhlPagePreview } from "./GhlPagePreview";
+import { toast } from "@/hooks/use-toast";
 
 interface SchemeColors {
   primary: string;
@@ -168,7 +169,11 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(`Download failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+      toast({
+        title: "Download failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
     }
   }
 

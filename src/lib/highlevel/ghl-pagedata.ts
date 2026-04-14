@@ -1909,6 +1909,8 @@ function buildUrgencyBannerHtml(data: GeneratedFunnelAssets, s: SchemeColors): s
 }
 
 export function buildLandingPageData(data: GeneratedFunnelAssets, templateVariant?: TemplateVariant): GhlPageData {
+  if (!data?.landingPage)   throw new Error("landingPage is required");
+  if (!data?.offerSummary)  throw new Error("offerSummary is required");
   console.log("[design] applied design:", data.design);
   const b = createBuilder();
   const s = resolveScheme(data);
@@ -2127,6 +2129,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
 // ── OPT-IN PAGE ───────────────────────────────────────────────────────────────
 
 export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
+  if (!data?.optInForm) throw new Error("optInForm is required");
   const b = createBuilder();
   const s    = resolveScheme(data);
   const form = data.optInForm;
@@ -2174,6 +2177,7 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
 // ── THANK YOU PAGE ────────────────────────────────────────────────────────────
 
 export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData {
+  if (!data?.thankYouPage) throw new Error("thankYouPage is required");
   const b = createBuilder();
   const s = resolveScheme(data);
   const ty = data.thankYouPage;
@@ -2264,6 +2268,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 // ── BOOKING PAGE ──────────────────────────────────────────────────────────────
 
 export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
+  if (!data?.bookingPage) throw new Error("bookingPage is required");
   const b = createBuilder();
   const s = resolveScheme(data);
   const bk = data.bookingPage;

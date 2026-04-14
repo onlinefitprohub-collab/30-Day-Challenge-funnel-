@@ -111,7 +111,14 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ projectId: project.id, inputs }),
         keepalive: true,
-      }).catch(() => {});
+      }).then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          console.error("[regenerate] generation API failed:", err.error ?? `HTTP ${res.status}`);
+        }
+      }).catch((err) => {
+        console.error("[regenerate] generation fetch error:", err);
+      });
 
       // Step 3: navigate to the generating screen (status is now "generating")
       router.push(`/projects/${project.id}/generating`);

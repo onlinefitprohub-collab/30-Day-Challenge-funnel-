@@ -56,6 +56,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid page value" }, { status: 400 });
   }
 
+  // Verify the project belongs to this user before returning its data
+  const { data: projectCheck } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!projectCheck) {
+    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+
   const { data, error } = await supabase
     .from("project_outputs")
     .select("outputs")
