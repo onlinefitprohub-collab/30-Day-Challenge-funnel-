@@ -1830,15 +1830,25 @@ function buildResultsHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): str
   return `<div style="background:${s.dark};background-image:${DOT_BG};font-family:${font};"><div style="background:linear-gradient(135deg,${s.primary} 0%,${s.accent} 100%);padding:20px 24px;text-align:center;"><div style="color:#ffffff;font-size:clamp(24px,4vw,38px);font-weight:900;">Over 2,400 lbs Lost by Our Community</div><div style="color:rgba(255,255,255,0.85);font-size:16px;margin-top:6px;">...and ${conceptFirst4} is how they did it</div></div><div style="padding:60px 24px;text-align:center;max-width:860px;margin:0 auto;"><h1 style="font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.1;margin:0 0 20px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.8)") }">${headline}</span></h1><p style="color:rgba(255,255,255,0.82);font-size:18px;margin:0 0 36px;line-height:1.6;">${subheadline}</p><div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px 32px;max-width:560px;margin:0 auto 36px;box-shadow:${SHADOW_XL};"><span style="color:${s.primary};font-size:48px;line-height:0.5;display:block;">"</span><p style="color:#ffffff;font-size:17px;font-style:italic;line-height:1.7;margin:0 0 12px;">I lost 16 lbs in my first 30 days and finally feel confident in my own skin.</p><span style="color:rgba(255,255,255,0.55);font-size:14px;">— Jessica M., challenge participant</span></div><a href="#optin" style="display:block;max-width:400px;margin:0 auto;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;text-align:center;${glowStyle(s.primary)}">${ctaText}</a></div></div>`;
 }
 
+// ── Template 20 social proof: gradient stat banner ───────────────────────────
+// Replaces the dark-background centered-stat section with a vivid gradient strip
+// so there is clear visual separation between the hero and the next section.
+function buildResultsStatBannerHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const memberCount = data.clientCount ? escHtml(data.clientCount) : "500+";
+  return `<div style="background:linear-gradient(90deg,${s.primary} 0%,${s.accent} 100%);padding:48px 24px;text-align:center;font-family:${font};box-shadow:0 4px 24px ${s.primary}55;"><div style="color:#ffffff;font-size:clamp(48px,8vw,80px);font-weight:900;line-height:1;letter-spacing:-2px;text-shadow:0 2px 16px rgba(0,0,0,0.2);">${memberCount}</div><div style="color:rgba(255,255,255,0.9);font-size:17px;font-weight:500;margin-top:10px;letter-spacing:0.3px;">people have completed this challenge — free to join</div></div>`;
+}
+
 // ── Template 11: vsl-focused "What You'll Discover" strip ───────────────────
 function buildVslDiscoverHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const ideas = data.landingPage?.sectionIdeas ?? [];
+  // Use the first 3 benefit bullet points (format: "Benefit — Reason why it matters")
+  const bullets = data.landingPage?.bulletPoints ?? [];
   const cols = [0, 1, 2].map((i, idx) => {
-    const words = (ideas[i] ?? "").split(/\s+/);
-    const heading = escHtml(words.slice(0, 6).join(" "));
-    const body = escHtml(words.slice(6, 16).join(" "));
-    const num = String(idx + 1).padStart(2, "0");
+    const parts = (bullets[i] ?? "").split(" — ");
+    const heading = escHtml((parts[0] ?? bullets[i] ?? `Key Benefit ${i + 1}`).trim());
+    const body    = escHtml((parts[1] ?? "").trim());
+    const num     = String(idx + 1).padStart(2, "0");
     return `<div style="flex:1;min-width:220px;text-align:center;padding:0 24px;${idx < 2 ? `border-right:1px solid rgba(255,255,255,0.08);` : ""}"><div style="color:${s.primary};font-size:14px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">${num}</div><div style="color:#ffffff;font-size:17px;font-weight:600;margin-bottom:10px;line-height:1.4;">${heading}</div>${body ? `<div style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;">${body}</div>` : ""}</div>`;
   }).join("");
   return `<div style="background:${s.dark};padding:48px 24px;border-top:3px solid ${s.primary};font-family:${font};"><h3 style="color:#ffffff;font-size:22px;font-weight:700;text-align:center;margin:0 0 28px;">What you'll discover inside:</h3><div style="max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;gap:0;">${cols}</div></div>`;
@@ -1867,19 +1877,25 @@ function buildIsThisForYouHtml(data: GeneratedFunnelAssets, s: SchemeColors): st
   const bullets = data.landingPage?.bulletPoints ?? [];
   const conceptWords = escHtml((data.offerSummary?.challengeConcept ?? "30-Day Challenge").split(/\s+/).slice(0, 3).join(" "));
   const forItems = bullets.slice(0, 5).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="color:${s.primary};font-weight:700;flex-shrink:0;margin-top:1px;">✓</span><span style="color:#1e293b;font-size:15px;line-height:1.6;">${escHtml(b)}</span></div>`).join("");
-  const notForItems = ["You're not ready to commit 30 days", "You want instant results with no effort", "You're not open to changing your habits", "You're looking for a magic pill"].map(item => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="color:#ef4444;font-weight:700;flex-shrink:0;margin-top:1px;">✕</span><span style="color:#374151;font-size:15px;line-height:1.6;">${item}</span></div>`).join("");
-  return `<style>@media(max-width:640px){.itfy-grid{flex-direction:column!important}}</style><div style="background:${s.mid};background-image:${DOT_BG};padding:56px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;"><h2 style="color:#ffffff;font-size:clamp(24px,3.5vw,32px);font-weight:800;text-align:center;margin:0 0 36px;">Is the ${conceptWords} right for you?</h2><div class="itfy-grid" style="display:flex;gap:24px;"><div style="flex:1;background:${bg};border-radius:16px;padding:28px;box-shadow:${SHADOW_XL};border-top:3px solid ${s.primary};"><div style="color:${s.primary};font-size:18px;font-weight:700;margin-bottom:20px;">✓ This IS for you if...</div>${forItems}</div><div style="flex:1;background:#ffffff;border-radius:16px;padding:28px;box-shadow:${SHADOW_XL};border-top:3px solid #ef4444;"><div style="color:#ef4444;font-size:18px;font-weight:700;margin-bottom:20px;">✕ This is NOT for you if...</div>${notForItems}</div></div></div></div>`;
+  const notForItems = [
+    "You're not ready to commit 30 days",
+    "You want instant results with no effort",
+    "You're not open to changing your habits",
+    "You're looking for a magic pill or shortcut",
+    "You're not willing to track your progress",
+    "You want someone else to do the work for you",
+  ].map(item => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;"><span style="color:#ef4444;font-weight:700;flex-shrink:0;margin-top:1px;">✕</span><span style="color:#374151;font-size:15px;line-height:1.6;">${item}</span></div>`).join("");
+  return `<style>@media(max-width:640px){.itfy-grid{flex-direction:column!important}}</style><div style="background:${s.mid};background-image:${DOT_BG};padding:56px 24px;font-family:${font};"><div style="max-width:900px;margin:0 auto;"><h2 style="color:#ffffff;font-size:clamp(24px,3.5vw,32px);font-weight:800;text-align:center;margin:0 0 36px;">Is the ${conceptWords} right for you?</h2><div class="itfy-grid" style="display:flex;align-items:stretch;gap:24px;"><div style="flex:1;background:${bg};border-radius:16px;padding:28px;box-shadow:${SHADOW_XL};border-top:3px solid ${s.primary};"><div style="color:${s.primary};font-size:18px;font-weight:700;margin-bottom:20px;">✓ This IS for you if...</div>${forItems}</div><div style="flex:1;background:#ffffff;border-radius:16px;padding:28px;box-shadow:${SHADOW_XL};border-top:3px solid #ef4444;"><div style="color:#ef4444;font-size:18px;font-weight:700;margin-bottom:20px;">✕ This is NOT for you if...</div>${notForItems}</div></div></div></div>`;
 }
 
 // ── Template 14: event-agenda journey timeline ────────────────────────────────
 function buildEventAgendaHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const ideas = data.landingPage?.sectionIdeas ?? [];
   const corePromiseShort = escHtml((data.offerSummary?.corePromise ?? "Real results you can see and feel.").split(/\s+/).slice(0, 8).join(" "));
   const milestones = [
-    { dayLabel: "Day 1", title: "Your Foundation", desc: "Get set up, meet your accountability crew, make your commitment." },
-    { dayLabel: "Week 1", title: "Building Momentum", desc: ideas[1] ? escHtml(ideas[1].split(/\s+/).slice(0, 12).join(" ")) : "First visible changes — energy up and routine locked in." },
-    { dayLabel: "Week 2", title: "Breaking Through", desc: "Halfway mark. Most people quit here. You won't." },
+    { dayLabel: "Day 1",  title: "Your Foundation",    desc: "Get set up, meet your accountability crew, make your commitment." },
+    { dayLabel: "Week 1", title: "Building Momentum",  desc: "First visible changes — energy up and routine locked in." },
+    { dayLabel: "Week 2", title: "Breaking Through",   desc: "Halfway mark. Most people quit here. You won't." },
     { dayLabel: "Day 30", title: "Your Transformation", desc: corePromiseShort },
   ];
   const steps = milestones.map((m, i) => `<div style="display:flex;align-items:flex-start;gap:24px;margin-bottom:${i < 3 ? "40px" : "0"};"><div style="flex-shrink:0;width:48px;height:48px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px ${s.primary}55;">${i + 1}</div><div><div style="color:${s.primary};font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">${m.dayLabel}</div><div style="color:#ffffff;font-size:20px;font-weight:700;margin-bottom:6px;letter-spacing:-0.5px;">${m.title}</div><div style="color:rgba(255,255,255,0.65);font-size:15px;line-height:1.7;">${m.desc}</div></div></div>`).join("");
@@ -1938,11 +1954,20 @@ function buildCredentialsStripHtml(data: GeneratedFunnelAssets, s: SchemeColors)
 function buildBoldImpactHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const lp = data.landingPage;
-  const headline = lp?.headlineOptions?.[2] ?? lp?.headlineOptions?.[0] ?? "Transform Now";
-  const firstThreeWords = escHtml(headline.split(/\s+/).slice(0, 3).join(" "));
   const subheadline = escHtml(lp?.subheadline ?? "");
-  const ctaText = escHtml(lp?.ctaText ?? "Claim Your Spot");
-  return `<div style="background:${s.dark};background-image:${DOT_BG};min-height:92vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><div style="max-width:900px;margin:0 auto;"><div style="font-size:clamp(72px,12vw,120px);font-weight:900;letter-spacing:-4px;line-height:0.9;margin:0 0 32px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.6)") }">${firstThreeWords}</span></div><div style="width:80px;height:4px;background:linear-gradient(90deg,transparent,${s.primary},transparent);margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.7);font-size:20px;max-width:560px;margin:0 auto 40px;line-height:1.6;">${subheadline}</p><a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 48px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;font-family:${font};${glowStyle(s.primary)}">${ctaText}</a></div></div>`;
+  const rawCta = lp?.ctaText ?? "Claim Your Spot";
+  const ctaText = escHtml(rawCta);
+
+  // Pick a short punchy phrase from the CTA (already curated, action-oriented, ≤5 words)
+  // Strip arrow/icon characters then take up to 3 words
+  const ctaClean = rawCta.replace(/[→←»«•>]/g, "").trim();
+  const ctaWords = ctaClean.split(/\s+/);
+  const FILLER = new Set(["my", "your", "a", "an", "the", "to", "for", "in", "and", "or"]);
+  // Take first 1-3 non-filler words — gives "Claim", "Join Now", "Start Your Journey" etc.
+  const displayWords = ctaWords.filter(w => !FILLER.has(w.toLowerCase())).slice(0, 3);
+  const displayText = escHtml((displayWords.length ? displayWords : ctaWords.slice(0, 3)).join(" ").toUpperCase());
+
+  return `<div style="background:${s.dark};background-image:${DOT_BG};padding:120px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><div style="max-width:900px;margin:0 auto;"><div style="font-size:clamp(56px,10vw,108px);font-weight:900;letter-spacing:-4px;line-height:0.9;margin:0 0 32px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.6)") }">${displayText}</span></div><div style="width:80px;height:4px;background:linear-gradient(90deg,transparent,${s.primary},transparent);margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.7);font-size:20px;max-width:560px;margin:0 auto 40px;line-height:1.6;">${subheadline}</p><a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 48px;border-radius:${s.buttonBorderRadius};font-size:17px;font-weight:700;font-family:${font};${glowStyle(s.primary)}">${ctaText}</a></div></div>`;
 }
 
 // ── Template 8: community-proof stats bar ────────────────────────────────────
@@ -1981,16 +2006,27 @@ function buildMinimalistEliteHtml(data: GeneratedFunnelAssets, s: SchemeColors):
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const lp = data.landingPage;
   const subheadline = escHtml(lp?.subheadline ?? "");
-  const ctaText = escHtml(lp?.ctaText ?? "Claim Your Spot");
-  const headline0 = lp?.headlineOptions?.[0] ?? "";
-  const words = headline0.split(/\s+/);
-  let mainWord = words.reduce((longest, w) => w.length > longest.length ? w : longest, "");
-  if (!mainWord || mainWord.length < 3) mainWord = (lp?.ctaText ?? "Transform").split(/\s+/)[0];
-  const mainWordEsc = escHtml(mainWord.toUpperCase());
+  const rawCta = lp?.ctaText ?? "Claim Your Spot";
+  const ctaText = escHtml(rawCta);
+
+  // Use first non-trivial word from CTA text (it's short, curated, action-oriented)
+  const CTA_STOP = new Set(["my", "your", "a", "an", "the", "to", "for", "in", "and", "or", "free", "now", "today"]);
+  const ctaWords = rawCta.replace(/[→←»«•>]/g, "").trim().split(/\s+/);
+  const mainWord = ctaWords.find(w => w.length >= 4 && !CTA_STOP.has(w.toLowerCase()))
+    ?? ctaWords[0]
+    ?? "Transform";
+  const mainWordEsc = escHtml(mainWord.replace(/[^a-zA-Z]/g, "").toUpperCase());
   const fontSize = mainWord.length > 10 ? "72px" : "96px";
-  const targetWords = (data.offerSummary?.targetAudienceSummary ?? "").split(/\s+/).slice(0, 4).join(" ").toUpperCase();
+
+  // Strip AI lead-in phrases from targetAudienceSummary before using as program label
+  const rawTarget = data.offerSummary?.targetAudienceSummary ?? "";
+  const cleanTarget = rawTarget
+    .replace(/^(this (challenge |program |is )?is (designed |built |made |perfect |ideal )?(specifically |especially )?for|designed (specifically |especially )?for|built for|made for|perfect for|ideal for|specifically for|for)\s+/i, "")
+    .trim();
+  const targetWords = cleanTarget.split(/\s+/).slice(0, 4).join(" ").toUpperCase();
   const programLabel = escHtml(targetWords || "30-DAY CHALLENGE") + " PROGRAM";
-  return `<div style="background:${s.dark};background-image:${DOT_BG};min-height:95vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><p style="color:${s.primary};font-size:12px;letter-spacing:4px;text-transform:uppercase;font-weight:600;margin:0 0 48px;">${programLabel}</p><div style="font-size:${fontSize};font-weight:900;letter-spacing:-6px;line-height:0.9;margin:0 0 24px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.5)") }">${mainWordEsc}</span></div><div style="width:60px;height:3px;background:${s.primary};margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.55);font-size:17px;max-width:500px;margin:0 auto 48px;line-height:1.8;">${subheadline}</p><a href="#optin" style="display:inline-block;border:2px solid ${s.primary};color:${s.primary};background:transparent;text-decoration:none;padding:16px 44px;border-radius:${s.buttonBorderRadius};font-size:16px;font-weight:600;box-shadow:0 0 24px ${s.primary}33;">${ctaText}</a></div>`;
+
+  return `<div style="background:${s.dark};background-image:${DOT_BG};padding:100px 24px;font-family:${font};text-align:center;box-sizing:border-box;"><p style="color:${s.primary};font-size:12px;letter-spacing:4px;text-transform:uppercase;font-weight:600;margin:0 0 48px;">${programLabel}</p><div style="font-size:${fontSize};font-weight:900;letter-spacing:-6px;line-height:0.9;margin:0 0 24px;"><span style="${gradientText("#ffffff", "rgba(255,255,255,0.5)") }">${mainWordEsc}</span></div><div style="width:60px;height:3px;background:${s.primary};margin:0 auto 32px;"></div><p style="color:rgba(255,255,255,0.55);font-size:17px;max-width:500px;margin:0 auto 48px;line-height:1.8;">${subheadline}</p><a href="#optin" style="display:inline-block;border:2px solid ${s.primary};color:${s.primary};background:transparent;text-decoration:none;padding:16px 44px;border-radius:${s.buttonBorderRadius};font-size:16px;font-weight:600;box-shadow:0 0 24px ${s.primary}33;">${ctaText}</a></div>`;
 }
 
 // ── Template 6: urgency-driven banner strip ──────────────────────────────────
@@ -2129,9 +2165,12 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
     "gradient-proof",
   ]);
   // Templates that replace social proof with custom HTML
-  const CUSTOM_HTML_SP_SET = new Set<TemplateVariant>(["social-proof-grid", "transformation-wall", "gradient-proof"]);
+  // results-first: gradient stat banner so it contrasts with the dark hero
+  const CUSTOM_HTML_SP_SET = new Set<TemplateVariant>(["social-proof-grid", "transformation-wall", "gradient-proof", "results-first"]);
   // Templates that replace what's-included with custom HTML
-  const CUSTOM_HTML_WI_SET = new Set<TemplateVariant>(["event-agenda", "story-journey"]);
+  // vsl-focused, free-value-first, video-authority: their feature strips go HERE
+  // (not in postHeroMap) so the content only appears once on the page.
+  const CUSTOM_HTML_WI_SET = new Set<TemplateVariant>(["event-agenda", "story-journey", "vsl-focused", "free-value-first", "video-authority"]);
 
   // ── Pre-hero strip (local-demographic only) ───────────────────────────────────
   if (resolvedVariant === "local-demographic") {
@@ -2168,15 +2207,16 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
   }
 
   // ── Post-hero custom strips ───────────────────────────────────────────────────
+  // NOTE: vsl-focused, free-value-first, and video-authority are intentionally
+  // NOT here — their feature strips live in CUSTOM_HTML_WI_SET to avoid showing
+  // the same content twice alongside the native What's Included section.
   type HtmlFn = (d: GeneratedFunnelAssets, sc: SchemeColors) => string;
   const postHeroMap: Partial<Record<TemplateVariant, HtmlFn>> = {
     "authority-builder": buildCredentialsStripHtml,
     "urgency-driven":    buildUrgencyBannerHtml,
     "community-proof":   buildCommunityStatsHtml,
-    "vsl-focused":       buildVslDiscoverHtml,
     "is-this-for-you":   buildIsThisForYouHtml,
     "executive-clean":   buildWhyThisWorksHtml,
-    "free-value-first":  buildValueStackHtml,
   };
   const postHeroFn = postHeroMap[resolvedVariant];
   if (postHeroFn) {
@@ -2195,13 +2235,19 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
 
   if (CUSTOM_HTML_SP_SET.has(resolvedVariant)) {
     snap = countBefore("social-proof");
-    const spHtml = resolvedVariant === "transformation-wall" || resolvedVariant === "gradient-proof"
-      ? buildTransformationWallHtml(data, s)
-      : buildSocialProofGridHtml(data, s);
+    let spHtml: string;
+    let spBg: string;
+    if (resolvedVariant === "transformation-wall" || resolvedVariant === "gradient-proof") {
+      spHtml = buildTransformationWallHtml(data, s); spBg = s.alt;
+    } else if (resolvedVariant === "results-first") {
+      spHtml = buildResultsStatBannerHtml(data, s); spBg = s.primary;
+    } else {
+      spHtml = buildSocialProofGridHtml(data, s); spBg = s.alt;
+    }
     const ccId = makeCustomCode(b, spHtml, 0);
     const col  = makeCol(b, [ccId], 100, {});
     const row  = makeRow(b, [col], 1200, 0);
-    makeSection(b, [row], { bgColor: s.alt, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+    makeSection(b, [row], { bgColor: spBg, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
     countAfter(snap, `${resolvedVariant} (custom-code social-proof)`);
   } else if (!skipSocialProof) {
     snap = countBefore("social-proof");
@@ -2210,25 +2256,22 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
     countAfter(snap, spVariant || "(auto)");
   }
 
-  // ── Post social-proof strip (video-authority only) ────────────────────────────
-  if (resolvedVariant === "video-authority") {
-    const html = buildFeatureStripHtml(data, s);
-    const ccId = makeCustomCode(b, html, 0);
-    const col  = makeCol(b, [ccId], 100, {});
-    const row  = makeRow(b, [col], 1200, 0);
-    makeSection(b, [row], { bgColor: s.alt, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
-
   // ── What's Included (or custom replacement) ───────────────────────────────────
   snap = countBefore("whats-included");
   if (CUSTOM_HTML_WI_SET.has(resolvedVariant)) {
-    const wiHtml = resolvedVariant === "event-agenda"
-      ? buildEventAgendaHtml(data, s)
-      : buildJourneyTimelineHtml(data, s);
+    let wiHtml: string;
+    let wiBg: string;
+    switch (resolvedVariant) {
+      case "event-agenda":    wiHtml = buildEventAgendaHtml(data, s);  wiBg = s.dark; break;
+      case "vsl-focused":     wiHtml = buildVslDiscoverHtml(data, s);  wiBg = s.dark; break;
+      case "free-value-first": wiHtml = buildValueStackHtml(data, s); wiBg = s.alt;  break;
+      case "video-authority": wiHtml = buildFeatureStripHtml(data, s); wiBg = s.alt;  break;
+      default:                wiHtml = buildJourneyTimelineHtml(data, s); wiBg = s.mid;
+    }
     const ccId = makeCustomCode(b, wiHtml, 0);
     const col  = makeCol(b, [ccId], 100, {});
     const row  = makeRow(b, [col], 1200, 0);
-    makeSection(b, [row], { bgColor: resolvedVariant === "event-agenda" ? s.dark : s.mid, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+    makeSection(b, [row], { bgColor: wiBg, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
     countAfter(snap, `${resolvedVariant} (custom-code whats-included)`);
   } else {
     dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "", data);
