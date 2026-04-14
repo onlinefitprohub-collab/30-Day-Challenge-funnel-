@@ -114,6 +114,13 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
     setCurrentStep((s) => Math.max(0, s - 1));
   }
 
+  function handleJumpToStep(step: number) {
+    if (step < currentStep) {
+      setSaveError(null);
+      setCurrentStep(step);
+    }
+  }
+
   async function handleSubmit(stepData: Partial<WizardInputs>) {
     const allData = { ...formData, ...stepData };
     setFormData(allData);
@@ -183,7 +190,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
       </div>
 
       {/* Progress bar */}
-      <WizardProgress currentStep={currentStep} steps={WIZARD_STEPS} />
+      <WizardProgress currentStep={currentStep} steps={WIZARD_STEPS} onStepClick={handleJumpToStep} />
 
       {/* Save error banner */}
       {saveError && (

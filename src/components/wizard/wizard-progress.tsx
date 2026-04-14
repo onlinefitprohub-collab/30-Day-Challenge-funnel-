@@ -9,9 +9,10 @@ type Step = (typeof WIZARD_STEPS)[number];
 interface WizardProgressProps {
   currentStep: number;
   steps: readonly Step[];
+  onStepClick?: (step: number) => void;
 }
 
-export function WizardProgress({ currentStep, steps }: WizardProgressProps) {
+export function WizardProgress({ currentStep, steps, onStepClick }: WizardProgressProps) {
   const progressPct = steps.length > 1
     ? (currentStep / (steps.length - 1)) * 100
     : 0;
@@ -45,19 +46,32 @@ export function WizardProgress({ currentStep, steps }: WizardProgressProps) {
           {steps.map((step, index) => {
             const isComplete = index < currentStep;
             const isCurrent  = index === currentStep;
+            const isClickable = isComplete && !!onStepClick;
+
+            const dotClasses = cn(
+              "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
+              isComplete ? "border-brand-600 bg-brand-600 text-white"
+              : isCurrent  ? "border-brand-600 bg-white text-brand-600 shadow-sm"
+              :              "border-gray-200 bg-white text-gray-400",
+              isClickable && "cursor-pointer hover:ring-2 hover:ring-brand-300 hover:ring-offset-1"
+            );
 
             return (
               <div key={step.id} className="flex flex-col items-center">
-                <div
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
-                    isComplete ? "border-brand-600 bg-brand-600 text-white"
-                    : isCurrent  ? "border-brand-600 bg-white text-brand-600 shadow-sm"
-                    :              "border-gray-200 bg-white text-gray-400"
-                  )}
-                >
-                  {isComplete ? <Check className="h-3.5 w-3.5" /> : step.id}
-                </div>
+                {isClickable ? (
+                  <button
+                    type="button"
+                    onClick={() => onStepClick(index)}
+                    title={`Back to step ${index + 1}: ${step.title}`}
+                    className={dotClasses}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <div className={dotClasses}>
+                    {isComplete ? <Check className="h-3.5 w-3.5" /> : step.id}
+                  </div>
+                )}
                 <span
                   className={cn(
                     "mt-2 max-w-[72px] text-center text-xs font-medium leading-tight",

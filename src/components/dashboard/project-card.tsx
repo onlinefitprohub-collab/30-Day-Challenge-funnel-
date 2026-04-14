@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, RefreshCw, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { ProjectRow } from "@/types/project";
+import { CloneButton } from "./clone-button";
 
 const STATUS_CONFIG: Record<
   ProjectRow["status"],
@@ -68,9 +69,14 @@ export function ProjectCard({ project, subtitle }: Props) {
 
       {/* CTA row */}
       <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-3">
-        <span className="text-[11px] text-gray-400">
-          Created {formatDate(project.created_at)}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] text-gray-400">
+            Created {formatDate(project.created_at)}
+          </span>
+          {project.status === "complete" && (
+            <CloneButton projectId={project.id} />
+          )}
+        </div>
         <span className="flex items-center gap-1 text-xs font-semibold text-orange-500 opacity-0 transition-opacity group-hover:opacity-100">
           {cta.text}
           <CtaIcon className="h-3.5 w-3.5" />

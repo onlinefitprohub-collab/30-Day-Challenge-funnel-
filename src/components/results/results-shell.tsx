@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -27,19 +27,19 @@ import { FunnelPreviewSection }   from "./sections/funnel-preview";
 import { GhlInspectorSection }    from "./sections/ghl-inspector";
 
 const tabs = [
-  { id: "highlevel",       label: "HighLevel",       icon: Layers,          highlight: true },
-  { id: "funnelPreview",   label: "Funnel Preview",  icon: LayoutTemplate },
-  { id: "ghlInspector",    label: "GHL Inspector",   icon: Microscope },
-  { id: "offerSummary",    label: "Offer Summary",   icon: Target },
-  { id: "landingPage",     label: "Landing Page",    icon: FileText },
-  { id: "optInForm",       label: "Opt-in Form",     icon: FormInput },
-  { id: "thankYouPage",    label: "Thank You",       icon: ThumbsUp },
-  { id: "bookingPage",     label: "Booking Page",    icon: Calendar },
-  { id: "smsSequence",     label: "SMS Sequence",    icon: MessageSquare },
-  { id: "emailSequence",   label: "Email Sequence",  icon: Mail },
-  { id: "adCopy",          label: "Ad Copy",         icon: Megaphone },
-  { id: "creativePrompts", label: "Creatives",       icon: ImageIcon },
-  { id: "campaignNaming",  label: "Campaign",        icon: BarChart3 },
+  { id: "highlevel",       label: "HighLevel",       icon: Layers,          highlight: true, group: "export" },
+  { id: "ghlInspector",    label: "GHL Inspector",   icon: Microscope,                       group: "export" },
+  { id: "funnelPreview",   label: "Funnel Preview",  icon: LayoutTemplate,                   group: "preview" },
+  { id: "offerSummary",    label: "Offer Summary",   icon: Target,                           group: "overview" },
+  { id: "landingPage",     label: "Landing Page",    icon: FileText,                         group: "pages" },
+  { id: "optInForm",       label: "Opt-in Form",     icon: FormInput,                        group: "pages" },
+  { id: "thankYouPage",    label: "Thank You",       icon: ThumbsUp,                         group: "pages" },
+  { id: "bookingPage",     label: "Booking Page",    icon: Calendar,                         group: "pages" },
+  { id: "smsSequence",     label: "SMS Sequence",    icon: MessageSquare,                    group: "sequences" },
+  { id: "emailSequence",   label: "Email Sequence",  icon: Mail,                             group: "sequences" },
+  { id: "adCopy",          label: "Ad Copy",         icon: Megaphone,                        group: "ads" },
+  { id: "creativePrompts", label: "Creatives",       icon: ImageIcon,                        group: "ads" },
+  { id: "campaignNaming",  label: "Campaign",        icon: BarChart3,                        group: "ads" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -51,14 +51,39 @@ interface ResultsShellProps {
   hlConnected: boolean;
 }
 
+type SectionGroup = "offer-pages" | "sequences" | "ads";
+
+// Maps each tab to its AI generation group (tabs without a group can't be section-regenerated)
+const TAB_SECTION_GROUP: Partial<Record<TabId, SectionGroup>> = {
+  offerSummary:    "offer-pages",
+  landingPage:     "offer-pages",
+  optInForm:       "offer-pages",
+  thankYouPage:    "offer-pages",
+  bookingPage:     "offer-pages",
+  smsSequence:     "sequences",
+  emailSequence:   "sequences",
+  adCopy:          "ads",
+  creativePrompts: "ads",
+  campaignNaming:  "ads",
+};
+
+const GROUP_LABEL: Record<SectionGroup, string> = {
+  "offer-pages": "Pages & Offer",
+  "sequences":   "Sequences",
+  "ads":         "Ads & Campaign",
+};
+
 export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsShellProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab]       = useState<TabId>("highlevel");
-  const [copiedAll, setCopiedAll]       = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
+  const [activeTab, setActiveTab]           = useState<TabId>("highlevel");
+  const [copiedAll, setCopiedAll]           = useState(false);
+  const [regenerating, setRegenerating]     = useState(false);
+  const [regenSection, setRegenSection]     = useState<SectionGroup | null>(null);
+  // Live outputs — updated in-place after section regeneration so the UI refreshes immediately
+  const [liveOutputs, setLiveOutputs]       = useState<Record<string, unknown>>(outputs);
 
   // Strip internal _isMock flag from the copy-all output
-  const { _isMock: _removed, ...cleanOutputs } = outputs;
+  const { _isMock: _removed, ...cleanOutputs } = liveOutputs;
   const assets = cleanOutputs as unknown as GeneratedFunnelAssets;
 
   async function handleCopyAll() {
@@ -94,6 +119,30 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Could not start regeneration", description: msg, variant: "destructive" });
       setRegenerating(false);
+    }
+  }
+
+  async function handleRegenerateSection(group: SectionGroup) {
+    if (regenSection) return;
+    setRegenSection(group);
+    try {
+      const res = await fetch("/api/regenerate-section", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ projectId: project.id, group }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+      const { outputs: updated } = await res.json() as { outputs: Record<string, unknown> };
+      setLiveOutputs(updated);
+      toast({ title: "Section regenerated!", description: `${GROUP_LABEL[group]} copy updated.` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      toast({ title: "Section regeneration failed", description: msg, variant: "destructive" });
+    } finally {
+      setRegenSection(null);
     }
   }
 
@@ -175,36 +224,63 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       {/* Tab bar — scrollable on mobile */}
       <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 w-max min-w-full sm:min-w-0">
-          {tabs.map((tab) => {
+          {tabs.map((tab, i) => {
             const isHL = "highlight" in tab && tab.highlight;
             const isActive = activeTab === tab.id;
+            const showSeparator = i > 0 && tab.group !== tabs[i - 1].group;
             return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                  isActive && isHL
-                    ? "bg-[#1a56db] text-white shadow-sm"
-                    : isActive
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : isHL
-                    ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-                data-tab={tab.id}
-              >
-                <tab.icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden sm:block">{tab.label}</span>
-              </button>
+              <Fragment key={tab.id}>
+                {showSeparator && (
+                  <div className="flex items-center px-0.5">
+                    <div className="h-5 w-px rounded-full bg-gray-300" />
+                  </div>
+                )}
+                <button
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                    isActive && isHL
+                      ? "bg-[#1a56db] text-white shadow-sm"
+                      : isActive
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : isHL
+                      ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  data-tab={tab.id}
+                >
+                  <tab.icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden sm:block">{tab.label}</span>
+                </button>
+              </Fragment>
             );
           })}
         </div>
       </div>
 
       {/* Active section */}
-      <div className="animate-fade-in" key={activeTab}>
-        {sections[activeTab]}
-      </div>
+      {(() => {
+        const tab = activeTab as TabId;
+        const sectionGroup = TAB_SECTION_GROUP[tab];
+        return (
+          <div className="animate-fade-in" key={tab}>
+            {/* Per-section regenerate button */}
+            {sectionGroup && (
+              <div className="mb-4 flex items-center justify-end">
+                <button
+                  onClick={() => handleRegenerateSection(sectionGroup)}
+                  disabled={!!regenSection}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 transition-colors"
+                  title={`Re-run AI for ${GROUP_LABEL[sectionGroup]} without regenerating the whole funnel`}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${regenSection === sectionGroup ? "animate-spin" : ""}`} />
+                  {regenSection === sectionGroup ? "Regenerating…" : "Regenerate this section"}
+                </button>
+              </div>
+            )}
+            {sections[tab]}
+          </div>
+        );
+      })()}
     </div>
   );
 }
