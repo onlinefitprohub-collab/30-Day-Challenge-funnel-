@@ -32,6 +32,7 @@ const TEMPLATE_LABELS: Record<TemplateVariant, string> = {
   "application-style":     "Application Style",
   "story-journey":         "Story Journey",
   "results-first":         "Results First",
+  "gradient-proof":        "Gradient Proof",
 };
 
 export const dynamic = "force-dynamic";

@@ -1543,6 +1543,8 @@ export const ALL_TEMPLATE_VARIANTS = [
   "vsl-focused", "transformation-wall", "is-this-for-you", "event-agenda",
   "executive-clean", "local-demographic", "free-value-first",
   "application-style", "story-journey", "results-first",
+  // Phase 3
+  "gradient-proof",
 ] as const;
 export type TemplateVariant = typeof ALL_TEMPLATE_VARIANTS[number];
 
@@ -1569,6 +1571,7 @@ export const TEMPLATE_VARIANTS_POOL: TemplateVariant[] = [
   "story-journey",
   "results-first",
   "social-proof-grid",
+  "gradient-proof",
 ];
 
 export function pickTemplateVariant(): TemplateVariant {
@@ -1673,6 +1676,38 @@ function buildSocialProofGridHtml(data: GeneratedFunnelAssets, s: SchemeColors):
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;max-width:900px;margin:0 auto;">
     ${cardHtml}
+  </div>
+</div>`;
+}
+
+// ── Template 21: gradient-proof centered hero with bullets ────────────────────
+/**
+ * Centered hero with a dark→mid→primary diagonal gradient, headline, subheadline,
+ * 4 bullet points, and a glowing CTA — matching the GHL native page reference design.
+ */
+function buildGradientProofHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const lp   = data.landingPage;
+  const h1   = escHtml(lp?.headlineOptions?.[0] ?? "Your Free 30-Day Challenge Starts Here");
+  const sub  = escHtml(lp?.subheadline ?? "");
+  const pts  = lp?.bulletPoints?.slice(0, 4) ?? [];
+
+  const bulletsHtml = (pts.length > 0 ? pts : ["Challenge details will appear here."]).map(pt =>
+    `<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;text-align:left;">
+      <div style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:${s.primary};color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">✓</div>
+      <p style="margin:0;color:rgba(255,255,255,0.88);font-size:17px;line-height:1.6;font-family:${font};">${escHtml(typeof pt === "string" ? pt : String(pt ?? ""))}</p>
+    </div>`
+  ).join("\n");
+
+  return `<div style="background:linear-gradient(135deg,${s.dark} 0%,${s.mid} 50%,${s.primary} 100%);padding:80px 24px;font-family:${font};text-align:center;">
+  <div style="max-width:800px;margin:0 auto;">
+    <p style="color:${s.primary};font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px;color:rgba(255,255,255,0.7);">🔥 Free 30-Day Challenge — Limited Spots</p>
+    <h1 style="color:#ffffff;font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.1;margin:0 0 20px;text-shadow:0 2px 32px rgba(0,0,0,0.4);">${h1}</h1>
+    ${sub ? `<p style="color:rgba(255,255,255,0.75);font-size:18px;line-height:1.6;margin:0 0 32px;max-width:600px;margin-left:auto;margin-right:auto;">${sub}</p>` : ""}
+    <div style="max-width:620px;margin:0 auto 36px;text-align:left;">
+      ${bulletsHtml}
+    </div>
+    <a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:50px;font-size:17px;font-weight:700;${glowStyle(s.primary)};">${escHtml(lp?.ctaText ?? "Claim My Free Spot →")}</a>
   </div>
 </div>`;
 }
@@ -2029,14 +2064,16 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
     "application-style":    "cta-dark-minimal",
     "story-journey":        "cta-centered-color-bg",
     "results-first":        "cta-social-proof-cta",
+    "gradient-proof":       "cta-centered-color-bg",
   };
   // Templates that replace the hero with fully custom HTML
   const CUSTOM_HTML_HERO_SET = new Set<TemplateVariant>([
     "stats-hero", "transformation-split", "bold-impact",
     "minimalist-elite", "application-style", "results-first",
+    "gradient-proof",
   ]);
   // Templates that replace social proof with custom HTML
-  const CUSTOM_HTML_SP_SET = new Set<TemplateVariant>(["social-proof-grid", "transformation-wall"]);
+  const CUSTOM_HTML_SP_SET = new Set<TemplateVariant>(["social-proof-grid", "transformation-wall", "gradient-proof"]);
   // Templates that replace what's-included with custom HTML
   const CUSTOM_HTML_WI_SET = new Set<TemplateVariant>(["event-agenda", "story-journey"]);
 
@@ -2060,6 +2097,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
       case "minimalist-elite":     heroHtml = buildMinimalistEliteHtml(data, s); break;
       case "application-style":    heroHtml = buildApplicationHeroHtml(data, s); break;
       case "results-first":        heroHtml = buildResultsHeroHtml(data, s); break;
+      case "gradient-proof":       heroHtml = buildGradientProofHeroHtml(data, s); break;
       default:                     heroHtml = buildStatsHeroHtml(data, s);
     }
     const ccId = makeCustomCode(b, heroHtml, 0);
@@ -2101,7 +2139,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
 
   if (CUSTOM_HTML_SP_SET.has(resolvedVariant)) {
     snap = countBefore("social-proof");
-    const spHtml = resolvedVariant === "transformation-wall"
+    const spHtml = resolvedVariant === "transformation-wall" || resolvedVariant === "gradient-proof"
       ? buildTransformationWallHtml(data, s)
       : buildSocialProofGridHtml(data, s);
     const ccId = makeCustomCode(b, spHtml, 0);
