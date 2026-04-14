@@ -5,15 +5,33 @@ import {
   buildOptInPageData,
   buildThankYouPageData,
   buildBookingPageData,
+  ALL_TEMPLATE_VARIANTS,
   pickTemplateVariant,
   type TemplateVariant,
 } from "@/lib/highlevel/ghl-pagedata";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
-const TEMPLATE_LABELS: Record<string, string> = {
-  "standard":          "Standard Hero",
-  "stats-hero":        "Stats Hero",
-  "social-proof-grid": "Social Proof Grid",
+const TEMPLATE_LABELS: Record<TemplateVariant, string> = {
+  "standard":              "Standard",
+  "stats-hero":            "Stats Hero",
+  "social-proof-grid":     "Social Proof Grid",
+  "transformation-split":  "Transformation Split",
+  "authority-builder":     "Authority Builder",
+  "urgency-driven":        "Urgency Driven",
+  "bold-impact":           "Bold Impact",
+  "community-proof":       "Community Proof",
+  "video-authority":       "Video Authority",
+  "minimalist-elite":      "Minimalist Elite",
+  "vsl-focused":           "VSL Focused",
+  "transformation-wall":   "Transformation Wall",
+  "is-this-for-you":       "Is This For You",
+  "event-agenda":          "Event Agenda",
+  "executive-clean":       "Executive Clean",
+  "local-demographic":     "Local Demographic",
+  "free-value-first":      "Free Value First",
+  "application-style":     "Application Style",
+  "story-journey":         "Story Journey",
+  "results-first":         "Results First",
 };
 
 export const dynamic = "force-dynamic";
@@ -58,8 +76,12 @@ export async function GET(request: Request) {
   let templateVariant: TemplateVariant | undefined;
   switch (page) {
     case "landing": {
-      templateVariant = pickTemplateVariant();
-      console.log(`[page-data] templateVariant=${templateVariant}`);
+      // Priority: query param (UI selector) → persisted from generation → random from pool
+      const requested = searchParams.get("templateVariant");
+      const isValid   = requested && (ALL_TEMPLATE_VARIANTS as readonly string[]).includes(requested);
+      const persisted = assets.templateVariant as TemplateVariant | undefined;
+      templateVariant = (isValid ? (requested as TemplateVariant) : undefined) ?? persisted ?? pickTemplateVariant();
+      console.log(`[page-data] templateVariant=${templateVariant} (requested=${requested ?? "none"}, persisted=${persisted ?? "none"})`);
       pageData = buildLandingPageData(assets, templateVariant);
       break;
     }
@@ -84,5 +106,6 @@ export async function GET(request: Request) {
     page,
     projectId,
     templateLabel: templateVariant ? (TEMPLATE_LABELS[templateVariant] ?? templateVariant) : undefined,
+    templateVariant,
   });
 }

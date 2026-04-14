@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw } from "lucide-react";
+import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw, Shuffle } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import { GhlPagePreview } from "./GhlPagePreview";
 
@@ -23,6 +23,30 @@ const COLOUR_SCHEMES: Record<string, SchemeColors> = {
 function getScheme(key?: string): SchemeColors {
   return COLOUR_SCHEMES[key ?? "navy-orange"] ?? COLOUR_SCHEMES["navy-orange"];
 }
+
+// All 20 template variants with display names and a short description
+const ALL_TEMPLATES: Array<{ id: string; label: string; desc: string }> = [
+  { id: "standard",             label: "Standard",            desc: "Classic hero with bullets & FAQ" },
+  { id: "stats-hero",           label: "Stats Hero",          desc: "Dark hero with 3 stat numbers" },
+  { id: "social-proof-grid",    label: "Social Proof Grid",   desc: "Testimonial card grid layout" },
+  { id: "transformation-split", label: "Transformation Split",desc: "Before/after split-panel hero" },
+  { id: "authority-builder",    label: "Authority Builder",   desc: "Credentials strip + image hero" },
+  { id: "urgency-driven",       label: "Urgency Driven",      desc: "Countdown hero + urgency banner" },
+  { id: "bold-impact",          label: "Bold Impact",         desc: "Giant full-screen typography hero" },
+  { id: "community-proof",      label: "Community Proof",     desc: "Community stats bar + centered hero" },
+  { id: "video-authority",      label: "Video Authority",     desc: "Video hero + feature bullet grid" },
+  { id: "minimalist-elite",     label: "Minimalist Elite",    desc: "Full-screen single-word hero" },
+  { id: "vsl-focused",          label: "VSL Focused",         desc: "Video hero + 'What You'll Discover'" },
+  { id: "transformation-wall",  label: "Transformation Wall", desc: "Results card wall layout" },
+  { id: "is-this-for-you",      label: "Is This For You",     desc: "For-you / not-for-you qualifier" },
+  { id: "event-agenda",         label: "Event Agenda",        desc: "Countdown hero + 4-step timeline" },
+  { id: "executive-clean",      label: "Executive Clean",     desc: "'Why This Works' 3-column grid" },
+  { id: "local-demographic",    label: "Local Demographic",   desc: "Audience callout banner + image hero" },
+  { id: "free-value-first",     label: "Free Value First",    desc: "Value-stack + free offer framing" },
+  { id: "application-style",    label: "Application Style",   desc: "Exclusive 'Apply for a spot' hero" },
+  { id: "story-journey",        label: "Story Journey",       desc: "Video hero + 4-milestone journey" },
+  { id: "results-first",        label: "Results First",       desc: "Stat-led hero with result quote card" },
+];
 
 interface Props {
   data: GeneratedFunnelAssets;
@@ -66,6 +90,12 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
 export function FunnelPreviewSection({ data, projectId }: Props) {
   const [activePage, setActivePage] = useState<PageId>("landing");
 
+  // Template selector — null means "use persisted/random (server decides)"
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
+    data.templateVariant ?? null,
+  );
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+
   // Clone-to-GHL one-click state
   const [cloneStatus, setCloneStatus] = useState<"idle" | "loading" | "saved" | "no-ext" | "error">("idle");
   const [cloneMsg, setCloneMsg]       = useState("");
@@ -73,7 +103,9 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
   // Refresh: incrementing refreshKey remounts GhlPagePreview → triggers a fresh fetch
   const [refreshKey, setRefreshKey] = useState(0);
   // Template label: set by GhlPagePreview after a successful landing-page fetch
-  const [templateLabel, setTemplateLabel] = useState<string>("");
+  const [templateLabel, setTemplateLabel] = useState<string>(
+    data.templateVariant ? (ALL_TEMPLATES.find(t => t.id === data.templateVariant)?.label ?? data.templateVariant) : "",
+  );
 
   const scheme = getScheme(data.colourScheme);
   const activeMeta = PAGES.find((p) => p.id === activePage)!;
@@ -86,8 +118,8 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
   };
 
   const handleLandingLoad = useCallback(
-    ({ templateLabel: label }: { templateLabel?: string }) => {
-      setTemplateLabel(label ?? "");
+    ({ templateLabel: label, templateVariant: tv }: { templateLabel?: string; templateVariant?: string }) => {
+      setTemplateLabel(label ?? tv ?? "");
     },
     [],
   );
@@ -97,10 +129,34 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
     setRefreshKey((k) => k + 1);
   }
 
+  function handleRandomTemplate() {
+    // Pick a random template from all 20
+    const random = ALL_TEMPLATES[Math.floor(Math.random() * ALL_TEMPLATES.length)];
+    setSelectedTemplate(random.id);
+    setTemplateLabel(random.label);
+    setRefreshKey((k) => k + 1);
+    setCloneStatus("idle");
+  }
+
+  function handleSelectTemplate(id: string) {
+    setSelectedTemplate(id);
+    const meta = ALL_TEMPLATES.find(t => t.id === id);
+    setTemplateLabel(meta?.label ?? id);
+    setRefreshKey((k) => k + 1);
+    setCloneStatus("idle");
+    setShowTemplateSelector(false);
+  }
+
+  // Build query string for API calls — include templateVariant when on landing page
+  function buildQs(page: PageId) {
+    const qs = new URLSearchParams({ page, ...(projectId ? { projectId } : {}) });
+    if (page === "landing" && selectedTemplate) qs.set("templateVariant", selectedTemplate);
+    return qs.toString();
+  }
+
   async function handleDownloadJson() {
     try {
-      const qs  = new URLSearchParams({ page: activePage, ...(projectId ? { projectId } : {}) });
-      const res = await fetch(`/api/highlevel/page-data?${qs}`);
+      const res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const json = await res.json() as { pageData: unknown };
       if (!json.pageData) throw new Error("No page data");
@@ -122,8 +178,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
     setCloneMsg("");
 
     try {
-      const qs = new URLSearchParams({ page: activePage, ...(projectId ? { projectId } : {}) });
-      const res = await fetch(`/api/highlevel/page-data?${qs}`);
+      const res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Server error ${res.status}`);
@@ -204,15 +259,15 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
             <button
               onClick={handleRefresh}
               className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-              title="Reload this page preview (landing page also picks a new template variant)"
+              title="Reload this page preview"
             >
               <RefreshCw className="h-3 w-3" />
-              Refresh Preview
+              Refresh
             </button>
             <button
               onClick={handleDownloadJson}
               className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-              title="Download this page's GHL JSON — import manually or inspect the schema"
+              title="Download this page's GHL JSON"
             >
               <Download className="h-3 w-3" />
               Download JSON
@@ -236,17 +291,65 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         </div>
       </div>
 
-      {/* Template label badge — only shown on the landing page */}
-      {activePage === "landing" && templateLabel && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Template:</span>
-          <span
-            className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
-            style={{ backgroundColor: scheme.primary }}
-          >
-            {templateLabel}
-          </span>
-          <span className="text-[10px] text-gray-400">Click "Refresh Preview" to pick a different one</span>
+      {/* ── Template selector (landing page only) ─────────────────────────── */}
+      {activePage === "landing" && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gray-700">Template Style</span>
+              {templateLabel && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: scheme.primary }}
+                >
+                  {templateLabel}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={handleRandomTemplate}
+                className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                title="Pick a random template from all 20"
+              >
+                <Shuffle className="h-3 w-3" />
+                Random
+              </button>
+              <button
+                onClick={() => setShowTemplateSelector((v) => !v)}
+                className="rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+              >
+                {showTemplateSelector ? "Hide" : "Browse all 20 →"}
+              </button>
+            </div>
+          </div>
+
+          {showTemplateSelector && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
+              {ALL_TEMPLATES.map((tmpl) => {
+                const isActive = selectedTemplate === tmpl.id;
+                return (
+                  <button
+                    key={tmpl.id}
+                    onClick={() => handleSelectTemplate(tmpl.id)}
+                    className={`rounded-lg border px-2.5 py-2 text-left transition-all ${
+                      isActive
+                        ? "border-transparent text-white shadow-sm"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm"
+                    }`}
+                    style={isActive ? { backgroundColor: scheme.dark } : {}}
+                  >
+                    <div className={`text-[11px] font-semibold leading-tight ${isActive ? "text-white" : "text-gray-800"}`}>
+                      {tmpl.label}
+                    </div>
+                    <div className={`text-[10px] mt-0.5 leading-snug ${isActive ? "text-white/70" : "text-gray-400"}`}>
+                      {tmpl.desc}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -299,12 +402,13 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         </div>
       )}
 
-      {/* Browser preview — key includes refreshKey so each refresh remounts the component */}
+      {/* Browser preview — key includes refreshKey + selectedTemplate so each change remounts */}
       <BrowserFrame url={pageUrls[activeMeta.id]}>
         <GhlPagePreview
-          key={`${activePage}-${refreshKey}`}
+          key={`${activePage}-${refreshKey}-${selectedTemplate ?? "auto"}`}
           projectId={projectId ?? ""}
           page={activePage}
+          templateVariant={activePage === "landing" && selectedTemplate ? selectedTemplate : undefined}
           onLoad={activePage === "landing" ? handleLandingLoad : undefined}
         />
       </BrowserFrame>

@@ -6,7 +6,8 @@ import type { GhlSection, GhlPageData } from "@/lib/highlevel/ghl-pagedata";
 interface Props {
   projectId: string;
   page: "landing" | "optin" | "thankyou" | "booking";
-  onLoad?: (info: { templateLabel?: string }) => void;
+  templateVariant?: string;
+  onLoad?: (info: { templateLabel?: string; templateVariant?: string }) => void;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -763,7 +764,7 @@ function LoadingSkeleton() {
 /*  Main component                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-export function GhlPagePreview({ projectId, page, onLoad }: Props) {
+export function GhlPagePreview({ projectId, page, templateVariant, onLoad }: Props) {
   const [status, setStatus] = useState<"loading" | "ok" | "empty" | "error">(
     "loading",
   );
@@ -785,6 +786,7 @@ export function GhlPagePreview({ projectId, page, onLoad }: Props) {
     setStatus("loading");
 
     const qs = new URLSearchParams({ page, projectId });
+    if (templateVariant) qs.set("templateVariant", templateVariant);
     fetch(`/api/highlevel/page-data?${qs}`)
       .then(async (res) => {
         if (!res.ok) {
@@ -792,7 +794,7 @@ export function GhlPagePreview({ projectId, page, onLoad }: Props) {
           setStatus(res.status === 404 ? "empty" : "error");
           return;
         }
-        const json = (await res.json()) as { pageData?: GhlPageData; templateLabel?: string };
+        const json = (await res.json()) as { pageData?: GhlPageData; templateLabel?: string; templateVariant?: string };
         if (cancelled) return;
         const pd = json.pageData;
         if (!pd?.sections?.length) {
@@ -803,7 +805,7 @@ export function GhlPagePreview({ projectId, page, onLoad }: Props) {
         setSections(pd.sections);
         setVars(cssVars);
         setStatus("ok");
-        onLoadRef.current?.({ templateLabel: json.templateLabel });
+        onLoadRef.current?.({ templateLabel: json.templateLabel, templateVariant: json.templateVariant });
       })
       .catch(() => {
         if (!cancelled) setStatus("error");
@@ -812,7 +814,7 @@ export function GhlPagePreview({ projectId, page, onLoad }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [projectId, page]);
+  }, [projectId, page, templateVariant]);
 
   if (status === "loading") return <LoadingSkeleton />;
 

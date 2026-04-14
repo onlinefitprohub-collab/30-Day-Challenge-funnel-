@@ -1501,7 +1501,7 @@ export function pickLandingVariant(): LandingVariant {
 // ALL_TEMPLATE_VARIANTS defines the full type — all 20 variants are wired into
 // buildLandingPageData(). TEMPLATE_VARIANTS_POOL controls frequency.
 // Phase 2 variants are commented out of the pool until they pass visual QA.
-const ALL_TEMPLATE_VARIANTS = [
+export const ALL_TEMPLATE_VARIANTS = [
   // Phase 1
   "standard", "stats-hero", "social-proof-grid",
   "transformation-split", "authority-builder", "urgency-driven",
