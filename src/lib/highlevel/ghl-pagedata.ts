@@ -1901,11 +1901,20 @@ function buildWhyThisWorksHtml(data: GeneratedFunnelAssets, s: SchemeColors): st
 // ── Template 4: transformation-split hero ────────────────────────────────────
 function buildTransformationSplitHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const bullets = data.landingPage?.bulletPoints ?? [];
+  const lp   = data.landingPage;
+  const bullets = lp?.bulletPoints ?? [];
   const corePromise = escHtml(data.offerSummary?.corePromise ?? "Transform your body in 30 days");
+  const headline = escHtml(lp?.headlineOptions?.[1] ?? lp?.headlineOptions?.[0] ?? "Ready to finally make the change?");
+  const subheadline = escHtml(lp?.subheadline ?? "");
+  const ctaText = escHtml(lp?.ctaText ?? "Claim My Free Spot →");
   const painItems = bullets.slice(0, 3).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;"><span style="color:${s.primary};font-size:18px;line-height:1.3;flex-shrink:0;text-shadow:0 0 8px ${s.primary};">◆</span><span style="color:rgba(255,255,255,0.88);font-size:15px;line-height:1.6;">${escHtml(b)}</span></div>`).join("") || `<div style="color:rgba(255,255,255,0.7);font-size:15px;">You're stuck in the same cycle</div>`;
   const gainItems = bullets.slice(3, 6).map(b => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;"><span style="color:${s.dark};font-size:20px;line-height:1.2;flex-shrink:0;">✓</span><span style="color:${s.dark};font-size:15px;line-height:1.6;font-weight:500;">${escHtml(b)}</span></div>`).join("") || `<div style="color:${s.dark};font-size:15px;">Real, lasting transformation awaits</div>`;
   return `<style>@media(max-width:640px){.ts-split{flex-direction:column!important}.ts-panel{min-height:280px!important}}</style>
+<div style="background:${s.dark};background-image:${DOT_BG};padding:64px 24px 48px;font-family:${font};text-align:center;">
+  <h1 style="color:#ffffff;font-size:clamp(28px,4vw,50px);font-weight:900;line-height:1.1;margin:0 auto 16px;max-width:780px;letter-spacing:-1px;text-shadow:0 2px 32px rgba(0,0,0,0.4);">${headline}</h1>
+  ${subheadline ? `<p style="color:rgba(255,255,255,0.7);font-size:18px;line-height:1.6;margin:0 auto 28px;max-width:600px;">${subheadline}</p>` : ""}
+  <a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:${s.buttonBorderRadius};font-size:16px;font-weight:700;margin-bottom:8px;${glowStyle(s.primary)};">${ctaText}</a>
+</div>
 <div class="ts-split" style="display:flex;min-height:60vh;font-family:${font};"><div class="ts-panel" style="flex:1;background:${s.dark};background-image:${DOT_BG};padding:56px 40px;display:flex;flex-direction:column;justify-content:center;"><p style="color:${s.primary};font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;">Where you are now</p><h2 style="color:#ffffff;font-size:clamp(24px,3vw,34px);font-weight:900;margin:0 0 28px;line-height:1.2;letter-spacing:-1px;text-shadow:0 2px 16px rgba(0,0,0,0.3);">Are you stuck here?</h2>${painItems}</div><div class="ts-panel" style="flex:1;background:${s.primary};padding:56px 40px;display:flex;flex-direction:column;justify-content:center;"><p style="color:${s.dark};font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 20px;opacity:0.7;">Where you could be</p><h2 style="color:${s.dark};font-size:clamp(24px,3vw,34px);font-weight:900;margin:0 0 28px;line-height:1.2;letter-spacing:-1px;text-shadow:0 2px 16px rgba(0,0,0,0.3);">Imagine this instead</h2>${gainItems}</div></div>
 <div style="background:${s.dark};padding:24px;text-align:center;font-family:${font};box-shadow:inset 0 1px 0 rgba(255,255,255,0.08);"><p style="color:rgba(255,255,255,0.9);font-size:20px;font-style:italic;margin:0;">${corePromise}</p></div>`;
 }
