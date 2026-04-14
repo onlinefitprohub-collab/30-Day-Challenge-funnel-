@@ -1996,8 +1996,48 @@ function buildMinimalistEliteHtml(data: GeneratedFunnelAssets, s: SchemeColors):
 // ── Template 6: urgency-driven banner strip ──────────────────────────────────
 function buildUrgencyBannerHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const urgencyText = escHtml((data.landingPage?.urgencyIdeas ?? [])[0] ?? "Limited spots available — secure yours now");
-  return `<div style="background:linear-gradient(90deg,${s.primary} 0%,${s.accent} 100%);padding:16px 24px;font-family:${font};box-shadow:0 4px 16px ${s.primary}66;"><div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;"><span style="color:#ffffff;font-size:16px;font-weight:700;">⚡ ${urgencyText}</span><a href="#optin" style="color:#ffffff;font-size:15px;font-weight:600;text-decoration:underline;white-space:nowrap;">CLAIM YOUR SPOT →</a></div></div>`;
+  const urgencyText = escHtml((data.landingPage?.urgencyIdeas ?? [])[0] ?? "Limited spots available — registration closes soon");
+  const ctaText = escHtml(data.landingPage?.ctaText ?? "Claim Your Spot →");
+  // Unique suffix per call so multiple instances don't collide
+  const uid = Math.random().toString(36).slice(2, 8);
+  return `<div style="background:linear-gradient(135deg,${s.dark} 0%,${s.mid} 40%,${s.primary} 100%);padding:48px 24px;font-family:${font};text-align:center;box-shadow:0 4px 16px ${s.primary}66;">
+  <p style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 12px;">⚡ Registration Closes In</p>
+  <div id="ub-countdown-${uid}" style="display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:0 0 20px;">
+    <div style="text-align:center;"><div id="ub-days-${uid}" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#ffffff;font-size:clamp(40px,8vw,80px);font-weight:900;line-height:1;padding:16px 24px;min-width:90px;">07</div><div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Days</div></div>
+    <div style="color:#ffffff;font-size:clamp(32px,6vw,64px);font-weight:900;line-height:1;padding-bottom:24px;">:</div>
+    <div style="text-align:center;"><div id="ub-hours-${uid}" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#ffffff;font-size:clamp(40px,8vw,80px);font-weight:900;line-height:1;padding:16px 24px;min-width:90px;">00</div><div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Hours</div></div>
+    <div style="color:#ffffff;font-size:clamp(32px,6vw,64px);font-weight:900;line-height:1;padding-bottom:24px;">:</div>
+    <div style="text-align:center;"><div id="ub-mins-${uid}" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#ffffff;font-size:clamp(40px,8vw,80px);font-weight:900;line-height:1;padding:16px 24px;min-width:90px;">00</div><div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Mins</div></div>
+    <div style="color:#ffffff;font-size:clamp(32px,6vw,64px);font-weight:900;line-height:1;padding-bottom:24px;">:</div>
+    <div style="text-align:center;"><div id="ub-secs-${uid}" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#ffffff;font-size:clamp(40px,8vw,80px);font-weight:900;line-height:1;padding:16px 24px;min-width:90px;">00</div><div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Secs</div></div>
+  </div>
+  <p style="color:rgba(255,255,255,0.75);font-size:15px;font-weight:500;margin:0 0 24px;max-width:560px;margin-left:auto;margin-right:auto;">⚡ ${urgencyText}</p>
+  <a href="#optin" style="display:inline-block;background:#ffffff;color:${s.primary};text-decoration:none;padding:16px 44px;border-radius:50px;font-size:17px;font-weight:800;letter-spacing:0.3px;">${ctaText}</a>
+  <script>
+  (function(){
+    var key='ub_deadline_${uid}';
+    var stored=localStorage.getItem(key);
+    var deadline;
+    if(stored){deadline=parseInt(stored,10);}
+    else{deadline=Date.now()+7*24*60*60*1000;localStorage.setItem(key,deadline);}
+    function pad(n){return n<10?'0'+n:String(n);}
+    function tick(){
+      var diff=Math.max(0,deadline-Date.now());
+      var d=Math.floor(diff/86400000);
+      var h=Math.floor((diff%86400000)/3600000);
+      var m=Math.floor((diff%3600000)/60000);
+      var s=Math.floor((diff%60000)/1000);
+      var el=function(id){return document.getElementById(id);};
+      if(el('ub-days-${uid}')) el('ub-days-${uid}').textContent=pad(d);
+      if(el('ub-hours-${uid}')) el('ub-hours-${uid}').textContent=pad(h);
+      if(el('ub-mins-${uid}')) el('ub-mins-${uid}').textContent=pad(m);
+      if(el('ub-secs-${uid}')) el('ub-secs-${uid}').textContent=pad(s);
+      if(diff>0)setTimeout(tick,1000);
+    }
+    tick();
+  })();
+  </script>
+</div>`;
 }
 
 export function buildLandingPageData(data: GeneratedFunnelAssets, templateVariant?: TemplateVariant): GhlPageData {
