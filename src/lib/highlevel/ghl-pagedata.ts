@@ -1761,9 +1761,17 @@ export function buildFaqHtml(data: GeneratedFunnelAssets, s: SchemeColors): stri
 // ── Template 16: local-demographic audience banner ───────────────────────────
 function buildAudienceBannerHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  const targetFirst8 = escHtml((data.offerSummary?.targetAudienceSummary ?? "").split(/\s+/).slice(0, 8).join(" "));
-  const promiseFirst6 = escHtml((data.offerSummary?.corePromise ?? "").split(/\s+/).slice(0, 6).join(" "));
-  return `<div style="background:linear-gradient(90deg,${s.primary} 0%,${s.accent} 100%);padding:14px 24px;text-align:center;font-family:${font};box-shadow:0 2px 8px ${s.primary}66;"><span style="color:#ffffff;font-size:15px;font-weight:600;letter-spacing:0.5px;">📍 Designed specifically for ${targetFirst8} — ${promiseFirst6}</span></div>`;
+  // Strip common lead-in phrases so we don't produce "Designed specifically for This is for..."
+  const rawTarget = data.offerSummary?.targetAudienceSummary ?? "";
+  const strippedTarget = rawTarget
+    .replace(/^(this (challenge |programme |program )?is (designed )?for[:\s]+)/i, "")
+    .replace(/^(designed for[:\s]+)/i, "")
+    .replace(/^(for[:\s]+)/i, "");
+  const audience = escHtml(strippedTarget.split(/\s+/).slice(0, 8).join(" "));
+  // Use the full corePromise as a short outcome statement (first sentence, ≤60 chars)
+  const rawPromise = data.offerSummary?.corePromise ?? "";
+  const promise = escHtml(rawPromise.split(/[.!?]/)[0].trim().slice(0, 60));
+  return `<div style="background:linear-gradient(90deg,${s.primary} 0%,${s.accent} 100%);padding:14px 24px;text-align:center;font-family:${font};box-shadow:0 2px 8px ${s.primary}66;"><span style="color:#ffffff;font-size:15px;font-weight:600;letter-spacing:0.5px;">📍 Designed specifically for ${audience} — ${promise}</span></div>`;
 }
 
 // ── Template 17: free-value-first value stack ─────────────────────────────────
