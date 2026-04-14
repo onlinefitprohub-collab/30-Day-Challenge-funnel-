@@ -1514,21 +1514,28 @@ export const ALL_TEMPLATE_VARIANTS = [
 export type TemplateVariant = typeof ALL_TEMPLATE_VARIANTS[number];
 
 export const TEMPLATE_VARIANTS_POOL: TemplateVariant[] = [
-  // Phase 1 — active (12 slots)
+  // Core templates — higher frequency
   "standard","standard","standard",
   "stats-hero","stats-hero",
   "transformation-split","transformation-split",
+  // Standard single-slot templates
   "authority-builder",
   "urgency-driven",
   "bold-impact",
   "community-proof",
   "video-authority",
-  // Phase 2 — enable after visual QA:
-  // "minimalist-elite","vsl-focused","transformation-wall",
-  // "is-this-for-you","event-agenda","executive-clean",
-  // "local-demographic","free-value-first","application-style",
+  "minimalist-elite",
+  "vsl-focused",
+  "transformation-wall",
+  "is-this-for-you",
+  "event-agenda",
+  "executive-clean",
+  "local-demographic",
+  "free-value-first",
+  "application-style",
   "story-journey",
-  // "results-first",
+  "results-first",
+  "social-proof-grid",
 ];
 
 export function pickTemplateVariant(): TemplateVariant {
