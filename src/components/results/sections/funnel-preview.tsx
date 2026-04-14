@@ -47,6 +47,7 @@ const ALL_TEMPLATES: Array<{ id: string; label: string; desc: string }> = [
   { id: "application-style",    label: "Application Style",   desc: "Exclusive 'Apply for a spot' hero" },
   { id: "story-journey",        label: "Story Journey",       desc: "Video hero + 4-milestone journey" },
   { id: "results-first",        label: "Results First",       desc: "Stat-led hero with result quote card" },
+  { id: "gradient-proof",       label: "Gradient Proof",      desc: "Gradient hero with bullets + testimonial cards" },
 ];
 
 interface Props {
@@ -324,7 +325,7 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
                 onClick={() => setShowTemplateSelector((v) => !v)}
                 className="rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors"
               >
-                {showTemplateSelector ? "Hide" : "Browse all 20 →"}
+                {showTemplateSelector ? "Hide" : "Browse all 21 →"}
               </button>
             </div>
           </div>
