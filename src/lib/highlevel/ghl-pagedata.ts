@@ -1680,34 +1680,147 @@ function buildSocialProofGridHtml(data: GeneratedFunnelAssets, s: SchemeColors):
 </div>`;
 }
 
-// ── Template 21: gradient-proof centered hero with bullets ────────────────────
+// ── Template 21: gradient-proof ─────────────────────────────────────────────
+// Signature palette hard-coded from the original reference page JSON.
+// These colors are deliberately NOT scheme-dependent so the visual identity
+// is always consistent regardless of which colour scheme the coach selected.
+const GP_GRADIENT = "linear-gradient(135deg, #2d1b3d 0%, #6b3fa0 60%, #c2185b 100%)";
+const GP_DARK     = "#1e1030";   // deep purple-black (hero bg fallback, dark sections)
+const GP_PINK     = "#e91e8c";   // hot magenta-pink  (buttons, accents, CTA section)
+const GP_CREAM    = "#fdf6f9";   // very light blush  (qualification + features sections)
+const GP_TEXT     = "#1a1a2e";   // near-black for dark text on cream
+
 /**
- * Centered hero with a dark→mid→primary diagonal gradient, headline, subheadline,
- * 4 bullet points, and a glowing CTA — matching the GHL native page reference design.
+ * Hero: centred, diagonal purple→violet→hot-pink gradient with headline,
+ * subheadline, 4 bullet points (✓ badges) and a glowing hot-pink CTA button.
  */
-function buildGradientProofHeroHtml(data: GeneratedFunnelAssets, s: SchemeColors): string {
+function buildGradientProofHeroHtml(data: GeneratedFunnelAssets, _s: SchemeColors): string {
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const lp   = data.landingPage;
   const h1   = escHtml(lp?.headlineOptions?.[0] ?? "Your Free 30-Day Challenge Starts Here");
   const sub  = escHtml(lp?.subheadline ?? "");
   const pts  = lp?.bulletPoints?.slice(0, 4) ?? [];
+  const cta  = escHtml(lp?.ctaText ?? "Claim My Free Spot →");
 
   const bulletsHtml = (pts.length > 0 ? pts : ["Challenge details will appear here."]).map(pt =>
-    `<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;text-align:left;">
-      <div style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:${s.primary};color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">✓</div>
-      <p style="margin:0;color:rgba(255,255,255,0.88);font-size:17px;line-height:1.6;font-family:${font};">${escHtml(typeof pt === "string" ? pt : String(pt ?? ""))}</p>
+    `<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;text-align:left;">
+      <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${GP_PINK};color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;box-shadow:0 0 12px ${GP_PINK}66;">✓</div>
+      <p style="margin:0;color:rgba(255,255,255,0.9);font-size:17px;line-height:1.65;font-family:${font};">${escHtml(typeof pt === "string" ? pt : String(pt ?? ""))}</p>
     </div>`
   ).join("\n");
 
-  return `<div style="background:linear-gradient(135deg,${s.dark} 0%,${s.mid} 50%,${s.primary} 100%);padding:80px 24px;font-family:${font};text-align:center;">
-  <div style="max-width:800px;margin:0 auto;">
-    <p style="color:${s.primary};font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px;color:rgba(255,255,255,0.7);">🔥 Free 30-Day Challenge — Limited Spots</p>
-    <h1 style="color:#ffffff;font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.1;margin:0 0 20px;text-shadow:0 2px 32px rgba(0,0,0,0.4);">${h1}</h1>
-    ${sub ? `<p style="color:rgba(255,255,255,0.75);font-size:18px;line-height:1.6;margin:0 0 32px;max-width:600px;margin-left:auto;margin-right:auto;">${sub}</p>` : ""}
-    <div style="max-width:620px;margin:0 auto 36px;text-align:left;">
+  return `<div style="background:${GP_GRADIENT};background-color:${GP_DARK};padding:96px 24px;font-family:${font};text-align:center;">
+  <div style="max-width:820px;margin:0 auto;">
+    <p style="color:rgba(255,255,255,0.65);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 18px;">🔥 Free 30-Day Challenge — Limited Spots Available</p>
+    <h1 style="color:#ffffff;font-size:clamp(30px,5vw,58px);font-weight:900;line-height:1.08;margin:0 0 20px;text-shadow:0 2px 32px rgba(0,0,0,0.35);">${h1}</h1>
+    ${sub ? `<p style="color:rgba(255,255,255,0.78);font-size:18px;line-height:1.65;margin:0 0 36px;max-width:620px;margin-left:auto;margin-right:auto;">${sub}</p>` : ""}
+    <div style="max-width:620px;margin:0 auto 40px;text-align:left;">
       ${bulletsHtml}
     </div>
-    <a href="#optin" style="display:inline-block;background:${s.primary};color:#ffffff;text-decoration:none;padding:18px 44px;border-radius:50px;font-size:17px;font-weight:700;${glowStyle(s.primary)};">${escHtml(lp?.ctaText ?? "Claim My Free Spot →")}</a>
+    <a href="#optin" style="display:inline-block;background:${GP_PINK};color:#ffffff;text-decoration:none;padding:18px 48px;border-radius:50px;font-size:18px;font-weight:700;box-shadow:0 0 32px ${GP_PINK}66,0 4px 16px rgba(0,0,0,0.25);">${cta}</a>
+    <p style="color:rgba(255,255,255,0.45);font-size:13px;margin:16px 0 0;">No payment required · Cancel anytime</p>
+  </div>
+</div>`;
+}
+
+/**
+ * Post-hero: cream qualification section — "Is This Right For You?"
+ * Mirrors the original page's light #fdf6f9 section that follows the gradient hero.
+ */
+function buildGradientProofQualificationHtml(data: GeneratedFunnelAssets, _s: SchemeColors): string {
+  const font    = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const bullets = data.landingPage?.bulletPoints ?? [];
+  const concept = escHtml((data.offerSummary?.challengeConcept ?? "30-Day Challenge").split(/\s+/).slice(0, 3).join(" "));
+
+  const forItems = bullets.slice(0, 5).map(b =>
+    `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;">
+      <span style="color:${GP_PINK};font-weight:700;flex-shrink:0;font-size:17px;margin-top:1px;">✓</span>
+      <span style="color:${GP_TEXT};font-size:15px;line-height:1.6;">${escHtml(b)}</span>
+    </div>`
+  ).join("");
+
+  const notForItems = [
+    "You want instant results with zero effort",
+    "You're not willing to show up consistently for 30 days",
+    "You're looking for a magic pill or shortcut",
+    "You're not open to guidance or changing your habits",
+    "You want someone else to do the work for you",
+  ].map(item =>
+    `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;">
+      <span style="color:#ef4444;font-weight:700;flex-shrink:0;font-size:17px;margin-top:1px;">✕</span>
+      <span style="color:${GP_TEXT};font-size:15px;line-height:1.6;">${item}</span>
+    </div>`
+  ).join("");
+
+  return `<style>@media(max-width:640px){.gp-qual{flex-direction:column!important}}</style>
+<div style="background:${GP_CREAM};padding:72px 24px;font-family:${font};">
+  <div style="max-width:900px;margin:0 auto;">
+    <h2 style="color:${GP_TEXT};font-size:clamp(26px,4vw,36px);font-weight:900;text-align:center;margin:0 0 10px;">Is the ${concept} right for you?</h2>
+    <p style="color:#64748b;font-size:17px;text-align:center;margin:0 0 40px;">Be honest with yourself — this is for the people who are genuinely ready.</p>
+    <div class="gp-qual" style="display:flex;align-items:stretch;gap:24px;">
+      <div style="flex:1;background:#ffffff;border-radius:16px;padding:28px 32px;box-shadow:0 4px 24px rgba(0,0,0,0.07);border-top:4px solid ${GP_PINK};">
+        <div style="color:${GP_PINK};font-size:18px;font-weight:700;margin-bottom:20px;">✓ This IS for you if...</div>
+        ${forItems}
+      </div>
+      <div style="flex:1;background:#ffffff;border-radius:16px;padding:28px 32px;box-shadow:0 4px 24px rgba(0,0,0,0.07);border-top:4px solid #ef4444;">
+        <div style="color:#ef4444;font-size:18px;font-weight:700;margin-bottom:20px;">✕ This is NOT for you if...</div>
+        ${notForItems}
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+/**
+ * What's-included replacement: cream feature card grid.
+ * Mirrors the original page's second cream section (bullet list + heading).
+ */
+function buildGradientProofFeaturesHtml(data: GeneratedFunnelAssets, _s: SchemeColors): string {
+  const font    = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const bullets = data.landingPage?.bulletPoints ?? [];
+
+  const cardHtml = bullets.slice(0, 6).map(bullet => {
+    const parts  = bullet.split(" — ");
+    const title  = escHtml((parts[0] ?? bullet).trim());
+    const reason = escHtml((parts[1] ?? "").trim());
+    return `<div style="background:#ffffff;border-radius:14px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);border-left:4px solid ${GP_PINK};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:${GP_PINK};color:#ffffff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</div>
+        <div style="font-weight:800;color:${GP_TEXT};font-size:16px;">${title}</div>
+      </div>
+      ${reason ? `<div style="color:#64748b;font-size:14px;line-height:1.6;padding-left:42px;">${reason}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  return `<div style="background:${GP_CREAM};padding:72px 24px;font-family:${font};">
+  <div style="max-width:920px;margin:0 auto;">
+    <p style="color:${GP_PINK};font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-align:center;margin:0 0 12px;">Everything included</p>
+    <h2 style="color:${GP_TEXT};font-size:clamp(26px,4vw,38px);font-weight:900;text-align:center;margin:0 0 8px;">Here's Exactly What You Get</h2>
+    <p style="color:#64748b;font-size:17px;text-align:center;margin:0 0 40px;">Every tool, every resource, every bit of support — all included at no cost.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
+      ${cardHtml}
+    </div>
+  </div>
+</div>`;
+}
+
+/**
+ * Final CTA: solid hot-pink section — matches section 4 from the original JSON.
+ */
+function buildGradientProofCtaHtml(data: GeneratedFunnelAssets, _s: SchemeColors): string {
+  const font  = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const lp    = data.landingPage;
+  const cta   = escHtml(lp?.ctaText ?? "Claim My Free Spot →");
+  const h2    = escHtml(lp?.headlineOptions?.[1] ?? lp?.headlineOptions?.[0] ?? "Ready to start your transformation?");
+  const core  = escHtml(data.offerSummary?.corePromise ?? "Join the challenge and change your life in 30 days.");
+
+  return `<div style="background:${GP_PINK};padding:88px 24px;font-family:${font};text-align:center;">
+  <div style="max-width:720px;margin:0 auto;">
+    <p style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 16px;">One last thing before you go...</p>
+    <h2 style="color:#ffffff;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.1;margin:0 0 18px;text-shadow:0 2px 16px rgba(0,0,0,0.2);">${h2}</h2>
+    <p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.65;margin:0 0 36px;max-width:560px;margin-left:auto;margin-right:auto;">${core}</p>
+    <a href="#optin" style="display:inline-block;background:#ffffff;color:${GP_PINK};text-decoration:none;padding:18px 52px;border-radius:50px;font-size:18px;font-weight:800;box-shadow:0 4px 24px rgba(0,0,0,0.2);">${cta}</a>
+    <p style="color:rgba(255,255,255,0.55);font-size:13px;margin:16px 0 0;">Free to join · No credit card required</p>
   </div>
 </div>`;
 }
@@ -2168,9 +2281,7 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
   // results-first: gradient stat banner so it contrasts with the dark hero
   const CUSTOM_HTML_SP_SET = new Set<TemplateVariant>(["social-proof-grid", "transformation-wall", "gradient-proof", "results-first"]);
   // Templates that replace what's-included with custom HTML
-  // vsl-focused, free-value-first, video-authority: their feature strips go HERE
-  // (not in postHeroMap) so the content only appears once on the page.
-  const CUSTOM_HTML_WI_SET = new Set<TemplateVariant>(["event-agenda", "story-journey", "vsl-focused", "free-value-first", "video-authority"]);
+  const CUSTOM_HTML_WI_SET = new Set<TemplateVariant>(["event-agenda", "story-journey", "vsl-focused", "free-value-first", "video-authority", "gradient-proof"]);
 
   // ── Pre-hero strip (local-demographic only) ───────────────────────────────────
   if (resolvedVariant === "local-demographic") {
@@ -2207,24 +2318,24 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
   }
 
   // ── Post-hero custom strips ───────────────────────────────────────────────────
-  // NOTE: vsl-focused, free-value-first, and video-authority are intentionally
-  // NOT here — their feature strips live in CUSTOM_HTML_WI_SET to avoid showing
-  // the same content twice alongside the native What's Included section.
   type HtmlFn = (d: GeneratedFunnelAssets, sc: SchemeColors) => string;
-  const postHeroMap: Partial<Record<TemplateVariant, HtmlFn>> = {
-    "authority-builder": buildCredentialsStripHtml,
-    "urgency-driven":    buildUrgencyBannerHtml,
-    "community-proof":   buildCommunityStatsHtml,
-    "is-this-for-you":   buildIsThisForYouHtml,
-    "executive-clean":   buildWhyThisWorksHtml,
+  type PostHeroEntry = { fn: HtmlFn; bg: string };
+  const postHeroMap: Partial<Record<TemplateVariant, PostHeroEntry>> = {
+    "authority-builder": { fn: buildCredentialsStripHtml,           bg: s.mid    },
+    "urgency-driven":    { fn: buildUrgencyBannerHtml,               bg: s.mid    },
+    "community-proof":   { fn: buildCommunityStatsHtml,              bg: s.mid    },
+    "is-this-for-you":   { fn: buildIsThisForYouHtml,                bg: s.mid    },
+    "executive-clean":   { fn: buildWhyThisWorksHtml,                bg: s.mid    },
+    // gradient-proof: cream qualification section (matches original page's first light section)
+    "gradient-proof":    { fn: buildGradientProofQualificationHtml,  bg: GP_CREAM },
   };
-  const postHeroFn = postHeroMap[resolvedVariant];
-  if (postHeroFn) {
-    const html = postHeroFn(data, s);
+  const postHeroEntry = postHeroMap[resolvedVariant];
+  if (postHeroEntry) {
+    const html = postHeroEntry.fn(data, s);
     const ccId = makeCustomCode(b, html, 0);
     const col  = makeCol(b, [ccId], 100, {});
     const row  = makeRow(b, [col], 1200, 0);
-    makeSection(b, [row], { bgColor: s.mid, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+    makeSection(b, [row], { bgColor: postHeroEntry.bg, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
   // ── Social Proof ──────────────────────────────────────────────────────────────
@@ -2237,8 +2348,11 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
     snap = countBefore("social-proof");
     let spHtml: string;
     let spBg: string;
-    if (resolvedVariant === "transformation-wall" || resolvedVariant === "gradient-proof") {
+    if (resolvedVariant === "transformation-wall") {
       spHtml = buildTransformationWallHtml(data, s); spBg = s.alt;
+    } else if (resolvedVariant === "gradient-proof") {
+      // Dark purple behind testimonials — matches original page's dark section (#1e1030)
+      spHtml = buildTransformationWallHtml(data, s); spBg = GP_DARK;
     } else if (resolvedVariant === "results-first") {
       spHtml = buildResultsStatBannerHtml(data, s); spBg = s.primary;
     } else {
@@ -2265,7 +2379,8 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
       case "event-agenda":    wiHtml = buildEventAgendaHtml(data, s);  wiBg = s.dark; break;
       case "vsl-focused":     wiHtml = buildVslDiscoverHtml(data, s);  wiBg = s.dark; break;
       case "free-value-first": wiHtml = buildValueStackHtml(data, s); wiBg = s.alt;  break;
-      case "video-authority": wiHtml = buildFeatureStripHtml(data, s); wiBg = s.alt;  break;
+      case "video-authority": wiHtml = buildFeatureStripHtml(data, s);          wiBg = s.alt;  break;
+      case "gradient-proof":  wiHtml = buildGradientProofFeaturesHtml(data, s); wiBg = GP_CREAM; break;
       default:                wiHtml = buildJourneyTimelineHtml(data, s); wiBg = s.mid;
     }
     const ccId = makeCustomCode(b, wiHtml, 0);
@@ -2289,8 +2404,18 @@ export function buildLandingPageData(data: GeneratedFunnelAssets, templateVarian
   countAfter(snap, "faq-custom-code");
 
   snap = countBefore("final-cta");
-  dispatchFinalCta(b, s, lp, resolvedCtaVariant);
-  countAfter(snap, resolvedCtaVariant || "(auto)");
+  if (resolvedVariant === "gradient-proof") {
+    // Hot-pink CTA section — matches section 4 (#e91e8c) from the original page JSON
+    const ctaHtml = buildGradientProofCtaHtml(data, s);
+    const ccId    = makeCustomCode(b, ctaHtml, 0);
+    const col     = makeCol(b, [ccId], 100, {});
+    const row     = makeRow(b, [col], 1200, 0);
+    makeSection(b, [row], { bgColor: GP_PINK, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+    countAfter(snap, "gradient-proof (custom hot-pink CTA)");
+  } else {
+    dispatchFinalCta(b, s, lp, resolvedCtaVariant);
+    countAfter(snap, resolvedCtaVariant || "(auto)");
+  }
 
   buildFooter(b, s);
 
