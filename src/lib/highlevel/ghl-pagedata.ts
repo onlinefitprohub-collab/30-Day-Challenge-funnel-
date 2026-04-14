@@ -1681,37 +1681,45 @@ export function buildFaqHtml(data: GeneratedFunnelAssets, s: SchemeColors): stri
   const font  = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const items = data.landingPage?.faqItems ?? [];
 
-  const cardRows = items.length > 0
-    ? items.map((item, idx) => {
-        const num = String(idx + 1).padStart(2, "0");
-        const q   = escHtml(item.question ?? "");
-        const a   = escHtml(item.answer ?? "");
-        return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:28px 28px 28px 24px;display:flex;gap:20px;align-items:flex-start;">
-      <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">${num}</div>
-      <div style="flex:1;">
-        <p style="color:#ffffff;font-size:18px;font-weight:600;margin:0 0 10px;line-height:1.4;">${q}</p>
-        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;padding-left:48px;">${a}</p>
-      </div>
-      <div style="flex-shrink:0;color:${s.primary};font-size:22px;font-weight:300;line-height:1;margin-top:6px;">+</div>
-    </div>`;
-      }).join("\n    ")
-    : `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:28px 28px 28px 24px;display:flex;gap:20px;align-items:flex-start;">
-      <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">01</div>
-      <div style="flex:1;">
-        <p style="color:#ffffff;font-size:18px;font-weight:600;margin:0 0 10px;">FAQ content will appear here.</p>
-        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;padding-left:48px;">Your frequently asked questions will be displayed in this section once generated.</p>
-      </div>
-      <div style="flex-shrink:0;color:${s.primary};font-size:22px;font-weight:300;line-height:1;margin-top:6px;">+</div>
-    </div>`;
+  const makeItem = (num: string, q: string, a: string) =>
+    `<details class="faq-item" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">
+  <summary style="display:flex;gap:20px;align-items:flex-start;padding:28px 28px 28px 24px;cursor:pointer;list-style:none;">
+    <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${s.primary};color:#ffffff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">${num}</div>
+    <div style="flex:1;">
+      <p style="color:#ffffff;font-size:18px;font-weight:600;margin:0;line-height:1.4;">${q}</p>
+    </div>
+    <span class="faq-plus"  style="flex-shrink:0;color:${s.primary};font-size:22px;font-weight:300;line-height:1;margin-top:6px;">+</span>
+    <span class="faq-minus" style="flex-shrink:0;color:${s.primary};font-size:22px;font-weight:300;line-height:1;margin-top:6px;display:none;">−</span>
+  </summary>
+  <div style="padding:0 28px 28px 80px;">
+    <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.7;margin:0;">${a}</p>
+  </div>
+</details>`;
+
+  const itemsHtml = items.length > 0
+    ? items.map((item, idx) =>
+        makeItem(
+          String(idx + 1).padStart(2, "0"),
+          escHtml(item.question ?? ""),
+          escHtml(item.answer ?? ""),
+        )
+      ).join("\n")
+    : makeItem("01", "FAQ content will appear here.", "Your frequently asked questions will be displayed in this section once generated.");
 
   return `<div style="background:${s.dark};padding:80px 24px;font-family:${font};">
-  <div style="max-width:820px;margin:0 auto;">
-    <p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;text-align:center;margin:0 0 16px;">COMMON QUESTIONS</p>
-    <h2 style="color:#ffffff;font-size:clamp(28px,4vw,40px);font-weight:800;text-align:center;margin:0 0 48px;line-height:1.2;">Frequently Asked Questions</h2>
-    <div style="display:flex;flex-direction:column;gap:16px;">
-    ${cardRows}
-    </div>
+<style>
+  details.faq-item summary::-webkit-details-marker { display:none; }
+  details.faq-item summary::marker { display:none; }
+  details.faq-item[open] .faq-plus  { display:none; }
+  details.faq-item[open] .faq-minus { display:flex !important; }
+</style>
+<div style="max-width:820px;margin:0 auto;">
+  <p style="color:${s.primary};font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;text-align:center;margin:0 0 16px;">COMMON QUESTIONS</p>
+  <h2 style="color:#ffffff;font-size:clamp(28px,4vw,40px);font-weight:800;text-align:center;margin:0 0 48px;line-height:1.2;">Frequently Asked Questions</h2>
+  <div style="display:flex;flex-direction:column;gap:16px;">
+  ${itemsHtml}
   </div>
+</div>
 </div>`;
 }
 
