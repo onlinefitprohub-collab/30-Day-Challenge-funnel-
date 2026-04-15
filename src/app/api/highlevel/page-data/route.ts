@@ -114,7 +114,15 @@ export async function GET(request: Request) {
       if (!assets.longFormAssets?.salesLetter) {
         return NextResponse.json({ error: "Sales letter not generated yet" }, { status: 404 });
       }
-      pageData = buildSalesLetterPageData(assets);
+      try {
+        pageData = buildSalesLetterPageData(assets);
+      } catch (err) {
+        console.error("[page-data] buildSalesLetterPageData threw:", err);
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Sales letter page build failed" },
+          { status: 500 },
+        );
+      }
       break;
     default:         return NextResponse.json({ error: "Invalid page" }, { status: 400 });
   }

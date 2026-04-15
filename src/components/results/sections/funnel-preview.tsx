@@ -56,6 +56,8 @@ interface Props {
   projectId?: string;
   funnelType?: "challenge" | "application";
   liveLongFormAssets?: LongFormSalesAssets;
+  /** Called when the salesletter page-data fails — triggers re-generation in the parent */
+  onGenerateLongForm?: () => Promise<void>;
 }
 
 const CHALLENGE_PAGES = [
@@ -101,10 +103,13 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  MAIN EXPORT                                                                */
 /* ─────────────────────────────────────────────────────────────────────────── */
-export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", liveLongFormAssets }: Props) {
+export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", liveLongFormAssets, onGenerateLongForm }: Props) {
   const isApplication = funnelType === "application";
   const PAGES = isApplication ? APPLICATION_PAGES : CHALLENGE_PAGES;
   const [activePage, setActivePage] = useState<PageId>(isApplication ? "salesletter" : "landing");
+  // Self-healing: track a local re-generation state for when page-data fails for the salesletter
+  const [localGenerating, setLocalGenerating] = useState(false);
+  const [hasRetried, setHasRetried] = useState(false);
 
   // Template selector — null means "use persisted/random (server decides)"
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
@@ -174,6 +179,18 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
   // For application funnels, show a generating spinner while the sales letter is being produced.
   // Check salesLetter specifically — longFormAssets may exist but salesLetter may still be missing.
   const showGeneratingSpinner = isApplication && activePage === "salesletter" && !liveLongFormAssets?.salesLetter;
+
+  // Self-healing: if the page-data API fails for the salesletter page (e.g., data not saved yet
+  // or buildSalesLetterPageData threw), re-trigger generation from the parent once.
+  const handleSalesLetterError = useCallback(() => {
+    if (!isApplication || activePage !== "salesletter" || !onGenerateLongForm || hasRetried) return;
+    setHasRetried(true);
+    setLocalGenerating(true);
+    onGenerateLongForm().finally(() => {
+      setLocalGenerating(false);
+      setRefreshKey((k) => k + 1); // force GhlPagePreview remount → fresh fetch
+    });
+  }, [isApplication, activePage, onGenerateLongForm, hasRetried]);
 
   async function handleDownloadJson() {
     try {
@@ -429,10 +446,12 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
 
       {/* Browser preview — key includes refreshKey + selectedTemplate so each change remounts */}
       <BrowserFrame url={pageUrls[activeMeta.id]}>
-        {showGeneratingSpinner ? (
+        {(showGeneratingSpinner || localGenerating) ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-400" />
-            <p className="text-sm font-medium text-gray-600">Generating your long-form landing page…</p>
+            <p className="text-sm font-medium text-gray-600">
+              {localGenerating ? "Preparing long-form landing page…" : "Generating your long-form landing page…"}
+            </p>
             <p className="mt-1 text-xs text-gray-400">This takes about 30 seconds</p>
           </div>
         ) : (
@@ -442,6 +461,7 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
             page={activePage}
             templateVariant={activePage === "landing" && selectedTemplate ? selectedTemplate : undefined}
             onLoad={activePage === "landing" ? handleLandingLoad : undefined}
+            onError={isApplication && activePage === "salesletter" ? handleSalesLetterError : undefined}
           />
         )}
       </BrowserFrame>

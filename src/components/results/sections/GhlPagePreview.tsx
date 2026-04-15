@@ -8,6 +8,8 @@ interface Props {
   page: "landing" | "optin" | "thankyou" | "booking" | "salesletter";
   templateVariant?: string;
   onLoad?: (info: { templateLabel?: string; templateVariant?: string }) => void;
+  /** Called when the page-data fetch fails (404, 500, or network error) */
+  onError?: () => void;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -777,17 +779,18 @@ function LoadingSkeleton() {
 /*  Main component                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-export function GhlPagePreview({ projectId, page, templateVariant, onLoad }: Props) {
+export function GhlPagePreview({ projectId, page, templateVariant, onLoad, onError }: Props) {
   const [status, setStatus] = useState<"loading" | "ok" | "empty" | "error">(
     "loading",
   );
   const [sections, setSections] = useState<GhlSection[]>([]);
   const [vars, setVars] = useState<Record<string, string>>({});
 
-  // Keep a ref to onLoad so it never becomes a useEffect dependency
-  // (avoids infinite re-fetch loops when the parent passes an inline function).
+  // Keep stable refs so they never become useEffect dependencies.
   const onLoadRef = useRef(onLoad);
   useEffect(() => { onLoadRef.current = onLoad; });
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onErrorRef.current = onError; });
 
   useEffect(() => {
     if (!projectId) {
@@ -805,6 +808,7 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad }: Pro
         if (!res.ok) {
           if (cancelled) return;
           setStatus(res.status === 404 ? "empty" : "error");
+          onErrorRef.current?.();
           return;
         }
         const json = (await res.json()) as { pageData?: GhlPageData; templateLabel?: string; templateVariant?: string };
@@ -812,6 +816,7 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad }: Pro
         const pd = json.pageData;
         if (!pd?.sections?.length) {
           setStatus("empty");
+          onErrorRef.current?.();
           return;
         }
         const cssVars = parseCssVars(pd.pageStyles ?? "");
@@ -821,7 +826,10 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad }: Pro
         onLoadRef.current?.({ templateLabel: json.templateLabel, templateVariant: json.templateVariant });
       })
       .catch(() => {
-        if (!cancelled) setStatus("error");
+        if (!cancelled) {
+          setStatus("error");
+          onErrorRef.current?.();
+        }
       });
 
     return () => {
