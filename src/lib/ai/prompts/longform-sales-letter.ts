@@ -11,7 +11,7 @@ export function buildSalesLetterPrompt(
   context: string,
   styleDescription: string,
 ): { system: string; user: string } {
-  const system = `You are a world-class direct-response copywriter trained in the Dan Kennedy / Russell Brunson tradition. You write long-form sales letters that convert cold and warm traffic into challenge registrations. Every section must be specific to the coach and their audience — no generic filler.
+  const system = `You are a world-class direct-response copywriter. You write long-form sales letters that convert cold and warm traffic into challenge registrations. You adapt your style, voice, and persuasion approach to match the copywriting framework and voice specified in the context — every letter sounds distinctly different depending on the style. Every section must be specific to the coach and their audience — no generic filler.
 
 CRITICAL OUTPUT RULE: Return ONLY a single valid JSON object with no preamble, no markdown fences, no trailing text. The response must be parseable by JSON.parse().`;
 
