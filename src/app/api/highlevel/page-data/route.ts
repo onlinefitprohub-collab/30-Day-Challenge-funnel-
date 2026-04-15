@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   buildLandingPageData,
   buildOptInPageData,
+  buildApplicationFormPageData,
   buildThankYouPageData,
   buildBookingPageData,
   buildSalesLetterPageData,
@@ -107,7 +108,11 @@ export async function GET(request: Request) {
       }
       break;
     }
-    case "optin":    pageData = buildOptInPageData(assets);    break;
+    case "optin":
+      pageData = assets.funnelType === "application"
+        ? buildApplicationFormPageData(assets)
+        : buildOptInPageData(assets);
+      break;
     case "thankyou": pageData = buildThankYouPageData(assets); break;
     case "booking":  pageData = buildBookingPageData(assets);  break;
     case "salesletter":

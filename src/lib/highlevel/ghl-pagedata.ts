@@ -2477,6 +2477,203 @@ export function buildOptInPageData(data: GeneratedFunnelAssets): GhlPageData {
   return optInResult;
 }
 
+// ── APPLICATION FORM PAGE ─────────────────────────────────────────────────────
+// Full-length landing page (no form) that matches the multi-section reference
+// layout: header → value prop → CTA with video → testimonials → about coach.
+// Used in place of buildOptInPageData when funnelType === "application".
+
+export function buildApplicationFormPageData(data: GeneratedFunnelAssets): GhlPageData {
+  const b  = createBuilder();
+  const s  = resolveScheme(data);
+  const lp = data.landingPage;
+  const os = data.offerSummary;
+
+  const challengeConcept = (os?.challengeConcept ?? "this challenge").trim();
+  const targetSummary    = (os?.targetAudienceSummary ?? "").split(/[.!]/)[0].trim().toLowerCase();
+  const headline         = lp?.headlineOptions?.[0] ?? `Transform with ${challengeConcept}`;
+  const subheadline      = lp?.subheadline ?? (os?.corePromise ?? "");
+  const corePromiseShort = (os?.corePromise ?? "real results").split(/\s+/).slice(0, 6).join(" ");
+  const hasVideo         = Boolean(data.coachVideoUrl);
+
+  // ─── Section 1: Header ──────────────────────────────────────────────────────
+  {
+    const img = makeImage(b, { url: data.coachPhotoUrl ?? "", width: 200 });
+    const col = makeCol(b, [img], 100, { align: "center", padH: 10 });
+    const row = makeRow(b, [col], 1170);
+    makeSection(b, [row], { bgColor: "#000000", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+  }
+
+  // ─── Section 2: Value Proposition (2-col: image left, text right) ───────────
+  {
+    const valPropText = targetSummary
+      ? `Join ${challengeConcept}, even if ${targetSummary}`
+      : headline;
+    const img     = makeImage(b, { url: data.coachPhotoUrl ?? "", width: 100 });
+    const heading = makeHeading(b, valPropText, "h2", {
+      color:      ss("#ffffff"),
+      fontSize:   sv(23),
+      lineHeight: ss("1.4em"),
+      textAlign:  ss("center"),
+    });
+    const imgCol  = makeCol(b, [img],     50, { padH: 10, padV: 15 });
+    const textCol = makeCol(b, [heading], 50, { align: "center", padH: 10, padV: 15 });
+    const row     = makeRow(b, [imgCol, textCol], 1170);
+    makeSection(b, [row], { bgColor: "#000000", ptD: 15, pbD: 15, ptM: 10, pbM: 10 });
+  }
+
+  // ─── Section 3: Congratulations banner ──────────────────────────────────────
+  {
+    const congratsHeading = makeHeading(b,
+      `Congratulations! You've taken the first step towards ${corePromiseShort}`, "h2",
+      {
+        color:           ss("#ffffff"),
+        fontSize:        sv(28),
+        textAlign:       ss("center"),
+        lineHeight:      ss("1.3em"),
+        paddingTop:      sv(10),
+        paddingBottom:   sv(10),
+        backgroundColor: ss(s.primary),
+      },
+      { fontSize: sv(22) },
+    );
+    const col = makeCol(b, [congratsHeading], 100, { align: "center", padH: 10 });
+    const row = makeRow(b, [col], 1170);
+    makeSection(b, [row], { bgColor: "#ffffff", ptD: 30, pbD: 10, ptM: 20, pbM: 10 });
+  }
+
+  // ─── Section 4: Video + headline / headline only ─────────────────────────────
+  {
+    const contentHeading = makeHeading(b, headline, "h2", {
+      color:         ss(s.primary),
+      fontSize:      sv(40),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.2em"),
+      paddingBottom: sv(10),
+    }, { fontSize: sv(26) });
+    const contentSubheading = makeParagraph(b, subheadline, {
+      color:      ss("#000000"),
+      fontSize:   sv(23),
+      textAlign:  ss("center"),
+      lineHeight: ss("1.4em"),
+    });
+
+    let contentRow: string;
+    if (hasVideo) {
+      const videoEl    = makeVideo(b, data.coachVideoUrl!);
+      const videoCol   = makeCol(b, [videoEl],                             50, { padH: 10, padV: 10 });
+      const contentCol = makeCol(b, [contentHeading, contentSubheading],   50, { align: "center", padH: 10, padV: 10 });
+      contentRow = makeRow(b, [videoCol, contentCol], 1170);
+    } else {
+      const singleCol = makeCol(b, [contentHeading, contentSubheading], 100, { align: "center", padH: 32 });
+      contentRow = makeRow(b, [singleCol], 720);
+    }
+
+    // CTA button row
+    const ctaBtn = makeButton(b,
+      "START YOUR APPLICATION NOW", "next-step", "",
+      {
+        backgroundColor: ss(s.primary),
+        fontSize:        sv(36),
+        paddingTop:      sv(13),
+        paddingBottom:   sv(13),
+        paddingLeft:     sv(35),
+        paddingRight:    sv(35),
+      },
+      { fontSize: sv(26), width: sv(100, "%") },
+    );
+    const ctaSubtext = makeParagraph(b,
+      "Fill Out An Application & Get Your Consultation For FREE",
+      { color: ss("#555555"), fontSize: sv(16), textAlign: ss("center"), paddingTop: sv(8) },
+    );
+    const btnCol = makeCol(b, [ctaBtn, ctaSubtext], 100, { align: "center", padH: 10 });
+    const btnRow = makeRow(b, [btnCol], 1170);
+
+    makeSection(b, [contentRow, btnRow], { bgColor: "#ffffff", ptD: 10, pbD: 30, ptM: 10, pbM: 20 });
+  }
+
+  // ─── Section 5: Testimonials ─────────────────────────────────────────────────
+  {
+    const testimonialsHeading = makeHeading(b,
+      "Here's What Clients JUST LIKE YOU, Have To Say...", "h2",
+      {
+        color:         ss("#000000"),
+        fontSize:      sv(44),
+        textAlign:     ss("center"),
+        lineHeight:    ss("1.2em"),
+        paddingBottom: sv(20),
+      },
+      { fontSize: sv(26) },
+    );
+    const headingCol = makeCol(b, [testimonialsHeading], 100, { align: "center", padH: 10 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    const midElems: string[] = [];
+    if (hasVideo) midElems.push(makeVideo(b, data.coachVideoUrl!));
+    const quoteText = lp?.sectionIdeas?.[0]
+      ? `"${lp.sectionIdeas[0]}"`
+      : `"This challenge completely transformed my results — I never thought change could happen this fast."`;
+    midElems.push(makeParagraph(b, quoteText, {
+      color:         ss("rgb(45,45,45)"),
+      fontSize:      sv(22),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.5em"),
+      paddingTop:    sv(10),
+      paddingBottom: sv(5),
+    }));
+
+    const spacerL = makeCol(b, [],        18, { padH: 0 });
+    const midCol  = makeCol(b, midElems,  64, { padH: 10, padV: 5 });
+    const spacerR = makeCol(b, [],        18, { padH: 0 });
+    const testimonialRow = makeRow(b, [spacerL, midCol, spacerR], 1170);
+
+    makeSection(b, [headingRow, testimonialRow], { bgColor: "rgb(245,245,245)", ptD: 20, pbD: 35, ptM: 15, pbM: 20 });
+  }
+
+  // ─── Section 6: About coach ──────────────────────────────────────────────────
+  {
+    const aboutHeading = makeHeading(b,
+      "WHO IS YOUR COACH, And Why Should You Listen To Them?", "h2",
+      {
+        color:         ss("#000000"),
+        fontSize:      sv(46),
+        textAlign:     ss("center"),
+        lineHeight:    ss("1.2em"),
+        paddingBottom: sv(10),
+      },
+      { fontSize: sv(28) },
+    );
+    const headingCol = makeCol(b, [aboutHeading], 100, { align: "center", padH: 10 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    const stageLabels = ["THE STRUGGLE", "THE TURNING POINT", "THE TRANSFORMATION", "THE RESULT"] as const;
+    const imgCols = stageLabels.map(label => {
+      const img = makeImage(b, { url: data.coachPhotoUrl ?? "", width: 100 });
+      const lbl = makeParagraph(b, label, {
+        color:           ss("#ffffff"),
+        fontSize:        sv(20),
+        textAlign:       ss("center"),
+        textTransform:   ss("uppercase"),
+        backgroundColor: ss("#333333"),
+        paddingTop:      sv(5),
+        paddingBottom:   sv(5),
+      });
+      return makeCol(b, [img, lbl], 25, { padH: 5, padV: 5 });
+    });
+    const imagesRow = makeRow(b, imgCols, 1170);
+
+    makeSection(b, [headingRow, imagesRow], { bgColor: "#ffffff", ptD: 20, pbD: 10, ptM: 10, pbM: 10 });
+  }
+
+  buildFooter(b, s);
+
+  const result = sanitizePageData(finalize(b, s));
+  console.log("[diag] APP-FORM FINAL sections array (" + result.sections.length + " total):");
+  result.sections.forEach((sec, i) => {
+    console.log(`  [${i}] id=${sec.id} elements=${sec.elements?.length ?? 0}`);
+  });
+  return result;
+}
+
 // ── THANK YOU PAGE ────────────────────────────────────────────────────────────
 
 export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData {

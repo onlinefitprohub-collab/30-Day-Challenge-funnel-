@@ -5,6 +5,7 @@ import { deriveProjectToken } from "@/lib/highlevel/inject-token";
 import {
   buildLandingPageData,
   buildOptInPageData,
+  buildApplicationFormPageData,
   buildThankYouPageData,
   buildBookingPageData,
   buildSalesLetterPageData,
@@ -96,7 +97,11 @@ export async function POST(request: Request) {
   let pageData;
   switch (page) {
     case "landing":  pageData = buildLandingPageData(assets);  break;
-    case "optin":    pageData = buildOptInPageData(assets);    break;
+    case "optin":
+      pageData = assets.funnelType === "application"
+        ? buildApplicationFormPageData(assets)
+        : buildOptInPageData(assets);
+      break;
     case "thankyou": pageData = buildThankYouPageData(assets); break;
     case "booking":  pageData = buildBookingPageData(assets);  break;
     case "salesletter":
