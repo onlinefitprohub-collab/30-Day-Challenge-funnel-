@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw, Shuffle } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
-import type { LongFormSalesAssets } from "@/types/longform";
+import type { LongFormSalesAssets, SalesLetter } from "@/types/longform";
 import { GhlPagePreview } from "./GhlPagePreview";
 import { toast } from "@/hooks/use-toast";
 
@@ -56,8 +56,6 @@ interface Props {
   projectId?: string;
   funnelType?: "challenge" | "application";
   liveLongFormAssets?: LongFormSalesAssets;
-  /** Called when the salesletter page-data fails — triggers re-generation in the parent */
-  onGenerateLongForm?: () => Promise<void>;
 }
 
 const CHALLENGE_PAGES = [
@@ -77,6 +75,133 @@ const APPLICATION_PAGES = [
 type ChallengePage = (typeof CHALLENGE_PAGES)[number]["id"];
 type ApplicationPage = (typeof APPLICATION_PAGES)[number]["id"];
 type PageId = ChallengePage | ApplicationPage;
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Sales letter direct renderer (no API — built from liveLongFormAssets)      */
+/* ─────────────────────────────────────────────────────────────────────────── */
+function SalesLetterDirectPreview({ sl, scheme }: { sl: SalesLetter; scheme: SchemeColors }) {
+  const p  = scheme.primary;
+  const dk = scheme.dark;
+  const md = scheme.mid;
+
+  const sections: string[] = [
+    // 1. Hero
+    `<div style="background:${dk};padding:80px 32px 64px;text-align:center">
+  <p style="display:inline-block;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);padding:6px 20px;border-radius:999px;color:${p};font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:24px">Long-Form Landing Page</p>
+  <h1 style="font-size:clamp(26px,4vw,52px);font-weight:900;color:#fff;line-height:1.1;margin:0 auto 20px;max-width:800px;font-family:'Poppins',sans-serif">${sl.headline ?? ""}</h1>
+  <p style="font-size:clamp(15px,1.8vw,20px);color:rgba(255,255,255,0.7);max-width:600px;margin:0 auto;line-height:1.6">${sl.subheadline ?? ""}</p>
+</div>`,
+    // 2. Opening Hook
+    `<div style="background:#fff;padding:64px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.4vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.openingHook ?? ""}</p>
+  </div>
+</div>`,
+    // 3. Problem Agitation
+    `<div style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:64px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">The Problem</p>
+    <p style="font-size:clamp(15px,1.4vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.problemAgitation ?? ""}</p>
+  </div>
+</div>`,
+    // 4. Bridge + Coach Credentials
+    `<div style="background:${md};padding:64px 32px">
+  <div style="max-width:720px;margin:0 auto;margin-bottom:40px">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:14px">There's a Better Way</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:rgba(255,255,255,0.85);line-height:1.85;white-space:pre-line">${sl.bridgeToPossibility ?? ""}</p>
+  </div>
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:14px">Why Trust Me</p>
+    <p style="font-size:clamp(15px,1.4vw,18px);color:rgba(255,255,255,0.8);line-height:1.85;white-space:pre-line">${sl.coachCredentials ?? ""}</p>
+  </div>
+</div>`,
+    // 5. Offer Reveal
+    `<div style="background:${dk};padding:64px 32px;text-align:center">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:14px">Introducing</p>
+    <p style="font-size:clamp(15px,1.6vw,20px);color:#fff;line-height:1.75;white-space:pre-line">${sl.offerReveal ?? ""}</p>
+  </div>
+</div>`,
+    // 6. What You Get
+    `<div style="background:#f8fafc;padding:72px 32px">
+  <div style="max-width:880px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Everything Included</p>
+    <h2 style="font-size:clamp(22px,2.8vw,36px);font-weight:900;text-align:center;color:#111;margin-bottom:36px;font-family:'Poppins',sans-serif">Here's what you get</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+      ${(sl.whatYouGet ?? []).map(item =>
+        `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+        <p style="font-weight:800;font-size:14px;color:#111;margin-bottom:6px">✓ ${item.name ?? ""}</p>
+        <p style="font-size:13px;color:#6b7280;line-height:1.6">${item.description ?? ""}</p>
+      </div>`).join("")}
+    </div>
+  </div>
+</div>`,
+    // 7. Social Proof + Bonus Stack
+    `<div style="background:${md};padding:72px 32px">
+  <div style="max-width:720px;margin:0 auto;margin-bottom:48px">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:14px">What Clients Say</p>
+    <p style="font-size:clamp(15px,1.4vw,18px);color:rgba(255,255,255,0.85);line-height:1.85;white-space:pre-line">${sl.socialProofFramework ?? ""}</p>
+  </div>
+  <div style="max-width:740px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Free Bonuses</p>
+    <h2 style="font-size:clamp(20px,2.2vw,30px);font-weight:900;text-align:center;color:#fff;margin-bottom:28px;font-family:'Poppins',sans-serif">Included at no extra cost</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${(sl.bonusStack ?? []).map(bonus =>
+        `<div style="display:flex;align-items:flex-start;gap:14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:18px">
+        <div style="flex:1">
+          <p style="font-weight:800;font-size:14px;color:#fff;margin-bottom:4px">🎁 ${bonus.name ?? ""}</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6">${bonus.description ?? ""}</p>
+        </div>
+        <span style="white-space:nowrap;background:${p};color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;margin-top:2px">${bonus.valueLabel ?? ""}</span>
+      </div>`).join("")}
+    </div>
+  </div>
+</div>`,
+    // 8. Price + Guarantee
+    `<div style="background:#fff;padding:72px 32px">
+  <div style="max-width:620px;margin:0 auto;text-align:center;margin-bottom:40px">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:8px">Investment</p>
+    <p style="font-size:clamp(15px,1.6vw,19px);color:#374151;line-height:1.8;white-space:pre-line">${sl.priceReveal ?? ""}</p>
+  </div>
+  <div style="max-width:620px;margin:0 auto;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:16px;padding:28px">
+    <p style="font-weight:800;font-size:17px;color:#14532d;margin-bottom:8px">My Personal Guarantee</p>
+    <p style="font-size:14px;color:#166534;line-height:1.75;white-space:pre-line">${sl.guarantee ?? ""}</p>
+  </div>
+</div>`,
+    // 9. Objection Handling
+    `<div style="background:#f8fafc;padding:72px 32px">
+  <div style="max-width:680px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Your Questions Answered</p>
+    <h2 style="font-size:clamp(20px,2.2vw,30px);font-weight:900;text-align:center;color:#111;margin-bottom:28px;font-family:'Poppins',sans-serif">Before you decide</h2>
+    ${(sl.objectionHandling ?? []).map(o =>
+      `<div style="border:1px solid #e5e7eb;border-radius:12px;padding:18px;background:#fff;margin-bottom:10px">
+      <p style="font-weight:700;font-size:14px;color:#111;margin-bottom:0">${o.objection ?? ""}</p>
+      <p style="font-size:13px;color:#4b5563;line-height:1.7;margin-top:10px">${o.response ?? ""}</p>
+    </div>`).join("")}
+  </div>
+</div>`,
+    // 10. Urgency + Final CTA
+    `<div style="background:${md};padding:48px 32px;text-align:center">
+  <div style="max-width:600px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.4vw,17px);color:rgba(255,255,255,0.85);line-height:1.8;white-space:pre-line">${sl.urgencySection ?? ""}</p>
+  </div>
+</div>
+<div style="background:${p};padding:80px 32px;text-align:center">
+  <div style="max-width:600px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.8vw,20px);color:#fff;line-height:1.75;margin-bottom:36px;font-weight:500;white-space:pre-line">${sl.finalCta ?? ""}</p>
+    <span style="display:inline-block;background:#fff;color:${p};padding:18px 44px;border-radius:8px;font-weight:900;font-size:17px;box-shadow:0 12px 40px rgba(0,0,0,0.2)">Yes — I'm Ready to Start →</span>
+  </div>
+</div>`,
+  ];
+
+  return (
+    <div style={{ backgroundColor: dk, fontFamily: "'Poppins', 'Inter', sans-serif", color: "#ffffff" }}>
+      {sections.map((html, i) => (
+        <div key={i} dangerouslySetInnerHTML={{ __html: html }} />
+      ))}
+    </div>
+  );
+}
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  Browser chrome wrapper                                                     */
@@ -103,13 +228,10 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  MAIN EXPORT                                                                */
 /* ─────────────────────────────────────────────────────────────────────────── */
-export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", liveLongFormAssets, onGenerateLongForm }: Props) {
+export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", liveLongFormAssets }: Props) {
   const isApplication = funnelType === "application";
   const PAGES = isApplication ? APPLICATION_PAGES : CHALLENGE_PAGES;
   const [activePage, setActivePage] = useState<PageId>(isApplication ? "salesletter" : "landing");
-  // Self-healing: track a local re-generation state for when page-data fails for the salesletter
-  const [localGenerating, setLocalGenerating] = useState(false);
-  const [hasRetried, setHasRetried] = useState(false);
 
   // Template selector — null means "use persisted/random (server decides)"
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
@@ -177,20 +299,8 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
   }
 
   // For application funnels, show a generating spinner while the sales letter is being produced.
-  // Check salesLetter specifically — longFormAssets may exist but salesLetter may still be missing.
+  // The salesletter preview is rendered directly from liveLongFormAssets (no API fetch needed).
   const showGeneratingSpinner = isApplication && activePage === "salesletter" && !liveLongFormAssets?.salesLetter;
-
-  // Self-healing: if the page-data API fails for the salesletter page (e.g., data not saved yet
-  // or buildSalesLetterPageData threw), re-trigger generation from the parent once.
-  const handleSalesLetterError = useCallback(() => {
-    if (!isApplication || activePage !== "salesletter" || !onGenerateLongForm || hasRetried) return;
-    setHasRetried(true);
-    setLocalGenerating(true);
-    onGenerateLongForm().finally(() => {
-      setLocalGenerating(false);
-      setRefreshKey((k) => k + 1); // force GhlPagePreview remount → fresh fetch
-    });
-  }, [isApplication, activePage, onGenerateLongForm, hasRetried]);
 
   async function handleDownloadJson() {
     try {
@@ -446,14 +556,15 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
 
       {/* Browser preview — key includes refreshKey + selectedTemplate so each change remounts */}
       <BrowserFrame url={pageUrls[activeMeta.id]}>
-        {(showGeneratingSpinner || localGenerating) ? (
+        {showGeneratingSpinner ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-400" />
-            <p className="text-sm font-medium text-gray-600">
-              {localGenerating ? "Preparing long-form landing page…" : "Generating your long-form landing page…"}
-            </p>
+            <p className="text-sm font-medium text-gray-600">Generating your long-form landing page…</p>
             <p className="mt-1 text-xs text-gray-400">This takes about 30 seconds</p>
           </div>
+        ) : isApplication && activePage === "salesletter" && liveLongFormAssets?.salesLetter ? (
+          /* Render sales letter directly from state — no API round-trip needed */
+          <SalesLetterDirectPreview sl={liveLongFormAssets.salesLetter} scheme={scheme} />
         ) : (
           <GhlPagePreview
             key={`${activePage}-${refreshKey}-${selectedTemplate ?? "auto"}`}
@@ -461,7 +572,6 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
             page={activePage}
             templateVariant={activePage === "landing" && selectedTemplate ? selectedTemplate : undefined}
             onLoad={activePage === "landing" ? handleLandingLoad : undefined}
-            onError={isApplication && activePage === "salesletter" ? handleSalesLetterError : undefined}
           />
         )}
       </BrowserFrame>

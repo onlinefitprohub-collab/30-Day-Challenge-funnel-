@@ -245,7 +245,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
-    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} liveLongFormAssets={liveLongFormAssets} onGenerateLongForm={isApplication ? async () => { const a = await triggerLongFormGeneration(project.id); if (a) handleLongFormGenerated(a); } : undefined} />,
+    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} liveLongFormAssets={liveLongFormAssets} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} />,
     // Landing page: challenge → short-form copy | application → long-form sales letter content
