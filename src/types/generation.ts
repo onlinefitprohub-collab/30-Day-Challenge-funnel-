@@ -103,6 +103,46 @@ export interface SectionLayoutVariants {
   'final-cta'?: string;
 }
 
+// ─── Workout Plan types ──────────────────────────────────────────────────────
+
+export interface WorkoutExercise {
+  name: string;
+  sets: number;
+  reps: string;         // "10-12" | "30 seconds" | "to failure"
+  rest: string;         // "60 sec" | "90 sec"
+  modification?: string;
+}
+
+export interface WorkoutDay {
+  dayNumber: number;
+  type: "strength" | "cardio" | "hiit" | "mobility" | "rest" | "active-recovery";
+  sessionName: string;
+  durationMins: number;
+  warmUp: string;
+  exercises: WorkoutExercise[];
+  coolDown: string;
+}
+
+export interface WorkoutWeek {
+  weekNumber: number;
+  theme: string;
+  focus: string;
+  days: WorkoutDay[];
+}
+
+export interface WorkoutPlan {
+  programName: string;
+  programOverview: string;
+  equipmentNeeded: string[];
+  weeklySchedule: string;
+  weeks: WorkoutWeek[];
+  nutritionGuidance: string;
+  progressionRules: string;
+  coachingNotes: string;
+}
+
+// ─── GeneratedFunnelAssets ───────────────────────────────────────────────────
+
 export interface GeneratedFunnelAssets {
   offerSummary: OfferSummary;
   landingPage: LandingPageCopy;
@@ -128,6 +168,9 @@ export interface GeneratedFunnelAssets {
   clientCount?:    string;
   yearsCoaching?:  string;
   templateVariant?: string;
+  // On-demand extras (separate generation flows)
+  workoutPlan?: WorkoutPlan;
+  longFormAssets?: import("./longform").LongFormSalesAssets;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

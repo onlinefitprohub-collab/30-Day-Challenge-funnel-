@@ -128,6 +128,82 @@ export const adsCampaignResponseSchema = z.object({
   campaignNaming:  campaignNamingSchema,
 });
 
+// ─── Workout Plan schemas ────────────────────────────────────────────────────
+
+export const workoutExerciseSchema = z.object({
+  name:         z.string().min(1),
+  sets:         z.number().int().min(0),
+  reps:         z.string().min(1),
+  rest:         z.string().min(1),
+  modification: z.string().optional(),
+});
+
+export const workoutDaySchema = z.object({
+  dayNumber:    z.number().int().min(1),
+  type:         z.enum(["strength", "cardio", "hiit", "mobility", "rest", "active-recovery"]),
+  sessionName:  z.string().min(1),
+  durationMins: z.number().int().min(0),
+  warmUp:       z.string().min(1),
+  exercises:    z.array(workoutExerciseSchema),
+  coolDown:     z.string().min(1),
+});
+
+export const workoutWeekSchema = z.object({
+  weekNumber: z.number().int().min(1),
+  theme:      z.string().min(1),
+  focus:      z.string().min(1),
+  days:       z.array(workoutDaySchema).min(7),
+});
+
+export const workoutPlanSchema = z.object({
+  programName:       z.string().min(1),
+  programOverview:   z.string().min(1),
+  equipmentNeeded:   z.array(z.string()).min(1),
+  weeklySchedule:    z.string().min(1),
+  weeks:             z.array(workoutWeekSchema).min(4).max(4),
+  nutritionGuidance: z.string().min(1),
+  progressionRules:  z.string().min(1),
+  coachingNotes:     z.string().min(1),
+});
+
+// ─── Long-Form Sales Assets schemas ─────────────────────────────────────────
+
+export const salesLetterSchema = z.object({
+  headline:             z.string().min(1),
+  subheadline:          z.string().min(1),
+  openingHook:          z.string().min(1),
+  problemAgitation:     z.string().min(1),
+  bridgeToPossibility:  z.string().min(1),
+  coachCredentials:     z.string().min(1),
+  offerReveal:          z.string().min(1),
+  whatYouGet:           z.array(z.object({ name: z.string().min(1), description: z.string().min(1) })).min(1),
+  socialProofFramework: z.string().min(1),
+  bonusStack:           z.array(z.object({ name: z.string().min(1), description: z.string().min(1), valueLabel: z.string().min(1) })).min(1),
+  priceReveal:          z.string().min(1),
+  guarantee:            z.string().min(1),
+  objectionHandling:    z.array(z.object({ objection: z.string().min(1), response: z.string().min(1) })).min(1),
+  urgencySection:       z.string().min(1),
+  finalCta:             z.string().min(1),
+});
+
+const manyChatMessageSchema = z.object({
+  message:      z.string().min(1),
+  quickReplies: z.array(z.string().min(1)).min(1).max(3),
+});
+
+export const manyChatFlowSchema = z.object({
+  welcomeMessage:      z.string().min(1),
+  qualificationQ1:     manyChatMessageSchema,
+  qualificationQ2:     manyChatMessageSchema,
+  challengeOverview:   z.string().min(1),
+  signupCta:           z.string().min(1),
+  registrationConfirm: z.string().min(1),
+  dayOneReminder:      z.string().min(1),
+  midpointCheckIn:     z.string().min(1),
+  noShowFollowUp:      z.string().min(1),
+  setupInstructions:   z.string().min(1),
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {

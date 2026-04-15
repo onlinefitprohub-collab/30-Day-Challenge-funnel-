@@ -7,11 +7,13 @@ import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
+  Dumbbell, MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan } from "@/types/generation";
+import type { LongFormSalesAssets } from "@/types/longform";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
 import { OptInFormSection }       from "./sections/opt-in-form";
@@ -25,6 +27,9 @@ import { CampaignNamingSection }  from "./sections/campaign-naming";
 import { HighLevelSection }       from "./sections/highlevel";
 import { FunnelPreviewSection }   from "./sections/funnel-preview";
 import { GhlInspectorSection }    from "./sections/ghl-inspector";
+import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-plan";
+import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
+import { ManyChatFlowSection }    from "./sections/manychat-flow";
 
 const tabs = [
   { id: "highlevel",       label: "HighLevel",       icon: Layers,          highlight: true, group: "export" },
@@ -40,6 +45,9 @@ const tabs = [
   { id: "adCopy",          label: "Ad Copy",         icon: Megaphone,                        group: "ads" },
   { id: "creativePrompts", label: "Creatives",       icon: ImageIcon,                        group: "ads" },
   { id: "campaignNaming",  label: "Campaign",        icon: BarChart3,                        group: "ads" },
+  { id: "workoutPlan",     label: "Workout Plan",    icon: Dumbbell,                         group: "programme" },
+  { id: "salesLetter",     label: "Sales Letter",    icon: FileText,                         group: "longform" },
+  { id: "manyChatFlow",    label: "ManyChat Flow",   icon: MessageCircle,                    group: "longform" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -81,6 +89,24 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   const [regenSection, setRegenSection]     = useState<SectionGroup | null>(null);
   // Live outputs — updated in-place after section regeneration so the UI refreshes immediately
   const [liveOutputs, setLiveOutputs]       = useState<Record<string, unknown>>(outputs);
+
+  // On-demand extras — managed in local state and merged back into liveOutputs on generation
+  const [liveWorkoutPlan, setLiveWorkoutPlan]         = useState<WorkoutPlan | undefined>(
+    outputs.workoutPlan as WorkoutPlan | undefined,
+  );
+  const [liveLongFormAssets, setLiveLongFormAssets]   = useState<LongFormSalesAssets | undefined>(
+    outputs.longFormAssets as LongFormSalesAssets | undefined,
+  );
+
+  function handleWorkoutGenerated(plan: WorkoutPlan) {
+    setLiveWorkoutPlan(plan);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, workoutPlan: plan }));
+  }
+
+  function handleLongFormGenerated(assets: LongFormSalesAssets) {
+    setLiveLongFormAssets(assets);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, longFormAssets: assets }));
+  }
 
   // Strip internal _isMock flag from the copy-all output
   const { _isMock: _removed, ...cleanOutputs } = liveOutputs;
@@ -167,6 +193,16 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     adCopy:          <AdCopySection          data={assets.adCopy} />,
     creativePrompts: <CreativePromptsSection data={assets.creativePrompts} generatedAdImages={assets.generatedAdImages} isMock={isMock} />,
     campaignNaming:  <CampaignNamingSection  data={assets.campaignNaming} />,
+    // On-demand extras
+    workoutPlan: liveWorkoutPlan
+      ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
+      : <WorkoutPlanPlaceholder projectId={project.id} onGenerated={handleWorkoutGenerated} />,
+    salesLetter: liveLongFormAssets
+      ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
+      : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,
+    manyChatFlow: liveLongFormAssets
+      ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
+      : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,
   };
 
   return (
