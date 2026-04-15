@@ -29,7 +29,8 @@ export const offerBasicsSchema = z.object({
 // Step 3: Audience Pain Points
 export const audiencePainSchema = z.object({
   biggestStruggle: z.string().min(10, "Please describe the biggest struggle"),
-  desiredOutcome: z.string().min(10, "Please describe the desired outcome"),
+  // desiredOutcome removed from the wizard UI — the AI falls back to mainGoal; kept optional for stored data
+  desiredOutcome: z.string().optional(),
   objections: z.string().min(10, "Please describe common objections"),
   demographicDetails: z.string().optional(),
   // legacy field kept optional for backward compat

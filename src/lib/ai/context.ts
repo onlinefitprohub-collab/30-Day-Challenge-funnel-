@@ -36,6 +36,8 @@ export function buildCoachContext(inputs: WizardInputs): string {
     ? "book a free strategy call with the coach"
     : "sign up / register directly";
 
+  const isApplication = inputs.funnelType === "application";
+
   const lines: string[] = [
     `=== COACH & BUSINESS ===`,
     `Business name: ${businessName}`,
@@ -43,9 +45,9 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `Location: ${location}`,
     `Delivery: ${DELIVERY_LABEL[deliveryMode] ?? deliveryMode}`,
     ``,
-    `=== THE CHALLENGE OFFER ===`,
-    ...(challengeName ? [`Challenge name: ${challengeName}`] : []),
-    `Challenge type: ${challengeType}`,
+    isApplication ? `=== THE PROGRAMME OFFER ===` : `=== THE CHALLENGE OFFER ===`,
+    ...(challengeName ? [`${isApplication ? "Program" : "Challenge"} name: ${challengeName}`] : []),
+    `${isApplication ? "Programme" : "Challenge"} type: ${challengeType}`,
     `Duration: ${duration} days`,
     `Main goal: ${mainGoal}`,
     `Price: ${price}${isFree ? " (free offer)" : ""}`,
@@ -66,7 +68,7 @@ export function buildCoachContext(inputs: WizardInputs): string {
     ``,
     `=== AUDIENCE PSYCHOLOGY ===`,
     `Biggest struggle right now: ${biggestStruggle}`,
-    `What they actually want: ${desiredOutcome}`,
+    `What they actually want: ${desiredOutcome || mainGoal}`,
     `Their objections before joining: ${objections}`,
     ``,
     `=== BRAND VOICE ===`,

@@ -171,8 +171,9 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
     return qs.toString();
   }
 
-  // For application funnels, show a generating spinner while the sales letter is being produced
-  const showGeneratingSpinner = isApplication && activePage === "salesletter" && !liveLongFormAssets;
+  // For application funnels, show a generating spinner while the sales letter is being produced.
+  // Check salesLetter specifically — longFormAssets may exist but salesLetter may still be missing.
+  const showGeneratingSpinner = isApplication && activePage === "salesletter" && !liveLongFormAssets?.salesLetter;
 
   async function handleDownloadJson() {
     try {

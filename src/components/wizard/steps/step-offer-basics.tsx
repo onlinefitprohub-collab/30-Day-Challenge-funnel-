@@ -28,6 +28,7 @@ export function StepOfferBasics({
   onNext,
   onBack,
 }: StepProps) {
+  const isApplication = defaultValues.funnelType === "application";
   const {
     register,
     handleSubmit,
@@ -57,10 +58,12 @@ export function StepOfferBasics({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-1.5">
-        <Label htmlFor="challengeName">Challenge name</Label>
+        <Label htmlFor="challengeName">{isApplication ? "Program name" : "Challenge name"}</Label>
         <Input
           id="challengeName"
-          placeholder="e.g. 30-Day Fat Loss Kickstart, 6-Week Body Reset, Summer Shred Challenge"
+          placeholder={isApplication
+            ? "e.g. Elite Coaching Program, 12-Week Body Transformation, VIP Mentorship"
+            : "e.g. 30-Day Fat Loss Kickstart, 6-Week Body Reset, Summer Shred Challenge"}
           {...register("challengeName")}
         />
         <p className="text-xs text-gray-400">This becomes the title of your funnel — make it specific and benefit-led.</p>
@@ -73,7 +76,9 @@ export function StepOfferBasics({
         <Label htmlFor="mainGoal">What&apos;s the main result your clients get?</Label>
         <Textarea
           id="mainGoal"
-          placeholder="e.g. Help women lose 10-15lbs and build a consistent workout habit without giving up carbs or spending hours in the gym"
+          placeholder={isApplication
+            ? "e.g. Help high-achieving professionals build a lean, strong physique and sustain it long-term without crash diets or extreme training"
+            : "e.g. Help women lose 10-15lbs and build a consistent workout habit without giving up carbs or spending hours in the gym"}
           rows={3}
           {...register("mainGoal")}
         />
@@ -84,7 +89,7 @@ export function StepOfferBasics({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="duration">Duration (days)</Label>
+          <Label htmlFor="duration">{isApplication ? "Program duration (days)" : "Duration (days)"}</Label>
           <Input
             id="duration"
             type="number"
@@ -141,10 +146,12 @@ export function StepOfferBasics({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="inclusions">What&apos;s included in the challenge?</Label>
+        <Label htmlFor="inclusions">{isApplication ? "What's included in the program?" : "What's included in the challenge?"}</Label>
         <Textarea
           id="inclusions"
-          placeholder="e.g. Daily workout videos, nutrition guide, private Facebook group, weekly live Q&A, recipe book"
+          placeholder={isApplication
+            ? "e.g. Weekly 1:1 coaching calls, custom training plan, nutrition coaching, Slack access, monthly reviews"
+            : "e.g. Daily workout videos, nutrition guide, private Facebook group, weekly live Q&A, recipe book"}
           rows={3}
           {...register("inclusions")}
         />
@@ -159,7 +166,9 @@ export function StepOfferBasics({
         </Label>
         <Textarea
           id="bonuses"
-          placeholder="e.g. Free 1:1 kickstart call (worth £150), done-for-you meal plan, accountability partner matching"
+          placeholder={isApplication
+            ? "e.g. Body composition scan (worth £120), done-for-you nutrition templates, lifetime alumni community access"
+            : "e.g. Free 1:1 kickstart call (worth £150), done-for-you meal plan, accountability partner matching"}
           rows={2}
           {...register("bonuses")}
         />

@@ -18,7 +18,6 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
     resolver: zodResolver(audiencePainSchema),
     defaultValues: {
       biggestStruggle: defaultValues.biggestStruggle ?? "",
-      desiredOutcome: defaultValues.desiredOutcome ?? "",
       objections: defaultValues.objections ?? "",
     },
   });
@@ -44,21 +43,6 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
         </p>
         {errors.biggestStruggle && (
           <p className="text-sm text-red-500">{errors.biggestStruggle.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="desiredOutcome">
-          What&apos;s their dream outcome? What do they actually want to feel or achieve?
-        </Label>
-        <Textarea
-          id="desiredOutcome"
-          placeholder="e.g. Feel confident in their clothes, have energy to play with their kids, stop dreading the gym and actually enjoy moving their body"
-          rows={3}
-          {...register("desiredOutcome")}
-        />
-        {errors.desiredOutcome && (
-          <p className="text-sm text-red-500">{errors.desiredOutcome.message}</p>
         )}
       </div>
 

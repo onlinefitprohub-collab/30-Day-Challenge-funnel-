@@ -146,9 +146,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     outputs.nurtureSequence as NurtureSequence | undefined,
   );
 
-  // Auto-generate longform for application funnels on mount (sales letter + ManyChat)
+  // Auto-generate longform for application funnels on mount (sales letter + ManyChat).
+  // Check salesLetter specifically so partial longFormAssets objects still trigger re-generation.
   useEffect(() => {
-    if (isApplication && !liveLongFormAssets) {
+    if (isApplication && !liveLongFormAssets?.salesLetter) {
       triggerLongFormGeneration(project.id).then((assets) => {
         if (assets) handleLongFormGenerated(assets);
       });
