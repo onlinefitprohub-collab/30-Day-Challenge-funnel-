@@ -2681,13 +2681,195 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
   return bookingResult;
 }
 
+// ── SALES LETTER PAGE ─────────────────────────────────────────────────────────
+
+/**
+ * Builds a full long-form sales letter as a native GHL page.
+ * Uses makeCustomCode() sections for each major block — keeps the HTML
+ * fully editable in the GHL builder while applying the brand colour scheme.
+ */
+export function buildSalesLetterPageData(data: GeneratedFunnelAssets): GhlPageData {
+  const sl = data.longFormAssets?.salesLetter;
+  if (!sl) throw new Error("salesLetter is required (generate longform assets first)");
+
+  const b = createBuilder();
+  const s = resolveScheme(data);
+  const p  = s.primary;
+  const dk = s.dark;
+  const md = s.mid;
+  const br = s.buttonBorderRadius;
+
+  // ── 1. Hero (headline + subheadline) ────────────────────────────────────────
+  const heroHtml = `
+<div style="background:${dk};padding:100px 32px 80px;text-align:center">
+  <p style="display:inline-block;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);padding:6px 20px;border-radius:999px;color:${p};font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px">Sales Letter</p>
+  <h1 style="font-size:clamp(28px,4.5vw,56px);font-weight:900;color:#fff;line-height:1.08;margin:0 auto 24px;max-width:800px;font-family:inherit">${sl.headline}</h1>
+  <p style="font-size:clamp(16px,2vw,22px);color:rgba(255,255,255,0.7);max-width:620px;margin:0 auto;line-height:1.6">${sl.subheadline}</p>
+</div>`;
+  const heroCode = makeCustomCode(b, heroHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [heroCode], 100, {})], 1600, 0)], { bgColor: dk, ptD: 0, pbD: 0 });
+
+  // ── 2. Opening hook ──────────────────────────────────────────────────────────
+  const hookHtml = `
+<div style="background:#fff;padding:72px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.5vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.openingHook}</p>
+  </div>
+</div>`;
+  const hookCode = makeCustomCode(b, hookHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [hookCode], 100, {})], 1600, 0)], { bgColor: "#ffffff", ptD: 0, pbD: 0 });
+
+  // ── 3. Problem agitation ─────────────────────────────────────────────────────
+  const problemHtml = `
+<div style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:72px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">The Problem</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.problemAgitation}</p>
+  </div>
+</div>`;
+  const problemCode = makeCustomCode(b, problemHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [problemCode], 100, {})], 1600, 0)], { bgColor: "#f8fafc", ptD: 0, pbD: 0 });
+
+  // ── 4. Bridge + coach credentials (dark section) ─────────────────────────────
+  const bridgeHtml = `
+<div style="background:${md};padding:72px 32px">
+  <div style="max-width:720px;margin:0 auto;margin-bottom:48px">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">There's a Better Way</p>
+    <p style="font-size:clamp(16px,1.6vw,20px);color:rgba(255,255,255,0.85);line-height:1.85;font-weight:500;white-space:pre-line">${sl.bridgeToPossibility}</p>
+  </div>
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">Why Trust Me</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:rgba(255,255,255,0.8);line-height:1.85;white-space:pre-line">${sl.coachCredentials}</p>
+  </div>
+</div>`;
+  const bridgeCode = makeCustomCode(b, bridgeHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [bridgeCode], 100, {})], 1600, 0)], { bgColor: md, ptD: 0, pbD: 0 });
+
+  // ── 5. Offer reveal ──────────────────────────────────────────────────────────
+  const offerHtml = `
+<div style="background:${dk};padding:72px 32px;text-align:center">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">Introducing</p>
+    <p style="font-size:clamp(16px,1.8vw,22px);color:#fff;line-height:1.75;white-space:pre-line">${sl.offerReveal}</p>
+  </div>
+</div>`;
+  const offerCode = makeCustomCode(b, offerHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [offerCode], 100, {})], 1600, 0)], { bgColor: dk, ptD: 0, pbD: 0 });
+
+  // ── 6. What you get (cards) ───────────────────────────────────────────────────
+  const whatCards = sl.whatYouGet.map((item) =>
+    `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+      <div style="width:36px;height:36px;background:${p};border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <p style="font-weight:800;font-size:15px;color:#111;margin-bottom:6px">${item.name}</p>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">${item.description}</p>
+    </div>`
+  ).join("");
+  const whatHtml = `
+<div style="background:#f8fafc;padding:80px 32px">
+  <div style="max-width:900px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Everything Included</p>
+    <h2 style="font-size:clamp(24px,3vw,38px);font-weight:900;text-align:center;color:#111;margin-bottom:40px;font-family:inherit">Here's what you get</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">${whatCards}</div>
+  </div>
+</div>`;
+  const whatCode = makeCustomCode(b, whatHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [whatCode], 100, {})], 1600, 0)], { bgColor: "#f8fafc", ptD: 0, pbD: 0 });
+
+  // ── 7. Social proof + bonus stack (dark) ──────────────────────────────────────
+  const bonusCards = sl.bonusStack.map((bonus) =>
+    `<div style="display:flex;align-items:flex-start;gap:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px">
+      <div style="flex:1">
+        <p style="font-weight:800;font-size:15px;color:#fff;margin-bottom:4px">🎁 ${bonus.name}</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6">${bonus.description}</p>
+      </div>
+      <span style="white-space:nowrap;background:${p};color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;margin-top:2px">${bonus.valueLabel}</span>
+    </div>`
+  ).join("");
+  const socialBonusHtml = `
+<div style="background:${md};padding:80px 32px">
+  <div style="max-width:720px;margin:0 auto;margin-bottom:56px">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">What Clients Say</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:rgba(255,255,255,0.85);line-height:1.85;white-space:pre-line">${sl.socialProofFramework}</p>
+  </div>
+  <div style="max-width:760px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Free Bonuses</p>
+    <h2 style="font-size:clamp(22px,2.5vw,32px);font-weight:900;text-align:center;color:#fff;margin-bottom:32px;font-family:inherit">Included at no extra cost</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">${bonusCards}</div>
+  </div>
+</div>`;
+  const socialBonusCode = makeCustomCode(b, socialBonusHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [socialBonusCode], 100, {})], 1600, 0)], { bgColor: md, ptD: 0, pbD: 0 });
+
+  // ── 8. Price + guarantee ──────────────────────────────────────────────────────
+  const priceHtml = `
+<div style="background:#fff;padding:80px 32px">
+  <div style="max-width:640px;margin:0 auto;text-align:center;margin-bottom:48px">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:8px">Investment</p>
+    <p style="font-size:clamp(16px,1.8vw,20px);color:#374151;line-height:1.8;white-space:pre-line">${sl.priceReveal}</p>
+  </div>
+  <div style="max-width:640px;margin:0 auto;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:32px;display:flex;gap:24px;align-items:flex-start">
+    <div style="width:56px;height:56px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <p style="font-weight:800;font-size:18px;color:#14532d;margin-bottom:8px">My Personal Guarantee</p>
+      <p style="font-size:14px;color:#166534;line-height:1.75;white-space:pre-line">${sl.guarantee}</p>
+    </div>
+  </div>
+</div>`;
+  const priceCode = makeCustomCode(b, priceHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [priceCode], 100, {})], 1600, 0)], { bgColor: "#ffffff", ptD: 0, pbD: 0 });
+
+  // ── 9. Objection handling (FAQ style) ────────────────────────────────────────
+  const objectionItems = sl.objectionHandling.map((o) =>
+    `<details style="border:1px solid #e5e7eb;border-radius:14px;padding:20px;background:#fff;margin-bottom:10px">
+      <summary style="font-weight:700;font-size:15px;color:#111;cursor:pointer;list-style:none">${o.objection}</summary>
+      <p style="font-size:14px;color:#4b5563;line-height:1.7;margin-top:12px">${o.response}</p>
+    </details>`
+  ).join("");
+  const objHtml = `
+<div style="background:#f8fafc;padding:80px 32px">
+  <div style="max-width:700px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Your Questions Answered</p>
+    <h2 style="font-size:clamp(22px,2.5vw,32px);font-weight:900;text-align:center;color:#111;margin-bottom:32px;font-family:inherit">Before you decide</h2>
+    ${objectionItems}
+  </div>
+</div>`;
+  const objCode = makeCustomCode(b, objHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [objCode], 100, {})], 1600, 0)], { bgColor: "#f8fafc", ptD: 0, pbD: 0 });
+
+  // ── 10. Urgency + Final CTA ───────────────────────────────────────────────────
+  const ctaHtml = `
+<div style="background:${md};padding:56px 32px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06)">
+  <div style="max-width:640px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.5vw,18px);color:rgba(255,255,255,0.85);line-height:1.8;white-space:pre-line">${sl.urgencySection}</p>
+  </div>
+</div>
+<div style="background:${p};padding:100px 32px;text-align:center">
+  <div style="max-width:640px;margin:0 auto">
+    <p style="font-size:clamp(16px,2vw,22px);color:#fff;line-height:1.75;margin-bottom:40px;font-weight:500;white-space:pre-line">${sl.finalCta}</p>
+    <a href="#signup" style="display:inline-flex;align-items:center;gap:10px;background:#fff;color:${p};padding:20px 48px;border-radius:${br};font-weight:900;font-size:18px;text-decoration:none;box-shadow:0 12px 40px rgba(0,0,0,0.2)">Yes — I'm Ready to Start →</a>
+    <p style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:18px">No risk · ${sl.guarantee.split(".")[0]}.</p>
+  </div>
+</div>`;
+  const ctaCode = makeCustomCode(b, ctaHtml, 0);
+  makeSection(b, [makeRow(b, [makeCol(b, [ctaCode], 100, {})], 1600, 0)], { bgColor: p, ptD: 0, pbD: 0 });
+
+  buildFooter(b, s);
+
+  return sanitizePageData(finalize(b, s));
+}
+
 // ── All pages ─────────────────────────────────────────────────────────────────
 
 export interface AllPageData {
-  landing:  GhlPageData;
-  optin:    GhlPageData;
-  thankYou: GhlPageData;
-  booking:  GhlPageData;
+  landing:    GhlPageData;
+  optin:      GhlPageData;
+  thankYou:   GhlPageData;
+  booking:    GhlPageData;
+  salesLetter?: GhlPageData;
 }
 
 export function buildAllPageData(data: GeneratedFunnelAssets): AllPageData {

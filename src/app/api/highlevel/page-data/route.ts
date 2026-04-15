@@ -5,6 +5,7 @@ import {
   buildOptInPageData,
   buildThankYouPageData,
   buildBookingPageData,
+  buildSalesLetterPageData,
   ALL_TEMPLATE_VARIANTS,
   pickTemplateVariant,
   type TemplateVariant,
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing projectId or page" }, { status: 400 });
   }
 
-  const validPages = ["landing", "optin", "thankyou", "booking"] as const;
+  const validPages = ["landing", "optin", "thankyou", "booking", "salesletter"] as const;
   if (!validPages.includes(page as typeof validPages[number])) {
     return NextResponse.json({ error: "Invalid page value" }, { status: 400 });
   }
@@ -109,6 +110,12 @@ export async function GET(request: Request) {
     case "optin":    pageData = buildOptInPageData(assets);    break;
     case "thankyou": pageData = buildThankYouPageData(assets); break;
     case "booking":  pageData = buildBookingPageData(assets);  break;
+    case "salesletter":
+      if (!assets.longFormAssets?.salesLetter) {
+        return NextResponse.json({ error: "Sales letter not generated yet" }, { status: 404 });
+      }
+      pageData = buildSalesLetterPageData(assets);
+      break;
     default:         return NextResponse.json({ error: "Invalid page" }, { status: 400 });
   }
 

@@ -5,6 +5,7 @@ import {
   generateOptInPageHtml,
   generateThankYouPageHtml,
   generateBookingPageHtml,
+  generateSalesLetterHtml,
 } from "@/lib/highlevel/page-html";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -68,12 +69,18 @@ export async function GET(request: Request) {
   if (info === "true") {
     const challengeConcept = assets.offerSummary?.challengeConcept ?? "Challenge Funnel";
     return NextResponse.json(
-      { challengeConcept, pages: ["landing", "optin", "thankyou", "booking"] },
+      {
+        challengeConcept,
+        pages: [
+          "landing", "optin", "thankyou", "booking",
+          ...(assets.longFormAssets?.salesLetter ? ["salesletter"] : []),
+        ],
+      },
       { status: 200, headers: CORS_HEADERS },
     );
   }
 
-  const validPages = ["landing", "optin", "thankyou", "booking"] as const;
+  const validPages = ["landing", "optin", "thankyou", "booking", "salesletter"] as const;
   if (!page || !validPages.includes(page as typeof validPages[number])) {
     return NextResponse.json(
       { error: "Missing or invalid page param" },
@@ -87,6 +94,15 @@ export async function GET(request: Request) {
     case "optin":    html = generateOptInPageHtml(assets);    break;
     case "thankyou": html = generateThankYouPageHtml(assets); break;
     case "booking":  html = generateBookingPageHtml(assets);  break;
+    case "salesletter":
+      if (!assets.longFormAssets?.salesLetter) {
+        return NextResponse.json(
+          { error: "Sales letter not generated" },
+          { status: 404, headers: CORS_HEADERS },
+        );
+      }
+      html = generateSalesLetterHtml(assets);
+      break;
     default:
       return NextResponse.json({ error: "Invalid page" }, { status: 400, headers: CORS_HEADERS });
   }

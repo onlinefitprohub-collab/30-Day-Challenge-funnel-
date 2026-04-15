@@ -271,6 +271,184 @@ export function generateBookingPageHtml(data: GeneratedFunnelAssets): string {
   return base(`Book Your Call — ${concept}`, body);
 }
 
+export function generateSalesLetterHtml(data: GeneratedFunnelAssets): string {
+  const sl    = data.longFormAssets?.salesLetter;
+  const concept = data.offerSummary?.challengeConcept ?? "30-Day Challenge";
+  if (!sl) return base(concept, `<div style="padding:80px 32px;text-align:center;font-size:18px;color:#6b7280">Sales letter not yet generated.</div>`);
+
+  const p  = data.design?.primaryColor       || "#f97316";
+  const dk = data.design?.darkBackground     || "#0f172a";
+  const md = data.design?.midBackground      || "#1e293b";
+  const br = data.design?.buttonBorderRadius || "8px";
+
+  const whatYouGetCards = sl.whatYouGet.map((item) =>
+    `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+      <div style="width:36px;height:36px;background:${p};border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <p style="font-weight:800;font-size:15px;color:#111;margin-bottom:6px">${item.name}</p>
+      <p style="font-size:13px;color:#6b7280;line-height:1.6">${item.description}</p>
+    </div>`
+  ).join("");
+
+  const bonusCards = sl.bonusStack.map((b) =>
+    `<div style="display:flex;align-items:flex-start;gap:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px">
+      <div style="flex:1">
+        <p style="font-weight:800;font-size:15px;color:#fff;margin-bottom:4px">🎁 ${b.name}</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6">${b.description}</p>
+      </div>
+      <span style="white-space:nowrap;background:${p};color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;margin-top:2px">${b.valueLabel}</span>
+    </div>`
+  ).join("");
+
+  const objectionQAs = sl.objectionHandling.map((o) =>
+    `<details style="border:1px solid #e5e7eb;border-radius:14px;padding:20px;background:#fff;margin-bottom:10px">
+      <summary style="font-weight:700;font-size:15px;color:#111;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
+        ${o.objection}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <p style="font-size:14px;color:#4b5563;line-height:1.7;margin-top:12px">${o.response}</p>
+    </details>`
+  ).join("");
+
+  const body = `
+<!-- NAV -->
+<nav style="background:${dk};padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99;border-bottom:1px solid rgba(255,255,255,0.06)">
+  <span style="color:#fff;font-weight:800;font-size:14px">${concept}</span>
+  <a href="#cta" style="background:${p};color:#fff;padding:10px 22px;border-radius:${br};font-weight:700;font-size:13px;text-decoration:none">Get Started →</a>
+</nav>
+
+<!-- HERO -->
+<section style="background:${dk};padding:100px 32px 80px;text-align:center">
+  <p style="display:inline-block;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);padding:6px 20px;border-radius:999px;color:${p};font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px">Sales Letter</p>
+  <h1 style="font-size:clamp(28px,4.5vw,58px);font-weight:900;color:#fff;line-height:1.08;margin:0 auto 24px;max-width:800px">${sl.headline}</h1>
+  <p style="font-size:clamp(16px,2vw,22px);color:rgba(255,255,255,0.7);max-width:620px;margin:0 auto;line-height:1.6">${sl.subheadline}</p>
+</section>
+
+<!-- OPENING HOOK -->
+<section style="background:#fff;padding:80px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.5vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.openingHook}</p>
+  </div>
+</section>
+
+<!-- PROBLEM AGITATION -->
+<section style="background:#f8fafc;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:80px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">The Problem</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.problemAgitation}</p>
+  </div>
+</section>
+
+<!-- BRIDGE TO POSSIBILITY -->
+<section style="background:${md};padding:80px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">There's a Better Way</p>
+    <p style="font-size:clamp(16px,1.6vw,20px);color:rgba(255,255,255,0.85);line-height:1.85;font-weight:500;white-space:pre-line">${sl.bridgeToPossibility}</p>
+  </div>
+</section>
+
+<!-- COACH CREDENTIALS -->
+<section style="background:#fff;padding:80px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">Why Trust Me</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:#374151;line-height:1.85;white-space:pre-line">${sl.coachCredentials}</p>
+  </div>
+</section>
+
+<!-- OFFER REVEAL -->
+<section style="background:${dk};padding:80px 32px;text-align:center">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">Introducing</p>
+    <p style="font-size:clamp(16px,1.8vw,22px);color:#fff;line-height:1.75;white-space:pre-line">${sl.offerReveal}</p>
+  </div>
+</section>
+
+<!-- WHAT YOU GET -->
+<section style="background:#f8fafc;padding:80px 32px">
+  <div style="max-width:900px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Everything Included</p>
+    <h2 style="font-size:clamp(24px,3vw,38px);font-weight:900;text-align:center;color:#111;margin-bottom:40px">Here's what you get</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
+      ${whatYouGetCards}
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section style="background:${md};padding:80px 32px">
+  <div style="max-width:720px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:16px">What Clients Say</p>
+    <p style="font-size:clamp(15px,1.5vw,18px);color:rgba(255,255,255,0.85);line-height:1.85;white-space:pre-line">${sl.socialProofFramework}</p>
+  </div>
+</section>
+
+<!-- BONUS STACK -->
+<section style="background:${dk};padding:80px 32px">
+  <div style="max-width:760px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Free Bonuses</p>
+    <h2 style="font-size:clamp(22px,2.5vw,32px);font-weight:900;text-align:center;color:#fff;margin-bottom:32px">Included at no extra cost</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">${bonusCards}</div>
+  </div>
+</section>
+
+<!-- PRICE REVEAL -->
+<section style="background:#fff;padding:80px 32px;text-align:center">
+  <div style="max-width:640px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};margin-bottom:8px">Investment</p>
+    <p style="font-size:clamp(16px,1.8vw,20px);color:#374151;line-height:1.8;white-space:pre-line">${sl.priceReveal}</p>
+  </div>
+</section>
+
+<!-- GUARANTEE -->
+<section style="background:#f0fdf4;border-top:1px solid #bbf7d0;border-bottom:1px solid #bbf7d0;padding:56px 32px">
+  <div style="max-width:640px;margin:0 auto;display:flex;gap:24px;align-items:flex-start">
+    <div style="width:56px;height:56px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <p style="font-weight:800;font-size:18px;color:#14532d;margin-bottom:8px">My Personal Guarantee</p>
+      <p style="font-size:14px;color:#166534;line-height:1.75;white-space:pre-line">${sl.guarantee}</p>
+    </div>
+  </div>
+</section>
+
+<!-- OBJECTION HANDLING -->
+<section style="background:#f8fafc;padding:80px 32px">
+  <div style="max-width:700px;margin:0 auto">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${p};text-align:center;margin-bottom:8px">Your Questions Answered</p>
+    <h2 style="font-size:clamp(22px,2.5vw,32px);font-weight:900;text-align:center;color:#111;margin-bottom:32px">Before you decide</h2>
+    ${objectionQAs}
+  </div>
+</section>
+
+<!-- URGENCY -->
+<section style="background:${md};padding:56px 32px;text-align:center">
+  <div style="max-width:640px;margin:0 auto">
+    <p style="font-size:clamp(15px,1.5vw,18px);color:rgba(255,255,255,0.85);line-height:1.8;white-space:pre-line">${sl.urgencySection}</p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="cta" style="background:${p};padding:100px 32px;text-align:center">
+  <div style="max-width:640px;margin:0 auto">
+    <p style="font-size:clamp(16px,2vw,22px);color:#fff;line-height:1.75;margin-bottom:40px;font-weight:500;white-space:pre-line">${sl.finalCta}</p>
+    <a href="#signup" style="display:inline-flex;align-items:center;gap:10px;background:#fff;color:${p};padding:20px 48px;border-radius:${br};font-weight:900;font-size:18px;text-decoration:none;box-shadow:0 12px 40px rgba(0,0,0,0.2)">
+      Yes — I'm Ready to Start →
+    </a>
+    <p style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:18px">No risk · ${sl.guarantee.split(".")[0]}.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:${dk};padding:28px 32px;text-align:center;border-top:1px solid rgba(255,255,255,0.05)">
+  <p style="color:#475569;font-size:12px">© ${new Date().getFullYear()} ${concept}. All rights reserved.</p>
+  <p style="color:#334155;font-size:11px;margin-top:4px">Privacy Policy · Terms of Service</p>
+</footer>`;
+
+  return base(sl.headline ?? concept, body);
+}
+
 export interface FunnelPageHtml {
   landing: string;
   optin: string;

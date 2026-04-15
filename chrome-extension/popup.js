@@ -3,16 +3,17 @@
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
 
-const PAGES = ["landing", "optin", "thankyou", "booking"];
+const PAGES = ["landing", "optin", "thankyou", "booking", "salesletter"];
 
 // Stores the full (untruncated) raw JSON from the last Native Firebase fetch
 let _nativeFirebaseRaw = null;
 
 const PAGE_LABELS = {
-  landing:  "Landing Page",
-  optin:    "Opt-In Page",
-  thankyou: "Thank You Page",
-  booking:  "Booking Page",
+  landing:      "Landing Page",
+  optin:        "Opt-In Page",
+  thankyou:     "Thank You Page",
+  booking:      "Booking Page",
+  salesletter:  "Sales Letter",
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -137,8 +138,9 @@ function refreshCopiedCard() {
     const pasteBtn  = document.getElementById("paste-btn");
 
     const PAGE_LABELS = {
-      landing: "Landing Page", optin: "Opt-In Page",
-      thankyou: "Thank You Page", booking: "Booking Page",
+      landing:     "Landing Page",   optin:       "Opt-In Page",
+      thankyou:    "Thank You Page", booking:     "Booking Page",
+      salesletter: "Sales Letter",
     };
 
     if (copied?.funnelId && copied?.stepId) {

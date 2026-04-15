@@ -5,12 +5,14 @@ import {
   generateOptInPageHtml,
   generateThankYouPageHtml,
   generateBookingPageHtml,
+  generateSalesLetterHtml,
 } from "./page-html";
 import {
   buildLandingPageData,
   buildOptInPageData,
   buildThankYouPageData,
   buildBookingPageData,
+  buildSalesLetterPageData,
   type GhlPageData,
 } from "./ghl-pagedata";
 
@@ -202,6 +204,7 @@ export async function importToHighLevel(
       type: string;
       htmlFn: (a: GeneratedFunnelAssets) => string;
       pageDataFn: (a: GeneratedFunnelAssets) => GhlPageData;
+      optional?: boolean;
     }[] = [
       {
         name:        "Landing Page",
@@ -227,6 +230,14 @@ export async function importToHighLevel(
         htmlFn:      generateBookingPageHtml,
         pageDataFn:  buildBookingPageData,
       },
+      // Sales letter is optional — only included if longform assets have been generated
+      ...(assets.longFormAssets?.salesLetter ? [{
+        name:        "Sales Letter",
+        type:        "sales-letter",
+        htmlFn:      generateSalesLetterHtml,
+        pageDataFn:  buildSalesLetterPageData,
+        optional:    true as const,
+      }] : []),
     ];
 
     for (const def of stepDefs) {

@@ -85,8 +85,8 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
   const ads = data.adCopy;
   const campaign = data.campaignNaming;
 
-  const emailKeys = ["welcome", "reminder", "objectionHandling", "lastChance", "reEngagement"] as const;
-  const emailLabels = ["Welcome", "Reminder", "Objection Handling", "Last Chance", "Re-engagement"];
+  const emailKeys = ["welcome", "valueDelivery", "socialProof", "objectionHandling", "lastChance", "dayOneKickoff", "midChallenge", "finalStretch", "challengeComplete", "reEngagement"] as const;
+  const emailLabels = ["Welcome", "Quick Win", "Social Proof", "Objection Handling", "Last Chance", "Day 1 Kickoff", "Midpoint Check-in", "Final Stretch", "Challenge Complete", "Re-engagement"];
 
   return (
     <div className="space-y-5">
@@ -122,7 +122,7 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
             {
               n: "2",
               title: "Load a page from the extension popup",
-              body: "Click the extension icon while on this results page. It auto-detects your project. Click Load next to the page you want (Landing, Opt-In, Thank You, or Booking).",
+              body: "Click the extension icon while on this results page. It auto-detects your project. Click Load next to the page you want (Landing, Opt-In, Thank You, Booking, or Sales Letter).",
             },
             {
               n: "3",
@@ -205,18 +205,18 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
       </HLGroup>
 
       {/* Step 4 – Email Sequence */}
-      <HLGroup step={4} title="Email Sequence (5 emails)" hlPath="Automation → Workflows → Add Action → Send Email">
+      <HLGroup step={4} title="Email Sequence (10 emails)" hlPath="Automation → Workflows → Add Action → Send Email">
         <p className="text-xs text-gray-400 -mt-1">
-          Create a workflow triggered on "Contact Created" or "Form Submitted". Add 5 Send Email actions with the delays shown.
+          Create a workflow triggered on "Contact Created" or "Form Submitted". Add Send Email actions with the timing shown below.
         </p>
         {emailKeys.map((key, i) => {
           const email = emails?.[key];
-          const delays = ["Immediately", "After 24h", "After 48h", "After 72h", "After 7 days"];
+          const timings = ["Immediately", "Day 1", "Day 2", "Day 4", "24h before challenge", "Challenge Day 1", "Challenge Day 15", "Challenge Day 28", "Challenge Day 30", "Day 37 (no conversion)"];
           return (
             <div key={key} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-gray-700">Email {i + 1}: {emailLabels[i]}</span>
-                <span className="text-xs text-gray-400">· Send: {delays[i]}</span>
+                <span className="text-xs text-gray-400">· Send: {timings[i]}</span>
               </div>
               <HLField label="Subject Line" hlField="Email → Subject" value={email?.subject ?? ""} />
               <HLField label="Email Body" hlField="Email → Body" value={email?.body ?? ""} />
@@ -226,24 +226,26 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
       </HLGroup>
 
       {/* Step 5 – SMS Sequence */}
-      <HLGroup step={5} title="SMS Sequence (5 messages)" hlPath="Automation → Workflows → Add Action → Send SMS">
+      <HLGroup step={5} title="SMS Sequence (7 messages)" hlPath="Automation → Workflows → Add Action → Send SMS">
         <p className="text-xs text-gray-400 -mt-1">
-          Add Send SMS actions to the same workflow, staggered with time delays.
+          Add Send SMS actions to the same workflow with the timing shown below.
         </p>
         {([
-          { key: "confirmation",  label: "SMS 1: Confirmation",  delay: "Immediately" },
-          { key: "reminder",      label: "SMS 2: Reminder",      delay: "Day 3" },
-          { key: "followUp",      label: "SMS 3: Follow-up",     delay: "Day 7" },
-          { key: "noShow",        label: "SMS 4: No-show",       delay: "Day 14" },
-          { key: "reEngagement",  label: "SMS 5: Re-engagement", delay: "Day 21" },
-        ] as const).map(({ key, label, delay }) => {
+          { key: "confirmation"           as const, label: "SMS 1: Confirmation",         timing: "Immediately" },
+          { key: "challengeReminder"      as const, label: "SMS 2: Challenge Reminder",   timing: "24h before challenge" },
+          { key: "dayOneKickoff"          as const, label: "SMS 3: Day 1 Kickoff",        timing: "Challenge Day 1 morning" },
+          { key: "midChallengeMotivation" as const, label: "SMS 4: Midpoint Motivation",  timing: "Challenge Day 15" },
+          { key: "noShow"                 as const, label: "SMS 5: No-Show Follow-up",    timing: "Trigger: no Day 1 activity" },
+          { key: "challengeComplete"      as const, label: "SMS 6: Challenge Complete",   timing: "Challenge Day 30" },
+          { key: "reEngagement"           as const, label: "SMS 7: Re-engagement",        timing: "Day 37 (no conversion)" },
+        ]).map(({ key, label, timing }) => {
           const msg = sms?.[key] ?? "";
           return (
             <div key={key} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-gray-700">{label}</span>
-                  <span className="text-xs text-gray-400">· Send: {delay}</span>
+                  <span className="text-xs text-gray-400">· Send: {timing}</span>
                   <span className={`text-[10px] font-medium ${msg.length > 160 ? "text-red-500" : "text-green-600"}`}>
                     {msg.length}/160 chars
                   </span>

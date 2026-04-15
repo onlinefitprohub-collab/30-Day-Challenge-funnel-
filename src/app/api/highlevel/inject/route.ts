@@ -7,6 +7,7 @@ import {
   buildOptInPageData,
   buildThankYouPageData,
   buildBookingPageData,
+  buildSalesLetterPageData,
 } from "@/lib/highlevel/ghl-pagedata";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   // ── Fetch project outputs using service role (token already validated) ─────
-  const validPages = ["landing", "optin", "thankyou", "booking"];
+  const validPages = ["landing", "optin", "thankyou", "booking", "salesletter"];
   if (!validPages.includes(page)) {
     return NextResponse.json({ success: false, error: "Invalid page value" }, { status: 400 });
   }
@@ -98,6 +99,15 @@ export async function POST(request: Request) {
     case "optin":    pageData = buildOptInPageData(assets);    break;
     case "thankyou": pageData = buildThankYouPageData(assets); break;
     case "booking":  pageData = buildBookingPageData(assets);  break;
+    case "salesletter":
+      if (!assets.longFormAssets?.salesLetter) {
+        return NextResponse.json(
+          { success: false, error: "Sales letter not generated yet" },
+          { status: 404, headers: CORS_HEADERS },
+        );
+      }
+      pageData = buildSalesLetterPageData(assets);
+      break;
     default:         return NextResponse.json({ success: false, error: "Invalid page" }, { status: 400 });
   }
 
