@@ -41,7 +41,7 @@ const MODEL_FAST    = "claude-haiku-4-5-20251001";
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
   offerPages:  4096,  // 5 sections + design spec + framework/voice/layout variants (was 2800 — truncated)
-  sequences:   2800,  // 5 SMS + 5 emails with subject + body
+  sequences:   4500,  // 7 SMS + 10 emails with subject + body (expanded lifecycle sequence)
   adsCampaign: 3200,  // ad copy, creative prompts, campaign naming (was 2400 — truncated)
 } as const;
 

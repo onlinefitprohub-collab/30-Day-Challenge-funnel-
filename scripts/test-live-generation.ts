@@ -118,11 +118,13 @@ sub("Expectation Setting");   print(result.bookingPage.expectationSetting);
 section(6, "SMS SEQUENCE");
 const sms = result.smsSequence;
 const smsList: [string, string][] = [
-  ["Confirmation", sms.confirmation],
-  ["Reminder",     sms.reminder],
-  ["Follow-up",    sms.followUp],
-  ["No-show",      sms.noShow],
-  ["Re-engagement",sms.reEngagement],
+  ["Confirmation",          sms.confirmation],
+  ["Challenge Reminder",    sms.challengeReminder],
+  ["Day 1 Kickoff",         sms.dayOneKickoff],
+  ["Mid-Challenge",         sms.midChallengeMotivation],
+  ["No-show",               sms.noShow],
+  ["Challenge Complete",    sms.challengeComplete],
+  ["Re-engagement",         sms.reEngagement],
 ];
 smsList.forEach(([label, text]) => {
   const flag = text.length > 160 ? "  ⚠️  OVER 160 CHARS" : "";
@@ -134,10 +136,15 @@ section(7, "EMAIL SEQUENCE");
 const emails = result.emailSequence;
 const emailList = [
   ["Welcome",            emails.welcome],
-  ["Reminder",          emails.reminder],
-  ["Objection Handling",emails.objectionHandling],
-  ["Last Chance",       emails.lastChance],
-  ["Re-engagement",     emails.reEngagement],
+  ["Value Delivery",     emails.valueDelivery],
+  ["Social Proof",       emails.socialProof],
+  ["Objection Handling", emails.objectionHandling],
+  ["Last Chance",        emails.lastChance],
+  ["Day 1 Kickoff",      emails.dayOneKickoff],
+  ["Mid-Challenge",      emails.midChallenge],
+  ["Final Stretch",      emails.finalStretch],
+  ["Challenge Complete", emails.challengeComplete],
+  ["Re-engagement",      emails.reEngagement],
 ] as const;
 emailList.forEach(([label, email]) => {
   console.log(`\n  ── ${label} Email ──`);

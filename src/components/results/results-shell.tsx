@@ -7,12 +7,12 @@ import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
-  Dumbbell, MessageCircle,
+  Dumbbell, MessageCircle, CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets, WorkoutPlan } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence } from "@/types/generation";
 import type { LongFormSalesAssets } from "@/types/longform";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
@@ -30,6 +30,7 @@ import { GhlInspectorSection }    from "./sections/ghl-inspector";
 import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-plan";
 import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
+import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
 
 const tabs = [
   { id: "highlevel",       label: "HighLevel",       icon: Layers,          highlight: true, group: "export" },
@@ -42,6 +43,7 @@ const tabs = [
   { id: "bookingPage",     label: "Booking Page",    icon: Calendar,                         group: "pages" },
   { id: "smsSequence",     label: "SMS Sequence",    icon: MessageSquare,                    group: "sequences" },
   { id: "emailSequence",   label: "Email Sequence",  icon: Mail,                             group: "sequences" },
+  { id: "nurtureSequence", label: "52-Wk Nurture",   icon: CalendarDays,                     group: "sequences" },
   { id: "adCopy",          label: "Ad Copy",         icon: Megaphone,                        group: "ads" },
   { id: "creativePrompts", label: "Creatives",       icon: ImageIcon,                        group: "ads" },
   { id: "campaignNaming",  label: "Campaign",        icon: BarChart3,                        group: "ads" },
@@ -97,6 +99,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   const [liveLongFormAssets, setLiveLongFormAssets]   = useState<LongFormSalesAssets | undefined>(
     outputs.longFormAssets as LongFormSalesAssets | undefined,
   );
+  const [liveNurtureSequence, setLiveNurtureSequence] = useState<NurtureSequence | undefined>(
+    outputs.nurtureSequence as NurtureSequence | undefined,
+  );
 
   function handleWorkoutGenerated(plan: WorkoutPlan) {
     setLiveWorkoutPlan(plan);
@@ -106,6 +111,11 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   function handleLongFormGenerated(assets: LongFormSalesAssets) {
     setLiveLongFormAssets(assets);
     setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, longFormAssets: assets }));
+  }
+
+  function handleNurtureGenerated(sequence: NurtureSequence) {
+    setLiveNurtureSequence(sequence);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, nurtureSequence: sequence }));
   }
 
   // Strip internal _isMock flag from the copy-all output
@@ -203,6 +213,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     manyChatFlow: liveLongFormAssets
       ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
       : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,
+    nurtureSequence: liveNurtureSequence
+      ? <NurtureSection data={liveNurtureSequence} projectId={project.id} onRegenerate={handleNurtureGenerated} />
+      : <NurturePlaceholder projectId={project.id} onGenerated={handleNurtureGenerated} />,
   };
 
   return (

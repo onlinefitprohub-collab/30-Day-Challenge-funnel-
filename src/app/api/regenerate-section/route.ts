@@ -131,7 +131,7 @@ export async function POST(request: Request) {
             buildSequencesPrompt(context, style.promptDescription),
             sequencesResponseSchema,
             "sequences",
-            2800,
+            4500,
             "claude-haiku-4-5-20251001",
           );
       const data = (result.data ?? mock) as GeneratedFunnelAssets;

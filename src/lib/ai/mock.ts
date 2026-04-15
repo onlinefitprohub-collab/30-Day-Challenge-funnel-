@@ -152,11 +152,13 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
 
     smsSequence: {
       // All under 160 chars
-      confirmation: `Hey {name}, you're confirmed for the ${challengeTitle}! Check your email — everything you need is in there. Looking forward to it — ${coachName}`.slice(0, 160),
-      reminder: `{name} — the ${challengeTitle} kicks off tomorrow. ${ctaType === "booking" ? "Your call is booked" : "You're all set"}. See you in there — ${coachName}`.slice(0, 160),
-      followUp: `Hey {name}, day 1 done — how did it go? Reply and let me know. I read every reply. — ${coachName}`.slice(0, 160),
-      noShow: `Hey {name}, missed you at your call. No worries — reply YES and I'll send a new booking link. — ${coachName}`.slice(0, 160),
-      reEngagement: `{name} — you signed up a while back and I wanted to check in. Still interested? Just reply and I'll help you get started. — ${coachName}`.slice(0, 160),
+      confirmation:           `Hey {name}, you're confirmed for the ${challengeTitle}! Check your email — everything you need is in there. — ${coachName}`.slice(0, 160),
+      challengeReminder:      `{name} — the ${challengeTitle} kicks off tomorrow. ${ctaType === "booking" ? "Your call is booked" : "You're all set"}. See you in there — ${coachName}`.slice(0, 160),
+      dayOneKickoff:          `It's Day 1, {name}! Head to the group now — your first session is live. Let's go. — ${coachName}`.slice(0, 160),
+      midChallengeMotivation: `{name}, you're halfway through the ${challengeTitle}. That's huge. How's it going? Reply and let me know. — ${coachName}`.slice(0, 160),
+      noShow:                 `Hey {name}, missed you at your call. No worries — reply YES and I'll send a new booking link. — ${coachName}`.slice(0, 160),
+      challengeComplete:      `{name} — you did it. Day 30 complete! Reply with your biggest win. So proud of you. — ${coachName}`.slice(0, 160),
+      reEngagement:           `{name} — you signed up a while back. Still interested? Just reply and I'll help you get started. — ${coachName}`.slice(0, 160),
     },
 
     emailSequence: {
@@ -164,9 +166,13 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
         subject: `You're in — here's what happens next`,
         body: `Hi {first_name},\n\nWelcome to the ${challengeTitle}. I'm ${coachName} and I'll be with you throughout the next ${duration} days.\n\nHere's what to do right now:\n\n${ctaType === "booking" ? "→ Book your kickstart call using the link below — don't skip this\n" : "→ Join the private group using the link below\n"}→ Save the start date to your calendar\n→ Read the welcome email coming right after this one\n\nI built ${businessName} because I know how frustrating ${firstStruggle} is — especially when you've already tried to fix it. This programme is designed around that reality.\n\nI'll be in touch soon.\n\n${coachName}`,
       },
-      reminder: {
-        subject: `We start tomorrow — quick checklist for you`,
-        body: `Hi {first_name},\n\nDay one of the ${challengeTitle} is tomorrow. Here's all you need to do before then:\n\n✓ ${ctaType === "booking" ? "Your kickstart call is confirmed" : "You've joined the group"}\n✓ You've got 20–30 minutes free in tomorrow's schedule\n✓ You know why you signed up\n\nYou signed up to ${outcomeLC}. In ${duration} days, that's where we're heading.\n\nSee you tomorrow.\n\n${coachName}`,
+      valueDelivery: {
+        subject: `One thing to do today (takes 5 minutes)`,
+        body: `Hi {first_name},\n\nBefore the challenge starts, here's something you can do right now that'll make Day 1 a lot smoother.\n\nTake 5 minutes and write down the #1 thing you want to feel different about in ${duration} days. Not a goal — a feeling. "I want to feel confident when I..." or "I want to stop feeling like..."\n\nThis one thing becomes your compass for the whole challenge. When it gets hard, it's what brings you back.\n\nKeep it somewhere you'll see it. I'll remind you to check it at the midpoint.\n\n${coachName}`,
+      },
+      socialProof: {
+        subject: `How ${testimonials ? "one of our clients" : "someone just like you"} got ${outcomeLC}`,
+        body: `Hi {first_name},\n\nI want to share a quick story with you.\n\nOne of the people who went through the ${challengeTitle} came in with exactly the same concern: ${firstStruggle}. They'd tried other things before and nothing had stuck. They weren't sure this would be any different.\n\nBy Day 30, they told me it was the first time they'd actually followed through on something like this — and that the results weren't just physical. Their confidence had shifted too.\n\nThat's what a structured programme with real accountability can do.\n\nI'm glad you're here.\n\n${coachName}`,
       },
       objectionHandling: {
         subject: `"${firstObjection}" — I hear this a lot`,
@@ -175,6 +181,22 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
       lastChance: {
         subject: `Closing soon — last chance to join this round`,
         body: `Hi {first_name},\n\nRegistration for the ${challengeTitle} closes at the end of {closing_date}. After that, the next intake won't open for a while.\n\nIf you've been sitting on it: ${outcomeCap} isn't going to happen by waiting for the right moment. The right moment is usually just a decision.\n\n${isFree ? "It's free to join." : `The investment is ${price}.`} The cost of another month of ${firstStruggle} is higher.\n\n→ ${ctaButton}: [LINK]\n\n${coachName}`,
+      },
+      dayOneKickoff: {
+        subject: `Day 1 is live — here's exactly what to do`,
+        body: `Hi {first_name},\n\nToday's the day. The ${challengeTitle} is officially live.\n\nHere's your Day 1 action:\n\n→ ${ctaType === "booking" ? "Join your kickstart call — check your calendar for the link" : "Open the group and complete today's session"}\n\nDon't overthink it. Don't wait until you feel ready. Just do the first step.\n\nI'll check in with you at the halfway mark. Until then — I'm rooting for you.\n\n${coachName}`,
+      },
+      midChallenge: {
+        subject: `Halfway there — this is the hardest part`,
+        body: `Hi {first_name},\n\nDay 15. You're halfway through the ${challengeTitle}.\n\nI want to be honest with you: this is usually when it gets harder. The initial excitement has worn off and the finish line still feels far away. That's completely normal — and it's also exactly the moment that separates people who get results from people who don't.\n\nYou've already done ${Math.floor(duration / 2)} days. That's not nothing. That's real.\n\nGo back to what you wrote at the start — that feeling you wanted. Keep that in front of you for the next ${Math.ceil(duration / 2)} days.\n\nI'm here if you need anything.\n\n${coachName}`,
+      },
+      finalStretch: {
+        subject: `2 days left — you're almost there`,
+        body: `Hi {first_name},\n\nTwo days left in the ${challengeTitle}.\n\nThink about where you were on Day 1 and where you are now. That gap — however small or large it feels — is real change. You showed up when it was easy and when it wasn't.\n\nFinish strong. The last two days matter as much as the first two.\n\nI'll be in touch on Day 30 with something special for the people who complete it.\n\n${coachName}`,
+      },
+      challengeComplete: {
+        subject: `You did it — here's what's next`,
+        body: `Hi {first_name},\n\nDay 30. You finished.\n\nI don't say this lightly: completing a ${duration}-day challenge takes more than most people think. You showed up when you didn't feel like it. That matters.\n\nFor the people who want to keep going — ${ctaType === "booking" ? "I'd love to have a conversation about what's possible next" : "I'm running the next round soon"}. If you're ready to take what you've built and go further, reply to this email and let me know.\n\nEither way — I'm glad you were part of this.\n\n${coachName}`,
       },
       reEngagement: {
         subject: `Still interested, {first_name}?`,

@@ -39,21 +39,52 @@ export const bookingPageSchema = z.object({
 });
 
 export const smsSequenceSchema = z.object({
-  confirmation:  z.string().min(1),
-  reminder:      z.string().min(1),
-  followUp:      z.string().min(1),
-  noShow:        z.string().min(1),
-  reEngagement:  z.string().min(1),
+  // Pre-Challenge
+  confirmation:           z.string().min(1),
+  challengeReminder:      z.string().min(1),
+  // During Challenge
+  dayOneKickoff:          z.string().min(1),
+  midChallengeMotivation: z.string().min(1),
+  noShow:                 z.string().min(1),
+  // Post-Challenge
+  challengeComplete:      z.string().min(1),
+  reEngagement:           z.string().min(1),
 });
 
 const emailSchema = z.object({ subject: z.string().min(1), body: z.string().min(1) });
 
 export const emailSequenceSchema = z.object({
+  // Pre-Challenge
   welcome:           emailSchema,
-  reminder:          emailSchema,
+  valueDelivery:     emailSchema,
+  socialProof:       emailSchema,
   objectionHandling: emailSchema,
   lastChance:        emailSchema,
+  // During Challenge
+  dayOneKickoff:     emailSchema,
+  midChallenge:      emailSchema,
+  finalStretch:      emailSchema,
+  // Post-Challenge
+  challengeComplete: emailSchema,
   reEngagement:      emailSchema,
+});
+
+// ─── 52-Week Nurture schemas ─────────────────────────────────────────────────
+
+export const nurtureEmailSchema = z.object({
+  week:    z.number().int().min(1).max(52),
+  theme:   z.string().min(1),
+  subject: z.string().min(1),
+  body:    z.string().min(1),
+});
+
+export const nurtureSequenceSchema = z.object({
+  generatedAt: z.string().min(1),
+  emails:      z.array(nurtureEmailSchema).min(52).max(52),
+});
+
+export const nurtureBatchSchema = z.object({
+  emails: z.array(nurtureEmailSchema).min(13).max(13),
 });
 
 export const adCopySchema = z.object({

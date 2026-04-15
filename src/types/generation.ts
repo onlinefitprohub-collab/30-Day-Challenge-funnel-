@@ -35,19 +35,46 @@ export interface BookingPageCopy {
 }
 
 export interface SmsSequence {
+  // Pre-Challenge
   confirmation: string;
-  reminder: string;
-  followUp: string;
+  challengeReminder: string;
+  // During Challenge
+  dayOneKickoff: string;
+  midChallengeMotivation: string;
   noShow: string;
+  // Post-Challenge
+  challengeComplete: string;
   reEngagement: string;
 }
 
 export interface EmailSequence {
+  // Pre-Challenge
   welcome: { subject: string; body: string };
-  reminder: { subject: string; body: string };
+  valueDelivery: { subject: string; body: string };
+  socialProof: { subject: string; body: string };
   objectionHandling: { subject: string; body: string };
   lastChance: { subject: string; body: string };
+  // During Challenge
+  dayOneKickoff: { subject: string; body: string };
+  midChallenge: { subject: string; body: string };
+  finalStretch: { subject: string; body: string };
+  // Post-Challenge
+  challengeComplete: { subject: string; body: string };
   reEngagement: { subject: string; body: string };
+}
+
+// ─── 52-Week Nurture Sequence ────────────────────────────────────────────────
+
+export interface NurtureEmail {
+  week: number;
+  theme: string;
+  subject: string;
+  body: string;
+}
+
+export interface NurtureSequence {
+  generatedAt: string;
+  emails: NurtureEmail[]; // 52 items
 }
 
 export interface AdCopy {
@@ -171,6 +198,7 @@ export interface GeneratedFunnelAssets {
   // On-demand extras (separate generation flows)
   workoutPlan?: WorkoutPlan;
   longFormAssets?: import("./longform").LongFormSalesAssets;
+  nurtureSequence?: NurtureSequence;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;
