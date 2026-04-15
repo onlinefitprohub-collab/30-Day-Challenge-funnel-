@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw, Shuffle } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
+import type { LongFormSalesAssets } from "@/types/longform";
 import { GhlPagePreview } from "./GhlPagePreview";
 import { toast } from "@/hooks/use-toast";
 
@@ -53,16 +54,27 @@ const ALL_TEMPLATES: Array<{ id: string; label: string; desc: string }> = [
 interface Props {
   data: GeneratedFunnelAssets;
   projectId?: string;
+  funnelType?: "challenge" | "application";
+  liveLongFormAssets?: LongFormSalesAssets;
 }
 
-const PAGES = [
-  { id: "landing",  label: "Landing Page" },
-  { id: "optin",    label: "Opt-in Form" },
-  { id: "thankyou", label: "Thank You" },
-  { id: "booking",  label: "Booking Page" },
+const CHALLENGE_PAGES = [
+  { id: "landing",      label: "Landing Page" },
+  { id: "optin",        label: "Opt-in Form" },
+  { id: "thankyou",     label: "Thank You" },
+  { id: "booking",      label: "Booking Page" },
 ] as const;
 
-type PageId = (typeof PAGES)[number]["id"];
+const APPLICATION_PAGES = [
+  { id: "salesletter",  label: "Long-Form Landing" },
+  { id: "optin",        label: "Application Form" },
+  { id: "thankyou",     label: "App Received" },
+  { id: "booking",      label: "Strategy Call" },
+] as const;
+
+type ChallengePage = (typeof CHALLENGE_PAGES)[number]["id"];
+type ApplicationPage = (typeof APPLICATION_PAGES)[number]["id"];
+type PageId = ChallengePage | ApplicationPage;
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  Browser chrome wrapper                                                     */
@@ -89,8 +101,10 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  MAIN EXPORT                                                                */
 /* ─────────────────────────────────────────────────────────────────────────── */
-export function FunnelPreviewSection({ data, projectId }: Props) {
-  const [activePage, setActivePage] = useState<PageId>("landing");
+export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", liveLongFormAssets }: Props) {
+  const isApplication = funnelType === "application";
+  const PAGES = isApplication ? APPLICATION_PAGES : CHALLENGE_PAGES;
+  const [activePage, setActivePage] = useState<PageId>(isApplication ? "salesletter" : "landing");
 
   // Template selector — null means "use persisted/random (server decides)"
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
@@ -113,10 +127,11 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
   const activeMeta = PAGES.find((p) => p.id === activePage)!;
 
   const pageUrls: Record<PageId, string> = {
-    landing:  "yourfunnel.com/challenge",
-    optin:    "yourfunnel.com/optin",
-    thankyou: "yourfunnel.com/thank-you",
-    booking:  "yourfunnel.com/book",
+    landing:      "yourfunnel.com/challenge",
+    salesletter:  "yourfunnel.com/apply",
+    optin:        "yourfunnel.com/optin",
+    thankyou:     "yourfunnel.com/thank-you",
+    booking:      "yourfunnel.com/book",
   };
 
   const handleLandingLoad = useCallback(
@@ -155,6 +170,9 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
     if (page === "landing" && selectedTemplate) qs.set("templateVariant", selectedTemplate);
     return qs.toString();
   }
+
+  // For application funnels, show a generating spinner while the sales letter is being produced
+  const showGeneratingSpinner = isApplication && activePage === "salesletter" && !liveLongFormAssets;
 
   async function handleDownloadJson() {
     try {
@@ -297,8 +315,8 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
         </div>
       </div>
 
-      {/* ── Template selector (landing page only) ─────────────────────────── */}
-      {activePage === "landing" && (
+      {/* ── Template selector (challenge landing page only) ──────────────── */}
+      {activePage === "landing" && !isApplication && (
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
@@ -410,13 +428,21 @@ export function FunnelPreviewSection({ data, projectId }: Props) {
 
       {/* Browser preview — key includes refreshKey + selectedTemplate so each change remounts */}
       <BrowserFrame url={pageUrls[activeMeta.id]}>
-        <GhlPagePreview
-          key={`${activePage}-${refreshKey}-${selectedTemplate ?? "auto"}`}
-          projectId={projectId ?? ""}
-          page={activePage}
-          templateVariant={activePage === "landing" && selectedTemplate ? selectedTemplate : undefined}
-          onLoad={activePage === "landing" ? handleLandingLoad : undefined}
-        />
+        {showGeneratingSpinner ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-400" />
+            <p className="text-sm font-medium text-gray-600">Generating your long-form landing page…</p>
+            <p className="mt-1 text-xs text-gray-400">This takes about 30 seconds</p>
+          </div>
+        ) : (
+          <GhlPagePreview
+            key={`${activePage}-${refreshKey}-${selectedTemplate ?? "auto"}`}
+            projectId={projectId ?? ""}
+            page={activePage}
+            templateVariant={activePage === "landing" && selectedTemplate ? selectedTemplate : undefined}
+            onLoad={activePage === "landing" ? handleLandingLoad : undefined}
+          />
+        )}
       </BrowserFrame>
     </div>
   );

@@ -12,28 +12,43 @@ interface SmsMeta {
   phase: "pre" | "during" | "post";
 }
 
-const smsLabels: Record<keyof SmsSequence, SmsMeta> = {
-  // Pre-Challenge
-  confirmation:           { label: "SMS 1: Confirmation",       timing: "Immediately after opt-in",    phase: "pre" },
-  challengeReminder:      { label: "SMS 2: Challenge Reminder",  timing: "24h before challenge starts", phase: "pre" },
-  // During Challenge
-  dayOneKickoff:          { label: "SMS 3: Day 1 Kickoff",       timing: "Challenge Day 1 morning",     phase: "during" },
-  midChallengeMotivation: { label: "SMS 4: Midpoint Motivation", timing: "Challenge Day 15",            phase: "during" },
+const CHALLENGE_SMS_LABELS: Record<keyof SmsSequence, SmsMeta> = {
+  confirmation:           { label: "SMS 1: Confirmation",       timing: "Immediately after opt-in",      phase: "pre" },
+  challengeReminder:      { label: "SMS 2: Challenge Reminder",  timing: "24h before challenge starts",   phase: "pre" },
+  dayOneKickoff:          { label: "SMS 3: Day 1 Kickoff",       timing: "Challenge Day 1 morning",       phase: "during" },
+  midChallengeMotivation: { label: "SMS 4: Midpoint Motivation", timing: "Challenge Day 15",              phase: "during" },
   noShow:                 { label: "SMS 5: No-Show Follow-up",   timing: "Triggered — no Day 1 activity", phase: "during" },
-  // Post-Challenge
-  challengeComplete:      { label: "SMS 6: Challenge Complete",  timing: "Challenge Day 30",            phase: "post" },
-  reEngagement:           { label: "SMS 7: Re-engagement",       timing: "Day 37 — no conversion",      phase: "post" },
+  challengeComplete:      { label: "SMS 6: Challenge Complete",  timing: "Challenge Day 30",              phase: "post" },
+  reEngagement:           { label: "SMS 7: Re-engagement",       timing: "Day 37 — no conversion",        phase: "post" },
 };
 
-const PHASE_LABELS: Record<"pre" | "during" | "post", string> = {
+const APPLICATION_SMS_LABELS: Record<keyof SmsSequence, SmsMeta> = {
+  confirmation:           { label: "SMS 1: Application Received",  timing: "Immediately after apply",         phase: "pre" },
+  challengeReminder:      { label: "SMS 2: Incomplete Reminder",   timing: "24h if incomplete",               phase: "pre" },
+  dayOneKickoff:          { label: "SMS 3: Application Approved",  timing: "When approved — book your call",  phase: "during" },
+  midChallengeMotivation: { label: "SMS 4: Call Reminder",         timing: "24h before strategy call",        phase: "during" },
+  noShow:                 { label: "SMS 5: Missed Call Follow-up", timing: "Triggered if no-show",            phase: "during" },
+  challengeComplete:      { label: "SMS 6: Post-Call Check-in",    timing: "Day 2 after call — no decision",  phase: "post" },
+  reEngagement:           { label: "SMS 7: Re-engagement",         timing: "Day 7 — no response",             phase: "post" },
+};
+
+const CHALLENGE_PHASE_LABELS: Record<"pre" | "during" | "post", string> = {
   pre:    "Pre-Challenge",
   during: "During Challenge",
   post:   "Post-Challenge",
 };
 
-const SMS_KEYS = Object.keys(smsLabels) as Array<keyof SmsSequence>;
+const APPLICATION_PHASE_LABELS: Record<"pre" | "during" | "post", string> = {
+  pre:    "Pre-Application",
+  during: "Post-Application",
+  post:   "Post-Call",
+};
 
-export function SmsSection({ data }: { data: SmsSequence }) {
+const SMS_KEYS = Object.keys(CHALLENGE_SMS_LABELS) as Array<keyof SmsSequence>;
+
+export function SmsSection({ data, funnelType = "challenge" }: { data: SmsSequence; funnelType?: string }) {
+  const smsLabels = funnelType === "application" ? APPLICATION_SMS_LABELS : CHALLENGE_SMS_LABELS;
+  const PHASE_LABELS = funnelType === "application" ? APPLICATION_PHASE_LABELS : CHALLENGE_PHASE_LABELS;
   const [copiedAll, setCopiedAll] = useState(false);
 
   async function handleCopyAll() {

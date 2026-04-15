@@ -70,6 +70,7 @@ export const socialProofSchema = z.object({
 
 // Combined wizard inputs — all steps merged
 export const wizardInputsSchema = z.object({
+  funnelType: z.enum(["challenge", "application"]).default("challenge"),
   ...businessBasicsSchema.shape,
   ...offerBasicsSchema.shape,
   ...audiencePainSchema.shape,
@@ -87,10 +88,11 @@ export type SocialProof = z.infer<typeof socialProofSchema>;
 export type WizardInputs = z.infer<typeof wizardInputsSchema>;
 
 export const WIZARD_STEPS = [
-  { id: 1, title: "Business Basics",  description: "Tell us about your business" },
-  { id: 2, title: "Your Offer",       description: "Define your challenge offer" },
-  { id: 3, title: "Your Audience",    description: "Who are you trying to reach?" },
-  { id: 4, title: "Brand Voice",      description: "How do you want to sound?" },
-  { id: 5, title: "Traffic",          description: "Where will your leads come from?" },
-  { id: 6, title: "Social Proof",     description: "Results, testimonials, and wins" },
+  { id: 1, title: "Funnel Type",      description: "What are you building?" },
+  { id: 2, title: "Business Basics",  description: "Tell us about your business" },
+  { id: 3, title: "Your Offer",       description: "Define your offer" },
+  { id: 4, title: "Your Audience",    description: "Who are you trying to reach?" },
+  { id: 5, title: "Brand Voice",      description: "How do you want to sound?" },
+  { id: 6, title: "Traffic",          description: "Where will your leads come from?" },
+  { id: 7, title: "Social Proof",     description: "Results, testimonials, and wins" },
 ] as const;

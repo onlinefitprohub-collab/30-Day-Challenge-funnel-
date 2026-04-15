@@ -12,31 +12,49 @@ interface EmailMeta {
   phase: "pre" | "during" | "post";
 }
 
-const emailMeta: Record<keyof EmailSequence, EmailMeta> = {
-  // Pre-Challenge
+const CHALLENGE_EMAIL_META: Record<keyof EmailSequence, EmailMeta> = {
   welcome:           { label: "Email 1: Welcome",            timing: "Immediately after opt-in",    phase: "pre" },
   valueDelivery:     { label: "Email 2: Quick Win",          timing: "Day 1",                       phase: "pre" },
   socialProof:       { label: "Email 3: Success Story",      timing: "Day 2",                       phase: "pre" },
   objectionHandling: { label: "Email 4: Objection Handling", timing: "Day 4",                       phase: "pre" },
   lastChance:        { label: "Email 5: Last Chance",        timing: "24h before challenge starts", phase: "pre" },
-  // During Challenge
   dayOneKickoff:     { label: "Email 6: Day 1 Kickoff",      timing: "Challenge Day 1",             phase: "during" },
   midChallenge:      { label: "Email 7: Midpoint Check-in",  timing: "Challenge Day 15",            phase: "during" },
   finalStretch:      { label: "Email 8: Final Stretch",      timing: "Challenge Day 28",            phase: "during" },
-  // Post-Challenge
   challengeComplete: { label: "Email 9: Challenge Complete", timing: "Challenge Day 30",            phase: "post" },
   reEngagement:      { label: "Email 10: Re-engagement",     timing: "Day 37 — no conversion",      phase: "post" },
 };
 
-const PHASE_LABELS: Record<"pre" | "during" | "post", string> = {
+const APPLICATION_EMAIL_META: Record<keyof EmailSequence, EmailMeta> = {
+  welcome:           { label: "Email 1: Welcome",              timing: "Immediately (pre-application opt-in)", phase: "pre" },
+  valueDelivery:     { label: "Email 2: Value Insight",         timing: "Day 1",                               phase: "pre" },
+  socialProof:       { label: "Email 3: Client Story",          timing: "Day 2",                               phase: "pre" },
+  objectionHandling: { label: "Email 4: Objection Handling",    timing: "Day 4",                               phase: "pre" },
+  lastChance:        { label: "Email 5: Apply Now",             timing: "Day 6 — spots closing",               phase: "pre" },
+  dayOneKickoff:     { label: "Email 6: Application Received",  timing: "Immediately after apply",             phase: "during" },
+  midChallenge:      { label: "Email 7: Under Review",          timing: "Day 2 post-apply",                    phase: "during" },
+  finalStretch:      { label: "Email 8: Approved — Book Call",  timing: "Day 3 post-apply",                    phase: "during" },
+  challengeComplete: { label: "Email 9: Pre-Call Prep",         timing: "24h before strategy call",            phase: "post" },
+  reEngagement:      { label: "Email 10: Re-engagement",        timing: "Day 7 post-call — no decision",       phase: "post" },
+};
+
+const CHALLENGE_PHASE_LABELS: Record<"pre" | "during" | "post", string> = {
   pre:    "Pre-Challenge",
   during: "During Challenge",
   post:   "Post-Challenge",
 };
 
-const EMAIL_KEYS = Object.keys(emailMeta) as Array<keyof EmailSequence>;
+const APPLICATION_PHASE_LABELS: Record<"pre" | "during" | "post", string> = {
+  pre:    "Pre-Application",
+  during: "Post-Application",
+  post:   "Post-Call",
+};
 
-export function EmailSection({ data }: { data: EmailSequence }) {
+const EMAIL_KEYS = Object.keys(CHALLENGE_EMAIL_META) as Array<keyof EmailSequence>;
+
+export function EmailSection({ data, funnelType = "challenge" }: { data: EmailSequence; funnelType?: string }) {
+  const emailMeta = funnelType === "application" ? APPLICATION_EMAIL_META : CHALLENGE_EMAIL_META;
+  const PHASE_LABELS = funnelType === "application" ? APPLICATION_PHASE_LABELS : CHALLENGE_PHASE_LABELS;
   const [openEmails, setOpenEmails] = useState<Set<keyof EmailSequence>>(
     new Set<keyof EmailSequence>(["welcome"])
   );

@@ -11,9 +11,11 @@ import type { LongFormSalesAssets } from "@/types/longform";
 interface LongFormPlaceholderProps {
   projectId: string;
   onGenerated: (assets: LongFormSalesAssets) => void;
+  /** When true the parent is already generating — show a spinner instead of a button */
+  generating?: boolean;
 }
 
-export function LongFormPlaceholder({ projectId, onGenerated }: LongFormPlaceholderProps) {
+export function LongFormPlaceholder({ projectId, onGenerated, generating }: LongFormPlaceholderProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleGenerate() {
@@ -40,26 +42,34 @@ export function LongFormPlaceholder({ projectId, onGenerated }: LongFormPlacehol
     }
   }
 
+  const isGenerating = loading || generating;
+
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100">
-        <FileText className="h-7 w-7 text-violet-600" />
-      </div>
-      <h3 className="mb-2 text-lg font-semibold text-gray-900">Generate Sales Letter + ManyChat Flow</h3>
-      <p className="mb-6 max-w-sm text-sm text-gray-500">
-        Create a long-form direct-response sales letter (3,000–5,000 words) and a complete ManyChat DM flow for organic lead nurture — both tailored to your challenge and audience.
-      </p>
-      <button
-        onClick={handleGenerate}
-        disabled={loading}
-        className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60 transition-colors"
-      >
-        {loading ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Generating… (this takes ~30 sec)</>
+        {isGenerating ? (
+          <Loader2 className="h-7 w-7 text-violet-600 animate-spin" />
         ) : (
-          <><FileText className="h-4 w-4" /> Generate Sales Letter + ManyChat</>
+          <FileText className="h-7 w-7 text-violet-600" />
         )}
-      </button>
+      </div>
+      <h3 className="mb-2 text-lg font-semibold text-gray-900">
+        {isGenerating ? "Generating your long-form assets…" : "Generate Sales Letter + ManyChat Flow"}
+      </h3>
+      <p className="mb-6 max-w-sm text-sm text-gray-500">
+        {isGenerating
+          ? "This takes about 30 seconds — your sales letter and ManyChat DM flow are being written."
+          : "Create a long-form direct-response sales letter (3,000–5,000 words) and a complete ManyChat DM flow for organic lead nurture — both tailored to your challenge and audience."}
+      </p>
+      {!isGenerating && (
+        <button
+          onClick={handleGenerate}
+          disabled={loading}
+          className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60 transition-colors"
+        >
+          <FileText className="h-4 w-4" /> Generate Sales Letter + ManyChat
+        </button>
+      )}
     </div>
   );
 }

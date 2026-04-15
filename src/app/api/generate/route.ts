@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       outputs: {
         ...assets,
         generatedAdImages,
+        funnelType:   validatedInputs.funnelType ?? "challenge",
         colourScheme: validatedInputs.colourScheme ?? "navy-orange",
         landingVariant,
         templateVariant,

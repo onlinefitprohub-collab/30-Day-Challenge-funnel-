@@ -125,10 +125,11 @@ export async function POST(request: Request) {
         copywriterStyle:       `${style.name} — ${style.tagline}`,
       };
     } else if (group === "sequences") {
+      const storedFunnelType = (existingOutputs.funnelType as "challenge" | "application" | undefined) ?? "challenge";
       const result = isMockMode
         ? { data: mock as GeneratedFunnelAssets, error: null, usedFallback: true }
         : await callClaudeGroup(
-            buildSequencesPrompt(context, style.promptDescription),
+            buildSequencesPrompt(context, style.promptDescription, storedFunnelType),
             sequencesResponseSchema,
             "sequences",
             4500,

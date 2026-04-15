@@ -91,7 +91,7 @@ export async function generateFunnelAssets(
       MODEL_PRIMARY,
     ),
     callCopyGroup(
-      buildSequencesPrompt(context, style.promptDescription),
+      buildSequencesPrompt(context, style.promptDescription, inputs.funnelType ?? "challenge"),
       sequencesResponseSchema,
       "sequences",
       TOKENS.sequences,

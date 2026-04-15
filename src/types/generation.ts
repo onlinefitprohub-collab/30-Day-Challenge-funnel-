@@ -195,6 +195,8 @@ export interface GeneratedFunnelAssets {
   clientCount?:    string;
   yearsCoaching?:  string;
   templateVariant?: string;
+  // Funnel type — determines tab set, sequence copy, and preview behaviour
+  funnelType?: "challenge" | "application";
   // On-demand extras (separate generation flows)
   workoutPlan?: WorkoutPlan;
   longFormAssets?: import("./longform").LongFormSalesAssets;

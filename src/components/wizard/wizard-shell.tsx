@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Zap, AlertCircle } from "lucide-react";
 import { WIZARD_STEPS, type WizardInputs } from "@/types/wizard";
 import { WizardProgress } from "@/components/wizard/wizard-progress";
+import { StepFunnelType } from "@/components/wizard/steps/step-funnel-type";
 import { StepBusinessBasics } from "@/components/wizard/steps/step-business-basics";
 import { StepOfferBasics } from "@/components/wizard/steps/step-offer-basics";
 import { StepAudiencePain } from "@/components/wizard/steps/step-audience-pain";
@@ -16,6 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
 
 const STEP_COMPONENTS = [
+  StepFunnelType,
   StepBusinessBasics,
   StepOfferBasics,
   StepAudiencePain,
@@ -55,7 +57,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
     if (error) throw new Error(error.message);
   }
 
-  // Create the project row — happens once on completing step 1
+  // Create the project row — deferred until we have a business name (step 2+)
   async function createProject(data: Partial<WizardInputs>): Promise<string> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -65,9 +67,12 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
       throw new Error("Not authenticated");
     }
 
+    const isApplication = data.funnelType === "application";
     const name = data.businessName
-      ? `${data.businessName} — ${data.challengeType ?? `${data.duration ?? 30}-Day Challenge`}`
-      : "My 30-Day Challenge Funnel";
+      ? isApplication
+        ? `${data.businessName} — Application Funnel`
+        : `${data.businessName} — ${data.challengeType ?? `${data.duration ?? 30}-Day Challenge`}`
+      : isApplication ? "My Application Funnel" : "My 30-Day Challenge Funnel";
 
     const { data: project, error } = await supabase
       .from("projects")
@@ -88,18 +93,20 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
     try {
       let pid = projectId;
 
-      // Create project on first step completion
-      if (!pid) {
+      // Defer project creation until we have a business name (step 2 = Business Basics)
+      if (!pid && merged.businessName) {
         pid = await createProject(merged);
         setProjectId(pid);
         // Soft URL update so a refresh will reload this project
         window.history.replaceState({}, "", `/projects/new?projectId=${pid}`);
       }
 
-      // Persist in background — don't block navigation
-      persistInputs(merged, pid).catch((err) => {
-        console.error("Background save failed:", err);
-      });
+      // Persist in background only when we have a project record
+      if (pid) {
+        persistInputs(merged, pid).catch((err) => {
+          console.error("Background save failed:", err);
+        });
+      }
 
       setCurrentStep((s) => s + 1);
     } catch (err) {
@@ -181,11 +188,13 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
             <Zap className="h-5 w-5 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Build your challenge funnel</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {formData.funnelType === "application" ? "Build your application funnel" : "Build your challenge funnel"}
+        </h1>
         <p className="mt-2 text-gray-500">
           {initialProjectId
             ? "Pick up where you left off — your answers are saved."
-            : "Answer 6 short sections. We'll generate your complete funnel."}
+            : "Answer 7 short sections. We'll generate your complete funnel."}
         </p>
       </div>
 
