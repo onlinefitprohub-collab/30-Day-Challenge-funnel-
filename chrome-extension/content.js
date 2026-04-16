@@ -74,7 +74,7 @@
     var t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.49.4" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.60.0" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {
