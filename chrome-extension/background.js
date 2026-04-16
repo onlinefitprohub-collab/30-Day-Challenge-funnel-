@@ -578,41 +578,94 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
            * Approach 1 writes to Firebase Storage directly via the signed URL,    *
            * but GHL's Publish button reads pageData from its own backend which is  *
            * only updated via POST /prebuilt-section/sync/changes.  Without this   *
-           * call Publish hangs on "Publishing…" indefinitely for new/blank pages. */
+           * call Publish hangs ("pageData should not be empty").                  *
+           *                                                                        *
+           * Critical: the raw pageData from our server has a random envelope `id` *
+           * and sections without pageId/funnelId/locationId/sequence.  Approach 2 *
+           * patches these before syncing.  We must do the same here so GHL's      *
+           * backend stores the data under the correct page and Publish succeeds.  */
+          var a1SyncOk = false;
+          var reloadDelay1 = 400;
           try {
             var a1SyncEndpoint = 'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes';
-            var a1LocId   = (window.location.href.match(/\/location\/([^/]+)\//) || [])[1] || locationId || '';
-            var a1FunId   = metadata?.funnelId || '';
-            var a1Payload = { pageData: pageData, locationId: a1LocId, pageId: builderId, funnelId: a1FunId };
+            var a1LocId = (window.location.href.match(/\/location\/([^/]+)\//) || [])[1] || locationId || '';
+            var a1FunId = metadata?.funnelId || (window.location.href.match(/\/funnels\/([^/?#]+)/) || [])[1] || '';
+
+            /* Deep-clone and patch pageData to match what approach 2 sends */
+            var a1SyncData   = JSON.parse(JSON.stringify(pageData));
+            a1SyncData.id    = builderId;                           // fix random envelope id
+            var a1Secs       = Array.isArray(a1SyncData.sections) ? a1SyncData.sections : [];
+            for (var a1Si = 0; a1Si < a1Secs.length; a1Si++) {
+              a1Secs[a1Si].pageId   = builderId;
+              a1Secs[a1Si].funnelId = a1FunId;
+              if (a1LocId) a1Secs[a1Si].locationId = a1LocId;
+              a1Secs[a1Si].sequence = a1Si;
+            }
+            var a1Payload = { pageData: a1SyncData, locationId: a1LocId, pageId: builderId, funnelId: a1FunId };
+
             if (revex && typeof revex.post === 'function') {
-              var a1SyncResp   = await revex.post(a1SyncEndpoint, a1Payload);
-              var a1SyncStatus = (typeof a1SyncResp?.status === 'number') ? a1SyncResp.status : 200;
-              diag.approach1Sync = { status: a1SyncStatus, ok: true };
-              /* 422 retry with minimal payload */
-              if (a1SyncStatus === 422) {
+              try {
+                var a1SyncResp   = await revex.post(a1SyncEndpoint, a1Payload);
+                var a1SyncStatus = (typeof a1SyncResp?.status === 'number') ? a1SyncResp.status : 200;
+                diag.approach1Sync = { status: a1SyncStatus, ok: true };
+                a1SyncOk = true;
+              } catch (a1SyncErr1) {
+                var a1ErrStatus = a1SyncErr1?.response?.status ?? null;
+                var a1ErrBody   = a1SyncErr1?.response?.data
+                  ? JSON.stringify(a1SyncErr1.response.data).slice(0, 500)
+                  : String(a1SyncErr1).slice(0, 500);
+                diag.approach1Sync = { status: a1ErrStatus, error: String(a1SyncErr1).slice(0, 120), responseBody: a1ErrBody };
+                /* Retry with minimal stripped payload on any non-2xx error */
                 try {
-                  var a1Payload2 = { pageData: { sections: pageData.sections, settings: pageData.settings, general: pageData.general, pageStyles: pageData.pageStyles }, locationId: a1LocId, pageId: builderId };
-                  var a1SyncResp2 = await revex.post(a1SyncEndpoint, a1Payload2);
-                  diag.approach1Sync.retry422 = { status: (typeof a1SyncResp2?.status === 'number') ? a1SyncResp2.status : 200, ok: true };
-                } catch (a1r2) {
-                  diag.approach1Sync.retry422 = { error: String(a1r2).slice(0, 80) };
+                  var a1Payload2 = {
+                    pageData: { id: builderId, sections: a1Secs, settings: a1SyncData.settings, general: a1SyncData.general, pageStyles: a1SyncData.pageStyles },
+                    locationId: a1LocId,
+                    pageId:     builderId,
+                  };
+                  var a1SyncResp2   = await revex.post(a1SyncEndpoint, a1Payload2);
+                  var a1SyncStatus2 = (typeof a1SyncResp2?.status === 'number') ? a1SyncResp2.status : 200;
+                  diag.approach1Sync.retry = { status: a1SyncStatus2, ok: true };
+                  a1SyncOk = true;
+                } catch (a1SyncErr2) {
+                  diag.approach1Sync.retry = { error: String(a1SyncErr2).slice(0, 120) };
                 }
               }
             } else {
-              var a1FetchResp = await fetch(a1SyncEndpoint, {
-                method:      'POST',
-                headers:     { 'Content-Type': 'application/json' },
-                body:        JSON.stringify(a1Payload),
-                credentials: 'include',
-                signal:      AbortSignal.timeout(10000),
-              });
-              diag.approach1Sync = { status: a1FetchResp.status, ok: a1FetchResp.ok };
+              try {
+                var a1FetchResp = await fetch(a1SyncEndpoint, {
+                  method:      'POST',
+                  headers:     { 'Content-Type': 'application/json' },
+                  body:        JSON.stringify(a1Payload),
+                  credentials: 'include',
+                  signal:      AbortSignal.timeout(10000),
+                });
+                diag.approach1Sync = { status: a1FetchResp.status, ok: a1FetchResp.ok };
+                a1SyncOk = a1FetchResp.ok;
+              } catch (a1FetchErr) {
+                diag.approach1Sync = { error: String(a1FetchErr).slice(0, 120) };
+              }
             }
-          } catch (a1SyncErr) {
-            diag.approach1Sync = { error: String(a1SyncErr).slice(0, 120) };
+          } catch (a1SyncOuterErr) {
+            diag.approach1Sync = { error: String(a1SyncOuterErr).slice(0, 120) };
           }
 
-          setTimeout(function() { window.location.reload(); }, 400);
+          /* Ctrl+S fallback: if sync failed, trigger GHL's native save handler   *
+           * so it serialises the loaded Vue state and calls the sync itself.      */
+          if (!a1SyncOk) {
+            try {
+              var a1CtrlSTarget = document.activeElement || document.body || document.documentElement;
+              a1CtrlSTarget.dispatchEvent(new KeyboardEvent('keydown', {
+                key: 's', code: 'KeyS', keyCode: 83, which: 83,
+                ctrlKey: true, metaKey: false, bubbles: true, cancelable: true,
+              }));
+              diag.approach1CtrlS = 'dispatched';
+              reloadDelay1 = 1500;
+            } catch (_a1cs) {
+              diag.approach1CtrlS = 'err:' + String(_a1cs).slice(0, 60);
+            }
+          }
+
+          setTimeout(function() { window.location.reload(); }, reloadDelay1);
           return JSON.stringify({ ok: true, method: "signed-upload-url", diag });
         }
         diag.approach1 = `HTTP ${res.status}`;
