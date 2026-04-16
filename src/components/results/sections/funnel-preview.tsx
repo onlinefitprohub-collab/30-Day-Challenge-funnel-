@@ -304,7 +304,15 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
 
   async function handleDownloadJson() {
     try {
-      const res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+      let res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+      // If sales letter isn't indexed yet (DB write just completed), wait briefly and retry once
+      if (!res.ok && res.status === 404) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        if (body.error?.includes("not generated yet")) {
+          await new Promise(r => setTimeout(r, 2500));
+          res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+        }
+      }
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const json = await res.json() as { pageData: unknown };
       if (!json.pageData) throw new Error("No page data");
@@ -330,7 +338,15 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
     setCloneMsg("");
 
     try {
-      const res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+      let res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+      // If sales letter isn't indexed yet, wait briefly and retry once
+      if (!res.ok && res.status === 404) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        if (body.error?.includes("not generated yet")) {
+          await new Promise(r => setTimeout(r, 2500));
+          res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+        }
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Server error ${res.status}`);
@@ -418,16 +434,18 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
             </button>
             <button
               onClick={handleDownloadJson}
-              className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-              title="Download this page's GHL JSON"
+              disabled={showGeneratingSpinner}
+              className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title={showGeneratingSpinner ? "Generating — please wait" : "Download this page's GHL JSON"}
             >
               <Download className="h-3 w-3" />
               Download JSON
             </button>
             <button
               onClick={handleClone}
-              disabled={cloneStatus === "loading"}
-              className="flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              disabled={cloneStatus === "loading" || showGeneratingSpinner}
+              className="flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title={showGeneratingSpinner ? "Generating — please wait" : "Clone to GHL"}
             >
               {cloneStatus === "loading" ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
