@@ -573,6 +573,46 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
         });
         if (res.ok) {
           diag.approach1 = "success";
+
+          /* ── Sync pageData to GHL backend so native Publish works ───────────── *
+           * Approach 1 writes to Firebase Storage directly via the signed URL,    *
+           * but GHL's Publish button reads pageData from its own backend which is  *
+           * only updated via POST /prebuilt-section/sync/changes.  Without this   *
+           * call Publish hangs on "Publishing…" indefinitely for new/blank pages. */
+          try {
+            var a1SyncEndpoint = 'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes';
+            var a1LocId   = (window.location.href.match(/\/location\/([^/]+)\//) || [])[1] || locationId || '';
+            var a1FunId   = metadata?.funnelId || '';
+            var a1Payload = { pageData: pageData, locationId: a1LocId, pageId: builderId, funnelId: a1FunId };
+            if (revex && typeof revex.post === 'function') {
+              var a1SyncResp   = await revex.post(a1SyncEndpoint, a1Payload);
+              var a1SyncStatus = (typeof a1SyncResp?.status === 'number') ? a1SyncResp.status : 200;
+              diag.approach1Sync = { status: a1SyncStatus, ok: true };
+              /* 422 retry with minimal payload */
+              if (a1SyncStatus === 422) {
+                try {
+                  var a1Payload2 = { pageData: { sections: pageData.sections, settings: pageData.settings, general: pageData.general, pageStyles: pageData.pageStyles }, locationId: a1LocId, pageId: builderId };
+                  var a1SyncResp2 = await revex.post(a1SyncEndpoint, a1Payload2);
+                  diag.approach1Sync.retry422 = { status: (typeof a1SyncResp2?.status === 'number') ? a1SyncResp2.status : 200, ok: true };
+                } catch (a1r2) {
+                  diag.approach1Sync.retry422 = { error: String(a1r2).slice(0, 80) };
+                }
+              }
+            } else {
+              var a1FetchResp = await fetch(a1SyncEndpoint, {
+                method:      'POST',
+                headers:     { 'Content-Type': 'application/json' },
+                body:        JSON.stringify(a1Payload),
+                credentials: 'include',
+                signal:      AbortSignal.timeout(10000),
+              });
+              diag.approach1Sync = { status: a1FetchResp.status, ok: a1FetchResp.ok };
+            }
+          } catch (a1SyncErr) {
+            diag.approach1Sync = { error: String(a1SyncErr).slice(0, 120) };
+          }
+
+          setTimeout(function() { window.location.reload(); }, 400);
           return JSON.stringify({ ok: true, method: "signed-upload-url", diag });
         }
         diag.approach1 = `HTTP ${res.status}`;
