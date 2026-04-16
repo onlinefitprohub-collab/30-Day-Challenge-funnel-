@@ -2,10 +2,10 @@
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
-    console.log("[CF Funnel] Installed v2.60.0 — POST pageData to GHL sync endpoint after inject. Press F5.");
+    console.log("[CF Funnel] Installed v2.61.0 — Patch Firebase write with correct pageId/funnelId/locationId/sequence before inject. Press F5.");
   }
   if (reason === "update") {
-    console.log("[CF Funnel] Updated to v2.60.0 — POST pageData to GHL sync endpoint after inject.");
+    console.log("[CF Funnel] Updated to v2.61.0 — Patch Firebase write with correct pageId/funnelId/locationId/sequence before inject.");
   }
 
   // On install/update: re-inject content.js into already-open GHL and Replit tabs.
@@ -566,41 +566,47 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
        ════════════════════════════════════════════════════════════════════════ */
     if (uploadUrl && typeof uploadUrl === "string") {
       try {
+        /* ── Patch pageData before writing to Firebase ───────────────────────── *
+         * The raw server pageData has a random envelope id and sections without  *
+         * pageId/funnelId/locationId/sequence.  Approach 2 patches all of these  *
+         * before both the Firebase write AND the approach-4B sync.               *
+         * We must do the same so Firebase and GHL's backend are consistent.      *
+         * If they differ, GHL's builder loads unpatched data from Firebase into  *
+         * Vue state, then Publish serialises that → sync 422 → "Publishing…" hangs. */
+        var a1LocId    = (window.location.href.match(/\/location\/([^/]+)\//) || [])[1] || locationId || '';
+        var a1FunId    = metadata?.funnelId
+          || (uploadUrl.match(/\/funnels\/([^/?#%]+)/) || [])[1]
+          || (uploadUrl.match(/funnels%2F([^%]+)%2F/)  || [])[1]
+          || '';
+        var a1SyncData = JSON.parse(JSON.stringify(pageData));
+        a1SyncData.id  = builderId;
+        var a1Secs     = Array.isArray(a1SyncData.sections) ? a1SyncData.sections : [];
+        for (var a1Si = 0; a1Si < a1Secs.length; a1Si++) {
+          a1Secs[a1Si].pageId   = builderId;
+          a1Secs[a1Si].funnelId = a1FunId;
+          if (a1LocId) a1Secs[a1Si].locationId = a1LocId;
+          a1Secs[a1Si].sequence = a1Si;
+        }
+        diag.approach1patch = { id: builderId, funnelId: a1FunId, locationId: a1LocId, sectionCount: a1Secs.length };
+
         var res = await fetch(uploadUrl, {
           method:  "PUT",
           headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify(pageData),
+          body:    JSON.stringify(a1SyncData),   // ← write PATCHED data, not raw pageData
         });
         if (res.ok) {
           diag.approach1 = "success";
 
-          /* ── Sync pageData to GHL backend so native Publish works ───────────── *
-           * Approach 1 writes to Firebase Storage directly via the signed URL,    *
-           * but GHL's Publish button reads pageData from its own backend which is  *
-           * only updated via POST /prebuilt-section/sync/changes.  Without this   *
-           * call Publish hangs ("pageData should not be empty").                  *
-           *                                                                        *
-           * Critical: the raw pageData from our server has a random envelope `id` *
-           * and sections without pageId/funnelId/locationId/sequence.  Approach 2 *
-           * patches these before syncing.  We must do the same here so GHL's      *
-           * backend stores the data under the correct page and Publish succeeds.  */
+          /* ── Sync the same patched payload to GHL backend ───────────────────── *
+           * GHL Publish calls POST /prebuilt-section/sync/changes with the        *
+           * serialised Vue state.  If GHL's backend already has our data (from    *
+           * this sync call) AND Firebase also has the same patched data (above),  *
+           * the Vue state that GHL loads after reload matches GHL's backend data, *
+           * so Publish's own sync call succeeds and publication completes.        */
           var a1SyncOk = false;
           var reloadDelay1 = 400;
           try {
             var a1SyncEndpoint = 'https://backend.leadconnectorhq.com/funnels/builder/prebuilt-section/sync/changes';
-            var a1LocId = (window.location.href.match(/\/location\/([^/]+)\//) || [])[1] || locationId || '';
-            var a1FunId = metadata?.funnelId || (window.location.href.match(/\/funnels\/([^/?#]+)/) || [])[1] || '';
-
-            /* Deep-clone and patch pageData to match what approach 2 sends */
-            var a1SyncData   = JSON.parse(JSON.stringify(pageData));
-            a1SyncData.id    = builderId;                           // fix random envelope id
-            var a1Secs       = Array.isArray(a1SyncData.sections) ? a1SyncData.sections : [];
-            for (var a1Si = 0; a1Si < a1Secs.length; a1Si++) {
-              a1Secs[a1Si].pageId   = builderId;
-              a1Secs[a1Si].funnelId = a1FunId;
-              if (a1LocId) a1Secs[a1Si].locationId = a1LocId;
-              a1Secs[a1Si].sequence = a1Si;
-            }
             var a1Payload = { pageData: a1SyncData, locationId: a1LocId, pageId: builderId, funnelId: a1FunId };
 
             if (revex && typeof revex.post === 'function') {

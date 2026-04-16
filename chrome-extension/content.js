@@ -11,8 +11,8 @@
   // Version-specific guard: when the extension updates, the new version string
   // doesn't match the old one, so the new content.js always replaces the old one
   // in already-open tabs (no manual page reload needed after extension update).
-  if (window.__cfExtLoaded === "2.49.4") return;
-  window.__cfExtLoaded = "2.49.4";
+  if (window.__cfExtLoaded === "2.61.0") return;
+  window.__cfExtLoaded = "2.61.0";
 
   var IS_GHL = window.location.hostname.endsWith("gohighlevel.com");
 
@@ -74,7 +74,7 @@
     var t = evt.data.type;
 
     if (t === "CF_PING") {
-      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.60.0" }, "*");
+      window.postMessage({ source: "cf-ext", type: "CF_PONG", version: "2.61.0" }, "*");
     }
 
     if (t === "CF_PERSIST_CAPTURED_GHL") {
