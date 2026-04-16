@@ -563,8 +563,19 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
        APPROACH 1: GHL-signed upload URL
        If GHL returns pageDataUploadUrl (a pre-signed PUT URL), write directly.
        No auth headers required — GHL has already signed the URL.
+
+       v2.63.0: DISABLED when metadata is present.  Pre-signed PUT URLs are
+       Google-signed GCS URLs whose response body does NOT contain Firebase
+       Storage JSON (no downloadTokens/bucket/name), so we cannot construct
+       pageDataDownloadUrl to PATCH into GHL metadata.  Without that URL,
+       GHL's Publish endpoint hangs forever waiting to write the published
+       page to Firebase/CDN.  Approach 2B writes via Firebase Storage REST
+       API (same method that works for challenge funnels) and successfully
+       registers pageDataDownloadUrl — so we skip Approach 1 and fall
+       through to 2B when metadata is available.
+       Approach 1 remains as a last-resort fallback when metadata is missing.
        ════════════════════════════════════════════════════════════════════════ */
-    if (uploadUrl && typeof uploadUrl === "string") {
+    if (uploadUrl && typeof uploadUrl === "string" && !metadata) {
       try {
         /* ── Patch pageData before writing to Firebase ───────────────────────── *
          * The raw server pageData has a random envelope id and sections without  *
@@ -746,6 +757,9 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
       } catch (e1) {
         diag.approach1 = `threw: ${String(e1).slice(0, 80)}`;
       }
+    } else if (uploadUrl && metadata) {
+      /* v2.63.0: intentionally skipped — see block comment above. */
+      diag.approach1 = "skipped-v2.63.0-prefer-2B-for-publish-compat";
     } else {
       diag.approach1 = uploadUrl ? "uploadUrl invalid" : "no pageDataUploadUrl in metadata";
     }
