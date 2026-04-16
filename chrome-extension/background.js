@@ -597,6 +597,73 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
         if (res.ok) {
           diag.approach1 = "success";
 
+          /* ── Register pageDataDownloadUrl in GHL backend (approach-2B style) ── *
+           * Root cause of the Publish hang: GHL's Publish endpoint reads           *
+           * pageDataDownloadUrl to write the published page to Firebase/CDN.       *
+           * Approach 1 writes to Firebase via pre-signed PUT but NEVER explicitly  *
+           * sets pageDataDownloadUrl in GHL's backend — GHL can't publish.         *
+           * Fix: read the PUT response body to get download token + path + bucket, *
+           * construct the download URL, then PATCH GHL's page metadata record.     *
+           * Same 6-URL × 2-verb pattern as approach 2B (lines 1469–1496).          */
+          var a1DownloadUrl = null;
+          try {
+            var a1PutBody = await res.json().catch(function() { return {}; });
+            var a1Tok     = a1PutBody.downloadTokens ?? '';
+            var a1Bucket2 = a1PutBody.bucket
+              || (uploadUrl.match(/\/b\/([^/]+)\/o/) || [])[1]
+              || (uploadUrl.match(/storage\.googleapis\.com\/([^/]+)\//) || [])[1]
+              || 'highlevel-backend.appspot.com';
+            var a1ObjName = a1PutBody.name
+              || (function() {
+                   var m = uploadUrl.match(/[?&]name=([^&]+)/);
+                   return m ? decodeURIComponent(m[1]) : null;
+                 })()
+              || (a1FunId ? ('funnels/' + a1FunId + '/' + builderId + '.json') : null);
+            if (a1ObjName && a1Tok) {
+              a1DownloadUrl = 'https://firebasestorage.googleapis.com/v0/b/'
+                + encodeURIComponent(a1Bucket2) + '/o/'
+                + encodeURIComponent(a1ObjName) + '?alt=media&token=' + a1Tok;
+            }
+            diag.approach1DownloadUrl = a1DownloadUrl ? a1DownloadUrl.slice(0, 160) : 'not-constructed';
+            diag.approach1PutBodyKeys = Object.keys(a1PutBody).slice(0, 10);
+          } catch (a1UrlErr) {
+            diag.approach1DownloadUrl = 'err:' + String(a1UrlErr).slice(0, 80);
+          }
+
+          if (a1DownloadUrl && revex && typeof revex.patch === 'function') {
+            var a1MetaUrls = a1LocId ? [
+              'https://backend.leadconnectorhq.com/locations/' + a1LocId + '/funnels/page/' + builderId,
+              'https://backend.leadconnectorhq.com/funnels/page/' + builderId + '?locationId=' + a1LocId,
+              'https://backend.leadconnectorhq.com/funnels/' + a1FunId + '/page/' + builderId + '?locationId=' + a1LocId,
+              'https://backend.leadconnectorhq.com/funnels/page/' + builderId,
+              'https://backend.leadconnectorhq.com/funnels/funnel/page/' + builderId,
+            ] : [
+              'https://backend.leadconnectorhq.com/funnels/page/' + builderId,
+              'https://backend.leadconnectorhq.com/funnels/funnel/page/' + builderId,
+            ];
+            var a1MetaPatchOk = false;
+            var a1MetaAttempts = [];
+            outerA1Meta: for (var a1Mu of a1MetaUrls) {
+              for (var a1V of ['patch', 'put']) {
+                try {
+                  await revex[a1V](a1Mu, { pageDataDownloadUrl: a1DownloadUrl });
+                  a1MetaAttempts.push({ url: a1Mu.slice(50), verb: a1V, ok: true });
+                  a1MetaPatchOk = true;
+                  break outerA1Meta;
+                } catch (a1Pe) {
+                  var a1PeSt = a1Pe?.response?.status ?? 'err';
+                  a1MetaAttempts.push({ url: a1Mu.slice(50), verb: a1V, status: a1PeSt, ok: false });
+                  if (a1V === 'patch' && a1PeSt !== 404 && a1PeSt !== 405) break;
+                }
+              }
+            }
+            diag.approach1MetaPatch = { ok: a1MetaPatchOk, attempts: a1MetaAttempts };
+          } else {
+            diag.approach1MetaPatch = {
+              skipped: !a1DownloadUrl ? 'no-download-url' : 'no-revex',
+            };
+          }
+
           /* ── Sync the same patched payload to GHL backend ───────────────────── *
            * GHL Publish calls POST /prebuilt-section/sync/changes with the        *
            * serialised Vue state.  If GHL's backend already has our data (from    *
@@ -627,6 +694,7 @@ async function _cf_injectViaBuilderSave(builderId, locationId, pageData, cachedB
                     pageData: { id: builderId, sections: a1Secs, settings: a1SyncData.settings, general: a1SyncData.general, pageStyles: a1SyncData.pageStyles },
                     locationId: a1LocId,
                     pageId:     builderId,
+                    funnelId:   a1FunId,
                   };
                   var a1SyncResp2   = await revex.post(a1SyncEndpoint, a1Payload2);
                   var a1SyncStatus2 = (typeof a1SyncResp2?.status === 'number') ? a1SyncResp2.status : 200;
