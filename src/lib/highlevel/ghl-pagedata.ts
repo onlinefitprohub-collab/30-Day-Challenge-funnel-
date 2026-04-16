@@ -3408,58 +3408,28 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     makeSection(b, [qualRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
-  // ─── Section 16: Text testimonials — 3 columns ──────────────────────────────
+  // ─── Section 16: Testimonials — scrollable card design (custom code) ─────────
   {
-    const testimCols = al.textTestimonials.map((t) => {
-      const quote = makeParagraph(b, `"${t.quote}"`, {
-        color:      ss("#333333"),
-        fontSize:   sv(15),
-        fontStyle:  ss("italic"),
-        lineHeight: ss("1.65em"),
-      });
-      const attr = makeParagraph(b, `— ${t.attribution}`, {
-        color:      ss("#666666"),
-        fontSize:   sv(13),
-        fontWeight: ss("600"),
-        paddingTop: sv(8),
-      });
-      const result = makeParagraph(b, t.result, {
-        color:           ss("#ffffff"),
-        fontSize:        sv(13),
-        fontWeight:      ss("700"),
-        backgroundColor: ss(p),
-        paddingTop:      sv(6),
-        paddingBottom:   sv(6),
-        paddingLeft:     sv(12),
-        paddingRight:    sv(12),
-        borderRadius:    sv(4),
-        textAlign:       ss("center"),
-        marginTop:       sv(10),
-      });
-      return makeCol(b, [quote, attr, result], 33, { padH: 16, padV: 16, valign: "top" });
-    });
-    const row = makeRow(b, testimCols, 1170);
-    makeSection(b, [row], { bgColor: "#f5f5f5", ptD: 50, pbD: 50, ptM: 35, pbM: 35 });
+    const cards = al.textTestimonials.map(t =>
+      `<div class="alp-tc"><div class="alp-tc-stars">★★★★★</div><p class="alp-tc-quote">"${escHtml(t.quote)}"</p><div class="alp-tc-footer"><span class="alp-tc-attr">— ${escHtml(t.attribution)}</span><span class="alp-tc-result" style="background:${p};">${escHtml(t.result)}</span></div></div>`
+    ).join("");
+    const testiHtml = `<style>.alp-tw{background:#f1f5f9;padding:52px 20px 40px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-ts{display:flex;gap:18px;overflow-x:auto;padding:4px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,0.15) transparent;-webkit-overflow-scrolling:touch}.alp-ts::-webkit-scrollbar{height:5px}.alp-ts::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px}.alp-tc{flex:0 0 300px;background:#fff;border-radius:16px;padding:24px 22px;box-shadow:0 4px 24px rgba(0,0,0,0.08);scroll-snap-align:start;display:flex;flex-direction:column;border-top:4px solid ${p}}.alp-tc-stars{color:${p};font-size:13px;letter-spacing:3px;margin-bottom:14px}.alp-tc-quote{color:#1e293b;font-size:15px;line-height:1.65;font-style:italic;margin:0 0 16px;flex:1}.alp-tc-footer{border-top:1px solid #f1f5f9;padding-top:14px;display:flex;flex-direction:column;gap:8px}.alp-tc-attr{color:#475569;font-size:13px;font-weight:700}.alp-tc-result{display:inline-block;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:5px 14px;text-transform:uppercase;letter-spacing:0.5px;align-self:flex-start}@media(max-width:640px){.alp-tc{flex:0 0 260px}.alp-tw{padding:40px 16px 28px}}</style><div class="alp-tw"><div style="text-align:center;margin-bottom:32px"><p style="color:${p};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px">Client Results</p><h2 style="color:#0f172a;font-size:clamp(24px,3.5vw,36px);font-weight:900;margin:0 0 8px;line-height:1.2">Real People. Real Results.</h2><p style="color:#64748b;font-size:14px;margin:0">Scroll to read more &#8594;</p></div><div class="alp-ts">${cards}</div></div>`;
+    const testiEl  = makeCustomCode(b, testiHtml, 0);
+    const testiCol = makeCol(b, [testiEl], 100, { padH: 0 });
+    const testiRow = makeRow(b, [testiCol], 1200, 0);
+    makeSection(b, [testiRow], { bgColor: "#f1f5f9", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
-  // ─── Section 17: What You Get ─────────────────────────────────────────────────
+  // ─── Section 17: What You Get — 2-col card grid (custom code) ────────────────
   {
-    const h2 = makeHeading(b, al.whatYouGetHeading, "h2", {
-      color:         ss("#ffffff"),
-      fontSize:      sv(32),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(24),
-    }, { fontSize: sv(24) });
-    const bullets = makeBulletList(b, al.whatYouGetItems, p, {
-      color:      ss("rgba(255,255,255,0.9)"),
-      fontSize:   sv(16),
-      lineHeight: ss("1.7em"),
-    });
-    const btn = ctaBtnLight(al.heroCtaText);
-    const col = makeCol(b, [h2, bullets, btn], 100, { align: "center", padH: 32 });
-    const row = makeRow(b, [col], 720);
-    makeSection(b, [row], { bgColor: dk, ptD: 60, pbD: 60, ptM: 40, pbM: 40 });
+    const items = al.whatYouGetItems.map(item =>
+      `<div class="alp-wyg-item"><span style="color:${p};font-size:20px;flex-shrink:0;font-weight:900;line-height:1.2;">✓</span><span style="color:rgba(255,255,255,0.92);font-size:14px;line-height:1.6;">${escHtml(item)}</span></div>`
+    ).join("");
+    const wygHtml = `<style>.alp-wyg{background:${dk};padding:60px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-wyg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:800px;margin:0 auto 40px}.alp-wyg-item{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;transition:background 0.2s}.alp-wyg-item:hover{background:rgba(255,255,255,0.11)}@media(max-width:560px){.alp-wyg-grid{grid-template-columns:1fr}.alp-wyg{padding:44px 16px}}</style><div class="alp-wyg"><p style="text-align:center;color:${p};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:0 0 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">Everything Inside The Programme</p><h2 style="text-align:center;color:#fff;font-size:clamp(24px,3.5vw,36px);font-weight:900;margin:0 0 36px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${escHtml(al.whatYouGetHeading)}</h2><div class="alp-wyg-grid">${items}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${p};color:#fff;padding:18px 48px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${escHtml(al.heroCtaText)}</a></div></div>`;
+    const wygEl  = makeCustomCode(b, wygHtml, 0);
+    const wygCol = makeCol(b, [wygEl], 100, { padH: 0 });
+    const wygRow = makeRow(b, [wygCol], 1200, 0);
+    makeSection(b, [wygRow], { bgColor: dk, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
   // ─── Section 18: Transformation gallery ─────────────────────────────────────
@@ -3476,11 +3446,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
     // 2 rows of 4 placeholder images
     const imgRow1 = makeRow(b, [0, 1, 2, 3].map(() => {
-      const img = makeImage(b, { url: placeholder, width: 100 });
+      const img = makeImage(b, { url: placeholder, width: 100, height: 220 });
       return makeCol(b, [img], 25, { padH: 6, padV: 6 });
     }), 1170);
     const imgRow2 = makeRow(b, [0, 1, 2, 3].map(() => {
-      const img = makeImage(b, { url: placeholder, width: 100 });
+      const img = makeImage(b, { url: placeholder, width: 100, height: 220 });
       return makeCol(b, [img], 25, { padH: 6, padV: 6 });
     }), 1170);
 
