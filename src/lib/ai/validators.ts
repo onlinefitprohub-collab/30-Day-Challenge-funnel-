@@ -235,6 +235,47 @@ export const manyChatFlowSchema = z.object({
   setupInstructions:   z.string().min(1),
 });
 
+// ─── Application Landing Page schema ────────────────────────────────────────
+
+const credentialItemSchema = z.object({ label: z.string().min(1), description: z.string().min(1) });
+const benefitBlockSchema   = z.object({ heading: z.string().min(1), body: z.string().min(1) });
+const faqItemSchema        = z.object({ question: z.string().min(1), answer: z.string().min(1) });
+const textTestimonialSchema = z.object({ quote: z.string().min(1), attribution: z.string().min(1), result: z.string().min(1) });
+const clientWinSchema      = z.object({ name: z.string().min(1), result: z.string().min(1) });
+
+export const applicationLandingPageSchema = z.object({
+  valuePropHeadline:            z.string().min(1),
+  valuePropSubheadline:         z.string().min(1),
+  videoSectionHeading:          z.string().min(1),
+  videoSectionSubheading:       z.string().min(1),
+  heroCtaText:                  z.string().min(1),
+  heroCtaSubtext:               z.string().min(1),
+  testimonialIntroHeading:      z.string().min(1),
+  testimonialVideoQuote:        z.string().min(1),
+  credentialItems:              z.array(credentialItemSchema).length(4),
+  benefitBlocks:                z.array(benefitBlockSchema).length(5),
+  midCtaHeading:                z.string().min(1),
+  midCtaText:                   z.string().min(1),
+  dividerHeading:               z.string().min(1),
+  faqItems:                     z.array(faqItemSchema).min(4).max(8),
+  galleryHeading:               z.string().min(1),
+  qualificationSectionHeading:  z.string().min(1),
+  shouldNotApply:               z.array(z.string().min(1)).min(4).max(8),
+  shouldApply:                  z.array(z.string().min(1)).min(4).max(8),
+  textTestimonials:             z.array(textTestimonialSchema).length(3),
+  whatYouGetHeading:            z.string().min(1),
+  whatYouGetItems:              z.array(z.string().min(1)).min(4).max(10),
+  transformationGalleryHeading: z.string().min(1),
+  clientWinsHeading:            z.string().min(1),
+  clientWins:                   z.array(clientWinSchema).min(4).max(8),
+  finalCtaText:                 z.string().min(1),
+  finalCtaSubtext:              z.string().min(1),
+});
+
+export const applicationLandingResponseSchema = z.object({
+  applicationLandingPage: applicationLandingPageSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {

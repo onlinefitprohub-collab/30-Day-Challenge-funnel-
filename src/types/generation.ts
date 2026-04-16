@@ -168,6 +168,37 @@ export interface WorkoutPlan {
   coachingNotes: string;
 }
 
+// ─── Application Landing Page ────────────────────────────────────────────────
+
+export interface ApplicationLandingPage {
+  valuePropHeadline: string;
+  valuePropSubheadline: string;
+  videoSectionHeading: string;
+  videoSectionSubheading: string;
+  heroCtaText: string;
+  heroCtaSubtext: string;
+  testimonialIntroHeading: string;
+  testimonialVideoQuote: string;
+  credentialItems: Array<{ label: string; description: string }>;   // exactly 4
+  benefitBlocks: Array<{ heading: string; body: string }>;          // exactly 5
+  midCtaHeading: string;
+  midCtaText: string;
+  dividerHeading: string;
+  faqItems: Array<{ question: string; answer: string }>;            // 4–8 items
+  galleryHeading: string;
+  qualificationSectionHeading: string;
+  shouldNotApply: string[];   // 4–8 disqualifiers
+  shouldApply: string[];      // 4–8 qualifiers
+  textTestimonials: Array<{ quote: string; attribution: string; result: string }>; // 3
+  whatYouGetHeading: string;
+  whatYouGetItems: string[];  // 6–8 items
+  transformationGalleryHeading: string;
+  clientWinsHeading: string;
+  clientWins: Array<{ name: string; result: string }>;              // 4–8 items
+  finalCtaText: string;
+  finalCtaSubtext: string;
+}
+
 // ─── GeneratedFunnelAssets ───────────────────────────────────────────────────
 
 export interface GeneratedFunnelAssets {
@@ -201,6 +232,8 @@ export interface GeneratedFunnelAssets {
   workoutPlan?: WorkoutPlan;
   longFormAssets?: import("./longform").LongFormSalesAssets;
   nurtureSequence?: NurtureSequence;
+  // Application funnel — 22-section registration page (generated in parallel with other copy)
+  applicationLandingPage?: ApplicationLandingPage;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

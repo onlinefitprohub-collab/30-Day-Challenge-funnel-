@@ -9,6 +9,7 @@ import {
   buildThankYouPageData,
   buildBookingPageData,
   buildSalesLetterPageData,
+  buildApplicationLandingPageData,
 } from "@/lib/highlevel/ghl-pagedata";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -105,13 +106,23 @@ export async function POST(request: Request) {
     case "thankyou": pageData = buildThankYouPageData(assets); break;
     case "booking":  pageData = buildBookingPageData(assets);  break;
     case "salesletter":
-      if (!assets.longFormAssets?.salesLetter) {
-        return NextResponse.json(
-          { success: false, error: "Sales letter not generated yet" },
-          { status: 404, headers: CORS_HEADERS },
-        );
+      if (assets.funnelType === "application") {
+        if (!assets.applicationLandingPage) {
+          return NextResponse.json(
+            { success: false, error: "Registration page not generated yet" },
+            { status: 404, headers: CORS_HEADERS },
+          );
+        }
+        pageData = buildApplicationLandingPageData(assets);
+      } else {
+        if (!assets.longFormAssets?.salesLetter) {
+          return NextResponse.json(
+            { success: false, error: "Sales letter not generated yet" },
+            { status: 404, headers: CORS_HEADERS },
+          );
+        }
+        pageData = buildSalesLetterPageData(assets);
       }
-      pageData = buildSalesLetterPageData(assets);
       break;
     default:         return NextResponse.json({ success: false, error: "Invalid page" }, { status: 400 });
   }

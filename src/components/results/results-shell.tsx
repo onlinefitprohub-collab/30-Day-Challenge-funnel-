@@ -58,7 +58,7 @@ const APPLICATION_TABS = [
   { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export" },
   { id: "funnelPreview",   label: "Funnel Preview",         icon: LayoutTemplate,                   group: "preview" },
   { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview" },
-  { id: "landingPage",     label: "Long-Form Landing",      icon: FileText,                         group: "pages" },
+  { id: "landingPage",     label: "Registration Page",       icon: FileText,                         group: "pages" },
   { id: "optInForm",       label: "Application Form",       icon: FormInput,                        group: "pages" },
   { id: "thankYouPage",    label: "App Received",           icon: ThumbsUp,                         group: "pages" },
   { id: "bookingPage",     label: "Strategy Call",          icon: Calendar,                         group: "pages" },
@@ -146,13 +146,13 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     outputs.nurtureSequence as NurtureSequence | undefined,
   );
 
-  // Auto-generate longform for application funnels on mount (sales letter + ManyChat).
-  // Check salesLetter specifically so partial longFormAssets objects still trigger re-generation.
+  // Auto-generate longform for challenge funnels on mount if ManyChat/sales letter not yet present.
+  // For application funnels, the registration page is generated synchronously during main generation —
+  // no separate longform auto-trigger needed.
   useEffect(() => {
-    if (isApplication && !liveLongFormAssets?.salesLetter) {
-      triggerLongFormGeneration(project.id).then((assets) => {
-        if (assets) handleLongFormGenerated(assets);
-      });
+    if (!isApplication && !liveLongFormAssets?.salesLetter) {
+      // Challenge funnels only — pre-warm the long-form sales letter if not yet generated.
+      // (ManyChat flow is application-only; handled separately via the manual trigger.)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -245,14 +245,54 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
-    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} liveLongFormAssets={liveLongFormAssets} />,
+    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} />,
-    // Landing page: challenge → short-form copy | application → long-form sales letter content
+    // Landing page: challenge → short-form copy | application → registration page summary card
     landingPage: isApplication
-      ? (liveLongFormAssets
-          ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
-          : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} generating />)
+      ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="font-semibold text-blue-900">22-Section Registration Page</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Your registration page has been generated and is ready to preview and export to GHL.
+                Use the <strong>Funnel Preview</strong> tab to see it in full, or click{" "}
+                <strong>Clone to GHL</strong> to inject it directly into your funnel.
+              </p>
+            </div>
+            {assets.applicationLandingPage && (
+              <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
+                <h3 className="font-semibold text-gray-900">Page Overview</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Headline</p>
+                    <p className="text-gray-800 font-medium">{assets.applicationLandingPage.valuePropHeadline}</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Primary CTA</p>
+                    <p className="text-gray-800 font-medium">{assets.applicationLandingPage.heroCtaText}</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Benefit Sections</p>
+                    <p className="text-gray-800">{assets.applicationLandingPage.benefitBlocks.length} programme pillars</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">FAQ Items</p>
+                    <p className="text-gray-800">{assets.applicationLandingPage.faqItems.length} questions answered</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Qualifications</p>
+                    <p className="text-gray-800">{assets.applicationLandingPage.shouldApply.length} qualifiers · {assets.applicationLandingPage.shouldNotApply.length} disqualifiers</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Client Wins</p>
+                    <p className="text-gray-800">{assets.applicationLandingPage.clientWins.length} results showcased</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
       : <LandingPageSection data={assets.landingPage} />,
     optInForm:       <OptInFormSection       data={assets.optInForm} />,
     thankYouPage:    <ThankYouSection        data={assets.thankYouPage} />,

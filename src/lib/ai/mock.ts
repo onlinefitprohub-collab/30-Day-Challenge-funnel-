@@ -1,5 +1,5 @@
 import type { WizardInputs } from "@/types/wizard";
-import type { GeneratedFunnelAssets } from "@/types/generation";
+import type { GeneratedFunnelAssets, ApplicationLandingPage } from "@/types/generation";
 
 /**
  * Mock generation — uses real wizard inputs to produce personalised placeholder output.
@@ -266,5 +266,149 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
       utmCampaign: `${resolvedType.toLowerCase().replace(/\s+/g, "_")}_${duration}day_${new Date().getFullYear()}`,
       utmContent: `hook1_v1`,
     },
+  };
+}
+
+/**
+ * Mock data for the application funnel's 22-section registration/landing page.
+ * Used as fallback when ANTHROPIC_API_KEY is absent or the AI call fails.
+ */
+export function buildMockApplicationLandingPage(inputs: WizardInputs): ApplicationLandingPage {
+  const {
+    coachName,
+    businessName,
+    targetAudience,
+    desiredOutcome,
+    biggestStruggle,
+    inclusions,
+  } = inputs;
+
+  const programmeName = inputs.challengeName ?? inputs.challengeType ?? "Transformation Programme";
+  const audienceShort = targetAudience.split(/,| and /i)[0].trim();
+  const outcomeLC = desiredOutcome.charAt(0).toLowerCase() + desiredOutcome.slice(1);
+  const firstInclusion = inclusions.split(",")[0]?.trim() ?? "personalised coaching";
+
+  return {
+    valuePropHeadline: `Join ${programmeName} and finally ${outcomeLC}, even if you've tried everything before`,
+    valuePropSubheadline: `A structured, results-driven programme designed specifically for ${audienceShort} who are serious about lasting transformation.`,
+
+    videoSectionHeading: `Watch This Before You Apply — ${coachName} Explains Exactly What to Expect`,
+    videoSectionSubheading: `This short video will show you whether this programme is the right fit for you.`,
+
+    heroCtaText: "Start Your Application Now",
+    heroCtaSubtext: "Free strategy consultation included — no payment required to apply.",
+
+    testimonialIntroHeading: `Here's What Clients Just Like You Are Saying...`,
+    testimonialVideoQuote: `"I was sceptical at first — I'd tried so many things. But within the first few weeks I could already see and feel the difference. ${coachName} and the team genuinely care about your results."`,
+
+    credentialItems: [
+      { label: "Certified Coach", description: `${coachName} holds professional certifications and has helped hundreds of ${audienceShort} achieve lasting results.` },
+      { label: "10+ Years Experience", description: `Over a decade of hands-on coaching experience in ${biggestStruggle} and transformation.` },
+      { label: "500+ Clients Transformed", description: `A proven track record of client results across the ${businessName} community.` },
+      { label: "Specialist Programme Design", description: `Every element of this programme has been refined through real client feedback and measurable outcomes.` },
+    ],
+
+    benefitBlocks: [
+      {
+        heading: `Stop Guessing — Get a Personalised Plan That Actually Works`,
+        body: `You'll receive a fully tailored programme built around your specific goals, schedule, and starting point. No more one-size-fits-all approaches that never stick.`,
+      },
+      {
+        heading: `Weekly Coaching Calls That Keep You on Track`,
+        body: `Regular live sessions with ${coachName} mean you always have expert guidance when you need it. Real answers, real accountability, real results.`,
+      },
+      {
+        heading: `${firstInclusion} — Everything You Need in One Place`,
+        body: `Every tool, resource, and support structure has been carefully designed to remove the overwhelm and give you a clear path from where you are to where you want to be.`,
+      },
+      {
+        heading: `A Community of Like-Minded People Cheering You On`,
+        body: `You'll join a private group of ${audienceShort} on the same journey. Shared wins, shared challenges, and a support network that stays with you beyond the programme.`,
+      },
+      {
+        heading: `Sustainable Results — Not Just a Short-Term Fix`,
+        body: `Everything in this programme is designed to create habits and systems that last. You'll leave with the tools to maintain your results for life.`,
+      },
+    ],
+
+    midCtaHeading: `Ready to Finally ${desiredOutcome}? Applications Are Open — But Spaces Are Limited`,
+    midCtaText: "Secure Your Application Spot",
+
+    dividerHeading: "Is This Programme Right For You?",
+
+    faqItems: [
+      { question: "How much time do I need to commit each week?", answer: `Most clients invest 3–5 hours per week into the programme, including coaching calls and implementation. ${coachName} has designed the programme to fit around a busy life — not the other way around.` },
+      { question: "I've tried other programmes before and they haven't worked — what makes this different?", answer: `The difference is personalisation and ongoing support. Most programmes give you information but no accountability. This programme puts ${coachName} in your corner every step of the way, adapting the plan as you progress.` },
+      { question: "What happens after I submit my application?", answer: `A member of the ${businessName} team will review your application and reach out within 24 hours to schedule your complimentary strategy consultation. No payment is required to apply.` },
+      { question: "Is this suitable for beginners?", answer: `Absolutely. The programme is designed to meet you exactly where you are. Whether you're just starting out or have some experience, the plan is built around your current level and progresses at a pace that works for you.` },
+      { question: "What investment is involved?", answer: `Investment details are discussed during your strategy consultation, where we'll ensure the programme is the right fit before any financial commitment is made. There is no pressure and no obligation to proceed after the call.` },
+      { question: "How long is the programme?", answer: `Programme length varies based on your goals and will be discussed during your strategy consultation. Most clients see significant results within 8–12 weeks.` },
+    ],
+
+    galleryHeading: "Real Results From Real Clients",
+
+    qualificationSectionHeading: "This Programme Is Designed For a Very Specific Type of Person",
+
+    shouldNotApply: [
+      "You're looking for a quick fix or overnight results without putting in the work",
+      "You're not willing to follow a structured programme or take expert guidance",
+      "You're not ready to invest time and energy into your own transformation",
+      "You want information only — not coaching, accountability, or real support",
+      "You're not open to changing the habits that have been holding you back",
+    ],
+
+    shouldApply: [
+      `You're a ${audienceShort} who is serious about finally achieving ${outcomeLC}`,
+      "You're coachable, open-minded, and ready to trust a proven system",
+      "You're committed to showing up even when it's uncomfortable",
+      "You understand that real results require real investment of time and effort",
+      "You want personalised support — not just another generic online course",
+      "You're ready to stop going it alone and get the expert guidance you deserve",
+    ],
+
+    textTestimonials: [
+      {
+        quote: `"I honestly didn't think it was possible at my age and with my schedule. But ${coachName} made everything so clear and manageable. I'm stronger, healthier, and more confident than I've been in years."`,
+        attribution: "Sarah T., 44, Busy Mum of Three",
+        result: "Lost 18kg and transformed her energy levels",
+      },
+      {
+        quote: `"The accountability and structure were exactly what I needed. I'd been spinning my wheels for two years. Within weeks of joining I had more clarity and momentum than I'd had in ages."`,
+        attribution: "Mark R., 52, Business Owner",
+        result: "Down 3 dress sizes and off blood pressure medication",
+      },
+      {
+        quote: `"What I appreciated most was that ${coachName} genuinely listened and adapted everything to my situation. It never felt generic — it felt personal. Best investment I've made in myself."`,
+        attribution: "Lisa M., 38, Nurse",
+        result: "Ran her first 10k and now coaches her colleagues",
+      },
+    ],
+
+    whatYouGetHeading: `Everything You Get When You Join ${programmeName}`,
+    whatYouGetItems: [
+      `Fully personalised ${inputs.duration ?? "12"}-week programme built around your goals and lifestyle`,
+      `Weekly 1-on-1 coaching sessions with ${coachName} — expert guidance every step of the way`,
+      `${firstInclusion} — professionally designed and tailored to your needs`,
+      "Private community access — connect, share wins, and get support between sessions",
+      "Progress tracking and ongoing programme adjustments as you evolve",
+      "Lifetime access to all programme materials and resources",
+      "Direct messaging support for questions between coaching calls",
+    ],
+
+    transformationGalleryHeading: "The Proof Is In The Results",
+
+    clientWinsHeading: "More Wins From Our Community",
+
+    clientWins: [
+      { name: "Emma R.", result: "Down 22kg and off medication after 16 weeks" },
+      { name: "James K.", result: "First 5k run completed — said he'd never run before" },
+      { name: "Claire S.", result: "Reversed pre-diabetes diagnosis through lifestyle change" },
+      { name: "Tom H.", result: "Lost 15kg and gained confidence he hadn't felt in 10 years" },
+      { name: "Ava M.", result: "Went from burnout to thriving in 12 weeks" },
+      { name: "Dan P.", result: "Dropped 4 trouser sizes and beat his insomnia" },
+    ],
+
+    finalCtaText: "Submit Your Application Now",
+    finalCtaSubtext: `No payment today. A member of the ${businessName} team will review your application and reach out within 24 hours to discuss whether this programme is the right fit for you.`,
   };
 }

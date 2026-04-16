@@ -1,4 +1,4 @@
-import type { GeneratedFunnelAssets, LandingPageCopy } from "@/types/generation";
+import type { GeneratedFunnelAssets, LandingPageCopy, ApplicationLandingPage } from "@/types/generation";
 
 // ── Colour Scheme ─────────────────────────────────────────────────────────────
 
@@ -3097,6 +3097,521 @@ export function buildSalesLetterPageData(data: GeneratedFunnelAssets): GhlPageDa
   buildFooter(b, s);
 
   return sanitizePageData(finalize(b, s));
+}
+
+// ── APPLICATION LANDING PAGE (22 sections) ────────────────────────────────────
+//
+// Mirrors the reference application form.json layout.
+// All native GHL elements — no custom code.
+// Colour scheme from user selection; copy from AI applicationLandingPage content.
+
+export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
+  const al = data.applicationLandingPage;
+  if (!al) throw new Error("applicationLandingPage is required");
+
+  const b = createBuilder();
+  const s = resolveScheme(data);
+  const p  = s.primary;
+  const dk = s.dark;
+
+  const placeholder = data.coachPhotoUrl ?? "";
+
+  // Helper: CTA button with primary bg (white text)
+  function ctaBtn(label: string) {
+    return makeButton(b, label, "next-step", "", {
+      backgroundColor: ss(p),
+      fontSize:        sv(20),
+      paddingTop:      sv(16),
+      paddingBottom:   sv(16),
+      paddingLeft:     sv(40),
+      paddingRight:    sv(40),
+    }, { fontSize: sv(16), width: sv(100, "%") });
+  }
+
+  // Helper: CTA button with white bg (primary text) — used on dark/primary sections
+  function ctaBtnLight(label: string) {
+    return makeButton(b, label, "next-step", "", {
+      backgroundColor: ss("#ffffff"),
+      color:           ss(p),
+      fontSize:        sv(20),
+      paddingTop:      sv(16),
+      paddingBottom:   sv(16),
+      paddingLeft:     sv(40),
+      paddingRight:    sv(40),
+    }, { fontSize: sv(16), width: sv(100, "%") });
+  }
+
+  // ─── Section 0: Full-width header image (logo/photo) ────────────────────────
+  {
+    const img = makeImage(b, { url: placeholder, width: 100 });
+    const col = makeCol(b, [img], 100, { align: "center", padH: 0 });
+    const row = makeRow(b, [col], 1170);
+    makeSection(b, [row], { bgColor: "#000000", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
+  }
+
+  // ─── Section 1: Value Proposition — 50/50 image + headline ──────────────────
+  {
+    const img = makeImage(b, { url: placeholder, width: 100 });
+    const h2  = makeHeading(b, al.valuePropHeadline, "h2", {
+      color:      ss("#ffffff"),
+      fontSize:   sv(26),
+      lineHeight: ss("1.4em"),
+      textAlign:  ss("center"),
+    }, { fontSize: sv(20) });
+    const sub = makeParagraph(b, al.valuePropSubheadline, {
+      color:         ss("rgba(255,255,255,0.8)"),
+      fontSize:      sv(16),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.6em"),
+      paddingTop:    sv(12),
+    });
+    const imgCol  = makeCol(b, [img],      50, { padH: 10, padV: 15 });
+    const textCol = makeCol(b, [h2, sub],  50, { align: "center", padH: 20, padV: 15 });
+    const row = makeRow(b, [imgCol, textCol], 1170);
+    makeSection(b, [row], { bgColor: "#000000", ptD: 15, pbD: 15, ptM: 10, pbM: 10 });
+  }
+
+  // ─── Section 2: Video + hero CTA ────────────────────────────────────────────
+  {
+    const h1 = makeHeading(b, al.videoSectionHeading, "h1", {
+      color:      ss("#000000"),
+      fontSize:   sv(38),
+      fontWeight: ss("900"),
+      textAlign:  ss("center"),
+      lineHeight: ss("1.2em"),
+    }, { fontSize: sv(26) });
+    const headingCol = makeCol(b, [h1], 100, { align: "center", padH: 24 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    const videoEl  = makeVideo(b, data.coachVideoUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    const videoCol = makeCol(b, [videoEl], 50, { padH: 10, padV: 10 });
+
+    const sub = makeHeading(b, al.videoSectionSubheading, "h2", {
+      color:         ss(p),
+      fontSize:      sv(22),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.3em"),
+      paddingBottom: sv(16),
+    }, { fontSize: sv(18) });
+    const btn = ctaBtn(al.heroCtaText);
+    const subtext = makeParagraph(b, al.heroCtaSubtext, {
+      color:      ss("#555555"),
+      fontSize:   sv(14),
+      textAlign:  ss("center"),
+      paddingTop: sv(8),
+    });
+    const ctaCol = makeCol(b, [sub, btn, subtext], 50, { align: "center", padH: 20, padV: 10 });
+    const videoRow = makeRow(b, [videoCol, ctaCol], 1170);
+
+    makeSection(b, [headingRow, videoRow], { bgColor: "#ffffff", ptD: 30, pbD: 30, ptM: 20, pbM: 20 });
+  }
+
+  // ─── Section 3: (skipped — was hidden section in reference) ─────────────────
+
+  // ─── Section 4: Testimonial intro + video + quote ───────────────────────────
+  {
+    const h2 = makeHeading(b, al.testimonialIntroHeading, "h2", {
+      color:         ss("#000000"),
+      fontSize:      sv(36),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.2em"),
+      paddingBottom: sv(20),
+    }, { fontSize: sv(24) });
+    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 10 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    const videoEl = makeVideo(b, data.coachVideoUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    const spacerL = makeCol(b, [],          18, { padH: 0 });
+    const midCol  = makeCol(b, [videoEl],   64, { padH: 10, padV: 5 });
+    const spacerR = makeCol(b, [],          18, { padH: 0 });
+    const videoRow = makeRow(b, [spacerL, midCol, spacerR], 1170);
+
+    const quote = makeParagraph(b, `"${al.testimonialVideoQuote}"`, {
+      color:         ss("#333333"),
+      fontSize:      sv(20),
+      fontStyle:     ss("italic"),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.6em"),
+      paddingTop:    sv(16),
+      paddingBottom: sv(10),
+    }, { fontSize: sv(16) });
+    const quoteCol = makeCol(b, [quote], 100, { align: "center", padH: 32 });
+    const quoteRow = makeRow(b, [quoteCol], 840);
+
+    makeSection(b, [headingRow, videoRow, quoteRow], { bgColor: "#f5f5f5", ptD: 20, pbD: 35, ptM: 15, pbM: 20 });
+  }
+
+  // ─── Section 5: Credentials — 4×25% columns ─────────────────────────────────
+  {
+    const cols = al.credentialItems.map((cred) => {
+      const img  = makeImage(b, { url: placeholder, width: 100 });
+      const lbl  = makeHeading(b, cred.label, "h3", {
+        color:      ss("#000000"),
+        fontSize:   sv(18),
+        fontWeight: ss("700"),
+        textAlign:  ss("center"),
+        paddingTop: sv(10),
+      });
+      const desc = makeParagraph(b, cred.description, {
+        color:      ss("#444444"),
+        fontSize:   sv(14),
+        textAlign:  ss("center"),
+        lineHeight: ss("1.5em"),
+      });
+      return makeCol(b, [img, lbl, desc], 25, { align: "center", padH: 12, padV: 10 });
+    });
+    const row = makeRow(b, cols, 1170);
+    makeSection(b, [row], { bgColor: "#ffffff", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  }
+
+  // ─── Sections 6–10: Benefit blocks — alternating dark / light ───────────────
+  //     Even index (6, 8, 10) → dark bg, copy left / image right
+  //     Odd index  (7, 9)     → light bg, image left / copy right
+
+  al.benefitBlocks.forEach((benefit, i) => {
+    const isDark = i % 2 === 0;
+    const bgColor = isDark ? dk : "#f5f5f5";
+    const textColor = isDark ? "#ffffff" : "#111111";
+    const subColor  = isDark ? "rgba(255,255,255,0.8)" : "#444444";
+
+    const h2 = makeHeading(b, benefit.heading, "h2", {
+      color:         ss(textColor),
+      fontSize:      sv(28),
+      fontWeight:    ss("800"),
+      lineHeight:    ss("1.3em"),
+      paddingBottom: sv(12),
+    }, { fontSize: sv(22) });
+    const body = makeParagraph(b, benefit.body, {
+      color:      ss(subColor),
+      fontSize:   sv(16),
+      lineHeight: ss("1.7em"),
+    });
+    const img = makeImage(b, { url: placeholder, width: 100 });
+
+    const textCol  = makeCol(b, [h2, body], 50, { padH: 24, padV: 24, valign: "middle" });
+    const imgCol   = makeCol(b, [img],       50, { padH: 10, padV: 10, valign: "middle" });
+
+    const rowCols = isDark ? [textCol, imgCol] : [imgCol, textCol];
+    const row = makeRow(b, rowCols, 1170);
+    makeSection(b, [row], { bgColor, ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  });
+
+  // ─── Section 11: Mid-page CTA banner ────────────────────────────────────────
+  {
+    const h2 = makeHeading(b, al.midCtaHeading, "h2", {
+      color:         ss("#ffffff"),
+      fontSize:      sv(30),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.3em"),
+      paddingBottom: sv(20),
+    }, { fontSize: sv(22) });
+    const btn = ctaBtnLight(al.midCtaText);
+    const col = makeCol(b, [h2, btn], 100, { align: "center", padH: 32 });
+    const row = makeRow(b, [col], 720);
+    makeSection(b, [row], { bgColor: p, ptD: 50, pbD: 50, ptM: 40, pbM: 40 });
+  }
+
+  // ─── Section 12: Divider / section break ────────────────────────────────────
+  {
+    const divTop = makeDivider(b, { borderColor: ss("rgba(255,255,255,0.2)") });
+    const h2 = makeHeading(b, al.dividerHeading, "h2", {
+      color:      ss("#ffffff"),
+      fontSize:   sv(32),
+      fontWeight: ss("900"),
+      textAlign:  ss("center"),
+      lineHeight: ss("1.2em"),
+    }, { fontSize: sv(24) });
+    const divBot = makeDivider(b, { borderColor: ss("rgba(255,255,255,0.2)") });
+    const col = makeCol(b, [divTop, h2, divBot], 100, { align: "center", padH: 32 });
+    const row = makeRow(b, [col], 800);
+    makeSection(b, [row], { bgColor: dk, ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  }
+
+  // ─── Section 13: FAQ ─────────────────────────────────────────────────────────
+  {
+    const elems: string[] = [];
+    const faqLabel = makeParagraph(b, "FREQUENTLY ASKED QUESTIONS", {
+      color:         ss(p),
+      fontSize:      sv(11),
+      fontWeight:    ss("700"),
+      textTransform: ss("uppercase"),
+      letterSpacing: ss("0.12em"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(8),
+    });
+    const faqH2 = makeHeading(b, "Your Questions Answered", "h2", {
+      color:         ss("#111111"),
+      fontSize:      sv(34),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(32),
+    }, { fontSize: sv(24) });
+    elems.push(faqLabel, faqH2);
+
+    al.faqItems.forEach((faq, i) => {
+      elems.push(makeHeading(b, faq.question, "h4", {
+        color:      ss("#111111"),
+        fontSize:   sv(17),
+        fontWeight: ss("700"),
+        paddingTop: sv(16),
+      }));
+      elems.push(makeParagraph(b, faq.answer, {
+        color:         ss("#444444"),
+        fontSize:      sv(15),
+        lineHeight:    ss("1.7em"),
+        paddingBottom: sv(12),
+      }));
+      if (i < al.faqItems.length - 1) elems.push(makeDivider(b));
+    });
+
+    const col = makeCol(b, elems, 100, { padH: 32 });
+    const row = makeRow(b, [col], 720);
+    makeSection(b, [row], { bgColor: "#ffffff", ptD: 40, pbD: 60, ptM: 30, pbM: 40 });
+  }
+
+  // ─── Section 14: Gallery + CTA ───────────────────────────────────────────────
+  {
+    const h2 = makeHeading(b, al.galleryHeading, "h2", {
+      color:         ss("#111111"),
+      fontSize:      sv(32),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(24),
+    }, { fontSize: sv(24) });
+    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 16 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    // 4 placeholder images
+    const imgCols = [0, 1, 2, 3].map(() => {
+      const img = makeImage(b, { url: placeholder, width: 100 });
+      return makeCol(b, [img], 25, { padH: 8, padV: 8 });
+    });
+    const imgRow = makeRow(b, imgCols, 1170);
+
+    const btn = ctaBtn(al.heroCtaText);
+    const btnCol = makeCol(b, [btn], 100, { align: "center", padH: 32 });
+    const btnRow = makeRow(b, [btnCol], 480);
+
+    makeSection(b, [headingRow, imgRow, btnRow], { bgColor: "#f5f5f5", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  }
+
+  // ─── Section 15: Red / Green qualification boxes ─────────────────────────────
+  {
+    const qualH2 = makeHeading(b, al.qualificationSectionHeading, "h2", {
+      color:         ss("#111111"),
+      fontSize:      sv(32),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(24),
+    }, { fontSize: sv(22) });
+    const qualHeadingCol = makeCol(b, [qualH2], 100, { align: "center", padH: 16 });
+    const qualHeadingRow = makeRow(b, [qualHeadingCol], 1170);
+
+    // Red — Should NOT apply
+    const redLabel = makeHeading(b, "You Should NOT Apply If...", "h3", {
+      color:           ss("#ffffff"),
+      fontSize:        sv(20),
+      fontWeight:      ss("800"),
+      textAlign:       ss("center"),
+      backgroundColor: ss("#c0392b"),
+      paddingTop:      sv(12),
+      paddingBottom:   sv(12),
+      paddingLeft:     sv(16),
+      paddingRight:    sv(16),
+    });
+    const redList = makeBulletList(b, al.shouldNotApply, "#c0392b", {
+      color:           ss("#333333"),
+      fontSize:        sv(15),
+      lineHeight:      ss("1.7em"),
+      backgroundColor: ss("#fdf2f2"),
+      paddingTop:      sv(16),
+      paddingRight:    sv(16),
+      paddingBottom:   sv(16),
+      paddingLeft:     sv(16),
+    });
+    const redCol = makeCol(b, [redLabel, redList], 50, { padH: 12, padV: 8 });
+
+    // Green — SHOULD apply
+    const greenLabel = makeHeading(b, "You SHOULD Apply If...", "h3", {
+      color:           ss("#ffffff"),
+      fontSize:        sv(20),
+      fontWeight:      ss("800"),
+      textAlign:       ss("center"),
+      backgroundColor: ss("#27ae60"),
+      paddingTop:      sv(12),
+      paddingBottom:   sv(12),
+      paddingLeft:     sv(16),
+      paddingRight:    sv(16),
+    });
+    const greenList = makeBulletList(b, al.shouldApply, "#27ae60", {
+      color:           ss("#333333"),
+      fontSize:        sv(15),
+      lineHeight:      ss("1.7em"),
+      backgroundColor: ss("#f2faf5"),
+      paddingTop:      sv(16),
+      paddingRight:    sv(16),
+      paddingBottom:   sv(16),
+      paddingLeft:     sv(16),
+    });
+    const greenCol = makeCol(b, [greenLabel, greenList], 50, { padH: 12, padV: 8 });
+
+    const qualRow = makeRow(b, [redCol, greenCol], 1170);
+    makeSection(b, [qualHeadingRow, qualRow], { bgColor: "#ffffff", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  }
+
+  // ─── Section 16: Text testimonials — 3 columns ──────────────────────────────
+  {
+    const testimCols = al.textTestimonials.map((t) => {
+      const quote = makeParagraph(b, `"${t.quote}"`, {
+        color:      ss("#333333"),
+        fontSize:   sv(15),
+        fontStyle:  ss("italic"),
+        lineHeight: ss("1.65em"),
+      });
+      const attr = makeParagraph(b, `— ${t.attribution}`, {
+        color:      ss("#666666"),
+        fontSize:   sv(13),
+        fontWeight: ss("600"),
+        paddingTop: sv(8),
+      });
+      const result = makeParagraph(b, t.result, {
+        color:           ss("#ffffff"),
+        fontSize:        sv(13),
+        fontWeight:      ss("700"),
+        backgroundColor: ss(p),
+        paddingTop:      sv(6),
+        paddingBottom:   sv(6),
+        paddingLeft:     sv(12),
+        paddingRight:    sv(12),
+        borderRadius:    sv(4),
+        textAlign:       ss("center"),
+        marginTop:       sv(10),
+      });
+      return makeCol(b, [quote, attr, result], 33, { padH: 16, padV: 16, valign: "top" });
+    });
+    const row = makeRow(b, testimCols, 1170);
+    makeSection(b, [row], { bgColor: "#f5f5f5", ptD: 50, pbD: 50, ptM: 35, pbM: 35 });
+  }
+
+  // ─── Section 17: What You Get ─────────────────────────────────────────────────
+  {
+    const h2 = makeHeading(b, al.whatYouGetHeading, "h2", {
+      color:         ss("#ffffff"),
+      fontSize:      sv(32),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(24),
+    }, { fontSize: sv(24) });
+    const bullets = makeBulletList(b, al.whatYouGetItems, p, {
+      color:      ss("rgba(255,255,255,0.9)"),
+      fontSize:   sv(16),
+      lineHeight: ss("1.7em"),
+    });
+    const btn = ctaBtnLight(al.heroCtaText);
+    const col = makeCol(b, [h2, bullets, btn], 100, { align: "center", padH: 32 });
+    const row = makeRow(b, [col], 720);
+    makeSection(b, [row], { bgColor: dk, ptD: 60, pbD: 60, ptM: 40, pbM: 40 });
+  }
+
+  // ─── Section 18: Transformation gallery ─────────────────────────────────────
+  {
+    const h2 = makeHeading(b, al.transformationGalleryHeading, "h2", {
+      color:         ss("#111111"),
+      fontSize:      sv(32),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(24),
+    }, { fontSize: sv(24) });
+    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 16 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    // 2 rows of 4 placeholder images
+    const imgRow1 = makeRow(b, [0, 1, 2, 3].map(() => {
+      const img = makeImage(b, { url: placeholder, width: 100 });
+      return makeCol(b, [img], 25, { padH: 6, padV: 6 });
+    }), 1170);
+    const imgRow2 = makeRow(b, [0, 1, 2, 3].map(() => {
+      const img = makeImage(b, { url: placeholder, width: 100 });
+      return makeCol(b, [img], 25, { padH: 6, padV: 6 });
+    }), 1170);
+
+    const btn = ctaBtn(al.heroCtaText);
+    const btnCol = makeCol(b, [btn], 100, { align: "center", padH: 32 });
+    const btnRow = makeRow(b, [btnCol], 480);
+
+    makeSection(b, [headingRow, imgRow1, imgRow2, btnRow], { bgColor: "#ffffff", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  }
+
+  // ─── Section 19: Client Wins ──────────────────────────────────────────────────
+  {
+    const h2 = makeHeading(b, al.clientWinsHeading, "h2", {
+      color:         ss("#111111"),
+      fontSize:      sv(32),
+      fontWeight:    ss("900"),
+      textAlign:     ss("center"),
+      paddingBottom: sv(24),
+    }, { fontSize: sv(24) });
+    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 16 });
+    const headingRow = makeRow(b, [headingCol], 1170);
+
+    // Arrange wins in 3-column rows
+    const winsPerRow = 3;
+    const winRows: string[] = [];
+    for (let i = 0; i < al.clientWins.length; i += winsPerRow) {
+      const chunk = al.clientWins.slice(i, i + winsPerRow);
+      const winCols = chunk.map((win) => {
+        const name = makeHeading(b, win.name, "h4", {
+          color:      ss("#111111"),
+          fontSize:   sv(16),
+          fontWeight: ss("700"),
+          paddingBottom: sv(4),
+        });
+        const result = makeParagraph(b, win.result, {
+          color:      ss("#555555"),
+          fontSize:   sv(14),
+          lineHeight: ss("1.5em"),
+        });
+        return makeCol(b, [name, result], 33, { padH: 16, padV: 12 });
+      });
+      // Pad to 3 cols if last row is short
+      while (winCols.length < winsPerRow) {
+        winCols.push(makeCol(b, [], 33, { padH: 16 }));
+      }
+      winRows.push(makeRow(b, winCols, 1170));
+    }
+
+    const btn = ctaBtn(al.heroCtaText);
+    const btnCol = makeCol(b, [btn], 100, { align: "center", padH: 32 });
+    const btnRow = makeRow(b, [btnCol], 480);
+
+    makeSection(b, [headingRow, ...winRows, btnRow], { bgColor: "#f5f5f5", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  }
+
+  // ─── Section 20: Final CTA + Footer ─────────────────────────────────────────
+  {
+    const subtext = makeParagraph(b, al.finalCtaSubtext, {
+      color:         ss("rgba(255,255,255,0.85)"),
+      fontSize:      sv(16),
+      textAlign:     ss("center"),
+      lineHeight:    ss("1.7em"),
+      paddingBottom: sv(24),
+    });
+    const btn = ctaBtnLight(al.finalCtaText);
+    const col = makeCol(b, [subtext, btn], 100, { align: "center", padH: 32 });
+    const row = makeRow(b, [col], 640);
+    makeSection(b, [row], { bgColor: dk, ptD: 60, pbD: 60, ptM: 40, pbM: 40 });
+  }
+
+  buildFooter(b, s);
+
+  const result = sanitizePageData(finalize(b, s));
+  console.log("[diag] APP-LANDING FINAL sections array (" + result.sections.length + " total):");
+  result.sections.forEach((sec, i) => {
+    console.log(`  [${i}] id=${sec.id} elements=${sec.elements?.length ?? 0}`);
+  });
+  return result;
 }
 
 // ── All pages ─────────────────────────────────────────────────────────────────
