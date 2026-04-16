@@ -3243,27 +3243,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     makeSection(b, [headingRow, videoRow, quoteRow], { bgColor: "#f5f5f5", ptD: 20, pbD: 35, ptM: 15, pbM: 20 });
   }
 
-  // ─── Section 5: Credentials — 4×25% columns ─────────────────────────────────
+  // ─── Section 5: Credentials — 4 cards (custom code) ─────────────────────────
   {
-    const cols = al.credentialItems.map((cred) => {
-      const img  = makeImage(b, { url: placeholder, width: 100, height: 180 });
-      const lbl  = makeHeading(b, cred.label, "h3", {
-        color:      ss("#000000"),
-        fontSize:   sv(18),
-        fontWeight: ss("700"),
-        textAlign:  ss("center"),
-        paddingTop: sv(10),
-      });
-      const desc = makeParagraph(b, cred.description, {
-        color:      ss("#444444"),
-        fontSize:   sv(14),
-        textAlign:  ss("center"),
-        lineHeight: ss("1.5em"),
-      });
-      return makeCol(b, [img, lbl, desc], 25, { align: "center", padH: 12, padV: 10 });
-    });
-    const row = makeRow(b, cols, 1170);
-    makeSection(b, [row], { bgColor: "#ffffff", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+    const credHtml = `<style>.alp-cred{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-cred-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1100px;margin:0 auto}.alp-cred-item{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}.alp-cred-ph{width:100%;aspect-ratio:1;background:#e8ecf0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;border:2px dashed #b0bec5}.alp-cred-label{color:#111;font-size:16px;font-weight:700;margin:0;line-height:1.3}.alp-cred-desc{color:#555;font-size:13px;line-height:1.55;margin:0}@media(max-width:640px){.alp-cred-grid{grid-template-columns:repeat(2,1fr)}.alp-cred{padding:36px 16px}}</style><div class="alp-cred"><div class="alp-cred-grid">${al.credentialItems.map(c => `<div class="alp-cred-item"><div class="alp-cred-ph">📷</div><h3 class="alp-cred-label">${escHtml(c.label)}</h3><p class="alp-cred-desc">${escHtml(c.description)}</p></div>`).join("")}</div></div>`;
+    const credEl  = makeCustomCode(b, credHtml, 0);
+    const credCol = makeCol(b, [credEl], 100, { padH: 0 });
+    const credRow = makeRow(b, [credCol], 1200, 0);
+    makeSection(b, [credRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
   // ─── Sections 6–10: Benefit blocks — alternating dark / light ───────────────
@@ -3331,72 +3317,23 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     makeSection(b, [row], { bgColor: dk, ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
   }
 
-  // ─── Section 13: FAQ ─────────────────────────────────────────────────────────
+  // ─── Section 13: FAQ (custom code) ──────────────────────────────────────────
   {
-    const elems: string[] = [];
-    const faqLabel = makeParagraph(b, "FREQUENTLY ASKED QUESTIONS", {
-      color:         ss(p),
-      fontSize:      sv(11),
-      fontWeight:    ss("700"),
-      textTransform: ss("uppercase"),
-      letterSpacing: ss("0.12em"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(8),
-    });
-    const faqH2 = makeHeading(b, "Your Questions Answered", "h2", {
-      color:         ss("#111111"),
-      fontSize:      sv(34),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(32),
-    }, { fontSize: sv(24) });
-    elems.push(faqLabel, faqH2);
-
-    al.faqItems.forEach((faq, i) => {
-      elems.push(makeHeading(b, faq.question, "h4", {
-        color:      ss("#111111"),
-        fontSize:   sv(17),
-        fontWeight: ss("700"),
-        paddingTop: sv(16),
-      }));
-      elems.push(makeParagraph(b, faq.answer, {
-        color:         ss("#444444"),
-        fontSize:      sv(15),
-        lineHeight:    ss("1.7em"),
-        paddingBottom: sv(12),
-      }));
-      if (i < al.faqItems.length - 1) elems.push(makeDivider(b));
-    });
-
-    const col = makeCol(b, elems, 100, { padH: 32 });
-    const row = makeRow(b, [col], 720);
-    makeSection(b, [row], { bgColor: "#ffffff", ptD: 40, pbD: 60, ptM: 30, pbM: 40 });
+    const faqHtml = `<style>.alp-faq{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-faq-wrap{max-width:720px;margin:0 auto}.alp-faq-eyebrow{color:${p};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;text-align:center;margin:0 0 10px}.alp-faq-h2{color:#111;font-size:clamp(24px,3.5vw,34px);font-weight:900;text-align:center;margin:0 0 36px;line-height:1.2}.alp-faq-item{border-bottom:1px solid #e5e7eb;padding:20px 0}.alp-faq-item:last-child{border-bottom:none}.alp-faq-q{color:#111;font-size:17px;font-weight:700;margin:0 0 10px;line-height:1.4}.alp-faq-a{color:#444;font-size:15px;line-height:1.7;margin:0}@media(max-width:640px){.alp-faq{padding:40px 16px}}</style><div class="alp-faq"><div class="alp-faq-wrap"><p class="alp-faq-eyebrow">FREQUENTLY ASKED QUESTIONS</p><h2 class="alp-faq-h2">Your Questions Answered</h2>${al.faqItems.map(faq => `<div class="alp-faq-item"><h4 class="alp-faq-q">${escHtml(faq.question)}</h4><p class="alp-faq-a">${escHtml(faq.answer)}</p></div>`).join("")}</div></div>`;
+    const faqEl  = makeCustomCode(b, faqHtml, 0);
+    const faqCol = makeCol(b, [faqEl], 100, { padH: 0 });
+    const faqRow = makeRow(b, [faqCol], 1200, 0);
+    makeSection(b, [faqRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
-  // ─── Section 14: Gallery + CTA ───────────────────────────────────────────────
+  // ─── Section 14: Gallery + CTA (custom code) ─────────────────────────────────
   {
-    const h2 = makeHeading(b, al.galleryHeading, "h2", {
-      color:         ss("#111111"),
-      fontSize:      sv(32),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(24),
-    }, { fontSize: sv(24) });
-    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 16 });
-    const headingRow = makeRow(b, [headingCol], 1170);
-
-    // 4 placeholder images
-    const imgCols = [0, 1, 2, 3].map(() => {
-      const img = makeImage(b, { url: placeholder, width: 100, height: 220 });
-      return makeCol(b, [img], 25, { padH: 8, padV: 8 });
-    });
-    const imgRow = makeRow(b, imgCols, 1170);
-
-    const btn = ctaBtn(al.heroCtaText);
-    const btnCol = makeCol(b, [btn], 100, { align: "center", padH: 32 });
-    const btnRow = makeRow(b, [btnCol], 480);
-
-    makeSection(b, [headingRow, imgRow, btnRow], { bgColor: "#f5f5f5", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+    const phItems = Array.from({ length: 4 }, () => `<div class="alp-gal-ph"><span style="font-size:28px;opacity:0.45;">📷</span><span style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Add photo</span></div>`).join("");
+    const galHtml = `<style>.alp-gal{background:#f5f5f5;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-gal-h2{text-align:center;font-size:clamp(22px,3.5vw,32px);font-weight:900;color:#111;margin:0 0 32px;line-height:1.2}.alp-gal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1100px;margin:0 auto 32px}.alp-gal-ph{background:#dde3ea;border-radius:10px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #b0bec5}@media(max-width:640px){.alp-gal-grid{grid-template-columns:repeat(2,1fr)}.alp-gal{padding:36px 16px}}</style><div class="alp-gal"><h2 class="alp-gal-h2">${escHtml(al.galleryHeading)}</h2><div class="alp-gal-grid">${phItems}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${p};color:#fff;padding:16px 44px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">${escHtml(al.heroCtaText)}</a></div></div>`;
+    const galEl  = makeCustomCode(b, galHtml, 0);
+    const galCol = makeCol(b, [galEl], 100, { padH: 0 });
+    const galRow = makeRow(b, [galCol], 1200, 0);
+    makeSection(b, [galRow], { bgColor: "#f5f5f5", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
   // ─── Section 15: Red / Green qualification boxes (custom code) ───────────────
@@ -3432,78 +3369,23 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     makeSection(b, [wygRow], { bgColor: dk, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
-  // ─── Section 18: Transformation gallery ─────────────────────────────────────
+  // ─── Section 18: Transformation gallery (custom code) ───────────────────────
   {
-    const h2 = makeHeading(b, al.transformationGalleryHeading, "h2", {
-      color:         ss("#111111"),
-      fontSize:      sv(32),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(24),
-    }, { fontSize: sv(24) });
-    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 16 });
-    const headingRow = makeRow(b, [headingCol], 1170);
-
-    // 2 rows of 4 placeholder images
-    const imgRow1 = makeRow(b, [0, 1, 2, 3].map(() => {
-      const img = makeImage(b, { url: placeholder, width: 100, height: 220 });
-      return makeCol(b, [img], 25, { padH: 6, padV: 6 });
-    }), 1170);
-    const imgRow2 = makeRow(b, [0, 1, 2, 3].map(() => {
-      const img = makeImage(b, { url: placeholder, width: 100, height: 220 });
-      return makeCol(b, [img], 25, { padH: 6, padV: 6 });
-    }), 1170);
-
-    const btn = ctaBtn(al.heroCtaText);
-    const btnCol = makeCol(b, [btn], 100, { align: "center", padH: 32 });
-    const btnRow = makeRow(b, [btnCol], 480);
-
-    makeSection(b, [headingRow, imgRow1, imgRow2, btnRow], { bgColor: "#ffffff", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+    const tgItems = Array.from({ length: 8 }, (_,i) => `<div class="alp-tg-ph"><span style="font-size:24px;opacity:0.4;">📷</span><span style="color:#94a3b8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">${i % 2 === 0 ? "Before" : "After"}</span></div>`).join("");
+    const tgHtml = `<style>.alp-tg{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-tg-h2{text-align:center;font-size:clamp(22px,3.5vw,32px);font-weight:900;color:#111;margin:0 0 32px;line-height:1.2}.alp-tg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1100px;margin:0 auto 32px}.alp-tg-ph{background:#e8ecf0;border-radius:10px;height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed #b0bec5}@media(max-width:640px){.alp-tg-grid{grid-template-columns:repeat(2,1fr)}.alp-tg{padding:36px 16px}}</style><div class="alp-tg"><h2 class="alp-tg-h2">${escHtml(al.transformationGalleryHeading)}</h2><div class="alp-tg-grid">${tgItems}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${p};color:#fff;padding:16px 44px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">${escHtml(al.heroCtaText)}</a></div></div>`;
+    const tgEl  = makeCustomCode(b, tgHtml, 0);
+    const tgCol = makeCol(b, [tgEl], 100, { padH: 0 });
+    const tgRow = makeRow(b, [tgCol], 1200, 0);
+    makeSection(b, [tgRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
-  // ─── Section 19: Client Wins ──────────────────────────────────────────────────
+  // ─── Section 19: Client Wins (custom code) ───────────────────────────────────
   {
-    const h2 = makeHeading(b, al.clientWinsHeading, "h2", {
-      color:         ss("#111111"),
-      fontSize:      sv(32),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(24),
-    }, { fontSize: sv(24) });
-    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 16 });
-    const headingRow = makeRow(b, [headingCol], 1170);
-
-    // Arrange wins in 3-column rows
-    const winsPerRow = 3;
-    const winRows: string[] = [];
-    for (let i = 0; i < al.clientWins.length; i += winsPerRow) {
-      const chunk = al.clientWins.slice(i, i + winsPerRow);
-      const winCols = chunk.map((win) => {
-        const name = makeHeading(b, win.name, "h4", {
-          color:      ss("#111111"),
-          fontSize:   sv(16),
-          fontWeight: ss("700"),
-          paddingBottom: sv(4),
-        });
-        const result = makeParagraph(b, win.result, {
-          color:      ss("#555555"),
-          fontSize:   sv(14),
-          lineHeight: ss("1.5em"),
-        });
-        return makeCol(b, [name, result], 33, { padH: 16, padV: 12 });
-      });
-      // Pad to 3 cols if last row is short
-      while (winCols.length < winsPerRow) {
-        winCols.push(makeCol(b, [], 33, { padH: 16 }));
-      }
-      winRows.push(makeRow(b, winCols, 1170));
-    }
-
-    const btn = ctaBtn(al.heroCtaText);
-    const btnCol = makeCol(b, [btn], 100, { align: "center", padH: 32 });
-    const btnRow = makeRow(b, [btnCol], 480);
-
-    makeSection(b, [headingRow, ...winRows, btnRow], { bgColor: "#f5f5f5", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+    const winsHtml = `<style>.alp-cw{background:#f5f5f5;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-cw-h2{text-align:center;font-size:clamp(22px,3.5vw,32px);font-weight:900;color:#111;margin:0 0 32px;line-height:1.2}.alp-cw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:1100px;margin:0 auto 40px}.alp-cw-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}.alp-cw-name{color:#111;font-size:15px;font-weight:700;margin:0 0 8px}.alp-cw-result{color:#555;font-size:14px;line-height:1.5;margin:0;border-left:3px solid ${p};padding-left:10px}@media(max-width:640px){.alp-cw-grid{grid-template-columns:repeat(2,1fr)}.alp-cw{padding:36px 16px}}</style><div class="alp-cw"><h2 class="alp-cw-h2">${escHtml(al.clientWinsHeading)}</h2><div class="alp-cw-grid">${al.clientWins.map(w => `<div class="alp-cw-card"><p class="alp-cw-name">${escHtml(w.name)}</p><p class="alp-cw-result">${escHtml(w.result)}</p></div>`).join("")}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${p};color:#fff;padding:16px 44px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">${escHtml(al.heroCtaText)}</a></div></div>`;
+    const cwEl  = makeCustomCode(b, winsHtml, 0);
+    const cwCol = makeCol(b, [cwEl], 100, { padH: 0 });
+    const cwRow = makeRow(b, [cwCol], 1200, 0);
+    makeSection(b, [cwRow], { bgColor: "#f5f5f5", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
   // ─── Section 20: Final CTA + Footer ─────────────────────────────────────────
