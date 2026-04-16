@@ -439,7 +439,7 @@ function makeCol(
   b: Builder,
   childIds: string[],
   widthPct = 100,
-  opts: { padH?: number; padV?: number; align?: string; valign?: string } = {},
+  opts: { padH?: number; padV?: number; align?: string; valign?: string; bgColor?: string } = {},
 ): string {
   const id = ghlId("col");
   const styles: GhlElem = {
@@ -448,7 +448,7 @@ function makeCol(
     paddingRight:    { value: opts.padH ?? 16, unit: "px" },
     paddingTop:      { value: opts.padV ?? 0,  unit: "px" },
     paddingBottom:   { value: opts.padV ?? 0,  unit: "px" },
-    backgroundColor: { value: "var(--transparent)" },
+    backgroundColor: { value: opts.bgColor ?? "var(--transparent)" },
     background:      { value: "none" },
     backdropFilter:  { value: "none" },
     borderColor:     { value: "var(--black)" },
@@ -750,7 +750,7 @@ function makeForm(b: Builder): string {
 
 // ── Image ─────────────────────────────────────────────────────────────────────
 
-function makeImage(b: Builder, opts: { url?: string; width?: number } = {}): string {
+function makeImage(b: Builder, opts: { url?: string; width?: number; height?: number } = {}): string {
   const id = ghlId("el");
   b.nodes[id] = {
     extra: {
@@ -773,14 +773,15 @@ function makeImage(b: Builder, opts: { url?: string; width?: number } = {}): str
     styles: {
       width:           { value: opts.width ?? 100, unit: "%" },
       fontFamily:      { value: "var(--bodyfont)" },
-      backgroundColor: { value: "var(--transparent)" },
+      backgroundColor: { value: (!opts.url && opts.height) ? "#e8ecf0" : "var(--transparent)" },
       opacity:         { value: 1 },
       boxShadow:       { value: "none" },
       borderRadius:    { value: 0, unit: "px" },
       borderColor:     { value: "var(--black)" },
       borderWidth:     { value: "0", unit: "px" },
       borderStyle:     { value: "solid" },
-    },
+      ...(opts.height ? { minHeight: { value: opts.height, unit: "px" } } : {}),
+    } as GhlElem,
     wrapper:       { ...ELEM_WRAPPER },
     customCss:     [],
     id,
@@ -3245,7 +3246,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // ─── Section 5: Credentials — 4×25% columns ─────────────────────────────────
   {
     const cols = al.credentialItems.map((cred) => {
-      const img  = makeImage(b, { url: placeholder, width: 100 });
+      const img  = makeImage(b, { url: placeholder, width: 100, height: 180 });
       const lbl  = makeHeading(b, cred.label, "h3", {
         color:      ss("#000000"),
         fontSize:   sv(18),
@@ -3287,10 +3288,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       fontSize:   sv(16),
       lineHeight: ss("1.7em"),
     });
-    const img = makeImage(b, { url: placeholder, width: 100 });
+    const phoneHtml = `<div style="display:flex;align-items:center;justify-content:center;min-height:300px;padding:20px;"><div style="width:155px;background:#0f172a;border-radius:32px;padding:9px;box-shadow:0 20px 50px rgba(0,0,0,0.45);border:2px solid #1e293b;"><div style="background:#000;border-radius:23px;overflow:hidden;"><div style="background:#1d4ed8;padding:5px 13px 0;display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;font-size:8px;font-weight:700;">9:41</span><span style="color:#fff;font-size:8px;opacity:0.8;">●●●</span></div><div style="background:linear-gradient(180deg,#1d4ed8 0%,#1e40af 34%,#f8fafc 34%);padding:11px 9px 13px;"><div style="color:#fff;font-size:10px;font-weight:800;margin-bottom:1px;">Good Morning 💪</div><div style="color:rgba(255,255,255,0.75);font-size:7px;margin-bottom:9px;">Day 23 of your programme</div><div style="background:#fff;border-radius:9px;padding:9px;margin-bottom:6px;box-shadow:0 3px 10px rgba(0,0,0,0.1);"><div style="color:#111;font-size:9px;font-weight:700;margin-bottom:2px;">Today's Workout</div><div style="color:#666;font-size:7px;margin-bottom:5px;">Upper Body · 45 min</div><div style="background:#1d4ed8;border-radius:5px;padding:4px;text-align:center;"><span style="color:#fff;font-size:7px;font-weight:800;">START →</span></div></div><div style="background:#fff;border-radius:9px;padding:8px;margin-bottom:6px;box-shadow:0 3px 10px rgba(0,0,0,0.1);"><div style="color:#111;font-size:9px;font-weight:700;margin-bottom:4px;">Nutrition</div><div style="background:#e5e7eb;border-radius:3px;height:4px;margin-bottom:3px;overflow:hidden;"><div style="background:#16a34a;height:100%;width:78%;border-radius:3px;"></div></div><div style="color:#666;font-size:7px;">1,710 / 2,200 kcal</div></div><div style="display:flex;gap:4px;"><div style="flex:1;background:#fff;border-radius:7px;padding:6px 3px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,0.1);"><div style="color:#1d4ed8;font-size:11px;font-weight:800;line-height:1;">23</div><div style="color:#888;font-size:6px;">Days</div></div><div style="flex:1;background:#fff;border-radius:7px;padding:6px 3px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,0.1);"><div style="color:#16a34a;font-size:11px;font-weight:800;line-height:1;">-4kg</div><div style="color:#888;font-size:6px;">Lost</div></div><div style="flex:1;background:#fff;border-radius:7px;padding:6px 3px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,0.1);"><div style="color:#dc2626;font-size:11px;font-weight:800;line-height:1;">95%</div><div style="color:#888;font-size:6px;">Adhere</div></div></div></div></div></div></div>`;
+    const phoneEl  = makeCustomCode(b, phoneHtml, 0);
 
     const textCol  = makeCol(b, [h2, body], 50, { padH: 24, padV: 24, valign: "middle" });
-    const imgCol   = makeCol(b, [img],       50, { padH: 10, padV: 10, valign: "middle" });
+    const imgCol   = makeCol(b, [phoneEl],   50, { padH: 10, padV: 10, valign: "middle" });
 
     const rowCols = isDark ? [textCol, imgCol] : [imgCol, textCol];
     const row = makeRow(b, rowCols, 1170);
@@ -3385,7 +3387,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
     // 4 placeholder images
     const imgCols = [0, 1, 2, 3].map(() => {
-      const img = makeImage(b, { url: placeholder, width: 100 });
+      const img = makeImage(b, { url: placeholder, width: 100, height: 220 });
       return makeCol(b, [img], 25, { padH: 8, padV: 8 });
     });
     const imgRow = makeRow(b, imgCols, 1170);
@@ -3397,68 +3399,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     makeSection(b, [headingRow, imgRow, btnRow], { bgColor: "#f5f5f5", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
   }
 
-  // ─── Section 15: Red / Green qualification boxes ─────────────────────────────
+  // ─── Section 15: Red / Green qualification boxes (custom code) ───────────────
   {
-    const qualH2 = makeHeading(b, al.qualificationSectionHeading, "h2", {
-      color:         ss("#111111"),
-      fontSize:      sv(32),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      paddingBottom: sv(24),
-    }, { fontSize: sv(22) });
-    const qualHeadingCol = makeCol(b, [qualH2], 100, { align: "center", padH: 16 });
-    const qualHeadingRow = makeRow(b, [qualHeadingCol], 1170);
-
-    // Red — Should NOT apply
-    const redLabel = makeHeading(b, "You Should NOT Apply If...", "h3", {
-      color:           ss("#ffffff"),
-      fontSize:        sv(20),
-      fontWeight:      ss("800"),
-      textAlign:       ss("center"),
-      backgroundColor: ss("#c0392b"),
-      paddingTop:      sv(12),
-      paddingBottom:   sv(12),
-      paddingLeft:     sv(16),
-      paddingRight:    sv(16),
-    });
-    const redList = makeBulletList(b, al.shouldNotApply, "#c0392b", {
-      color:           ss("#333333"),
-      fontSize:        sv(15),
-      lineHeight:      ss("1.7em"),
-      backgroundColor: ss("#fdf2f2"),
-      paddingTop:      sv(16),
-      paddingRight:    sv(16),
-      paddingBottom:   sv(16),
-      paddingLeft:     sv(16),
-    });
-    const redCol = makeCol(b, [redLabel, redList], 50, { padH: 12, padV: 8 });
-
-    // Green — SHOULD apply
-    const greenLabel = makeHeading(b, "You SHOULD Apply If...", "h3", {
-      color:           ss("#ffffff"),
-      fontSize:        sv(20),
-      fontWeight:      ss("800"),
-      textAlign:       ss("center"),
-      backgroundColor: ss("#27ae60"),
-      paddingTop:      sv(12),
-      paddingBottom:   sv(12),
-      paddingLeft:     sv(16),
-      paddingRight:    sv(16),
-    });
-    const greenList = makeBulletList(b, al.shouldApply, "#27ae60", {
-      color:           ss("#333333"),
-      fontSize:        sv(15),
-      lineHeight:      ss("1.7em"),
-      backgroundColor: ss("#f2faf5"),
-      paddingTop:      sv(16),
-      paddingRight:    sv(16),
-      paddingBottom:   sv(16),
-      paddingLeft:     sv(16),
-    });
-    const greenCol = makeCol(b, [greenLabel, greenList], 50, { padH: 12, padV: 8 });
-
-    const qualRow = makeRow(b, [redCol, greenCol], 1170);
-    makeSection(b, [qualHeadingRow, qualRow], { bgColor: "#ffffff", ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+    const qualHtml = `<style>.alp-qual{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-qual-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:940px;margin:0 auto}.alp-qual-box{border-radius:14px;overflow:hidden}.alp-qual-header{padding:16px 20px;text-align:center;font-size:16px;font-weight:800;color:#fff;letter-spacing:0.3px}.alp-qual-list{margin:0;padding:16px;list-style:none;display:flex;flex-direction:column;gap:8px}.alp-qual-item{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55;color:#1e293b;padding:10px 12px;background:rgba(255,255,255,0.75);border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}@media(max-width:640px){.alp-qual-grid{grid-template-columns:1fr}.alp-qual{padding:36px 16px}}</style><div class="alp-qual"><h2 style="text-align:center;font-size:clamp(20px,3vw,30px);font-weight:900;color:#0f172a;margin:0 0 32px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${escHtml(al.qualificationSectionHeading)}</h2><div class="alp-qual-grid"><div class="alp-qual-box" style="background:#fef2f2;border:2px solid #fca5a5;"><div class="alp-qual-header" style="background:#dc2626;">✗ You Should NOT Apply If...</div><ul class="alp-qual-list">${al.shouldNotApply.map(item => `<li class="alp-qual-item"><span style="color:#dc2626;font-weight:800;font-size:15px;flex-shrink:0;line-height:1.35;margin-top:1px;">✗</span><span>${escHtml(item)}</span></li>`).join("")}</ul></div><div class="alp-qual-box" style="background:#f0fdf4;border:2px solid #86efac;"><div class="alp-qual-header" style="background:#16a34a;">✓ You SHOULD Apply If...</div><ul class="alp-qual-list">${al.shouldApply.map(item => `<li class="alp-qual-item"><span style="color:#16a34a;font-weight:800;font-size:15px;flex-shrink:0;line-height:1.35;margin-top:1px;">✓</span><span>${escHtml(item)}</span></li>`).join("")}</ul></div></div></div>`;
+    const qualEl  = makeCustomCode(b, qualHtml, 0);
+    const qualCol = makeCol(b, [qualEl], 100, { padH: 0 });
+    const qualRow = makeRow(b, [qualCol], 1200, 0);
+    makeSection(b, [qualRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
   }
 
   // ─── Section 16: Text testimonials — 3 columns ──────────────────────────────
