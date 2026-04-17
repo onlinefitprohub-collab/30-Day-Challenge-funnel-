@@ -3217,6 +3217,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // array has its properties at the top level, matching the format finalize() produces.
   // GHL's page builder and the Chrome extension both expect this flat structure.
   function spread(obj: { id: string; metaData: Record<string, unknown> }): GhlElem {
+    const meta = obj.metaData;
     return {
       wrapper:       {},
       class:         {},
@@ -3224,8 +3225,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       tag:           "",
       mobileWrapper: {},
       mobileExtra:   {},
+      mobileStyles:  {},
       id:            obj.id,
-      ...obj.metaData,
+      ...meta,
+      // Guarantee these are never null/undefined — GHL elementSanitizer crashes otherwise
+      styles: (meta.styles as Record<string, unknown> | null | undefined) ?? {},
+      child:  (meta.child  as string[] | null | undefined)                ?? [],
     } as GhlElem;
   }
 
