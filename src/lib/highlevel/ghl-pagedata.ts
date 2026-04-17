@@ -3267,9 +3267,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     elements: t.elements as Record<string, unknown>,
   };
 
-  const _diag = JSON.stringify(result);
+  const sanitized = sanitizePageData(result);
+  const _diag = JSON.stringify(sanitized);
   console.log(`[app-landing] pageData bytes=${_diag.length} sections=${sections.length} customCode=${_diag.split('"meta":"custom-code"').length - 1}`);
-  return result;
+  return sanitized;
 }
 
 
