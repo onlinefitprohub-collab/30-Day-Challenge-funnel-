@@ -3209,20 +3209,27 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Section 18: transformation gallery heading
   setText("heading-NW29KOB9P8", h1(al.transformationGalleryHeading));
 
+  // Spread { id, metaData:{...} } → { id, ...metaData } so every element in the flat
+  // array has its properties at the top level, matching the format finalize() produces.
+  // GHL's page builder and the Chrome extension both expect this flat structure.
+  function spread(obj: { id: string; metaData: Record<string, unknown> }): GhlElem {
+    return { id: obj.id, ...obj.metaData } as GhlElem;
+  }
+
   // Build GhlSection[] by walking rows → columns → elements for each section
   const sections: GhlSection[] = t.sections.map(sec => {
     const flatEls: GhlElem[] = [];
     for (const rowId of sec.metaData?.child ?? []) {
-      const row = t.rows[rowId];
+      const row = t.rows[rowId] as unknown as { id: string; metaData: Record<string, unknown> };
       if (!row) continue;
-      flatEls.push(row as unknown as GhlElem);
-      for (const colId of row.metaData?.child ?? []) {
-        const col = t.columns[colId];
+      flatEls.push(spread(row));
+      for (const colId of (row.metaData?.child as string[] | undefined) ?? []) {
+        const col = t.columns[colId] as unknown as { id: string; metaData: Record<string, unknown> };
         if (!col) continue;
-        flatEls.push(col as unknown as GhlElem);
-        for (const elemId of col.metaData?.child ?? []) {
-          const elem = t.elements[elemId];
-          if (elem) flatEls.push(elem as unknown as GhlElem);
+        flatEls.push(spread(col));
+        for (const elemId of (col.metaData?.child as string[] | undefined) ?? []) {
+          const elem = t.elements[elemId] as unknown as { id: string; metaData: Record<string, unknown> };
+          if (elem) flatEls.push(spread(elem));
         }
       }
     }
