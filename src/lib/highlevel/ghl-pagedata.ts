@@ -1,4 +1,5 @@
 import type { GeneratedFunnelAssets, LandingPageCopy, ApplicationLandingPage } from "@/types/generation";
+import APP_FORM_TEMPLATE from "./templates/application-form.json";
 
 // ── Colour Scheme ─────────────────────────────────────────────────────────────
 
@@ -3102,319 +3103,149 @@ export function buildSalesLetterPageData(data: GeneratedFunnelAssets): GhlPageDa
 
 // ── APPLICATION LANDING PAGE (22 sections) ────────────────────────────────────
 //
-// Mirrors the reference application form.json layout.
-// All native GHL elements — no custom code.
-// Colour scheme from user selection; copy from AI applicationLandingPage content.
+// Template-hydration: deep-clone reference application-form.json (0 customCode,
+// native GHL elements only) and substitute AI-generated content into known IDs.
 
 export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const al = data.applicationLandingPage;
   if (!al) throw new Error("applicationLandingPage is required");
 
-  const b = createBuilder();
-  const s = resolveScheme(data);
-  const p  = s.primary;
-  const dk = s.dark;
+  type TElem = { metaData: { tagName?: string; child?: string[]; extra?: { text?: { value: string }; imageProperties?: { value: { url: string } }; videoProperties?: { value: { url: string } } } } };
+  type TRows = Record<string, { metaData: { child?: string[] } }>;
+  type TCols = Record<string, { metaData: { child?: string[] } }>;
+  type TElems = Record<string, TElem>;
+  type TSecs = Array<{ id: string; metaData: { child?: string[] } & Record<string, unknown> }>;
 
-  const placeholder = data.coachPhotoUrl ?? "";
+  const t = JSON.parse(JSON.stringify(APP_FORM_TEMPLATE)) as {
+    sections: TSecs; rows: TRows; columns: TCols; elements: TElems;
+    fontsForPreview: unknown; general: unknown; id: string; pageStyles: string; popups: unknown;
+  };
 
-  // Helper: CTA button with primary bg (white text)
-  function ctaBtn(label: string) {
-    return makeButton(b, label, "next-step", "", {
-      backgroundColor: ss(p),
-      fontSize:        sv(20),
-      paddingTop:      sv(16),
-      paddingBottom:   sv(16),
-      paddingLeft:     sv(40),
-      paddingRight:    sv(40),
-    }, { fontSize: sv(16), width: sv(100, "%") });
+  const photoUrl = data.coachPhotoUrl ?? "";
+  const videoUrl = data.coachVideoUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+  function setText(id: string, html: string) {
+    const extra = t.elements[id]?.metaData?.extra;
+    if (extra?.text) extra.text.value = html;
+  }
+  function h1(s: string) { return `<h1>${escHtml(s)}</h1>`; }
+  function h2(s: string) { return `<h2>${escHtml(s)}</h2>`; }
+  function pTag(s: string) { return `<p>${escHtml(s)}</p>`; }
+  function ulTag(items: string[]) { return `<ul>${items.map(i => `<li>${escHtml(i)}</li>`).join("")}</ul>`; }
+
+  // Replace ALL images, videos, and buttons in bulk
+  for (const id of Object.keys(t.elements)) {
+    const extra = t.elements[id]?.metaData?.extra;
+    if (extra?.imageProperties?.value) extra.imageProperties.value.url = photoUrl;
+    if (extra?.videoProperties?.value) extra.videoProperties.value.url = videoUrl;
+    if (t.elements[id]?.metaData?.tagName === "c-button" && extra?.text) extra.text.value = al.heroCtaText;
   }
 
-  // Helper: CTA button with white bg (primary text) — used on dark/primary sections
-  function ctaBtnLight(label: string) {
-    return makeButton(b, label, "next-step", "", {
-      backgroundColor: ss("#ffffff"),
-      color:           ss(p),
-      fontSize:        sv(20),
-      paddingTop:      sv(16),
-      paddingBottom:   sv(16),
-      paddingLeft:     sv(40),
-      paddingRight:    sv(40),
-    }, { fontSize: sv(16), width: sv(100, "%") });
+  // Section 1: value prop headline
+  setText("sub-heading-2YNvPo_qL", h2(al.valuePropHeadline));
+
+  // Section 2: video section heading + subheading
+  setText("heading-B6N4PLI9NI", h1(al.videoSectionHeading));
+  setText("sub-heading-PZ92K8MAUT", h2(al.videoSectionSubheading));
+
+  // Section 4: testimonial intro + video quote
+  setText("heading-KU01A728DI", h1(al.testimonialIntroHeading));
+  setText("sub-heading-KW89SVROGZ", h2(`"${al.testimonialVideoQuote}"`));
+
+  // Section 5: credential labels + descriptions (4 items)
+  const creds = al.credentialItems ?? [];
+  ["sub-heading-P5NGGX21MA", "sub-heading-4DOQMKCGVJ", "sub-heading-DZKJMHFADB", "sub-heading-EKVU9I5ZN3"]
+    .forEach((id, i) => { if (creds[i]) setText(id, h2(creds[i].label)); });
+  ["sub-heading-P8MN6P99MS", "sub-heading-IP962VNQKG"].forEach((id, i) => { if (creds[i]) setText(id, h2(creds[i].description)); });
+  if (creds[2]) setText("heading-UGuka_g8A", h1(creds[2].description));
+  if (creds[3]) setText("sub-heading-QZkdWoF0v", h2(creds[3].description));
+
+  // Sections 6–11: benefit block hook headings + testimonial attribution + quotes
+  const benefitHookIds    = ["heading-HMTZI5M7WW","heading-A_1oltYZF","heading-FL80PPCHLE","heading-EPX6NKSZUX","heading-JOFES8W489","heading-KM3DFXD5OI"];
+  const testimAttrIds     = ["heading-LTWAFMZTRZ","heading-P4LKF251UN","heading-YAJ1FH2AQ5","heading-OPE7JDJE8R","heading-TYTSNNDTY8","heading-BZ3OJSZQBO"];
+  const testimQuoteIds    = ["paragraph-QBA9RWLOFY","paragraph-STIRR0JH7I","paragraph-HFWMHBKEQW","paragraph-LPFY67B30H","paragraph-EMKDCDA8YH","paragraph-NOCDU8YE6R"];
+  const benefits = al.benefitBlocks ?? [];
+  const testis   = al.textTestimonials ?? [];
+  for (let i = 0; i < 6; i++) {
+    const b2 = benefits[i < benefits.length ? i : benefits.length - 1];
+    const tt = testis[i % Math.max(testis.length, 1)];
+    if (b2) setText(benefitHookIds[i], h1(b2.heading));
+    if (tt) { setText(testimAttrIds[i], h1(tt.attribution)); setText(testimQuoteIds[i], pTag(`"${tt.quote}"`)); }
   }
 
-  // ─── Section 0: Full-width header image (logo/photo) ────────────────────────
-  {
-    const img = makeImage(b, { url: placeholder, width: 100 });
-    const col = makeCol(b, [img], 100, { align: "center", padH: 0 });
-    const row = makeRow(b, [col], 1170);
-    makeSection(b, [row], { bgColor: "#000000", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
+  // Section 12: divider heading + mid-CTA subtext
+  setText("heading-H27T57JXAO", h1(al.dividerHeading));
+  setText("sub-heading-PTNIKXY8QS", h2(al.midCtaText));
 
-  // ─── Section 1: Value Proposition — 50/50 image + headline ──────────────────
-  {
-    const img = makeImage(b, { url: placeholder, width: 100 });
-    const h2  = makeHeading(b, al.valuePropHeadline, "h2", {
-      color:      ss("#ffffff"),
-      fontSize:   sv(26),
-      lineHeight: ss("1.4em"),
-      textAlign:  ss("center"),
-    }, { fontSize: sv(20) });
-    const sub = makeParagraph(b, al.valuePropSubheadline, {
-      color:         ss("rgba(255,255,255,0.8)"),
-      fontSize:      sv(16),
-      textAlign:     ss("center"),
-      lineHeight:    ss("1.6em"),
-      paddingTop:    sv(12),
-    });
-    const imgCol  = makeCol(b, [img],      50, { padH: 10, padV: 15 });
-    const textCol = makeCol(b, [h2, sub],  50, { align: "center", padH: 20, padV: 15 });
-    const row = makeRow(b, [imgCol, textCol], 1170);
-    makeSection(b, [row], { bgColor: "#000000", ptD: 15, pbD: 15, ptM: 10, pbM: 10 });
-  }
-
-  // ─── Section 2: Video + hero CTA ────────────────────────────────────────────
-  {
-    const h1 = makeHeading(b, al.videoSectionHeading, "h1", {
-      color:      ss("#000000"),
-      fontSize:   sv(38),
-      fontWeight: ss("900"),
-      textAlign:  ss("center"),
-      lineHeight: ss("1.2em"),
-    }, { fontSize: sv(26) });
-    const headingCol = makeCol(b, [h1], 100, { align: "center", padH: 24 });
-    const headingRow = makeRow(b, [headingCol], 1170);
-
-    const videoEl  = makeVideo(b, data.coachVideoUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-    const videoCol = makeCol(b, [videoEl], 50, { padH: 10, padV: 10 });
-
-    const sub = makeHeading(b, al.videoSectionSubheading, "h2", {
-      color:         ss(p),
-      fontSize:      sv(22),
-      textAlign:     ss("center"),
-      lineHeight:    ss("1.3em"),
-      paddingBottom: sv(16),
-    }, { fontSize: sv(18) });
-    const btn = ctaBtn(al.heroCtaText);
-    const subtext = makeParagraph(b, al.heroCtaSubtext, {
-      color:      ss("#555555"),
-      fontSize:   sv(14),
-      textAlign:  ss("center"),
-      paddingTop: sv(8),
-    });
-    const ctaCol = makeCol(b, [sub, btn, subtext], 50, { align: "center", padH: 20, padV: 10 });
-    const videoRow = makeRow(b, [videoCol, ctaCol], 1170);
-
-    makeSection(b, [headingRow, videoRow], { bgColor: "#ffffff", ptD: 30, pbD: 30, ptM: 20, pbM: 20 });
-  }
-
-  // ─── Section 3: (skipped — was hidden section in reference) ─────────────────
-
-  // ─── Section 4: Testimonial intro + video + quote ───────────────────────────
-  {
-    const h2 = makeHeading(b, al.testimonialIntroHeading, "h2", {
-      color:         ss("#000000"),
-      fontSize:      sv(36),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      lineHeight:    ss("1.2em"),
-      paddingBottom: sv(20),
-    }, { fontSize: sv(24) });
-    const headingCol = makeCol(b, [h2], 100, { align: "center", padH: 10 });
-    const headingRow = makeRow(b, [headingCol], 1170);
-
-    const videoEl = makeVideo(b, data.coachVideoUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-    const spacerL = makeCol(b, [],          18, { padH: 0 });
-    const midCol  = makeCol(b, [videoEl],   64, { padH: 10, padV: 5 });
-    const spacerR = makeCol(b, [],          18, { padH: 0 });
-    const videoRow = makeRow(b, [spacerL, midCol, spacerR], 1170);
-
-    const quote = makeParagraph(b, `"${al.testimonialVideoQuote}"`, {
-      color:         ss("#333333"),
-      fontSize:      sv(20),
-      fontStyle:     ss("italic"),
-      textAlign:     ss("center"),
-      lineHeight:    ss("1.6em"),
-      paddingTop:    sv(16),
-      paddingBottom: sv(10),
-    }, { fontSize: sv(16) });
-    const quoteCol = makeCol(b, [quote], 100, { align: "center", padH: 32 });
-    const quoteRow = makeRow(b, [quoteCol], 840);
-
-    makeSection(b, [headingRow, videoRow, quoteRow], { bgColor: "#f5f5f5", ptD: 20, pbD: 35, ptM: 15, pbM: 20 });
-  }
-
-  // ─── Section 5: Credentials — 4 cards (custom code) ─────────────────────────
-  {
-    const credHtml = `<style>.alp-cred{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-cred-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1100px;margin:0 auto}.alp-cred-item{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}.alp-cred-ph{width:100%;aspect-ratio:1;background:#e8ecf0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;border:2px dashed #b0bec5}.alp-cred-label{color:#111;font-size:16px;font-weight:700;margin:0;line-height:1.3}.alp-cred-desc{color:#555;font-size:13px;line-height:1.55;margin:0}@media(max-width:640px){.alp-cred-grid{grid-template-columns:repeat(2,1fr)}.alp-cred{padding:36px 16px}}</style><div class="alp-cred"><div class="alp-cred-grid">${(al.credentialItems ?? []).slice(0, 8).map(c => `<div class="alp-cred-item"><div class="alp-cred-ph">&#128247;</div><h3 class="alp-cred-label">${escHtml(c.label)}</h3><p class="alp-cred-desc">${escHtml(c.description)}</p></div>`).join("")}</div></div>`;
-    const credEl  = makeCustomCode(b, credHtml, 0);
-    const credCol = makeCol(b, [credEl], 100, { padH: 0 });
-    const credRow = makeRow(b, [credCol], 1200, 0);
-    makeSection(b, [credRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
-
-  // ─── Sections 6–10: Benefit blocks — alternating dark / light ───────────────
-  //     Even index (6, 8, 10) → dark bg, copy left / image right
-  //     Odd index  (7, 9)     → light bg, image left / copy right
-
-  al.benefitBlocks.forEach((benefit, i) => {
-    const isDark = i % 2 === 0;
-    const bgColor = isDark ? dk : "#f5f5f5";
-    const textColor = isDark ? "#ffffff" : "#111111";
-    const subColor  = isDark ? "rgba(255,255,255,0.8)" : "#444444";
-
-    const h2 = makeHeading(b, benefit.heading, "h2", {
-      color:         ss(textColor),
-      fontSize:      sv(28),
-      fontWeight:    ss("800"),
-      lineHeight:    ss("1.3em"),
-      paddingBottom: sv(12),
-    }, { fontSize: sv(22) });
-    const body = makeParagraph(b, benefit.body, {
-      color:      ss(subColor),
-      fontSize:   sv(16),
-      lineHeight: ss("1.7em"),
-    });
-    /* Phone mockup kept small (< 400 chars) — repeated 5x so every KB matters */
-    const phoneHtml = `<div style="display:flex;align-items:center;justify-content:center;padding:32px 20px;"><div style="width:140px;background:#0f172a;border-radius:28px;padding:8px;box-shadow:0 16px 40px rgba(0,0,0,0.4);"><div style="background:#1d4ed8;border-radius:20px 20px 0 0;padding:6px 10px;"><span style="color:#fff;font-size:8px;font-weight:700;">9:41</span></div><div style="background:#f8fafc;border-radius:0 0 20px 20px;padding:10px 8px;min-height:120px;display:flex;flex-direction:column;gap:6px;"><div style="background:#fff;border-radius:6px;padding:7px;box-shadow:0 2px 6px rgba(0,0,0,0.08);font-size:8px;font-weight:700;color:#111;">Your Programme</div><div style="background:#1d4ed8;border-radius:5px;padding:5px;text-align:center;"><span style="color:#fff;font-size:7px;font-weight:800;">START TODAY</span></div></div></div></div>`;
-    const phoneEl  = makeCustomCode(b, phoneHtml, 0);
-
-    const textCol  = makeCol(b, [h2, body], 50, { padH: 24, padV: 24, valign: "middle" });
-    const imgCol   = makeCol(b, [phoneEl],   50, { padH: 10, padV: 10, valign: "middle" });
-
-    const rowCols = isDark ? [textCol, imgCol] : [imgCol, textCol];
-    const row = makeRow(b, rowCols, 1170);
-    makeSection(b, [row], { bgColor, ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
+  // Section 13: problem Q&A (5 slots, cycle if fewer faqItems provided)
+  const faqQIds = ["heading-QK9CU27L86","heading-D4MNL2S5DI","heading-3ENTRXIW76","heading-M4HF8QKN09","heading-QENB9V42PT"];
+  const faqAIds = ["sub-heading-ERXJWE5RF1","sub-heading-6ZXRAZPSWF","sub-heading-J4A458UEK0","sub-heading-PSOVK4METC","sub-heading-1XR1G6PET0"];
+  const faqs = al.faqItems ?? [];
+  faqQIds.forEach((id, i) => {
+    const faq = faqs[i] ?? faqs[faqs.length - 1];
+    if (faq) { setText(id, h1(faq.question)); setText(faqAIds[i], h2(faq.answer)); }
   });
 
-  // ─── Section 11: Mid-page CTA banner ────────────────────────────────────────
-  {
-    const h2 = makeHeading(b, al.midCtaHeading, "h2", {
-      color:         ss("#ffffff"),
-      fontSize:      sv(30),
-      fontWeight:    ss("900"),
-      textAlign:     ss("center"),
-      lineHeight:    ss("1.3em"),
-      paddingBottom: sv(20),
-    }, { fontSize: sv(22) });
-    const btn = ctaBtnLight(al.midCtaText);
-    const col = makeCol(b, [h2, btn], 100, { align: "center", padH: 32 });
-    const row = makeRow(b, [col], 720);
-    makeSection(b, [row], { bgColor: p, ptD: 50, pbD: 50, ptM: 40, pbM: 40 });
-  }
+  // Section 14: client wins heading + result captions (6 slots)
+  setText("heading-SGD8IPYUFC", h1(al.clientWinsHeading));
+  const winIds = ["sub-heading-TAWE4DVGSF","sub-heading-M0GT6LW8Y5","sub-heading-WIFG63YY7B","sub-heading-M7L7ETTD72","sub-heading-AISPS3OFLO","sub-heading-R006P1BLEV"];
+  const wins = al.clientWins ?? [];
+  winIds.forEach((id, i) => { const w = wins[i % Math.max(wins.length, 1)]; if (w) setText(id, h2(`"${w.result}"`)); });
 
-  // ─── Section 12: Divider / section break ────────────────────────────────────
-  {
-    const divTop = makeDivider(b, { borderColor: ss("rgba(255,255,255,0.2)") });
-    const h2 = makeHeading(b, al.dividerHeading, "h2", {
-      color:      ss("#ffffff"),
-      fontSize:   sv(32),
-      fontWeight: ss("900"),
-      textAlign:  ss("center"),
-      lineHeight: ss("1.2em"),
-    }, { fontSize: sv(24) });
-    const divBot = makeDivider(b, { borderColor: ss("rgba(255,255,255,0.2)") });
-    const col = makeCol(b, [divTop, h2, divBot], 100, { align: "center", padH: 32 });
-    const row = makeRow(b, [col], 800);
-    makeSection(b, [row], { bgColor: dk, ptD: 40, pbD: 40, ptM: 30, pbM: 30 });
-  }
+  // Section 15: what-you-get heading + guarantee bullet list
+  setText("heading-B4OA2TQ05U", h1(al.whatYouGetHeading));
+  setText("bulletList-XZ2SOCF8UI", ulTag(al.whatYouGetItems ?? []));
 
-  // ─── Section 13: FAQ (custom code) ──────────────────────────────────────────
-  {
-    const faqHtml = `<style>.alp-faq{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-faq-wrap{max-width:720px;margin:0 auto}.alp-faq-eyebrow{color:${escHtml(p)};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;text-align:center;margin:0 0 10px}.alp-faq-h2{color:#111;font-size:clamp(24px,3.5vw,34px);font-weight:900;text-align:center;margin:0 0 36px;line-height:1.2}.alp-faq-item{border-bottom:1px solid #e5e7eb;padding:20px 0}.alp-faq-item:last-child{border-bottom:none}.alp-faq-q{color:#111;font-size:17px;font-weight:700;margin:0 0 10px;line-height:1.4}.alp-faq-a{color:#444;font-size:15px;line-height:1.7;margin:0}@media(max-width:640px){.alp-faq{padding:40px 16px}}</style><div class="alp-faq"><div class="alp-faq-wrap"><p class="alp-faq-eyebrow">FREQUENTLY ASKED QUESTIONS</p><h2 class="alp-faq-h2">Your Questions Answered</h2>${(al.faqItems ?? []).slice(0, 10).map(faq => `<div class="alp-faq-item"><h4 class="alp-faq-q">${escHtml(faq.question)}</h4><p class="alp-faq-a">${escHtml(faq.answer)}</p></div>`).join("")}</div></div>`;
-    const faqEl  = makeCustomCode(b, faqHtml, 0);
-    const faqCol = makeCol(b, [faqEl], 100, { padH: 0 });
-    const faqRow = makeRow(b, [faqCol], 1200, 0);
-    makeSection(b, [faqRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
+  // Section 16: qualification heading + should-not / should-apply paragraphs
+  setText("heading-K35V3XC9BZ", h1(al.qualificationSectionHeading));
+  setText("paragraph-KUYC1E4LBV", `<p>${(al.shouldNotApply ?? []).map(s => `&#10007; ${escHtml(s)}`).join("<br>")}</p>`);
+  setText("paragraph-XQZA31ZIG2", `<p>${(al.shouldApply ?? []).map(s => `&#10003; ${escHtml(s)}`).join("<br>")}</p>`);
 
-  // ─── Section 14: Gallery + CTA (custom code) ─────────────────────────────────
-  {
-    const phItems = Array.from({ length: 4 }, () => `<div class="alp-gal-ph"><span style="font-size:28px;opacity:0.45;">&#128247;</span><span style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Add photo</span></div>`).join("");
-    const galHtml = `<style>.alp-gal{background:#f5f5f5;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-gal-h2{text-align:center;font-size:clamp(22px,3.5vw,32px);font-weight:900;color:#111;margin:0 0 32px;line-height:1.2}.alp-gal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1100px;margin:0 auto 32px}.alp-gal-ph{background:#dde3ea;border-radius:10px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed #b0bec5}@media(max-width:640px){.alp-gal-grid{grid-template-columns:repeat(2,1fr)}.alp-gal{padding:36px 16px}}</style><div class="alp-gal"><h2 class="alp-gal-h2">${escHtml(al.galleryHeading)}</h2><div class="alp-gal-grid">${phItems}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${escHtml(p)};color:#fff;padding:16px 44px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">${escHtml(al.heroCtaText)}</a></div></div>`;
-    const galEl  = makeCustomCode(b, galHtml, 0);
-    const galCol = makeCol(b, [galEl], 100, { padH: 0 });
-    const galRow = makeRow(b, [galCol], 1200, 0);
-    makeSection(b, [galRow], { bgColor: "#f5f5f5", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
+  // Section 17: recap heading + bullet list + final subtext
+  setText("heading-Y0C29M37M1", h1(al.whatYouGetHeading));
+  setText("bulletList-B2SW5TR7FT", ulTag(al.whatYouGetItems ?? []));
+  setText("paragraph-RXDTC5EL7H", pTag(al.finalCtaSubtext));
 
-  // ─── Section 15: Red / Green qualification boxes (custom code) ───────────────
-  {
-    const qualHtml = `<style>.alp-qual{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-qual-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:940px;margin:0 auto}.alp-qual-box{border-radius:14px;overflow:hidden}.alp-qual-header{padding:16px 20px;text-align:center;font-size:16px;font-weight:800;color:#fff;letter-spacing:0.3px}.alp-qual-list{margin:0;padding:16px;list-style:none;display:flex;flex-direction:column;gap:8px}.alp-qual-item{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55;color:#1e293b;padding:10px 12px;background:rgba(255,255,255,0.75);border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}@media(max-width:640px){.alp-qual-grid{grid-template-columns:1fr}.alp-qual{padding:36px 16px}}</style><div class="alp-qual"><h2 style="text-align:center;font-size:clamp(20px,3vw,30px);font-weight:900;color:#0f172a;margin:0 0 32px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${escHtml(al.qualificationSectionHeading)}</h2><div class="alp-qual-grid"><div class="alp-qual-box" style="background:#fef2f2;border:2px solid #fca5a5;"><div class="alp-qual-header" style="background:#dc2626;">&#10007; You Should NOT Apply If...</div><ul class="alp-qual-list">${(al.shouldNotApply ?? []).slice(0, 8).map(item => `<li class="alp-qual-item"><span style="color:#dc2626;font-weight:800;font-size:15px;flex-shrink:0;line-height:1.35;margin-top:1px;">&#10007;</span><span>${escHtml(item)}</span></li>`).join("")}</ul></div><div class="alp-qual-box" style="background:#f0fdf4;border:2px solid #86efac;"><div class="alp-qual-header" style="background:#16a34a;">&#10003; You SHOULD Apply If...</div><ul class="alp-qual-list">${(al.shouldApply ?? []).slice(0, 8).map(item => `<li class="alp-qual-item"><span style="color:#16a34a;font-weight:800;font-size:15px;flex-shrink:0;line-height:1.35;margin-top:1px;">&#10003;</span><span>${escHtml(item)}</span></li>`).join("")}</ul></div></div></div>`;
-    const qualEl  = makeCustomCode(b, qualHtml, 0);
-    const qualCol = makeCol(b, [qualEl], 100, { padH: 0 });
-    const qualRow = makeRow(b, [qualCol], 1200, 0);
-    makeSection(b, [qualRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
+  // Section 18: transformation gallery heading
+  setText("heading-NW29KOB9P8", h1(al.transformationGalleryHeading));
 
-  // ─── Section 16: Testimonials — scrollable card design (custom code) ─────────
-  {
-    const cards = (al.textTestimonials ?? []).slice(0, 12).map(t =>
-      `<div class="alp-tc"><div class="alp-tc-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p class="alp-tc-quote">&ldquo;${escHtml(t.quote)}&rdquo;</p><div class="alp-tc-footer"><span class="alp-tc-attr">&#8212; ${escHtml(t.attribution)}</span><span class="alp-tc-result" style="background:${escHtml(p)};">${escHtml(t.result)}</span></div></div>`
-    ).join("");
-    const testiHtml = `<style>.alp-tw{background:#f1f5f9;padding:52px 20px 40px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-ts{display:flex;gap:18px;overflow-x:auto;padding:4px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,0.15) transparent;-webkit-overflow-scrolling:touch}.alp-ts::-webkit-scrollbar{height:5px}.alp-ts::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:4px}.alp-tc{flex:0 0 300px;background:#fff;border-radius:16px;padding:24px 22px;box-shadow:0 4px 24px rgba(0,0,0,0.08);scroll-snap-align:start;display:flex;flex-direction:column;border-top:4px solid ${escHtml(p)}}.alp-tc-stars{color:${escHtml(p)};font-size:13px;letter-spacing:3px;margin-bottom:14px}.alp-tc-quote{color:#1e293b;font-size:15px;line-height:1.65;font-style:italic;margin:0 0 16px;flex:1}.alp-tc-footer{border-top:1px solid #f1f5f9;padding-top:14px;display:flex;flex-direction:column;gap:8px}.alp-tc-attr{color:#475569;font-size:13px;font-weight:700}.alp-tc-result{display:inline-block;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:5px 14px;text-transform:uppercase;letter-spacing:0.5px;align-self:flex-start}@media(max-width:640px){.alp-tc{flex:0 0 260px}.alp-tw{padding:40px 16px 28px}}</style><div class="alp-tw"><div style="text-align:center;margin-bottom:32px"><p style="color:${escHtml(p)};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px">Client Results</p><h2 style="color:#0f172a;font-size:clamp(24px,3.5vw,36px);font-weight:900;margin:0 0 8px;line-height:1.2">Real People. Real Results.</h2><p style="color:#64748b;font-size:14px;margin:0">Scroll to read more &#8594;</p></div><div class="alp-ts">${cards}</div></div>`;
-    const testiEl  = makeCustomCode(b, testiHtml, 0);
-    const testiCol = makeCol(b, [testiEl], 100, { padH: 0 });
-    const testiRow = makeRow(b, [testiCol], 1200, 0);
-    makeSection(b, [testiRow], { bgColor: "#f1f5f9", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
+  // Build GhlSection[] by walking rows → columns → elements for each section
+  const sections: GhlSection[] = t.sections.map(sec => {
+    const flatEls: GhlElem[] = [];
+    for (const rowId of sec.metaData?.child ?? []) {
+      const row = t.rows[rowId];
+      if (!row) continue;
+      flatEls.push(row as unknown as GhlElem);
+      for (const colId of row.metaData?.child ?? []) {
+        const col = t.columns[colId];
+        if (!col) continue;
+        flatEls.push(col as unknown as GhlElem);
+        for (const elemId of col.metaData?.child ?? []) {
+          const elem = t.elements[elemId];
+          if (elem) flatEls.push(elem as unknown as GhlElem);
+        }
+      }
+    }
+    return { id: sec.id, metaData: sec.metaData as Record<string, unknown>, elements: flatEls };
+  });
 
-  // ─── Section 17: What You Get — 2-col card grid (custom code) ────────────────
-  {
-    const items = (al.whatYouGetItems ?? []).slice(0, 12).map(item =>
-      `<div class="alp-wyg-item"><span style="color:${escHtml(p)};font-size:20px;flex-shrink:0;font-weight:900;line-height:1.2;">&#10003;</span><span style="color:rgba(255,255,255,0.92);font-size:14px;line-height:1.6;">${escHtml(item)}</span></div>`
-    ).join("");
-    const wygHtml = `<style>.alp-wyg{background:${escHtml(dk)};padding:60px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-wyg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:800px;margin:0 auto 40px}.alp-wyg-item{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px}.alp-wyg-item:hover{background:rgba(255,255,255,0.11)}@media(max-width:560px){.alp-wyg-grid{grid-template-columns:1fr}.alp-wyg{padding:44px 16px}}</style><div class="alp-wyg"><p style="text-align:center;color:${escHtml(p)};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:0 0 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">Everything Inside The Programme</p><h2 style="text-align:center;color:#fff;font-size:clamp(24px,3.5vw,36px);font-weight:900;margin:0 0 36px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${escHtml(al.whatYouGetHeading)}</h2><div class="alp-wyg-grid">${items}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${escHtml(p)};color:#fff;padding:18px 48px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${escHtml(al.heroCtaText)}</a></div></div>`;
-    const wygEl  = makeCustomCode(b, wygHtml, 0);
-    const wygCol = makeCol(b, [wygEl], 100, { padH: 0 });
-    const wygRow = makeRow(b, [wygCol], 1200, 0);
-    makeSection(b, [wygRow], { bgColor: dk, ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
+  const result: GhlPageData = {
+    fontsForPreview: (t.fontsForPreview as string[]) ?? [],
+    general:         t.general as GhlPageData["general"],
+    id:              t.id,
+    pageStyles:      t.pageStyles ?? "",
+    popups:          (t.popups as unknown[]) ?? [],
+    popupsList:      [],
+    settings:        {},
+    trackingCode:    "",
+    sections,
+  };
 
-  // ─── Section 18: Transformation gallery (custom code) ───────────────────────
-  {
-    const tgItems = Array.from({ length: 8 }, (_,i) => `<div class="alp-tg-ph"><span style="font-size:24px;opacity:0.4;">&#128247;</span><span style="color:#94a3b8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">${i % 2 === 0 ? "Before" : "After"}</span></div>`).join("");
-    const tgHtml = `<style>.alp-tg{background:#fff;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-tg-h2{text-align:center;font-size:clamp(22px,3.5vw,32px);font-weight:900;color:#111;margin:0 0 32px;line-height:1.2}.alp-tg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1100px;margin:0 auto 32px}.alp-tg-ph{background:#e8ecf0;border-radius:10px;height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed #b0bec5}@media(max-width:640px){.alp-tg-grid{grid-template-columns:repeat(2,1fr)}.alp-tg{padding:36px 16px}}</style><div class="alp-tg"><h2 class="alp-tg-h2">${escHtml(al.transformationGalleryHeading)}</h2><div class="alp-tg-grid">${tgItems}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${escHtml(p)};color:#fff;padding:16px 44px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">${escHtml(al.heroCtaText)}</a></div></div>`;
-    const tgEl  = makeCustomCode(b, tgHtml, 0);
-    const tgCol = makeCol(b, [tgEl], 100, { padH: 0 });
-    const tgRow = makeRow(b, [tgCol], 1200, 0);
-    makeSection(b, [tgRow], { bgColor: "#ffffff", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
-
-  // ─── Section 19: Client Wins (custom code) ───────────────────────────────────
-  {
-    const winsHtml = `<style>.alp-cw{background:#f5f5f5;padding:48px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.alp-cw-h2{text-align:center;font-size:clamp(22px,3.5vw,32px);font-weight:900;color:#111;margin:0 0 32px;line-height:1.2}.alp-cw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:1100px;margin:0 auto 40px}.alp-cw-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}.alp-cw-name{color:#111;font-size:15px;font-weight:700;margin:0 0 8px}.alp-cw-result{color:#555;font-size:14px;line-height:1.5;margin:0;border-left:3px solid ${escHtml(p)};padding-left:10px}@media(max-width:640px){.alp-cw-grid{grid-template-columns:repeat(2,1fr)}.alp-cw{padding:36px 16px}}</style><div class="alp-cw"><h2 class="alp-cw-h2">${escHtml(al.clientWinsHeading)}</h2><div class="alp-cw-grid">${(al.clientWins ?? []).slice(0, 12).map(w => `<div class="alp-cw-card"><p class="alp-cw-name">${escHtml(w.name)}</p><p class="alp-cw-result">${escHtml(w.result)}</p></div>`).join("")}</div><div style="text-align:center"><a href="#optin" style="display:inline-block;background:${escHtml(p)};color:#fff;padding:16px 44px;border-radius:8px;font-size:16px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">${escHtml(al.heroCtaText)}</a></div></div>`;
-    const cwEl  = makeCustomCode(b, winsHtml, 0);
-    const cwCol = makeCol(b, [cwEl], 100, { padH: 0 });
-    const cwRow = makeRow(b, [cwCol], 1200, 0);
-    makeSection(b, [cwRow], { bgColor: "#f5f5f5", ptD: 0, pbD: 0, ptM: 0, pbM: 0 });
-  }
-
-  // ─── Section 20: Final CTA + Footer ─────────────────────────────────────────
-  {
-    const subtext = makeParagraph(b, al.finalCtaSubtext, {
-      color:         ss("rgba(255,255,255,0.85)"),
-      fontSize:      sv(16),
-      textAlign:     ss("center"),
-      lineHeight:    ss("1.7em"),
-      paddingBottom: sv(24),
-    });
-    const btn = ctaBtnLight(al.finalCtaText);
-    const col = makeCol(b, [subtext, btn], 100, { align: "center", padH: 32 });
-    const row = makeRow(b, [col], 640);
-    makeSection(b, [row], { bgColor: dk, ptD: 60, pbD: 60, ptM: 40, pbM: 40 });
-  }
-
-  buildFooter(b, s);
-
-  const result = sanitizePageData(finalize(b, s));
-  const _diagJson = JSON.stringify(result);
-  console.log(
-    `[app-landing] pageData bytes=${_diagJson.length}` +
-    ` sections=${result.sections.length}` +
-    ` customCode=${_diagJson.split('"meta":"custom-code"').length - 1}`
-  );
+  const _diag = JSON.stringify(result);
+  console.log(`[app-landing] pageData bytes=${_diag.length} sections=${sections.length} customCode=${_diag.split('"meta":"custom-code"').length - 1}`);
   return result;
 }
+
 
 // ── All pages ─────────────────────────────────────────────────────────────────
 
