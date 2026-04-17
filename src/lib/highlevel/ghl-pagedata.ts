@@ -81,6 +81,10 @@ export interface GhlPageData {
   settings: Record<string, unknown>;
   trackingCode: string;
   sections: GhlSection[];
+  // Optional dicts used by the Chrome extension's "constructed path" for blank pages
+  rows?:     Record<string, unknown>;
+  columns?:  Record<string, unknown>;
+  elements?: Record<string, unknown>;
 }
 
 interface Builder {
@@ -3246,6 +3250,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     settings:        {},
     trackingCode:    "",
     sections,
+    // Include the raw template dicts so the extension's "constructed path"
+    // (used for blank pages that have no existing Firebase download URL) can
+    // build the flat elements array via its flattenForFirebase2B traversal.
+    rows:     t.rows    as Record<string, unknown>,
+    columns:  t.columns as Record<string, unknown>,
+    elements: t.elements as Record<string, unknown>,
   };
 
   const _diag = JSON.stringify(result);
