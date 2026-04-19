@@ -3167,10 +3167,17 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     props.placeholderBase64 = "";
   }
 
-  // Replace all original images with placeholders (specific setImg calls below will override as needed)
+  // Decorative arrow images flanking the hero CTA button — keep originals
+  const KEEP_ORIGINAL_IMAGE_IDS = new Set([
+    "image-OQBLc5fXIvH", // left arrow
+    "image-ECSXZa0Fgcz", // right arrow
+  ]);
+
+  // Replace all other original images with placeholders
   for (const sec of page.sections)
     for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
       if ((el.meta as string) !== "image") continue;
+      if (KEEP_ORIGINAL_IMAGE_IDS.has(el.id as string)) continue;
       const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
       props.url = (el.id as string) === "image-nsjFovBSkSa"
         ? "https://placehold.co/800x80/000000/000000"
