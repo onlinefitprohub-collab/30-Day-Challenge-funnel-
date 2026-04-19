@@ -3105,19 +3105,17 @@ export function buildSalesLetterPageData(data: GeneratedFunnelAssets): GhlPageDa
   return sanitizePageData(finalize(b, s));
 }
 
-// ── APPLICATION LANDING PAGE (22 sections) ────────────────────────────────────
+// ── APPLICATION LANDING PAGE — pure template passthrough ─────────────────────
 //
-// Template-hydration: deep-clone reference application-form.json (0 customCode,
-// native GHL elements only) and substitute AI-generated content into known IDs.
+// Returns application-form.json deep-cloned with zero content modifications.
+// No AI text / image / video substitutions — this is a diagnostic passthrough
+// to confirm the template structure publishes successfully end-to-end before
+// adding AI content injection on top.
 
-export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
-  const al = data.applicationLandingPage;
-  if (!al) throw new Error("applicationLandingPage is required");
-
-  type TElem = { metaData: { tagName?: string; child?: string[]; extra?: { text?: { value: string }; imageProperties?: { value: { url: string } }; videoProperties?: { value: { url: string } } } } };
-  type TRows = Record<string, { metaData: { child?: string[] } }>;
-  type TCols = Record<string, { metaData: { child?: string[] } }>;
-  type TElems = Record<string, TElem>;
+export function buildApplicationLandingPageData(_data: GeneratedFunnelAssets): GhlPageData {
+  type TRows = Record<string, { metaData: { child?: string[] } & Record<string, unknown> }>;
+  type TCols = Record<string, { metaData: { child?: string[] } & Record<string, unknown> }>;
+  type TElems = Record<string, { metaData: Record<string, unknown> }>;
   type TSecs = Array<{ id: string; metaData: { child?: string[] } & Record<string, unknown> }>;
 
   const t = JSON.parse(JSON.stringify(APP_FORM_TEMPLATE)) as {
@@ -3125,97 +3123,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     fontsForPreview: unknown; general: unknown; id: string; pageStyles: string; popups: unknown;
   };
 
-  const photoUrl = data.coachPhotoUrl ?? "";
-  const videoUrl = data.coachVideoUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-
-  function setText(id: string, html: string) {
-    const extra = t.elements[id]?.metaData?.extra;
-    if (extra?.text) extra.text.value = html;
-  }
-  function h1(s: string) { return `<h1>${escHtml(s)}</h1>`; }
-  function h2(s: string) { return `<h2>${escHtml(s)}</h2>`; }
-  function pTag(s: string) { return `<p>${escHtml(s)}</p>`; }
-  function ulTag(items: string[]) { return `<ul>${items.map(i => `<li>${escHtml(i)}</li>`).join("")}</ul>`; }
-
-  // Replace ALL images, videos, and buttons in bulk
-  for (const id of Object.keys(t.elements)) {
-    const extra = t.elements[id]?.metaData?.extra;
-    if (extra?.imageProperties?.value) extra.imageProperties.value.url = photoUrl;
-    if (extra?.videoProperties?.value) extra.videoProperties.value.url = videoUrl;
-    if (t.elements[id]?.metaData?.tagName === "c-button" && extra?.text) extra.text.value = al.heroCtaText;
-  }
-
-  // Section 1: value prop headline
-  setText("sub-heading-2YNvPo_qL", h2(al.valuePropHeadline));
-
-  // Section 2: video section heading + subheading
-  setText("heading-B6N4PLI9NI", h1(al.videoSectionHeading));
-  setText("sub-heading-PZ92K8MAUT", h2(al.videoSectionSubheading));
-
-  // Section 4: testimonial intro + video quote
-  setText("heading-KU01A728DI", h1(al.testimonialIntroHeading));
-  setText("sub-heading-KW89SVROGZ", h2(`"${al.testimonialVideoQuote}"`));
-
-  // Section 5: credential labels + descriptions (4 items)
-  const creds = al.credentialItems ?? [];
-  ["sub-heading-P5NGGX21MA", "sub-heading-4DOQMKCGVJ", "sub-heading-DZKJMHFADB", "sub-heading-EKVU9I5ZN3"]
-    .forEach((id, i) => { if (creds[i]) setText(id, h2(creds[i].label)); });
-  ["sub-heading-P8MN6P99MS", "sub-heading-IP962VNQKG"].forEach((id, i) => { if (creds[i]) setText(id, h2(creds[i].description)); });
-  if (creds[2]) setText("heading-UGuka_g8A", h1(creds[2].description));
-  if (creds[3]) setText("sub-heading-QZkdWoF0v", h2(creds[3].description));
-
-  // Sections 6–11: benefit block hook headings + testimonial attribution + quotes
-  const benefitHookIds    = ["heading-HMTZI5M7WW","heading-A_1oltYZF","heading-FL80PPCHLE","heading-EPX6NKSZUX","heading-JOFES8W489","heading-KM3DFXD5OI"];
-  const testimAttrIds     = ["heading-LTWAFMZTRZ","heading-P4LKF251UN","heading-YAJ1FH2AQ5","heading-OPE7JDJE8R","heading-TYTSNNDTY8","heading-BZ3OJSZQBO"];
-  const testimQuoteIds    = ["paragraph-QBA9RWLOFY","paragraph-STIRR0JH7I","paragraph-HFWMHBKEQW","paragraph-LPFY67B30H","paragraph-EMKDCDA8YH","paragraph-NOCDU8YE6R"];
-  const benefits = al.benefitBlocks ?? [];
-  const testis   = al.textTestimonials ?? [];
-  for (let i = 0; i < 6; i++) {
-    const b2 = benefits[i < benefits.length ? i : benefits.length - 1];
-    const tt = testis[i % Math.max(testis.length, 1)];
-    if (b2) setText(benefitHookIds[i], h1(b2.heading));
-    if (tt) { setText(testimAttrIds[i], h1(tt.attribution)); setText(testimQuoteIds[i], pTag(`"${tt.quote}"`)); }
-  }
-
-  // Section 12: divider heading + mid-CTA subtext
-  setText("heading-H27T57JXAO", h1(al.dividerHeading));
-  setText("sub-heading-PTNIKXY8QS", h2(al.midCtaText));
-
-  // Section 13: problem Q&A (5 slots, cycle if fewer faqItems provided)
-  const faqQIds = ["heading-QK9CU27L86","heading-D4MNL2S5DI","heading-3ENTRXIW76","heading-M4HF8QKN09","heading-QENB9V42PT"];
-  const faqAIds = ["sub-heading-ERXJWE5RF1","sub-heading-6ZXRAZPSWF","sub-heading-J4A458UEK0","sub-heading-PSOVK4METC","sub-heading-1XR1G6PET0"];
-  const faqs = al.faqItems ?? [];
-  faqQIds.forEach((id, i) => {
-    const faq = faqs[i] ?? faqs[faqs.length - 1];
-    if (faq) { setText(id, h1(faq.question)); setText(faqAIds[i], h2(faq.answer)); }
-  });
-
-  // Section 14: client wins heading + result captions (6 slots)
-  setText("heading-SGD8IPYUFC", h1(al.clientWinsHeading));
-  const winIds = ["sub-heading-TAWE4DVGSF","sub-heading-M0GT6LW8Y5","sub-heading-WIFG63YY7B","sub-heading-M7L7ETTD72","sub-heading-AISPS3OFLO","sub-heading-R006P1BLEV"];
-  const wins = al.clientWins ?? [];
-  winIds.forEach((id, i) => { const w = wins[i % Math.max(wins.length, 1)]; if (w) setText(id, h2(`"${w.result}"`)); });
-
-  // Section 15: what-you-get heading + guarantee bullet list
-  setText("heading-B4OA2TQ05U", h1(al.whatYouGetHeading));
-  setText("bulletList-XZ2SOCF8UI", ulTag(al.whatYouGetItems ?? []));
-
-  // Section 16: qualification heading + should-not / should-apply paragraphs
-  setText("heading-K35V3XC9BZ", h1(al.qualificationSectionHeading));
-  setText("paragraph-KUYC1E4LBV", `<p>${(al.shouldNotApply ?? []).map(s => `&#10007; ${escHtml(s)}`).join("<br>")}</p>`);
-  setText("paragraph-XQZA31ZIG2", `<p>${(al.shouldApply ?? []).map(s => `&#10003; ${escHtml(s)}`).join("<br>")}</p>`);
-
-  // Section 17: recap heading + bullet list + final subtext
-  setText("heading-Y0C29M37M1", h1(al.whatYouGetHeading));
-  setText("bulletList-B2SW5TR7FT", ulTag(al.whatYouGetItems ?? []));
-  setText("paragraph-RXDTC5EL7H", pTag(al.finalCtaSubtext));
-
-  // Section 18: transformation gallery heading
-  setText("heading-NW29KOB9P8", h1(al.transformationGalleryHeading));
-
-  // Spread { id, metaData:{...} } → { id, ...metaData } so every element in the flat
-  // array has its properties at the top level, matching the format finalize() produces.
-  // GHL's page builder and the Chrome extension both expect this flat structure.
+  // Spread { id, metaData:{...} } → { id, ...metaData } — required because the
+  // Chrome extension and GHL's elementSanitizer both read properties at the top
+  // level of each element object, not nested inside metaData.
   function spread(obj: { id: string; metaData: Record<string, unknown> }): GhlElem {
     const meta = obj.metaData;
     return {
@@ -3228,7 +3138,6 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       mobileStyles:  {},
       id:            obj.id,
       ...meta,
-      // Guarantee these are never null/undefined — GHL elementSanitizer crashes otherwise
       styles: (meta.styles as Record<string, unknown> | null | undefined) ?? {},
       child:  (meta.child  as string[] | null | undefined)                ?? [],
     } as GhlElem;
@@ -3264,9 +3173,6 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     settings:        {},
     trackingCode:    "",
     sections,
-    // Include the raw template dicts so the extension's "constructed path"
-    // (used for blank pages that have no existing Firebase download URL) can
-    // build the flat elements array via its flattenForFirebase2B traversal.
     rows:     t.rows    as Record<string, unknown>,
     columns:  t.columns as Record<string, unknown>,
     elements: t.elements as Record<string, unknown>,
