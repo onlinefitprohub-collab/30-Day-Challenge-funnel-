@@ -1,5 +1,5 @@
 import type { GeneratedFunnelAssets, LandingPageCopy, ApplicationLandingPage } from "@/types/generation";
-import APP_FORM_TEMPLATE from "./templates/application-form.json";
+import APP_PAGE_TEMPLATE from "./templates/applicationpage.json";
 
 // ── Colour Scheme ─────────────────────────────────────────────────────────────
 
@@ -3107,203 +3107,105 @@ export function buildSalesLetterPageData(data: GeneratedFunnelAssets): GhlPageDa
 
 // ── APPLICATION LANDING PAGE — pure template passthrough ─────────────────────
 //
+const APP_LANDING_BUTTON_IDS = [
+  "button-VNuCo6tLUaq", "button-6F0W9reKOkb",
+  "button-G_PgzhYgdX5", "button-NPFXJi_u4Oj",
+  "button-JUlhAy3fm26", "button-4RmvfMFwZL3",
+  "button-XUC4z-jtk-uK", "button-sJIgg-l_A2Bk",
+  "button-dqivDvPukA6W", "button-BP2qYN51lxCo",
+  "button-8_PI5laVbnxL", "button-DNjLGy_UOY06",
+  "button-p9G9HbFSrq5I", "button-aF_VVlBlBjfs",
+] as const;
+
 export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
-  const b = createBuilder();
-  const s = resolveScheme(data);
   const al = data.applicationLandingPage;
   if (!al) throw new Error("applicationLandingPage is required");
 
   const photoUrl = ((data as unknown as Record<string, unknown>).coachPhotoUrl as string | undefined) ?? "";
   const videoUrl = ((data as unknown as Record<string, unknown>).coachVideoUrl as string | undefined) ?? "";
 
-  // ── 1. Hero ───────────────────────────────────────────────────────────────────
-  {
-    const h1 = makeHeading(b, al.valuePropHeadline, "h1",
-      { color: ss(s.textColorOnDark), fontSize: sv(48), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
-      { fontSize: sv(28) });
-    const sub = makeParagraph(b, al.valuePropSubheadline,
-      { color: ss(s.textColorOnDark), fontSize: sv(20), lineHeight: ss("1.6"), paddingBottom: sv(32) },
-      { fontSize: sv(16) });
-    const btn = makeButton(b, al.heroCtaText, "next-step", "",
-      { backgroundColor: ss(s.accent), color: ss("#fff"), fontSize: sv(18), paddingTop: sv(18), paddingBottom: sv(18), paddingLeft: sv(40), paddingRight: sv(40) });
-    const sub2 = makeParagraph(b, al.heroCtaSubtext,
-      { color: ss(s.textColorOnDark), fontSize: sv(14), paddingTop: sv(12), textAlign: ss("center") });
-    const textCol = makeCol(b, [h1, sub, btn, sub2], photoUrl ? 55 : 100,
-      { padH: 24, align: photoUrl ? "left" : "center" });
-    const rowCols = photoUrl
-      ? [textCol, makeCol(b, [makeImage(b, { url: photoUrl, width: 100 })], 45, { padH: 0 })]
-      : [textCol];
-    const r = makeRow(b, rowCols, 1200, 0);
-    makeSection(b, [r], { bg: s.heroGradient, ptD: 100, pbD: 100, ptM: 64, pbM: 64 });
+  // Deep-clone the native 22-section template (full live Firebase format — all styles intact)
+  const page = JSON.parse(JSON.stringify(APP_PAGE_TEMPLATE)) as GhlPageData;
+
+  // Build element lookup across all sections
+  const byId = new Map<string, Record<string, unknown>>();
+  for (const sec of page.sections)
+    for (const el of (sec.elements ?? []) as Record<string, unknown>[])
+      byId.set(el.id as string, el);
+
+  function setH(id: string, text: string): void {
+    const el = byId.get(id);
+    if (!el || !text) return;
+    const tag = (el.tag as string) || "h2";
+    (el.extra as Record<string, unknown>).text = { value: `<${tag}>${text}</${tag}>` };
   }
 
-  // ── 2. Video Section ─────────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, al.videoSectionHeading, "h2",
-      { color: ss(s.textColorOnLight), fontSize: sv(32), fontWeight: ss("700"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(12) },
-      { fontSize: sv(22) });
-    const sub = makeParagraph(b, al.videoSectionSubheading,
-      { color: ss(s.textColorOnLight), fontSize: sv(18), textAlign: ss("center"), paddingBottom: sv(32) });
-    const headRow = makeRow(b, [makeCol(b, [h, sub], 100, { padH: 0, align: "center" })], 800, 24);
-    const sectionRows: string[] = [headRow];
-    if (videoUrl) {
-      const vid = makeVideo(b, videoUrl);
-      sectionRows.push(makeRow(b, [makeCol(b, [vid], 100, { padH: 0 })], 800, 24));
-    }
-    makeSection(b, sectionRows, { bgColor: s.alt, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
+  function setBtn(id: string, text: string): void {
+    const el = byId.get(id);
+    if (!el || !text) return;
+    ((el.extra as Record<string, unknown>).text as Record<string, unknown>).value = text;
   }
 
-  // ── 3. Testimonials Intro ────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, al.testimonialIntroHeading, "h2",
-      { color: ss(s.textColorOnDark), fontSize: sv(30), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(16) },
-      { fontSize: sv(22) });
-    const q = makeParagraph(b, `"${al.testimonialVideoQuote}"`,
-      { color: ss(s.textColorOnDark), fontSize: sv(18), textAlign: ss("center"), lineHeight: ss("1.7") });
-    const c = makeCol(b, [h, q], 100, { padH: 24, align: "center" });
-    const r = makeRow(b, [c], 760, 24);
-    makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
+  function setVid(id: string, url: string): void {
+    if (!url) return;
+    const el = byId.get(id);
+    if (!el) return;
+    const vid = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=))([^?&\n]{11})/)?.[1] ?? "";
+    const props = ((el.extra as Record<string, unknown>).videoProperties as Record<string, unknown>).value as Record<string, unknown>;
+    props.url = url;
+    props.embedURL = `https://www.youtube.com/embed/${vid}?autoplay=0&rel=0&controls=0`;
+    props.thumbnailURL = `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`;
   }
 
-  // ── 4. Credentials ───────────────────────────────────────────────────────────
-  {
-    const credCols = al.credentialItems.map(item => {
-      const lbl = makeHeading(b, item.label, "h3",
-        { color: ss(s.textColorOnLight), fontSize: sv(18), fontWeight: ss("700"), paddingBottom: sv(8) });
-      const desc = makeParagraph(b, item.description,
-        { color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.6") });
-      return makeCol(b, [lbl, desc], 25, { padH: 16 });
-    });
-    const r = makeRow(b, credCols, 1200, 24);
-    makeSection(b, [r], { bgColor: s.mid, ptD: 64, pbD: 64, ptM: 48, pbM: 48 });
+  function setImg(id: string, url: string): void {
+    if (!url) return;
+    const el = byId.get(id);
+    if (!el) return;
+    const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
+    props.url = url;
+    props.servingUrl = "";
+    props.placeholderBase64 = "";
   }
 
-  // ── 5. Benefit Blocks (3 + 2 layout) ────────────────────────────────────────
-  {
-    const makeBlock = (block: { heading: string; body: string }, widthPct: number) => {
-      const bh = makeHeading(b, block.heading, "h3",
-        { color: ss(s.textColorOnLight), fontSize: sv(20), fontWeight: ss("700"), paddingBottom: sv(8) });
-      const bp = makeParagraph(b, block.body,
-        { color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.6") });
-      return makeCol(b, [bh, bp], widthPct, { padH: 16 });
-    };
-    const top3 = al.benefitBlocks.slice(0, 3).map(blk => makeBlock(blk, 33.333));
-    const bot2 = al.benefitBlocks.slice(3).map(blk => makeBlock(blk, 50));
-    const bRows: string[] = [makeRow(b, top3, 1200, 24)];
-    if (bot2.length) bRows.push(makeRow(b, bot2, 800, 24));
-    makeSection(b, bRows, { bgColor: s.dark, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
-  }
+  // Hero (section 2)
+  setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
+  setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
+  setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
+  setVid("video-20p-7VhVtF4", videoUrl);
 
-  // ── 6. Mid-page CTA ──────────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, al.midCtaHeading, "h2",
-      { color: ss(s.textColorOnDark), fontSize: sv(34), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), paddingBottom: sv(24) },
-      { fontSize: sv(24) });
-    const btn = makeButton(b, al.midCtaText, "next-step", "",
-      { backgroundColor: ss(s.accent), color: ss("#fff"), fontSize: sv(18), paddingTop: sv(18), paddingBottom: sv(18), paddingLeft: sv(40), paddingRight: sv(40) });
-    const c = makeCol(b, [h, btn], 100, { padH: 24, align: "center" });
-    const r = makeRow(b, [c], 760, 24);
-    makeSection(b, [r], { bgColor: s.ctaSectionBackground, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
-  }
+  // Testimonials intro (section 4)
+  setH("heading-eu5M2j4fixD", al.testimonialIntroHeading);
 
-  // ── 7. Is This Right For You? ────────────────────────────────────────────────
-  {
-    const divH = makeHeading(b, al.dividerHeading, "h2",
-      { color: ss(s.textColorOnLight), fontSize: sv(36), fontWeight: ss("900"), textAlign: ss("center"), paddingBottom: sv(8) },
-      { fontSize: sv(24) });
-    const qualH = makeHeading(b, al.qualificationSectionHeading, "h3",
-      { color: ss(s.textColorOnLight), fontSize: sv(20), textAlign: ss("center"), paddingBottom: sv(48), lineHeight: ss("1.4") });
-    const noLbl = makeHeading(b, "This is NOT for you if\u2026", "h3",
-      { color: ss("#e55353"), fontSize: sv(18), fontWeight: ss("700"), paddingBottom: sv(12) });
-    const noList = makeBulletList(b, al.shouldNotApply, "#e55353");
-    const noCol = makeCol(b, [noLbl, noList], 50, { padH: 16 });
-    const yesLbl = makeHeading(b, "This IS for you if\u2026", "h3",
-      { color: ss(s.accent), fontSize: sv(18), fontWeight: ss("700"), paddingBottom: sv(12) });
-    const yesList = makeBulletList(b, al.shouldApply, s.accent);
-    const yesCol = makeCol(b, [yesLbl, yesList], 50, { padH: 16 });
-    const r1 = makeRow(b, [makeCol(b, [divH, qualH], 100, { padH: 24, align: "center" })], 760, 24);
-    const r2 = makeRow(b, [noCol, yesCol], 1100, 24);
-    makeSection(b, [r1, r2], { bgColor: s.alt, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
-  }
+  // Coach bio (section 5)
+  setH("heading-3u8EPoD9Qou", al.credentialItems[0]?.label ?? "");
+  setImg("image-HxJsjcn1-rj", photoUrl);
 
-  // ── 8. What You Get ──────────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, al.whatYouGetHeading, "h2",
-      { color: ss(s.textColorOnDark), fontSize: sv(32), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(32) },
-      { fontSize: sv(22) });
-    const list = makeBulletList(b, al.whatYouGetItems, s.accent);
-    const c = makeCol(b, [h, list], 100, { padH: 24 });
-    const r = makeRow(b, [c], 760, 24);
-    makeSection(b, [r], { bgColor: s.socialProofBackground, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
-  }
+  // Will This Work For You (section 6)
+  setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
 
-  // ── 9. Text Testimonials ─────────────────────────────────────────────────────
-  {
-    const tCards = al.textTestimonials.map(testimonial => {
-      const tq = makeParagraph(b, `"${testimonial.quote}"`,
-        { color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.7"), paddingBottom: sv(12) });
-      const ta = makeParagraph(b,
-        `\u2014 ${testimonial.attribution}${testimonial.result ? ` \u00b7 ${testimonial.result}` : ""}`,
-        { color: ss(s.accent), fontSize: sv(13), fontWeight: ss("700") });
-      return makeCol(b, [tq, ta], 33.333, { padH: 20 });
-    });
-    const r = makeRow(b, tCards, 1200, 24);
-    makeSection(b, [r], { bgColor: s.dark, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
-  }
+  // Individual testimonial quote headings (sections 7–9)
+  setH("heading-gGTM7pLAWp1", al.textTestimonials[0]?.quote ?? "");
+  setH("heading-DxtKO-nccYj", al.textTestimonials[1]?.quote ?? "");
+  setH("heading-ry34q51jror", al.textTestimonials[2]?.quote ?? "");
 
-  // ── 10. FAQ ───────────────────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, "Frequently Asked Questions", "h2",
-      { color: ss(s.textColorOnLight), fontSize: sv(32), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(40) },
-      { fontSize: sv(22) });
-    const faqEls: string[] = al.faqItems.flatMap(item => [
-      makeHeading(b, item.question, "h3",
-        { color: ss(s.textColorOnLight), fontSize: sv(18), fontWeight: ss("700"), paddingBottom: sv(8), paddingTop: sv(16) }),
-      makeParagraph(b, item.answer,
-        { color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.7"), paddingBottom: sv(8) }),
-      makeDivider(b),
-    ]);
-    const c = makeCol(b, [h, ...faqEls], 100, { padH: 0 });
-    const r = makeRow(b, [c], 760, 24);
-    makeSection(b, [r], { bgColor: s.alt, ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
-  }
+  // 5-problems divider (section 12)
+  setH("heading-VNPStBY-834", al.dividerHeading);
 
-  // ── 11. Client Wins ───────────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, al.clientWinsHeading, "h2",
-      { color: ss(s.textColorOnLight), fontSize: sv(30), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(32) },
-      { fontSize: sv(22) });
-    const headRow = makeRow(b, [makeCol(b, [h], 100, { padH: 24, align: "center" })], 760, 24);
-    const winRows: string[] = [];
-    for (let i = 0; i < al.clientWins.length; i += 2) {
-      const pair = al.clientWins.slice(i, i + 2).map(w => {
-        const wn = makeHeading(b, w.name, "h4",
-          { color: ss(s.accent), fontSize: sv(15), fontWeight: ss("700"), paddingBottom: sv(4) });
-        const wr = makeParagraph(b, w.result,
-          { color: ss(s.textColorOnLight), fontSize: sv(14), lineHeight: ss("1.6") });
-        return makeCol(b, [wn, wr], 50, { padH: 16 });
-      });
-      winRows.push(makeRow(b, pair, 1100, 24));
-    }
-    makeSection(b, [headRow, ...winRows], { bgColor: s.mid, ptD: 72, pbD: 72, ptM: 48, pbM: 48 });
-  }
+  // Client wins (section 14)
+  setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
 
-  // ── 12. Final CTA ─────────────────────────────────────────────────────────────
-  {
-    const h = makeHeading(b, al.finalCtaText, "h2",
-      { color: ss(s.textColorOnDark), fontSize: sv(36), fontWeight: ss(s.headlineFontWeight), textAlign: ss("center"), paddingBottom: sv(20) },
-      { fontSize: sv(26) });
-    const btn = makeButton(b, "Apply Now", "next-step", "",
-      { backgroundColor: ss(s.accent), color: ss("#fff"), fontSize: sv(20), paddingTop: sv(20), paddingBottom: sv(20), paddingLeft: sv(48), paddingRight: sv(48) });
-    const sub = makeParagraph(b, al.finalCtaSubtext,
-      { color: ss(s.textColorOnDark), fontSize: sv(14), textAlign: ss("center"), paddingTop: sv(16), lineHeight: ss("1.6") });
-    const c = makeCol(b, [h, btn, sub], 100, { padH: 24, align: "center" });
-    const r = makeRow(b, [c], 760, 24);
-    makeSection(b, [r], { bg: s.heroGradient, ptD: 100, pbD: 100, ptM: 64, pbM: 64 });
-  }
+  // What you get (section 15)
+  setH("heading-XpcooI_gth7", al.whatYouGetHeading);
 
-  return sanitizePageData(finalize(b, s));
+  // More transformations (section 18)
+  setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);
+
+  // All CTA buttons
+  for (const id of APP_LANDING_BUTTON_IDS) setBtn(id, al.heroCtaText);
+
+  return page;
 }
+
 
 
 // ── All pages ─────────────────────────────────────────────────────────────────
