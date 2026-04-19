@@ -3173,18 +3173,60 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     "image-ECSXZa0Fgcz", // right arrow
   ]);
 
-  // Replace all other original images with placeholders
+  // Parse a CSS/numeric dimension string → pixel integer (returns null if invalid)
+  const parseDim = (v: unknown): number | null => {
+    if (!v) return null;
+    const n = parseInt(String(v).replace(/[^0-9]/g, ""), 10);
+    return isNaN(n) || n <= 0 ? null : n;
+  };
+
+  // Replace all other original images with size-matched placeholders
   for (const sec of page.sections)
     for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
       if ((el.meta as string) !== "image") continue;
       if (KEEP_ORIGINAL_IMAGE_IDS.has(el.id as string)) continue;
       const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
-      props.url = (el.id as string) === "image-nsjFovBSkSa"
-        ? "https://placehold.co/800x80/000000/000000"
-        : "https://placehold.co/800x500/cccccc/888888?text=Image+Placeholder";
+      if ((el.id as string) === "image-nsjFovBSkSa") {
+        props.url = "https://placehold.co/800x80/000000/000000";
+      } else {
+        const w = parseDim(props.width) ?? 800;
+        const h = parseDim(props.height) ?? Math.round(w * 0.75);
+        props.url = `https://placehold.co/${w}x${h}/cccccc/888888?text=Image+Placeholder`;
+      }
       props.servingUrl = "";
       props.placeholderBase64 = "";
     }
+
+  // "As Seen On" carousel — replace image-08WmhnTMPWh in-place with custom-code
+  const carouselHtml = `<style>
+.aso-wrap{width:100%;overflow:hidden;padding:16px 0 8px}
+.aso-label{text-align:center;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#999;margin-bottom:12px}
+.aso-track-outer{overflow:hidden;width:100%}
+.aso-track{display:flex;gap:24px;width:max-content;animation:aso-scroll 18s linear infinite}
+.aso-track:hover{animation-play-state:paused}
+@keyframes aso-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.aso-logo{flex-shrink:0;width:120px;height:48px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#aaa;letter-spacing:0.06em;text-transform:uppercase}
+</style>
+<div class="aso-wrap">
+  <div class="aso-label">As Seen On</div>
+  <div class="aso-track-outer">
+    <div class="aso-track">
+      ${["Media Outlet","Press Feature","TV Feature","Podcast","Magazine","News Site","Radio Show","Online Pub"].map((n) => `<div class="aso-logo">${n}</div>`).join("\n      ")}
+      ${["Media Outlet","Press Feature","TV Feature","Podcast","Magazine","News Site","Radio Show","Online Pub"].map((n) => `<div class="aso-logo">${n}</div>`).join("\n      ")}
+    </div>
+  </div>
+</div>`;
+  const asoEl = byId.get("image-08WmhnTMPWh");
+  if (asoEl) {
+    asoEl.meta = "custom-code";
+    asoEl.tagName = "c-custom-code";
+    asoEl.extra = {
+      customClass: { value: [] },
+      customCode:  { value: { rawCustomCode: carouselHtml } },
+      nodeId:      "cimage-08WmhnTMPWh",
+      visibility:  { value: { hideDesktop: false, hideMobile: false } },
+    };
+  }
 
   // Hero (section 2)
   setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
@@ -3192,20 +3234,33 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
   setVid("video-20p-7VhVtF4", videoUrl);
 
-  // Testimonials intro (section 4)
-  setH("heading-eu5M2j4fixD", al.testimonialIntroHeading);
-
-  // Coach bio (section 5)
-  setH("heading-3u8EPoD9Qou", al.credentialItems[0]?.label ?? "");
+  // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
+  setH("heading-3u8EPoD9Qou", `<strong>Who Is ${data.coachName ?? "Your Coach"}, And Why Should I Listen To Them?</strong>`);
   setImg("image-HxJsjcn1-rj", photoUrl);
+
+  // Align 4 transformation cards in section 5 to top
+  const transformRow = byId.get("row-LgRplJ7QXHv");
+  if (transformRow) {
+    (transformRow.styles as Record<string, unknown>).alignItems = { value: "flex-start" };
+  }
+
+  // Reduce coach bio line spacing to single-line between sentences
+  const coachBioEl = byId.get("sub-heading-FvfzFHkx-9U");
+  if (coachBioEl) {
+    (coachBioEl.styles as Record<string, unknown>).lineHeight = { value: "1", unit: "em" };
+  }
 
   // Will This Work For You (section 6)
   setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
 
-  // Individual testimonial quote headings (sections 7–9)
-  setH("heading-gGTM7pLAWp1", al.textTestimonials[0]?.quote ?? "");
-  setH("heading-DxtKO-nccYj", al.textTestimonials[1]?.quote ?? "");
-  setH("heading-ry34q51jror", al.textTestimonials[2]?.quote ?? "");
+  // Individual testimonial quote headings (sections 7–9) — first sentence only, white font
+  const firstSentence = (q: string): string => {
+    const m = q.match(/^[^.!?]*[.!?]/);
+    return (m ? m[0] : q).trim();
+  };
+  setH("heading-gGTM7pLAWp1", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[0]?.quote ?? "")}</strong></font>`);
+  setH("heading-DxtKO-nccYj", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[1]?.quote ?? "")}</strong></font>`);
+  setH("heading-ry34q51jror", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[2]?.quote ?? "")}</strong></font>`);
 
   // 5-problems divider (section 12)
   setH("heading-VNPStBY-834", al.dividerHeading);
@@ -3218,6 +3273,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   // More transformations (section 18)
   setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);
+
+  // Footer copyright — update year and replace brand name with placeholder
+  const copyrightEl = byId.get("paragraph-FTXmive2endp");
+  if (copyrightEl) {
+    ((copyrightEl.extra as Record<string, unknown>).text as Record<string, unknown>).value =
+      `<p>Copyright © 2026 - Your Company - All Rights Reserved</p>`;
+  }
 
   // All CTA buttons
   for (const id of APP_LANDING_BUTTON_IDS) setBtn(id, al.heroCtaText);

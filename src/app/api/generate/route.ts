@@ -88,6 +88,7 @@ export async function POST(request: Request) {
         landingVariant,
         templateVariant,
         // Wizard-sourced fields for template personalisation
+        coachName:      validatedInputs.coachName,
         coachVideoUrl:  validatedInputs.videoUrl,
         coachPhotoUrl:  validatedInputs.coachPhotoUrl,
         clientCount:    validatedInputs.clientCount,

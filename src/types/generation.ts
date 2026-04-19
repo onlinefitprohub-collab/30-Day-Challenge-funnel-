@@ -221,6 +221,7 @@ export interface GeneratedFunnelAssets {
   sectionLayoutVariants?: SectionLayoutVariants;
   landingVariant?: "variant-a";
   // Wizard-sourced fields for template personalisation (persisted alongside AI assets)
+  coachName?:      string;
   coachVideoUrl?:  string;
   coachPhotoUrl?:  string;
   clientCount?:    string;
