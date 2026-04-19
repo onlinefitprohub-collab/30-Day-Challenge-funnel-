@@ -3126,8 +3126,12 @@ export function buildApplicationLandingPageData(_data: GeneratedFunnelAssets): G
   // Spread { id, metaData:{...} } → { id, ...metaData } — required because the
   // Chrome extension and GHL's elementSanitizer both read properties at the top
   // level of each element object, not nested inside metaData.
+  //
+  // Strips `element` (GHL-internal native representation — not used by builder
+  // elements, confuses GHL's publish pipeline when present at top level) and
+  // `_id` (internal Firebase/MongoDB document ID, irrelevant after spread).
   function spread(obj: { id: string; metaData: Record<string, unknown> }): GhlElem {
-    const meta = obj.metaData;
+    const { element: _elem, _id: __id, ...meta } = obj.metaData;
     return {
       wrapper:       {},
       class:         {},
@@ -3160,7 +3164,9 @@ export function buildApplicationLandingPageData(_data: GeneratedFunnelAssets): G
         }
       }
     }
-    return { id: sec.id, metaData: sec.metaData as Record<string, unknown>, elements: flatEls };
+    // Strip internal fields from section metaData before writing to Firebase
+    const { element: _se, _id: _sid, ...secMeta } = sec.metaData as Record<string, unknown>;
+    return { id: sec.id, metaData: secMeta, elements: flatEls };
   });
 
   const result: GhlPageData = {

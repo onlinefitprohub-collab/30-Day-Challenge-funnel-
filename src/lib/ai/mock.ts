@@ -16,12 +16,13 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     inclusions,
     bonuses,
     targetAudience,
-    desiredOutcome,
     biggestStruggle,
     objections,
     trafficSources,
     testimonials,
+    mainGoal,
   } = inputs;
+  const desiredOutcome = inputs.desiredOutcome ?? mainGoal;
 
   const isFree = price.toLowerCase().includes("free");
   const ctaLabel = ctaType === "booking" ? "book a free call" : "sign up now";
@@ -278,10 +279,11 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
     coachName,
     businessName,
     targetAudience,
-    desiredOutcome,
     biggestStruggle,
     inclusions,
+    mainGoal,
   } = inputs;
+  const desiredOutcome = inputs.desiredOutcome ?? mainGoal;
 
   const programmeName = inputs.challengeName ?? inputs.challengeType ?? "Transformation Programme";
   const audienceShort = targetAudience.split(/,| and /i)[0].trim();

@@ -15,7 +15,6 @@ export function buildFunnelPrompt(inputs: WizardInputs): string {
     inclusions,
     bonuses,
     biggestStruggle,
-    desiredOutcome,
     objections,
     demographicDetails,
     toneOfVoice,
@@ -62,7 +61,7 @@ ${bonuses ? `Bonuses: ${bonuses}` : ""}
 
 === AUDIENCE INSIGHTS ===
 Biggest Struggle: ${biggestStruggle}
-Desired Outcome: ${desiredOutcome}
+Desired Outcome: ${inputs.desiredOutcome ?? mainGoal}
 Common Objections: ${objections}
 
 === BRAND VOICE ===
