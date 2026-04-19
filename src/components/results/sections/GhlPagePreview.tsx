@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { GhlSection, GhlPageData } from "@/lib/highlevel/ghl-pagedata";
+import type { GhlPageData } from "@/lib/highlevel/ghl-pagedata";
 
 interface Props {
   projectId: string;
@@ -789,8 +789,6 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad, onErr
   const [status, setStatus] = useState<"loading" | "ok" | "empty" | "error">(
     "loading",
   );
-  const [sections, setSections] = useState<GhlSection[]>([]);
-  const [vars, setVars] = useState<Record<string, string>>({});
 
   // Keep stable refs so they never become useEffect dependencies.
   const onLoadRef = useRef(onLoad);
@@ -798,6 +796,8 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad, onErr
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; });
 
+  // Probe page-data to detect empty/error states and get templateLabel metadata.
+  // The actual rendering is done by the iframe (/api/highlevel/page-preview).
   useEffect(() => {
     if (!projectId) {
       setStatus("empty");
@@ -825,9 +825,6 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad, onErr
           onErrorRef.current?.();
           return;
         }
-        const cssVars = parseCssVars(pd.pageStyles ?? "");
-        setSections(pd.sections);
-        setVars(cssVars);
         setStatus("ok");
         onLoadRef.current?.({ templateLabel: json.templateLabel, templateVariant: json.templateVariant });
       })
@@ -865,17 +862,17 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad, onErr
     );
   }
 
-  const bodyBg = vars["--dark"] ?? "#0f172a";
+  // Render via server-generated HTML iframe so CSS variables from pageStyles
+  // resolve natively (var(--primary) etc.) and fonts load correctly — giving a
+  // much more accurate representation of the GHL page builder output.
+  const qs = new URLSearchParams({ page, projectId: projectId ?? "" });
+  if (templateVariant) qs.set("templateVariant", templateVariant);
 
   return (
-    <div style={{ backgroundColor: bodyBg, fontFamily: "'Poppins', sans-serif", color: "#ffffff" }}>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;700;900&display=swap"
-      />
-      {sections.map((sec) => (
-        <RenderSection key={sec.id} section={sec} vars={vars} />
-      ))}
-    </div>
+    <iframe
+      src={`/api/highlevel/page-preview?${qs}`}
+      style={{ width: "100%", height: "640px", border: "none", display: "block" }}
+      title="Page preview"
+    />
   );
 }
