@@ -3173,7 +3173,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       if ((el.meta as string) !== "image") continue;
       const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
       props.url = (el.id as string) === "image-nsjFovBSkSa"
-        ? "https://placehold.co/400x120/111111/ffffff?text=Your+Logo+Here"
+        ? "https://placehold.co/800x80/000000/000000"
         : "https://placehold.co/800x500/cccccc/888888?text=Image+Placeholder";
       props.servingUrl = "";
       props.placeholderBase64 = "";
