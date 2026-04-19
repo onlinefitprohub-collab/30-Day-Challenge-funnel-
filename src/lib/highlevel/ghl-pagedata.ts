@@ -3197,6 +3197,66 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       props.placeholderBase64 = "";
     }
 
+  // Device mockup CSS — replaces all 8 instances of the phones+laptop collage image
+  const DEVICE_MOCKUP_URL_FRAGMENT = "61851b46290c5b61b2e6739d.png";
+  const deviceMockupHtml = `<style>
+.dm-wrap{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:24px 8px;flex-wrap:wrap}
+.dm-phone{display:flex;flex-direction:column;border:3px solid #d0d0d0;border-radius:18px;background:#f8f8f8;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.12)}
+.dm-phone.sm{width:70px;height:130px}
+.dm-phone.md{width:85px;height:158px}
+.dm-screen{flex:1;background:#e0e0e0;margin:4px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.dm-screen .dot{width:6px;height:6px;border-radius:50%;background:#bbb}
+.dm-phone-btn{height:8px;width:30px;background:#d0d0d0;border-radius:0 0 4px 4px;align-self:center;margin-bottom:4px}
+.dm-laptop{display:flex;flex-direction:column;align-items:center}
+.dm-lid{width:200px;height:130px;background:#222;border-radius:8px 8px 0 0;border:3px solid #555;display:flex;align-items:center;justify-content:center;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,0.25)}
+.dm-lid-inner{width:100%;height:100%;background:#1a1a2e;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.dm-prog{font-size:13px;font-weight:900;color:#f97316;font-family:sans-serif;text-transform:uppercase;text-align:center;line-height:1.1}
+.dm-sub{font-size:8px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.1em}
+.dm-base{width:220px;height:12px;background:#888;border-radius:0 0 6px 6px}
+.dm-foot{width:180px;height:6px;background:#666;border-radius:0 0 4px 4px}
+.dm-badge{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,#ffd700,#b8860b);border:3px solid #ffd700;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(184,134,11,0.5);flex-shrink:0}
+.dm-badge span{font-size:8px;font-weight:900;color:#1a1a00;text-transform:uppercase;letter-spacing:0.06em;line-height:1.2;text-align:center}
+.dm-access{display:flex;flex-direction:column;align-items:flex-start;flex-shrink:0}
+.dm-access .num{font-size:36px;font-weight:900;color:#222;font-family:sans-serif;line-height:1;letter-spacing:-0.02em}
+.dm-access .lbl{font-size:12px;font-weight:700;color:#555;letter-spacing:0.08em;text-transform:uppercase}
+</style>
+<div class="dm-wrap">
+  <div class="dm-phone sm"><div class="dm-screen"><div class="dot"></div></div><div class="dm-phone-btn"></div></div>
+  <div class="dm-phone md"><div class="dm-screen"><div class="dot"></div></div><div class="dm-phone-btn"></div></div>
+  <div class="dm-laptop">
+    <div class="dm-lid">
+      <div class="dm-lid-inner">
+        <div class="dm-prog">Your<br>Program</div>
+        <div class="dm-sub">Community · Coaching</div>
+      </div>
+    </div>
+    <div class="dm-base"></div>
+    <div class="dm-foot"></div>
+  </div>
+  <div class="dm-badge"><span>VIP<br>MEMBER</span></div>
+  <div class="dm-phone md"><div class="dm-screen"><div class="dot"></div></div><div class="dm-phone-btn"></div></div>
+  <div class="dm-phone sm"><div class="dm-screen"><div class="dot"></div></div><div class="dm-phone-btn"></div></div>
+  <div class="dm-access"><div class="num">24/7</div><div class="lbl">Access</div></div>
+</div>`;
+
+  for (const sec of page.sections)
+    for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
+      if ((el.meta as string) !== "image") continue;
+      const url = String(
+        ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown> | undefined)
+          ?.value && ((((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>).url ?? "")
+      );
+      if (!url.includes(DEVICE_MOCKUP_URL_FRAGMENT)) continue;
+      (el as Record<string, unknown>).meta = "custom-code";
+      (el as Record<string, unknown>).tagName = "c-custom-code";
+      (el as Record<string, unknown>).extra = {
+        customClass: { value: [] },
+        customCode:  { value: { rawCustomCode: deviceMockupHtml } },
+        nodeId:      `c${(el as Record<string, unknown>).id as string}`,
+        visibility:  { value: { hideDesktop: false, hideMobile: false } },
+      };
+    }
+
   // "As Seen On" carousel — replace image-08WmhnTMPWh in-place with custom-code
   const carouselHtml = `<style>
 .aso-wrap{width:100%;overflow:hidden;padding:16px 0 8px}
