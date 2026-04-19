@@ -3167,6 +3167,18 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     props.placeholderBase64 = "";
   }
 
+  // Replace all original images with placeholders (specific setImg calls below will override as needed)
+  for (const sec of page.sections)
+    for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
+      if ((el.meta as string) !== "image") continue;
+      const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
+      props.url = (el.id as string) === "image-nsjFovBSkSa"
+        ? "https://placehold.co/400x120/111111/ffffff?text=Your+Logo+Here"
+        : "https://placehold.co/800x500/cccccc/888888?text=Image+Placeholder";
+      props.servingUrl = "";
+      props.placeholderBase64 = "";
+    }
+
   // Hero (section 2)
   setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
@@ -3202,6 +3214,79 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   // All CTA buttons
   for (const id of APP_LANDING_BUTTON_IDS) setBtn(id, al.heroCtaText);
+
+  // Replace FAQ section (section-rkAIJvdkvxg) with a CSS-only accordion
+  const faqSection = page.sections.find(
+    (s) => (s as unknown as Record<string, unknown>).id === "section-rkAIJvdkvxg",
+  ) as unknown as Record<string, unknown> | undefined;
+
+  if (faqSection && al.faqItems?.length) {
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    const accordionHtml = `<style>
+  .faq-acc{width:100%;max-width:800px;margin:0 auto;font-family:inherit}
+  .faq-acc input[type=checkbox]{display:none}
+  .faq-item{border-bottom:1px solid rgba(255,255,255,0.15)}
+  .faq-label{display:flex;justify-content:space-between;align-items:center;padding:20px 4px;cursor:pointer;font-size:18px;font-weight:600;color:#fff;line-height:1.4;gap:16px}
+  .faq-label::after{content:'+';font-size:28px;font-weight:300;flex-shrink:0;transition:transform 0.2s}
+  input:checked+.faq-label::after{content:'\\2212'}
+  .faq-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease,padding 0.35s ease;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);padding:0 4px}
+  input:checked~.faq-body{max-height:600px;padding:0 4px 20px}
+</style>
+<div class="faq-acc">
+${al.faqItems
+  .map(
+    (item, i) => `  <div class="faq-item">
+    <input type="checkbox" id="faq-${i}">
+    <label class="faq-label" for="faq-${i}">${esc(item.question)}</label>
+    <div class="faq-body">${esc(item.answer)}</div>
+  </div>`,
+  )
+  .join("\n")}
+</div>`;
+
+    const ccId = "custom-code-faq-accordion";
+    const ccEl: Record<string, unknown> = {
+      id: ccId,
+      meta: "custom-code",
+      tagName: "c-custom-code",
+      title: "FAQ Accordion",
+      type: "element",
+      tag: "",
+      child: [],
+      class: {},
+      customCss: [],
+      styles: {},
+      wrapper: {
+        marginBottom: { unit: "px", value: 0 },
+        marginLeft: { unit: "px", value: 0 },
+        marginRight: { unit: "px", value: 0 },
+        marginTop: { unit: "px", value: 0 },
+      },
+      mobileWrapper: { marginTop: { unit: "px", value: 0 } },
+      extra: {
+        customClass: { value: [] },
+        customCode: { value: { rawCustomCode: accordionHtml } },
+        nodeId: `c${ccId}`,
+        visibility: { value: { hideDesktop: false, hideMobile: false } },
+      },
+    };
+
+    // Update col's child list to include the accordion after the heading
+    const col = byId.get("col-CVERE-5NmZwJ");
+    if (col) (col.child as string[]) = ["heading-HshMw8tZBIBp", ccId];
+
+    // Rebuild section elements: row + col + heading + accordion (drop the other 94 elements)
+    const faqRow = byId.get("row-jvy-ZbKnSAq7")!;
+    const faqCol = byId.get("col-CVERE-5NmZwJ")!;
+    const faqHdg = byId.get("heading-HshMw8tZBIBp")!;
+    (faqSection.elements as Record<string, unknown>[]) = [faqRow, faqCol, faqHdg, ccEl];
+
+    // Trim section's row list to just the single header row
+    const md = faqSection.metaData as Record<string, unknown>;
+    (md.child as string[]) = ["row-jvy-ZbKnSAq7"];
+  }
 
   return page;
 }
