@@ -25,8 +25,14 @@ function sanitizeHtml(html: string): string {
     .replace(/<link[^>]*>/gi, "")
     // Strip <svg> blocks (can contain onload/onclick handlers)
     .replace(/<svg[\s\S]*?<\/svg>/gi, "")
-    // Strip <style> blocks (CSS expression() / -moz-binding XSS)
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    // Sanitize <style> blocks: allow them but strip known CSS XSS vectors
+    .replace(/(<style[\s\S]*?>)([\s\S]*?)(<\/style>)/gi, (_m, open, body: string, close) => {
+      const safeBody = body
+        .replace(/expression\s*\(/gi, "")
+        .replace(/-moz-binding\s*:/gi, "")
+        .replace(/url\s*\(\s*["']?\s*javascript/gi, "");
+      return `${open}${safeBody}${close}`;
+    })
     // Strip unquoted event handlers (on* = ...)
     .replace(/\bon\w+\s*=\s*[^\s>]*/gi, "")
     // Strip double-quoted event handlers
