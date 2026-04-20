@@ -54,7 +54,7 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
       const style = css({
         display: "flex",
         "flex-wrap": "wrap",
-        "align-items": "center",
+        "align-items": sv(s.alignItems) ?? "center",
         width: "100%",
         "box-sizing": "border-box",
         "margin-left": "auto",
@@ -72,7 +72,7 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
       const style = css({
         display: "flex",
         "flex-direction": "column",
-        "justify-content": "center",
+        "justify-content": sv(s.justifyContent) ?? "flex-start",
         "box-sizing": "border-box",
         "min-width": "0",
         width: sv(s.width) ?? "100%",

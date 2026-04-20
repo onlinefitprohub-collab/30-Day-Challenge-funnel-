@@ -3179,7 +3179,23 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     "image-5F0zvBTNVBM",
     "image-r1QRMnqL0md",
     "image-D3RhaKGQKM-",
+    // Section 18 "Real Progress" gallery — force uniform 350×350
+    "image-i7afiA-ETx9N", "image-WZkzbSVA58_2", "image-Fj9FRKY3ZquK",
+    "image-Xli80zyRcW2Q", "image-Y9DmxTo2ZEil", "image-PcwIHpBU9ulS",
+    "image-XpMEn-rt2IsE", "image-5vou4GGboZlU", "image-0skWSKJGYq5G",
+    "image-tfgielG28WhY",
   ]);
+
+  // Pre-identify device mockup elements by URL BEFORE placeholder loop overwrites them
+  const DEVICE_MOCKUP_URL_FRAGMENT = "61851b46290c5b61b2e6739d.png";
+  const deviceMockupIds = new Set<string>();
+  for (const sec of page.sections)
+    for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
+      if ((el.meta as string) !== "image") continue;
+      const imgProps = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>)?.value as Record<string, unknown> | undefined;
+      if (String(imgProps?.url ?? "").includes(DEVICE_MOCKUP_URL_FRAGMENT))
+        deviceMockupIds.add(el.id as string);
+    }
 
   // Parse a CSS/numeric dimension string → pixel integer (returns null if invalid)
   const parseDim = (v: unknown): number | null => {
@@ -3193,11 +3209,14 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
       if ((el.meta as string) !== "image") continue;
       if (KEEP_ORIGINAL_IMAGE_IDS.has(el.id as string)) continue;
+      if (deviceMockupIds.has(el.id as string)) continue;
       const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
       if ((el.id as string) === "image-nsjFovBSkSa") {
         props.url = "https://placehold.co/800x100/000000/000000";
-      } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
+      } else if (["image-HxJsjcn1-rj","image-5F0zvBTNVBM","image-r1QRMnqL0md","image-D3RhaKGQKM-"].includes(el.id as string)) {
         props.url = "https://placehold.co/400x400/cccccc/888888?text=Image+Placeholder";
+      } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
+        props.url = "https://placehold.co/350x350/cccccc/888888?text=Image+Placeholder";
       } else {
         const w = parseDim(props.width) ?? 800;
         const h = parseDim(props.height) ?? Math.round(w * 0.75);
@@ -3207,8 +3226,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       props.placeholderBase64 = "";
     }
 
-  // Device mockup CSS — replaces all 8 instances of the phones+laptop collage image
-  const DEVICE_MOCKUP_URL_FRAGMENT = "61851b46290c5b61b2e6739d.png";
+  // Device mockup CSS — replaces all detected phones+laptop collage images
   const deviceMockupHtml = `<style>
 .dm-wrap{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:24px 8px;flex-wrap:wrap}
 .dm-phone{display:flex;flex-direction:column;border:3px solid #d0d0d0;border-radius:18px;background:#f8f8f8;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.12)}
@@ -3251,12 +3269,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   for (const sec of page.sections)
     for (const el of (sec.elements ?? []) as Record<string, unknown>[]) {
-      if ((el.meta as string) !== "image") continue;
-      const url = String(
-        ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown> | undefined)
-          ?.value && ((((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>).url ?? "")
-      );
-      if (!url.includes(DEVICE_MOCKUP_URL_FRAGMENT)) continue;
+      if (!deviceMockupIds.has((el as Record<string, unknown>).id as string)) continue;
       (el as Record<string, unknown>).meta = "custom-code";
       (el as Record<string, unknown>).tagName = "c-custom-code";
       (el as Record<string, unknown>).extra = {
@@ -3317,10 +3330,19 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (transformRow.styles as Record<string, unknown>).alignItems = { value: "flex-start" };
   }
 
-  // Reduce coach bio line spacing to single-line between sentences
-  const coachBioEl = byId.get("sub-heading-FvfzFHkx-9U");
-  if (coachBioEl) {
-    (coachBioEl.styles as Record<string, unknown>).lineHeight = { value: "1", unit: "em" };
+  // Reduce line spacing to single-line for all 3 coach bio text blocks
+  for (const shId of ["sub-heading-FvfzFHkx-9U", "sub-heading-0vtmtqgq1Lg", "sub-heading-uegTH1yDDad"]) {
+    const shEl = byId.get(shId);
+    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1", unit: "em" };
+  }
+
+  // Add spacing below bullet list elements (sections 15, 17)
+  for (const blId of [
+    "bulletList-ggLT1qrShFG", "bulletList-AWuJ0-P2vjjd", "bulletList-hktollYcOwpn",
+    "bulletList-iPt66D6x8OfW", "bulletList-nfCSb8tH0TnX", "bulletList-y_I3SqcE1w2C",
+  ]) {
+    const blEl = byId.get(blId);
+    if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
   // Will This Work For You (section 6)
@@ -3354,8 +3376,21 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       `<p>Copyright © 2026 - Your Company - All Rights Reserved</p>`;
   }
 
-  // All CTA buttons
-  for (const id of APP_LANDING_BUTTON_IDS) setBtn(id, al.heroCtaText);
+  // All CTA buttons — set text and reduce font size to 28px
+  for (const id of APP_LANDING_BUTTON_IDS) {
+    setBtn(id, al.heroCtaText);
+    const btnEl = byId.get(id);
+    if (!btnEl) continue;
+    const ex = btnEl.extra as Record<string, unknown>;
+    if (ex.desktopFontSize) (ex.desktopFontSize as Record<string, unknown>).value = "28";
+    if (ex.mobileFontSize)  (ex.mobileFontSize  as Record<string, unknown>).value = "22";
+    (btnEl.styles as Record<string, unknown>).fontSize = { value: "28", unit: "px" };
+  }
+
+  // Remove empty trailing section (section-yKSj_u9QJlY)
+  page.sections = page.sections.filter(
+    (s) => ((s as unknown as Record<string, unknown>).id as string) !== "section-yKSj_u9QJlY",
+  );
 
   // Replace FAQ section (section-rkAIJvdkvxg) with a CSS-only accordion
   const faqSection = page.sections.find(
