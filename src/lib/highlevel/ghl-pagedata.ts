@@ -3220,6 +3220,8 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
       if ((el.id as string) === "image-nsjFovBSkSa") {
         props.url = "https://placehold.co/800x100/000000/000000";
+      } else if ((el.id as string) === "image-8ee1zVG1yd-") {
+        props.url = "https://placehold.co/600x150/cccccc/888888?text=Image+Placeholder";
       } else if (["image-HxJsjcn1-rj","image-5F0zvBTNVBM","image-r1QRMnqL0md","image-D3RhaKGQKM-"].includes(el.id as string)) {
         props.url = "https://placehold.co/400x400/cccccc/888888?text=Image+Placeholder";
       } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
