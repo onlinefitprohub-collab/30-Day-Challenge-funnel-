@@ -3196,6 +3196,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       if (String(imgProps?.url ?? "").includes(DEVICE_MOCKUP_URL_FRAGMENT))
         deviceMockupIds.add(el.id as string);
     }
+  // image-6e0WmsLWqrn: narrow 8.33% left spacer column — not a device mockup
+  // image-TGSdIKkezfu: client testimonial photo slot — not a device mockup
+  deviceMockupIds.delete("image-6e0WmsLWqrn");
+  deviceMockupIds.delete("image-TGSdIKkezfu");
 
   // Parse a CSS/numeric dimension string → pixel integer (returns null if invalid)
   const parseDim = (v: unknown): number | null => {
@@ -3217,6 +3221,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
         props.url = "https://placehold.co/400x400/cccccc/888888?text=Image+Placeholder";
       } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
         props.url = "https://placehold.co/350x350/cccccc/888888?text=Image+Placeholder";
+      } else if ((el.id as string) === "image-6e0WmsLWqrn") {
+        props.url = "https://placehold.co/1x1/ffffff/ffffff";
+      } else if (["image-vLTSAbHKiL4","image-zpUQvEWZkt6","image-COlWuRiURYv","image-VwvNcTjxHrw","image-xeVELQp8U0-","image-ZvjPDkc8HjR","image-TGSdIKkezfu"].includes(el.id as string)) {
+        props.url = "https://placehold.co/300x300/cccccc/888888?text=Image+Placeholder";
       } else {
         const w = parseDim(props.width) ?? 800;
         const h = parseDim(props.height) ?? Math.round(w * 0.75);
