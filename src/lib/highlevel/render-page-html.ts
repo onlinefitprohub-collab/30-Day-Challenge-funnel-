@@ -242,7 +242,7 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
         sv(extra.iconColor as unknown) ?? "var(--primary,#f97316)";
       const fontSize = sv(s.fontSize) ?? "16px";
       const lineHeight = sv(s.lineHeight) ?? "1.7em";
-      return `<ul style="list-style:none;padding:0;margin:0;color:${color};font-size:${fontSize};line-height:${lineHeight}">${items.map((item) => `<li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><span style="color:${iconColor};flex-shrink:0;margin-top:2px;font-size:14px">&#10003;</span><span>${esc(item.text ?? "")}</span></li>`).join("")}</ul>`;
+      return `<ul style="list-style:none;padding:0;margin:0;color:${color};font-size:${fontSize};line-height:${lineHeight}">${items.map((item) => `<li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:16px"><span style="color:${iconColor};flex-shrink:0;margin-top:2px;font-size:14px">&#10003;</span><span>${esc(item.text ?? "")}</span></li>`).join("")}</ul>`;
     }
 
     default:

@@ -3183,7 +3183,6 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     "image-i7afiA-ETx9N", "image-WZkzbSVA58_2", "image-Fj9FRKY3ZquK",
     "image-Xli80zyRcW2Q", "image-Y9DmxTo2ZEil", "image-PcwIHpBU9ulS",
     "image-XpMEn-rt2IsE", "image-5vou4GGboZlU", "image-0skWSKJGYq5G",
-    "image-tfgielG28WhY",
   ]);
 
   // Pre-identify device mockup elements by URL BEFORE placeholder loop overwrites them
@@ -3198,8 +3197,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     }
   // image-6e0WmsLWqrn: narrow 8.33% left spacer column — not a device mockup
   // image-TGSdIKkezfu: client testimonial photo slot — not a device mockup
+  // image-7raUDY4EF6ei: duplicate mockup in the same column as image-QAKnhYeMXD4W
   deviceMockupIds.delete("image-6e0WmsLWqrn");
   deviceMockupIds.delete("image-TGSdIKkezfu");
+  deviceMockupIds.delete("image-7raUDY4EF6ei");
+  // image-tfgielG28WhY: CTA row device mockup in section-WPVD3X08-hu (different CDN URL, same pattern)
+  deviceMockupIds.add("image-tfgielG28WhY");
 
   // Parse a CSS/numeric dimension string → pixel integer (returns null if invalid)
   const parseDim = (v: unknown): number | null => {
@@ -3221,7 +3224,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
         props.url = "https://placehold.co/400x400/cccccc/888888?text=Image+Placeholder";
       } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
         props.url = "https://placehold.co/350x350/cccccc/888888?text=Image+Placeholder";
-      } else if ((el.id as string) === "image-6e0WmsLWqrn") {
+      } else if (["image-6e0WmsLWqrn","image-7raUDY4EF6ei"].includes(el.id as string)) {
         props.url = "https://placehold.co/1x1/ffffff/ffffff";
       } else if (["image-vLTSAbHKiL4","image-zpUQvEWZkt6","image-COlWuRiURYv","image-VwvNcTjxHrw","image-xeVELQp8U0-","image-ZvjPDkc8HjR","image-TGSdIKkezfu"].includes(el.id as string)) {
         props.url = "https://placehold.co/300x300/cccccc/888888?text=Image+Placeholder";
@@ -3412,11 +3415,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     const accordionHtml = `<style>
   .faq-acc{width:100%;max-width:800px;margin:0 auto;font-family:inherit}
   .faq-acc input[type=checkbox]{display:none}
-  .faq-item{border-bottom:1px solid rgba(255,255,255,0.15)}
-  .faq-label{display:flex;justify-content:space-between;align-items:center;padding:20px 4px;cursor:pointer;font-size:18px;font-weight:600;color:#fff;line-height:1.4;gap:16px}
+  .faq-item{border-bottom:1px solid rgba(0,0,0,0.12)}
+  .faq-label{display:flex;justify-content:space-between;align-items:center;padding:20px 4px;cursor:pointer;font-size:18px;font-weight:600;color:#111;line-height:1.4;gap:16px}
   .faq-label::after{content:'+';font-size:28px;font-weight:300;flex-shrink:0;transition:transform 0.2s}
   input:checked+.faq-label::after{content:'\\2212'}
-  .faq-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease,padding 0.35s ease;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);padding:0 4px}
+  .faq-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease,padding 0.35s ease;font-size:16px;line-height:1.7;color:rgba(0,0,0,0.65);padding:0 4px}
   input:checked~.faq-body{max-height:600px;padding:0 4px 20px}
 </style>
 <div class="faq-acc">
