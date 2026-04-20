@@ -3173,6 +3173,14 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     "image-ECSXZa0Fgcz", // right arrow
   ]);
 
+  // Force uniform 400×400 square for the 4 coach transformation cards
+  const SQUARE_IMAGE_IDS = new Set([
+    "image-HxJsjcn1-rj",
+    "image-5F0zvBTNVBM",
+    "image-r1QRMnqL0md",
+    "image-D3RhaKGQKM-",
+  ]);
+
   // Parse a CSS/numeric dimension string → pixel integer (returns null if invalid)
   const parseDim = (v: unknown): number | null => {
     if (!v) return null;
@@ -3187,7 +3195,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       if (KEEP_ORIGINAL_IMAGE_IDS.has(el.id as string)) continue;
       const props = ((el.extra as Record<string, unknown>).imageProperties as Record<string, unknown>).value as Record<string, unknown>;
       if ((el.id as string) === "image-nsjFovBSkSa") {
-        props.url = "https://placehold.co/800x80/000000/000000";
+        props.url = "https://placehold.co/800x100/000000/000000";
+      } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
+        props.url = "https://placehold.co/400x400/cccccc/888888?text=Image+Placeholder";
       } else {
         const w = parseDim(props.width) ?? 800;
         const h = parseDim(props.height) ?? Math.round(w * 0.75);
@@ -3295,7 +3305,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setVid("video-20p-7VhVtF4", videoUrl);
 
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
+  const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
   setH("heading-3u8EPoD9Qou", `<strong>Who Is ${data.coachName ?? "Your Coach"}, And Why Should I Listen To Them?</strong>`);
+  setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+  setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
   setImg("image-HxJsjcn1-rj", photoUrl);
 
   // Align 4 transformation cards in section 5 to top
