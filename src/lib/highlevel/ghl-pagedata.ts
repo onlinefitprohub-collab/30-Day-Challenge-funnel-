@@ -3224,11 +3224,19 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
         props.url = "https://placehold.co/600x150/cccccc/888888?text=Image+Placeholder";
       } else if (["image-HxJsjcn1-rj","image-5F0zvBTNVBM","image-r1QRMnqL0md","image-D3RhaKGQKM-"].includes(el.id as string)) {
         props.url = "https://placehold.co/400x400/cccccc/888888?text=Image+Placeholder";
+        props.width = "";
+        props.height = "";
       } else if (SQUARE_IMAGE_IDS.has(el.id as string)) {
         props.url = "https://placehold.co/350x350/cccccc/888888?text=Image+Placeholder";
       } else if (["image-6e0WmsLWqrn","image-7raUDY4EF6ei"].includes(el.id as string)) {
         props.url = "https://placehold.co/1x1/ffffff/ffffff";
-      } else if (["image-vLTSAbHKiL4","image-zpUQvEWZkt6","image-COlWuRiURYv","image-VwvNcTjxHrw","image-xeVELQp8U0-","image-ZvjPDkc8HjR","image-TGSdIKkezfu"].includes(el.id as string)) {
+      } else if ([
+        // section-UZvyII6XSc coaching client testimonial photos
+        "image-vLTSAbHKiL4","image-zpUQvEWZkt6","image-COlWuRiURYv","image-VwvNcTjxHrw",
+        "image-xeVELQp8U0-","image-ZvjPDkc8HjR","image-TGSdIKkezfu",
+        // section-mamQkS7y-C benefit/feature images (no original dimensions → 800×600 default)
+        "image-5QkufbB2UgXo","image-_x3KJH03nYy4","image-9wc9RwgY6V1E","image-cgUbxwUoI87R",
+      ].includes(el.id as string)) {
         props.url = "https://placehold.co/300x300/cccccc/888888?text=Image+Placeholder";
       } else {
         const w = parseDim(props.width) ?? 800;
@@ -3292,6 +3300,21 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
         visibility:  { value: { hideDesktop: false, hideMobile: false } },
       };
     }
+
+  // Remove device mockup images and narrow spacer images from their parent column
+  // child lists so they don't appear in the GHL builder or rendered output.
+  const REMOVE_FROM_COLUMNS = new Set([
+    // Device mockup collage images in CTA rows (user wants clean button-only CTA rows)
+    "image-zrBkKPG1mMG", "image-NcImVoRpttF", "image-QAKnhYeMXD4W",
+    "image-Gpj_CYEANduI", "image-tQy9jRus_bRY", "image-tfgielG28WhY",
+    // Narrow 8.33% left-spacer images
+    "image-6e0WmsLWqrn", "image-2MG5utczSnx", "image-7FRVUjOPaILh", "image-Q-1peOTCLKZk",
+  ]);
+  for (const el of byId.values()) {
+    if (Array.isArray(el.child)) {
+      el.child = (el.child as string[]).filter(id => !REMOVE_FROM_COLUMNS.has(id));
+    }
+  }
 
   // "As Seen On" carousel — replace image-08WmhnTMPWh in-place with custom-code
   const carouselHtml = `<style>
