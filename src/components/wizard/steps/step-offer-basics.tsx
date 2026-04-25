@@ -14,12 +14,14 @@ const ctaOptions = [
   {
     value: "booking",
     label: "Book a call",
-    description: "Lead books a strategy / sales call",
+    descriptionChallenge: "Lead books a strategy / sales call",
+    descriptionApplication: "Lead books a free strategy call to discuss fit",
   },
   {
     value: "signup",
     label: "Direct sign-up",
-    description: "Lead registers or purchases directly",
+    descriptionChallenge: "Lead registers or purchases directly",
+    descriptionApplication: "Lead submits an application form directly",
   },
 ] as const;
 
@@ -43,7 +45,8 @@ export function StepOfferBasics({
       mainGoal: defaultValues.mainGoal ?? "",
       duration: defaultValues.duration ?? 30,
       price: defaultValues.price ?? "",
-      ctaType: defaultValues.ctaType,
+      // Default to "booking" (strategy call) for application funnels
+      ctaType: defaultValues.ctaType ?? (isApplication ? "booking" : undefined),
       inclusions: defaultValues.inclusions ?? "",
       bonuses: defaultValues.bonuses ?? "",
     },
@@ -89,7 +92,7 @@ export function StepOfferBasics({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="duration">{isApplication ? "Program duration (days)" : "Duration (days)"}</Label>
+          <Label htmlFor="duration">Duration (days)</Label>
           <Input
             id="duration"
             type="number"
@@ -97,16 +100,21 @@ export function StepOfferBasics({
             max={90}
             {...register("duration", { valueAsNumber: true })}
           />
+          {isApplication && (
+            <p className="text-xs text-gray-400">e.g. 84 days = 12-week programme</p>
+          )}
           {errors.duration && (
             <p className="text-sm text-red-500">{errors.duration.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="price">Price / offer type</Label>
+          <Label htmlFor="price">Price / investment</Label>
           <Input
             id="price"
-            placeholder="e.g. Free, £47, $97/month, Free trial"
+            placeholder={isApplication
+              ? "e.g. By application only · From £5,000 · Shared on strategy call"
+              : "e.g. Free, £47, $97/month, Free trial"}
             {...register("price")}
           />
           {errors.price && (
@@ -136,7 +144,9 @@ export function StepOfferBasics({
               >
                 {option.label}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">{option.description}</p>
+              <p className="mt-0.5 text-xs text-gray-400">
+                {isApplication ? option.descriptionApplication : option.descriptionChallenge}
+              </p>
             </button>
           ))}
         </div>

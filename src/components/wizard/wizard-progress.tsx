@@ -2,13 +2,15 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { WIZARD_STEPS } from "@/types/wizard";
-
-type Step = (typeof WIZARD_STEPS)[number];
+interface WizardStep {
+  id: number;
+  title: string;
+  description: string;
+}
 
 interface WizardProgressProps {
   currentStep: number;
-  steps: readonly Step[];
+  steps: readonly WizardStep[];
   onStepClick?: (step: number) => void;
 }
 

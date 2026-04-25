@@ -10,6 +10,7 @@ import { audiencePainSchema, type AudiencePain, type WizardInputs } from "@/type
 import type { StepProps } from "./types";
 
 export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
+  const isApplication = defaultValues.funnelType === "application";
   const {
     register,
     handleSubmit,
@@ -30,16 +31,22 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-1.5">
         <Label htmlFor="biggestStruggle">
-          What&apos;s the biggest struggle your ideal client faces?
+          {isApplication
+            ? "What's the single biggest frustration your ideal client faces right now?"
+            : "What's the biggest struggle your ideal client faces?"}
         </Label>
         <Textarea
           id="biggestStruggle"
-          placeholder="e.g. They start and stop, feel overwhelmed, lose motivation, can't find time — include who they are (e.g. busy mums, men over 40, postpartum women)"
+          placeholder={isApplication
+            ? "e.g. They've invested in coaches, programmes, and courses before but nothing has stuck. They're motivated but stuck in the same cycles — they know what to do but can't stay consistent. High performers in their career who feel like failures in their health."
+            : "e.g. They start and stop, feel overwhelmed, lose motivation, can't find time — include who they are (e.g. busy mums, men over 40, postpartum women)"}
           rows={3}
           {...register("biggestStruggle")}
         />
         <p className="text-xs text-gray-400">
-          Describe them and what keeps them up at night
+          {isApplication
+            ? "Be specific — the more clearly you describe their pain, the stronger the copy"
+            : "Describe them and what keeps them up at night"}
         </p>
         {errors.biggestStruggle && (
           <p className="text-sm text-red-500">{errors.biggestStruggle.message}</p>
@@ -48,11 +55,15 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
 
       <div className="space-y-1.5">
         <Label htmlFor="objections">
-          What objections or hesitations do they typically have before joining?
+          {isApplication
+            ? "What hesitations hold serious prospects back from investing at this level?"
+            : "What objections or hesitations do they typically have before joining?"}
         </Label>
         <Textarea
           id="objections"
-          placeholder="e.g. 'I've tried before and failed', 'I don't have time', 'I'm not sure it'll work for me', 'I can't afford it'"
+          placeholder={isApplication
+            ? "e.g. 'I've already tried coaches and it didn't work', 'I'm not sure I can commit to the schedule', 'Is the investment worth it for me?', 'What if I don't get the results?', 'I've heard this before'"
+            : "e.g. 'I've tried before and failed', 'I don't have time', 'I'm not sure it'll work for me', 'I can't afford it'"}
           rows={3}
           {...register("objections")}
         />
