@@ -69,6 +69,16 @@ export const socialProofSchema = z.object({
   // caseStudySnippets and resultsHighlights kept optional for backward compat
 });
 
+// Application funnel only — inserted as step 4 when funnelType === "application"
+export const applicationDetailsSchema = z.object({
+  programPillars:     z.string().optional(), // 3-5 core pillars/phases — feeds benefitBlocks AI
+  uniqueApproach:     z.string().optional(), // what makes the method different
+  idealClientProfile: z.string().optional(), // who IS the perfect fit (qualifiers)
+  notForWho:          z.string().optional(), // who should NOT apply (disqualifiers)
+  applicationProcess: z.string().optional(), // what happens after applying
+  coachingCapacity:   z.string().optional(), // max client slots — scarcity signal
+});
+
 // Combined wizard inputs — all steps merged
 export const wizardInputsSchema = z.object({
   funnelType: z.enum(["challenge", "application"]).default("challenge"),
@@ -78,17 +88,19 @@ export const wizardInputsSchema = z.object({
   ...brandVoiceSchema.shape,
   ...trafficInputsSchema.shape,
   ...socialProofSchema.shape,
+  ...applicationDetailsSchema.shape,
 });
 
-export type BusinessBasics = z.infer<typeof businessBasicsSchema>;
-export type OfferBasics = z.infer<typeof offerBasicsSchema>;
-export type AudiencePain = z.infer<typeof audiencePainSchema>;
-export type BrandVoice = z.infer<typeof brandVoiceSchema>;
-export type TrafficInputs = z.infer<typeof trafficInputsSchema>;
-export type SocialProof = z.infer<typeof socialProofSchema>;
-export type WizardInputs = z.infer<typeof wizardInputsSchema>;
+export type BusinessBasics    = z.infer<typeof businessBasicsSchema>;
+export type OfferBasics       = z.infer<typeof offerBasicsSchema>;
+export type AudiencePain      = z.infer<typeof audiencePainSchema>;
+export type BrandVoice        = z.infer<typeof brandVoiceSchema>;
+export type TrafficInputs     = z.infer<typeof trafficInputsSchema>;
+export type SocialProof       = z.infer<typeof socialProofSchema>;
+export type ApplicationDetails = z.infer<typeof applicationDetailsSchema>;
+export type WizardInputs      = z.infer<typeof wizardInputsSchema>;
 
-export const WIZARD_STEPS = [
+export const CHALLENGE_WIZARD_STEPS = [
   { id: 1, title: "Funnel Type",      description: "What are you building?" },
   { id: 2, title: "Business Basics",  description: "Tell us about your business" },
   { id: 3, title: "Your Offer",       description: "Define your offer" },
@@ -97,3 +109,17 @@ export const WIZARD_STEPS = [
   { id: 6, title: "Traffic",          description: "Where will your leads come from?" },
   { id: 7, title: "Social Proof",     description: "Results, testimonials, and wins" },
 ] as const;
+
+export const APPLICATION_WIZARD_STEPS = [
+  { id: 1, title: "Funnel Type",           description: "What are you building?" },
+  { id: 2, title: "Business Basics",       description: "Tell us about your business" },
+  { id: 3, title: "Your Programme",        description: "Define your offer and investment" },
+  { id: 4, title: "Application Details",   description: "Qualify leads and describe your process" },
+  { id: 5, title: "Your Ideal Client",     description: "Who are you trying to reach?" },
+  { id: 6, title: "Brand Voice",           description: "How do you want to sound?" },
+  { id: 7, title: "Traffic",              description: "Where will your leads come from?" },
+  { id: 8, title: "Social Proof",          description: "Results, testimonials, and wins" },
+] as const;
+
+// Backward-compatible alias
+export const WIZARD_STEPS = CHALLENGE_WIZARD_STEPS;

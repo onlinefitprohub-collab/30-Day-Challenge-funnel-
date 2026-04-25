@@ -29,6 +29,8 @@ export function buildCoachContext(inputs: WizardInputs): string {
     trafficSources, utmNamingPreference, adBudgetRange,
     testimonials, caseStudySnippets, resultsHighlights, hasBeforeAfter,
     clientCount, yearsCoaching,
+    programPillars, uniqueApproach, idealClientProfile, notForWho,
+    applicationProcess, coachingCapacity,
   } = inputs;
 
   const isFree = price.toLowerCase().includes("free");
@@ -99,6 +101,16 @@ export function buildCoachContext(inputs: WizardInputs): string {
     if (yearsCoaching)  lines.push(`Years coaching: ${yearsCoaching}`);
     if (videoUrl)       lines.push(`Intro video URL: ${videoUrl}`);
     if (coachPhotoUrl)  lines.push(`Coach photo URL: ${coachPhotoUrl}`);
+  }
+
+  if (isApplication && (programPillars || uniqueApproach || idealClientProfile || notForWho || applicationProcess || coachingCapacity)) {
+    lines.push(``, `=== APPLICATION PROGRAMME DETAILS ===`);
+    if (programPillars)     lines.push(`Programme pillars:\n${programPillars}`);
+    if (uniqueApproach)     lines.push(`Unique approach/method: ${uniqueApproach}`);
+    if (idealClientProfile) lines.push(`Ideal client (qualifiers):\n${idealClientProfile}`);
+    if (notForWho)          lines.push(`Who this is NOT for:\n${notForWho}`);
+    if (applicationProcess) lines.push(`Application process: ${applicationProcess}`);
+    if (coachingCapacity)   lines.push(`Coaching capacity (scarcity): ${coachingCapacity}`);
   }
 
   return lines.join("\n");
