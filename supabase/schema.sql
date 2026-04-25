@@ -154,6 +154,22 @@ create policy "Users can insert own project outputs"
     and projects.user_id = auth.uid()
   ));
 
+-- Project folders (admin-created organisational folders per user)
+create table if not exists public.project_folders (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists project_folders_user_id_idx on public.project_folders(user_id);
+
+alter table public.project_folders enable row level security;
+
+create policy "Users can view own folders"
+  on public.project_folders for select
+  using (auth.uid() = user_id);
+
 -- User settings (one row per user — stores integration credentials)
 create table if not exists public.user_settings (
   user_id uuid primary key references auth.users(id) on delete cascade,
