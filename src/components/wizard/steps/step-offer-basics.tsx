@@ -40,15 +40,18 @@ export function StepOfferBasics({
   } = useForm<OfferBasics>({
     resolver: zodResolver(offerBasicsSchema),
     defaultValues: {
-      challengeName: defaultValues.challengeName ?? "",
-      challengeType: defaultValues.challengeType ?? "",
-      mainGoal: defaultValues.mainGoal ?? "",
-      duration: defaultValues.duration ?? 30,
-      price: defaultValues.price ?? "",
-      // Default to "booking" (strategy call) for application funnels
-      ctaType: defaultValues.ctaType ?? (isApplication ? "booking" : undefined),
-      inclusions: defaultValues.inclusions ?? "",
-      bonuses: defaultValues.bonuses ?? "",
+      challengeName:       defaultValues.challengeName       ?? "",
+      challengeType:       defaultValues.challengeType       ?? "",
+      mainGoal:            defaultValues.mainGoal            ?? "",
+      duration:            defaultValues.duration            ?? 30,
+      price:               defaultValues.price               ?? "",
+      ctaType:             defaultValues.ctaType             ?? (isApplication ? "booking" : undefined),
+      inclusions:          defaultValues.inclusions          ?? "",
+      bonuses:             defaultValues.bonuses             ?? "",
+      investmentRange:     defaultValues.investmentRange     ?? "",
+      roiAnchor:           defaultValues.roiAnchor           ?? "",
+      cohortStartDate:     defaultValues.cohortStartDate     ?? "",
+      applicationDeadline: defaultValues.applicationDeadline ?? "",
     },
   });
 
@@ -183,6 +186,63 @@ export function StepOfferBasics({
           {...register("bonuses")}
         />
       </div>
+
+      {isApplication && (
+        <>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="investmentRange">
+                Exact investment <span className="text-gray-400">(optional)</span>
+              </Label>
+              <Input
+                id="investmentRange"
+                placeholder="e.g. £4,997 or 3× £1,799"
+                {...register("investmentRange")}
+              />
+              <p className="text-xs text-gray-400">
+                Enables value-stacking and ROI copy even if price isn't shown on the page.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="roiAnchor">
+                ROI / comparison frame <span className="text-gray-400">(optional)</span>
+              </Label>
+              <Input
+                id="roiAnchor"
+                placeholder="e.g. One new client pays for the programme"
+                {...register("roiAnchor")}
+              />
+              <p className="text-xs text-gray-400">
+                The AI uses this to make the investment feel logical, not large.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="cohortStartDate">
+                Next cohort / start date <span className="text-gray-400">(optional)</span>
+              </Label>
+              <Input
+                id="cohortStartDate"
+                placeholder="e.g. 5 May 2025"
+                {...register("cohortStartDate")}
+              />
+              <p className="text-xs text-gray-400">Creates real, honest urgency — not artificial scarcity.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="applicationDeadline">
+                Application deadline <span className="text-gray-400">(optional)</span>
+              </Label>
+              <Input
+                id="applicationDeadline"
+                placeholder="e.g. 30 April — 3 days before cohort starts"
+                {...register("applicationDeadline")}
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="flex justify-between pt-2">
         <Button type="button" variant="outline" size="lg" onClick={onBack}>

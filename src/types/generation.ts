@@ -199,6 +199,22 @@ export interface ApplicationLandingPage {
   finalCtaSubtext: string;
 }
 
+// ─── VSL Script ─────────────────────────────────────────────────────────────
+
+export interface VslScript {
+  hook: string;               // First 30–60s — pattern interrupt + bold statement
+  problemStatement: string;   // The pain — vivid and specific
+  agitation: string;          // Make it worse — cost of staying stuck
+  coachStoryBridge: string;   // Coach journey + turning point + how they solved it
+  solutionReveal: string;     // Unique mechanism — why THIS approach works
+  programmeWalkthrough: string; // What they get — pillars, deliverables, timeline
+  socialProof: string;        // Client results and transformations (scripted)
+  offerPresentation: string;  // The investment, value stack, payment options
+  objectionHandling: string;  // Top 3 objections addressed in script form
+  callToAction: string;       // The close — specific action to take right now
+  closingScarcity: string;    // Final urgency — deadline, spots, FOMO
+}
+
 // ─── GeneratedFunnelAssets ───────────────────────────────────────────────────
 
 export interface GeneratedFunnelAssets {
@@ -237,6 +253,8 @@ export interface GeneratedFunnelAssets {
   applicationLandingPage?: ApplicationLandingPage;
   // Application funnel — AI-generated first-person coach bio (3 paragraphs from wizard story inputs)
   coachStory?: { part1: string; part2: string; part3: string };
+  // Application funnel — AI-generated VSL script (11 sections)
+  vslScript?: VslScript;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

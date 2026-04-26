@@ -9,6 +9,7 @@ export const businessBasicsSchema = z.object({
     required_error: "Please select a delivery mode",
   }),
   targetAudience: z.string().min(10, "Please describe your target audience (at least 10 characters)"),
+  coachCredentials: z.string().optional(), // certifications, media, method name — feeds credentialItems AI
 });
 
 // Step 2: Offer Basics
@@ -24,6 +25,11 @@ export const offerBasicsSchema = z.object({
   inclusions: z.string().min(10, "Please list what's included"),
   bonuses: z.string().optional(),
   videoUrl: z.string().optional(), // YouTube/Vimeo embed URL for hero-two-col-video templates
+  // Application funnel: investment details for value-stacking copy
+  investmentRange: z.string().optional(), // e.g. "£4,997 single pay or 3× £1,799"
+  roiAnchor: z.string().optional(),       // e.g. "one new client covers the full investment"
+  cohortStartDate: z.string().optional(), // e.g. "5 May 2025" — real urgency
+  applicationDeadline: z.string().optional(), // e.g. "30 April" — closes the window
 });
 
 // Step 3: Audience Pain Points
@@ -34,6 +40,7 @@ export const audiencePainSchema = z.object({
   objections: z.string().min(10, "Please describe common objections"),
   demographicDetails: z.string().optional(),
   // legacy field kept optional for backward compat
+  whatTheyTried: z.string().optional(), // what alternatives they've already tried — feeds market sophistication copy
 });
 
 // Step 4: Brand Voice
@@ -67,16 +74,18 @@ export const socialProofSchema = z.object({
   clientCount: z.string().optional(),   // e.g. "500+" — shown in community stats bar
   yearsCoaching: z.string().optional(), // e.g. "7" — shown in credentials strip
   // caseStudySnippets and resultsHighlights kept optional for backward compat
+  clientTransformations: z.string().optional(), // 2-3 structured before→after→time stories
 });
 
 // Application funnel only — inserted as step 4 when funnelType === "application"
 export const applicationDetailsSchema = z.object({
-  programPillars:     z.string().optional(), // 3-5 core pillars/phases — feeds benefitBlocks AI
-  uniqueApproach:     z.string().optional(), // what makes the method different
-  idealClientProfile: z.string().optional(), // who IS the perfect fit (qualifiers)
-  notForWho:          z.string().optional(), // who should NOT apply (disqualifiers)
-  applicationProcess: z.string().optional(), // what happens after applying
-  coachingCapacity:   z.string().optional(), // max client slots — scarcity signal
+  programPillars:          z.string().optional(), // 3-5 core pillars/phases — feeds benefitBlocks AI
+  uniqueApproach:          z.string().optional(), // what makes the method different
+  idealClientProfile:      z.string().optional(), // who IS the perfect fit (qualifiers)
+  notForWho:               z.string().optional(), // who should NOT apply (disqualifiers)
+  applicationProcess:      z.string().optional(), // what happens after applying
+  coachingCapacity:        z.string().optional(), // max client slots — scarcity signal
+  applicationFormQuestions: z.string().optional(), // 3-5 pre-screening questions for the form
 });
 
 // Application funnel only — coach story leading questions (AI writes the bio from these)

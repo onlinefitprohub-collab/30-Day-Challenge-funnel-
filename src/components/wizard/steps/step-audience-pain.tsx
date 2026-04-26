@@ -19,7 +19,8 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
     resolver: zodResolver(audiencePainSchema),
     defaultValues: {
       biggestStruggle: defaultValues.biggestStruggle ?? "",
-      objections: defaultValues.objections ?? "",
+      objections:      defaultValues.objections      ?? "",
+      whatTheyTried:   defaultValues.whatTheyTried   ?? "",
     },
   });
 
@@ -70,6 +71,26 @@ export function StepAudiencePain({ defaultValues, onNext, onBack }: StepProps) {
         {errors.objections && (
           <p className="text-sm text-red-500">{errors.objections.message}</p>
         )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="whatTheyTried">
+          {isApplication
+            ? "What have they already tried that didn't work?"
+            : "What have they already tried before coming to you?"}
+          {" "}<span className="text-gray-400">(optional)</span>
+        </Label>
+        <Textarea
+          id="whatTheyTried"
+          placeholder={isApplication
+            ? "e.g. Online courses they never finished, generic PTs who gave them a cookie-cutter plan, calorie tracking apps, slimming clubs, trying to figure it out from YouTube and Instagram. They're not lazy — they've just never had the right system and real accountability."
+            : "e.g. Slimming World, gym memberships they stopped using, YouTube workouts, meal plans from Instagram influencers, trying to go it alone. They know what to do in theory but can't stay consistent without support."}
+          rows={3}
+          {...register("whatTheyTried")}
+        />
+        <p className="text-xs text-gray-400">
+          This powers market-sophistication copy — "you've tried X and Y, here's why they didn't work, and what's different here."
+        </p>
       </div>
 
       <div className="flex justify-between pt-2">

@@ -30,11 +30,12 @@ export function StepBusinessBasics({
   } = useForm<BusinessBasics>({
     resolver: zodResolver(businessBasicsSchema),
     defaultValues: {
-      businessName: defaultValues.businessName ?? "",
-      coachName: defaultValues.coachName ?? "",
-      location: defaultValues.location ?? "",
-      deliveryMode: defaultValues.deliveryMode,
-      targetAudience: defaultValues.targetAudience ?? "",
+      businessName:     defaultValues.businessName     ?? "",
+      coachName:        defaultValues.coachName        ?? "",
+      location:         defaultValues.location         ?? "",
+      deliveryMode:     defaultValues.deliveryMode,
+      targetAudience:   defaultValues.targetAudience   ?? "",
+      coachCredentials: defaultValues.coachCredentials ?? "",
     },
   });
 
@@ -132,6 +133,21 @@ export function StepBusinessBasics({
         {errors.targetAudience && (
           <p className="text-sm text-red-500">{errors.targetAudience.message}</p>
         )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="coachCredentials">
+          Your credentials &amp; authority signals <span className="text-gray-400">(optional)</span>
+        </Label>
+        <Textarea
+          id="coachCredentials"
+          placeholder={`e.g.\n• Level 3 Personal Trainer + Precision Nutrition L2 certified\n• Featured in Women's Health, The Sun, and BBC Radio\n• Creator of the 5-Phase Protocol — used by 300+ clients\n• Former NHS dietitian turned performance coach`}
+          rows={4}
+          {...register("coachCredentials")}
+        />
+        <p className="text-xs text-gray-400">
+          Certifications, media appearances, named methods, notable results — the AI uses these for your authority section.
+        </p>
       </div>
 
       <div className="flex justify-end pt-2">

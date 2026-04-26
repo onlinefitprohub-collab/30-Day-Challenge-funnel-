@@ -7,7 +7,7 @@ import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
-  Dumbbell, MessageCircle, CalendarDays, Pen,
+  Dumbbell, MessageCircle, CalendarDays, Pen, Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -31,6 +31,7 @@ import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-p
 import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
 import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
+import { VslScriptSection, VslScriptPlaceholder }    from "./sections/vsl-script";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ const APPLICATION_TABS = [
   { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
   { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
   { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
+  { id: "vslScript",       label: "VSL Script",             icon: Video,                            group: "longform" },
   { id: "manyChatFlow",    label: "ManyChat Flow",          icon: MessageCircle,                    group: "longform" },
 ] as const;
 
@@ -317,6 +319,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     }),
     // Application-only extras
     ...(isApplication && {
+      vslScript: assets.vslScript
+        ? <VslScriptSection data={assets.vslScript} />
+        : <VslScriptPlaceholder />,
       manyChatFlow: liveLongFormAssets
         ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} generating />,

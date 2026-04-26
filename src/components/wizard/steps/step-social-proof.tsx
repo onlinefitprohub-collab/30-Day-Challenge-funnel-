@@ -25,10 +25,11 @@ export function StepSocialProof({
   } = useForm<SocialProof>({
     resolver: zodResolver(socialProofSchema),
     defaultValues: {
-      testimonials:      defaultValues.testimonials ?? "",
-      caseStudySnippets: defaultValues.caseStudySnippets ?? "",
-      resultsHighlights: defaultValues.resultsHighlights ?? "",
-      hasBeforeAfter:    defaultValues.hasBeforeAfter ?? false,
+      testimonials:          defaultValues.testimonials          ?? "",
+      caseStudySnippets:     defaultValues.caseStudySnippets     ?? "",
+      resultsHighlights:     defaultValues.resultsHighlights     ?? "",
+      hasBeforeAfter:        defaultValues.hasBeforeAfter        ?? false,
+      clientTransformations: defaultValues.clientTransformations ?? "",
     },
   });
 
@@ -68,6 +69,22 @@ export function StepSocialProof({
         />
         <p className="text-xs text-gray-400">
           Include quotes, stats, short client stories — whatever you have. Real results dramatically improve conversions.
+        </p>
+      </div>
+
+      {/* Structured transformations */}
+      <div className="space-y-1.5">
+        <Label htmlFor="clientTransformations">
+          2–3 specific client transformations <span className="text-gray-400">(optional — highest impact)</span>
+        </Label>
+        <Textarea
+          id="clientTransformations"
+          placeholder={`Give the AI structured before → after → timeframe stories:\n\nEmma, 42, nurse and mum of 3 — was 3 stone overweight, exhausted, had tried Slimming World twice. Lost 24lbs and ran her first 10k. 14 weeks.\n\nMark, 51, company director — hadn't exercised in 10 years, back pain, low energy. Dropped 18kg, off blood pressure meds, now trains 4x per week. 16 weeks.\n\nSarah, 35, teacher — postpartum, couldn't shift baby weight after 2 years of trying. Lost 16lbs, regained confidence, back in her pre-pregnancy clothes. 12 weeks.`}
+          rows={7}
+          {...register("clientTransformations")}
+        />
+        <p className="text-xs text-gray-400">
+          Specific stories with real numbers and timelines are far more powerful than generic quotes. The more detail you give, the stronger the AI-generated copy.
         </p>
       </div>
 

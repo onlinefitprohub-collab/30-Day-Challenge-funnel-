@@ -288,6 +288,26 @@ export const coachStoryResponseSchema = z.object({
   coachStory: coachStoryPartsSchema,
 });
 
+// ─── VSL Script schema ───────────────────────────────────────────────────────
+
+export const vslScriptSchema = z.object({
+  hook:                   z.string().min(1),
+  problemStatement:       z.string().min(1),
+  agitation:              z.string().min(1),
+  coachStoryBridge:       z.string().min(1),
+  solutionReveal:         z.string().min(1),
+  programmeWalkthrough:   z.string().min(1),
+  socialProof:            z.string().min(1),
+  offerPresentation:      z.string().min(1),
+  objectionHandling:      z.string().min(1),
+  callToAction:           z.string().min(1),
+  closingScarcity:        z.string().min(1),
+});
+
+export const vslScriptResponseSchema = z.object({
+  vslScript: vslScriptSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {

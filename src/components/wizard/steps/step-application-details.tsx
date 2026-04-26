@@ -18,12 +18,13 @@ export function StepApplicationDetails({ defaultValues, onNext, onBack }: StepPr
   } = useForm<ApplicationDetails>({
     resolver: zodResolver(applicationDetailsSchema),
     defaultValues: {
-      programPillars:     defaultValues.programPillars     ?? "",
-      uniqueApproach:     defaultValues.uniqueApproach     ?? "",
-      idealClientProfile: defaultValues.idealClientProfile ?? "",
-      notForWho:          defaultValues.notForWho          ?? "",
-      applicationProcess: defaultValues.applicationProcess ?? "",
-      coachingCapacity:   defaultValues.coachingCapacity   ?? "",
+      programPillars:           defaultValues.programPillars           ?? "",
+      uniqueApproach:           defaultValues.uniqueApproach           ?? "",
+      idealClientProfile:       defaultValues.idealClientProfile       ?? "",
+      notForWho:                defaultValues.notForWho                ?? "",
+      applicationProcess:       defaultValues.applicationProcess       ?? "",
+      coachingCapacity:         defaultValues.coachingCapacity         ?? "",
+      applicationFormQuestions: defaultValues.applicationFormQuestions ?? "",
     },
   });
 
@@ -138,6 +139,22 @@ export function StepApplicationDetails({ defaultValues, onNext, onBack }: StepPr
             <p className="text-sm text-red-500">{errors.coachingCapacity.message}</p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="applicationFormQuestions">
+          What questions do you ask applicants?{" "}
+          <span className="text-gray-400">(optional)</span>
+        </Label>
+        <Textarea
+          id="applicationFormQuestions"
+          placeholder={`e.g.\n1. What is your current weight and goal weight?\n2. Have you worked with a coach before? What happened?\n3. What's your biggest obstacle to getting in shape right now?\n4. What does your current training and nutrition look like?\n5. Why do you feel now is the right time to invest in yourself?`}
+          rows={5}
+          {...register("applicationFormQuestions")}
+        />
+        <p className="text-xs text-gray-400">
+          These pre-screen applicants and feed the AI-generated application form copy.
+        </p>
       </div>
 
       <div className="flex justify-between pt-2">
