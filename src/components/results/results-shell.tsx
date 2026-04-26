@@ -356,7 +356,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
               <p className="text-sm text-gray-500">
             {isApplication ? "Your application funnel" : "Your complete challenge funnel"}
           </p>
-              {outputs.templateVariant && (
+              {!isApplication && outputs.templateVariant && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 border border-indigo-200">
                   <LayoutTemplate className="h-3 w-3" />
                   {String(outputs.templateVariant).replace(/-/g, " ")}
