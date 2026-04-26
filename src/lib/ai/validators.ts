@@ -276,6 +276,18 @@ export const applicationLandingResponseSchema = z.object({
   applicationLandingPage: applicationLandingPageSchema,
 });
 
+// ─── Coach Story schema ──────────────────────────────────────────────────────
+
+export const coachStoryPartsSchema = z.object({
+  part1: z.string().min(1),
+  part2: z.string().min(1),
+  part3: z.string().min(1),
+});
+
+export const coachStoryResponseSchema = z.object({
+  coachStory: coachStoryPartsSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {

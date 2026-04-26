@@ -31,6 +31,7 @@ export function buildCoachContext(inputs: WizardInputs): string {
     clientCount, yearsCoaching,
     programPillars, uniqueApproach, idealClientProfile, notForWho,
     applicationProcess, coachingCapacity,
+    coachBeforeState, coachTurningPoint, coachPersonalResult, coachWhyCoach,
   } = inputs;
 
   const isFree = price.toLowerCase().includes("free");
@@ -111,6 +112,14 @@ export function buildCoachContext(inputs: WizardInputs): string {
     if (notForWho)          lines.push(`Who this is NOT for:\n${notForWho}`);
     if (applicationProcess) lines.push(`Application process: ${applicationProcess}`);
     if (coachingCapacity)   lines.push(`Coaching capacity (scarcity): ${coachingCapacity}`);
+  }
+
+  if (isApplication && (coachBeforeState || coachTurningPoint || coachPersonalResult || coachWhyCoach)) {
+    lines.push(``, `=== COACH PERSONAL STORY (for bio generation) ===`);
+    if (coachBeforeState)    lines.push(`Coach before state:\n${coachBeforeState}`);
+    if (coachTurningPoint)   lines.push(`Coach turning point:\n${coachTurningPoint}`);
+    if (coachPersonalResult) lines.push(`Coach personal result: ${coachPersonalResult}`);
+    if (coachWhyCoach)       lines.push(`Coach's mission/why:\n${coachWhyCoach}`);
   }
 
   return lines.join("\n");

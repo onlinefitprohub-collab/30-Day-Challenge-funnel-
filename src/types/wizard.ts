@@ -79,6 +79,14 @@ export const applicationDetailsSchema = z.object({
   coachingCapacity:   z.string().optional(), // max client slots — scarcity signal
 });
 
+// Application funnel only — coach story leading questions (AI writes the bio from these)
+export const coachStorySchema = z.object({
+  coachBeforeState:   z.string().optional(), // where the coach was before / their struggle
+  coachTurningPoint:  z.string().optional(), // the moment / discovery that changed everything
+  coachPersonalResult: z.string().optional(), // specific result they achieved for themselves
+  coachWhyCoach:      z.string().optional(), // why they do this work / their mission
+});
+
 // Combined wizard inputs — all steps merged
 export const wizardInputsSchema = z.object({
   funnelType: z.enum(["challenge", "application"]).default("challenge"),
@@ -89,6 +97,7 @@ export const wizardInputsSchema = z.object({
   ...trafficInputsSchema.shape,
   ...socialProofSchema.shape,
   ...applicationDetailsSchema.shape,
+  ...coachStorySchema.shape,
 });
 
 export type BusinessBasics    = z.infer<typeof businessBasicsSchema>;
@@ -98,6 +107,7 @@ export type BrandVoice        = z.infer<typeof brandVoiceSchema>;
 export type TrafficInputs     = z.infer<typeof trafficInputsSchema>;
 export type SocialProof       = z.infer<typeof socialProofSchema>;
 export type ApplicationDetails = z.infer<typeof applicationDetailsSchema>;
+export type CoachStoryInputs  = z.infer<typeof coachStorySchema>;
 export type WizardInputs      = z.infer<typeof wizardInputsSchema>;
 
 export const CHALLENGE_WIZARD_STEPS = [
@@ -114,11 +124,12 @@ export const APPLICATION_WIZARD_STEPS = [
   { id: 1, title: "Funnel Type",           description: "What are you building?" },
   { id: 2, title: "Business Basics",       description: "Tell us about your business" },
   { id: 3, title: "Your Programme",        description: "Define your offer and investment" },
-  { id: 4, title: "Application Details",   description: "Qualify leads and describe your process" },
-  { id: 5, title: "Your Ideal Client",     description: "Who are you trying to reach?" },
-  { id: 6, title: "Brand Voice",           description: "How do you want to sound?" },
-  { id: 7, title: "Traffic",              description: "Where will your leads come from?" },
-  { id: 8, title: "Social Proof",          description: "Results, testimonials, and wins" },
+  { id: 4, title: "Your Story",            description: "Let AI write your coach bio from your answers" },
+  { id: 5, title: "Programme Details",     description: "Qualify leads and describe your process" },
+  { id: 6, title: "Your Ideal Client",     description: "Who are you trying to reach?" },
+  { id: 7, title: "Brand Voice",           description: "How do you want to sound?" },
+  { id: 8, title: "Traffic",              description: "Where will your leads come from?" },
+  { id: 9, title: "Social Proof",          description: "Results, testimonials, and wins" },
 ] as const;
 
 // Backward-compatible alias

@@ -9,6 +9,7 @@ import { StepFunnelType } from "@/components/wizard/steps/step-funnel-type";
 import { StepBusinessBasics } from "@/components/wizard/steps/step-business-basics";
 import { StepOfferBasics } from "@/components/wizard/steps/step-offer-basics";
 import { StepApplicationDetails } from "@/components/wizard/steps/step-application-details";
+import { StepCoachStory } from "@/components/wizard/steps/step-coach-story";
 import { StepAudiencePain } from "@/components/wizard/steps/step-audience-pain";
 import { StepBrandVoice } from "@/components/wizard/steps/step-brand-voice";
 import { StepTrafficInputs } from "@/components/wizard/steps/step-traffic-inputs";
@@ -31,6 +32,7 @@ const APPLICATION_STEP_COMPONENTS = [
   StepFunnelType,
   StepBusinessBasics,
   StepOfferBasics,
+  StepCoachStory,
   StepApplicationDetails,
   StepAudiencePain,
   StepBrandVoice,
