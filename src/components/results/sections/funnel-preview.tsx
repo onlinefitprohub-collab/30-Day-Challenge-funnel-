@@ -54,6 +54,7 @@ interface Props {
   data: GeneratedFunnelAssets;
   projectId?: string;
   funnelType?: "challenge" | "application";
+  copywriterStyle?: string;
 }
 
 const CHALLENGE_PAGES = [
@@ -99,7 +100,8 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  MAIN EXPORT                                                                */
 /* ─────────────────────────────────────────────────────────────────────────── */
-export function FunnelPreviewSection({ data, projectId, funnelType = "challenge" }: Props) {
+export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", copywriterStyle }: Props) {
+  const copywriterName = copywriterStyle ? copywriterStyle.split(" — ")[0] : null;
   const isApplication = funnelType === "application";
   const PAGES = isApplication ? APPLICATION_PAGES : CHALLENGE_PAGES;
   const [activePage, setActivePage] = useState<PageId>(isApplication ? "salesletter" : "landing");
@@ -266,6 +268,11 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
         <p className="text-sm text-gray-500 mt-0.5">
           Switch pages to review the full funnel flow. Each tab renders the exact GHL element tree that will be injected.
         </p>
+        {copywriterName && (
+          <p className="text-xs text-orange-600 font-medium mt-1">
+            ✦ Copy written in the style of {copywriterName}
+          </p>
+        )}
       </div>
 
       {/* Page selector + Clone button */}
