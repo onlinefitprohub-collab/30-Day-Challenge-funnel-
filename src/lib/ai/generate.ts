@@ -28,12 +28,16 @@ import { buildOfferPagesPrompt } from "./prompts/offer-pages";
 import { buildSequencesPrompt } from "./prompts/sequences";
 import { buildAdsCampaignPrompt } from "./prompts/ads-campaign";
 import { buildApplicationLandingPrompt } from "./prompts/application-landing";
+import { buildCoachStoryPrompt } from "./prompts/coach-story";
+import { buildVslScriptPrompt } from "./prompts/vsl-script";
 import { pickRandomStyle } from "./copywriter-styles";
 import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
   adsCampaignResponseSchema,
   applicationLandingResponseSchema,
+  coachStoryResponseSchema,
+  vslScriptResponseSchema,
 } from "./validators";
 import { generateMockAssets, buildMockApplicationLandingPage } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
@@ -48,6 +52,8 @@ const TOKENS = {
   sequences:           4500,  // 7 SMS + 10 emails with subject + body (expanded lifecycle sequence)
   adsCampaign:         3200,  // ad copy, creative prompts, campaign naming (was 2400 — truncated)
   applicationLanding:  3200,  // 22-section registration page content
+  coachStory:          1000,  // 3 bio paragraphs (~300–400 words)
+  vslScript:           4000,  // 11-section VSL — full spoken-word script (~1500–2500 words)
 } as const;
 
 interface GroupResult<T> {
@@ -88,8 +94,24 @@ export async function generateFunnelAssets(
 
   const isApplication = inputs.funnelType === "application";
 
-  // Fire groups in parallel — 4 calls for application funnels, 3 for challenge funnels
-  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult] =
+  const coachStoryInputs = {
+    coachName:           inputs.coachName,
+    coachBeforeState:    inputs.coachBeforeState,
+    coachTurningPoint:   inputs.coachTurningPoint,
+    coachPersonalResult: inputs.coachPersonalResult,
+    coachWhyCoach:       inputs.coachWhyCoach,
+    targetAudience:      inputs.targetAudience,
+    mainGoal:            inputs.mainGoal,
+    challengeName:       inputs.challengeName,
+  };
+
+  const hasStoryInputs = !!(
+    inputs.coachBeforeState || inputs.coachTurningPoint ||
+    inputs.coachPersonalResult || inputs.coachWhyCoach
+  );
+
+  // Fire groups in parallel — up to 6 calls for application funnels, 3 for challenge funnels
+  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult, coachStoryResult, vslScriptResult] =
     await Promise.all([
       callCopyGroup(
         buildOfferPagesPrompt(context, style.promptDescription),
@@ -121,12 +143,32 @@ export async function generateFunnelAssets(
             MODEL_PRIMARY,
           )
         : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ applicationLandingPage: import("@/types/generation").ApplicationLandingPage }>),
+      isApplication && hasStoryInputs
+        ? callCopyGroup(
+            buildCoachStoryPrompt(context, style.promptDescription, coachStoryInputs),
+            coachStoryResponseSchema,
+            "coach-story",
+            TOKENS.coachStory,
+            MODEL_PRIMARY,
+          )
+        : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ coachStory: import("@/types/generation").GeneratedFunnelAssets["coachStory"] }>),
+      isApplication
+        ? callCopyGroup(
+            buildVslScriptPrompt(context, style.promptDescription),
+            vslScriptResponseSchema,
+            "vsl-script",
+            TOKENS.vslScript,
+            MODEL_PRIMARY,
+          )
+        : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ vslScript: import("@/types/generation").VslScript }>),
     ]);
 
   console.log("[design] Claude returned:", offerPagesResult.data?.design);
   console.log("[framework] Claude selected:", offerPagesResult.data?.copywritingFramework, offerPagesResult.data?.copywriterVoice);
   if (isApplication) {
     console.log("[application-landing] result:", appLandingResult.error ?? "ok");
+    console.log("[coach-story] result:", coachStoryResult.error ?? (coachStoryResult.data ? "ok" : "skipped"));
+    console.log("[vsl-script] result:", vslScriptResult.error ?? (vslScriptResult.data ? "ok" : "skipped"));
   }
 
   // Log any errors for observability
@@ -135,6 +177,8 @@ export async function generateFunnelAssets(
     sequencesResult.error,
     adsCampaignResult.error,
     isApplication ? appLandingResult.error : null,
+    isApplication ? coachStoryResult.error : null,
+    isApplication ? vslScriptResult.error : null,
   ].filter(Boolean);
   if (errors.length > 0) {
     console.warn(
@@ -150,6 +194,14 @@ export async function generateFunnelAssets(
 
   const applicationLandingPage = isApplication
     ? (appLandingResult.data?.applicationLandingPage ?? buildMockApplicationLandingPage(inputs))
+    : undefined;
+
+  const coachStory = isApplication
+    ? (coachStoryResult.data?.coachStory ?? undefined)
+    : undefined;
+
+  const vslScript = isApplication
+    ? (vslScriptResult.data?.vslScript ?? undefined)
     : undefined;
 
   return {
@@ -169,5 +221,7 @@ export async function generateFunnelAssets(
     design:                offerPages.design,
     sectionLayoutVariants: offerPages.sectionLayoutVariants,
     applicationLandingPage,
+    coachStory,
+    vslScript,
   };
 }

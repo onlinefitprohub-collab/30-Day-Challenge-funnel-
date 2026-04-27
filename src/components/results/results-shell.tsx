@@ -7,7 +7,7 @@ import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
-  Dumbbell, MessageCircle, CalendarDays,
+  Dumbbell, MessageCircle, CalendarDays, Pen, Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -31,6 +31,7 @@ import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-p
 import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
 import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
+import { VslScriptSection, VslScriptPlaceholder }    from "./sections/vsl-script";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ const APPLICATION_TABS = [
   { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
   { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
   { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
+  { id: "vslScript",       label: "VSL Script",             icon: Video,                            group: "longform" },
   { id: "manyChatFlow",    label: "ManyChat Flow",          icon: MessageCircle,                    group: "longform" },
 ] as const;
 
@@ -245,7 +247,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
-    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} />,
+    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} />,
     // Landing page: challenge → short-form copy | application → registration page summary card
@@ -317,6 +319,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     }),
     // Application-only extras
     ...(isApplication && {
+      vslScript: assets.vslScript
+        ? <VslScriptSection data={assets.vslScript} />
+        : <VslScriptPlaceholder />,
       manyChatFlow: liveLongFormAssets
         ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} generating />,
@@ -352,11 +357,17 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
           </Link>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               <p className="text-sm text-gray-500">
-            {isApplication ? "Your application funnel" : "Your complete challenge funnel"}
-          </p>
-              {outputs.templateVariant && (
+                {isApplication ? "Your application funnel" : "Your complete challenge funnel"}
+              </p>
+              {outputs.copywriterStyle && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-700 border border-orange-200">
+                  <Pen className="h-3 w-3" />
+                  Written in the style of {String(outputs.copywriterStyle).split(" — ")[0]}
+                </span>
+              )}
+              {!isApplication && outputs.templateVariant && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 border border-indigo-200">
                   <LayoutTemplate className="h-3 w-3" />
                   {String(outputs.templateVariant).replace(/-/g, " ")}

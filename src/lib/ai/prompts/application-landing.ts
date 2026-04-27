@@ -8,6 +8,8 @@
  * All copy must be in the chosen copywriter style.
  */
 
+import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-quality";
+
 export function buildApplicationLandingPrompt(
   context: string,
   styleDescription?: string,
@@ -26,7 +28,11 @@ Maintain this tone, structure, sentence rhythm, and personality throughout every
 
   return `${context}
 
-${styleBlock}=== YOUR TASK ===
+${styleBlock}${buildAudienceAnalysisBlock()}
+
+${buildCopyStandardsBlock()}
+
+=== YOUR TASK ===
 
 You are a world-class direct response copywriter specialising in high-ticket coaching and transformation programmes. You are writing copy for a 22-section application/registration landing page — the flagship page prospects land on before submitting an application to work with this coach.
 

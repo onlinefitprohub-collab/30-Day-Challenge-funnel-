@@ -9,6 +9,9 @@ export const businessBasicsSchema = z.object({
     required_error: "Please select a delivery mode",
   }),
   targetAudience: z.string().min(10, "Please describe your target audience (at least 10 characters)"),
+  audienceDemographic: z.string().optional(), // age range, gender lean, life stage — sharpens all copy
+  coachCredentials: z.string().optional(), // certifications, media, method name — feeds credentialItems AI
+  namedMethod: z.string().optional(), // "The 5-Phase Protocol", "The Identity Shift Method" — unique mechanism anchor
 });
 
 // Step 2: Offer Basics
@@ -24,6 +27,11 @@ export const offerBasicsSchema = z.object({
   inclusions: z.string().min(10, "Please list what's included"),
   bonuses: z.string().optional(),
   videoUrl: z.string().optional(), // YouTube/Vimeo embed URL for hero-two-col-video templates
+  // Application funnel: investment details for value-stacking copy
+  investmentRange: z.string().optional(), // e.g. "£4,997 single pay or 3× £1,799"
+  roiAnchor: z.string().optional(),       // e.g. "one new client covers the full investment"
+  cohortStartDate: z.string().optional(), // e.g. "5 May 2025" — real urgency
+  applicationDeadline: z.string().optional(), // e.g. "30 April" — closes the window
 });
 
 // Step 3: Audience Pain Points
@@ -34,6 +42,7 @@ export const audiencePainSchema = z.object({
   objections: z.string().min(10, "Please describe common objections"),
   demographicDetails: z.string().optional(),
   // legacy field kept optional for backward compat
+  whatTheyTried: z.string().optional(), // what alternatives they've already tried — feeds market sophistication copy
 });
 
 // Step 4: Brand Voice
@@ -64,19 +73,29 @@ export const socialProofSchema = z.object({
   caseStudySnippets: z.string().optional(),
   resultsHighlights: z.string().optional(),
   hasBeforeAfter: z.boolean().default(false),
-  clientCount: z.string().optional(),   // e.g. "500+" — shown in community stats bar
-  yearsCoaching: z.string().optional(), // e.g. "7" — shown in credentials strip
-  // caseStudySnippets and resultsHighlights kept optional for backward compat
+  clientCount: z.string().optional(),
+  yearsCoaching: z.string().optional(),
+  clientTransformations: z.string().optional(), // 2-3 structured before→after→time stories
+  bestClientResult: z.string().optional(),       // single most impressive outcome — headline anchor
 });
 
 // Application funnel only — inserted as step 4 when funnelType === "application"
 export const applicationDetailsSchema = z.object({
-  programPillars:     z.string().optional(), // 3-5 core pillars/phases — feeds benefitBlocks AI
-  uniqueApproach:     z.string().optional(), // what makes the method different
-  idealClientProfile: z.string().optional(), // who IS the perfect fit (qualifiers)
-  notForWho:          z.string().optional(), // who should NOT apply (disqualifiers)
-  applicationProcess: z.string().optional(), // what happens after applying
-  coachingCapacity:   z.string().optional(), // max client slots — scarcity signal
+  programPillars:          z.string().optional(), // 3-5 core pillars/phases — feeds benefitBlocks AI
+  uniqueApproach:          z.string().optional(), // what makes the method different
+  idealClientProfile:      z.string().optional(), // who IS the perfect fit (qualifiers)
+  notForWho:               z.string().optional(), // who should NOT apply (disqualifiers)
+  applicationProcess:      z.string().optional(), // what happens after applying
+  coachingCapacity:        z.string().optional(), // max client slots — scarcity signal
+  applicationFormQuestions: z.string().optional(), // 3-5 pre-screening questions for the form
+});
+
+// Application funnel only — coach story leading questions (AI writes the bio from these)
+export const coachStorySchema = z.object({
+  coachBeforeState:   z.string().optional(), // where the coach was before / their struggle
+  coachTurningPoint:  z.string().optional(), // the moment / discovery that changed everything
+  coachPersonalResult: z.string().optional(), // specific result they achieved for themselves
+  coachWhyCoach:      z.string().optional(), // why they do this work / their mission
 });
 
 // Combined wizard inputs — all steps merged
@@ -89,6 +108,7 @@ export const wizardInputsSchema = z.object({
   ...trafficInputsSchema.shape,
   ...socialProofSchema.shape,
   ...applicationDetailsSchema.shape,
+  ...coachStorySchema.shape,
 });
 
 export type BusinessBasics    = z.infer<typeof businessBasicsSchema>;
@@ -98,6 +118,7 @@ export type BrandVoice        = z.infer<typeof brandVoiceSchema>;
 export type TrafficInputs     = z.infer<typeof trafficInputsSchema>;
 export type SocialProof       = z.infer<typeof socialProofSchema>;
 export type ApplicationDetails = z.infer<typeof applicationDetailsSchema>;
+export type CoachStoryInputs  = z.infer<typeof coachStorySchema>;
 export type WizardInputs      = z.infer<typeof wizardInputsSchema>;
 
 export const CHALLENGE_WIZARD_STEPS = [
@@ -114,11 +135,12 @@ export const APPLICATION_WIZARD_STEPS = [
   { id: 1, title: "Funnel Type",           description: "What are you building?" },
   { id: 2, title: "Business Basics",       description: "Tell us about your business" },
   { id: 3, title: "Your Programme",        description: "Define your offer and investment" },
-  { id: 4, title: "Application Details",   description: "Qualify leads and describe your process" },
-  { id: 5, title: "Your Ideal Client",     description: "Who are you trying to reach?" },
-  { id: 6, title: "Brand Voice",           description: "How do you want to sound?" },
-  { id: 7, title: "Traffic",              description: "Where will your leads come from?" },
-  { id: 8, title: "Social Proof",          description: "Results, testimonials, and wins" },
+  { id: 4, title: "Your Story",            description: "Let AI write your coach bio from your answers" },
+  { id: 5, title: "Programme Details",     description: "Qualify leads and describe your process" },
+  { id: 6, title: "Your Ideal Client",     description: "Who are you trying to reach?" },
+  { id: 7, title: "Brand Voice",           description: "How do you want to sound?" },
+  { id: 8, title: "Traffic",              description: "Where will your leads come from?" },
+  { id: 9, title: "Social Proof",          description: "Results, testimonials, and wins" },
 ] as const;
 
 // Backward-compatible alias

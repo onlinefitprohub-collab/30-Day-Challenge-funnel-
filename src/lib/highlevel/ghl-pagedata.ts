@@ -3356,9 +3356,23 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
   const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
   setH("heading-3u8EPoD9Qou", `<strong>Who Is ${data.coachName ?? "Your Coach"}, And Why Should I Listen To Them?</strong>`);
-  setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-  setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
   setImg("image-HxJsjcn1-rj", photoUrl);
+
+  // Inject AI-generated coach story paragraphs if available, otherwise keep intro heading
+  const story = data.coachStory;
+  if (story?.part1) {
+    // Replace "Hi, my name is..." headings with the opening of the story
+    setH("heading-EpE-UucuzD_", story.part1);
+    setH("heading-xZ7OY1ZTCQB", story.part1);
+    // Fill the 3 story sub-sections with the 3 bio paragraphs
+    setH("sub-heading-FvfzFHkx-9U", story.part1);
+    setH("sub-heading-0vtmtqgq1Lg", story.part2 ?? story.part1);
+    setH("sub-heading-uegTH1yDDad", story.part3 ?? story.part2 ?? story.part1);
+  } else {
+    // Fallback: keep the personalised "Hi, my name is..." heading
+    setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+    setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+  }
 
   // Align 4 transformation cards in section 5 to top
   const transformRow = byId.get("row-LgRplJ7QXHv");
@@ -3369,7 +3383,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Reduce line spacing to single-line for all 3 coach bio text blocks
   for (const shId of ["sub-heading-FvfzFHkx-9U", "sub-heading-0vtmtqgq1Lg", "sub-heading-uegTH1yDDad"]) {
     const shEl = byId.get(shId);
-    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1", unit: "em" };
+    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1.4", unit: "em" };
   }
 
   // Add spacing below bullet list elements (sections 15, 17)
