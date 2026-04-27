@@ -3361,9 +3361,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Inject AI-generated coach story paragraphs if available, otherwise keep intro heading
   const story = data.coachStory;
   if (story?.part1) {
-    // Replace "Hi, my name is..." headings with the opening of the story
-    setH("heading-EpE-UucuzD_", story.part1);
-    setH("heading-xZ7OY1ZTCQB", story.part1);
+    // Keep the heading as a short 1-sentence intro; story paragraphs go in sub-headings only
+    setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+    setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
     // Fill the 3 story sub-sections with the 3 bio paragraphs
     setH("sub-heading-FvfzFHkx-9U", story.part1);
     setH("sub-heading-0vtmtqgq1Lg", story.part2 ?? story.part1);
