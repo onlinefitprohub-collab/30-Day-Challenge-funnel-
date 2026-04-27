@@ -7,6 +7,8 @@
  * Every word here either earns trust or loses it. No filler.
  */
 
+import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-quality";
+
 export function buildOfferPagesPrompt(context: string, styleDescription?: string): string {
   const styleBlock = styleDescription
     ? `=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
@@ -40,6 +42,8 @@ COPYWRITER VOICE (pick one that best matches the brand tone from context):
 
   return `${context}
 
+${buildAudienceAnalysisBlock()}
+
 === YOUR ROLE ===
 
 You are two things simultaneously:
@@ -48,7 +52,9 @@ You are two things simultaneously:
 
 Your job is to generate a complete, high-converting 30-day challenge funnel AND a precise design specification. Every word, every colour choice, every layout decision must serve one goal: convert the right prospect into a lead or buyer.
 
-${styleBlock}=== STEP 2: DESIGN SPECIFICATION ===
+${styleBlock}${buildCopyStandardsBlock()}
+
+=== STEP 2: DESIGN SPECIFICATION ===
 
 Choose a design that is visually compelling and on-brand for this specific coach, niche, and audience. Do not pick generic defaults — make deliberate choices based on the tone, audience, and niche from the context.
 

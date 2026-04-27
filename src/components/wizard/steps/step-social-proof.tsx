@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, Loader2, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export function StepSocialProof({
       resultsHighlights:     defaultValues.resultsHighlights     ?? "",
       hasBeforeAfter:        defaultValues.hasBeforeAfter        ?? false,
       clientTransformations: defaultValues.clientTransformations ?? "",
+      bestClientResult:      defaultValues.bestClientResult      ?? "",
     },
   });
 
@@ -85,6 +87,21 @@ export function StepSocialProof({
         />
         <p className="text-xs text-gray-400">
           Specific stories with real numbers and timelines are far more powerful than generic quotes. The more detail you give, the stronger the AI-generated copy.
+        </p>
+      </div>
+
+      {/* Best single result */}
+      <div className="space-y-1.5">
+        <Label htmlFor="bestClientResult">
+          What's the single best result any client has achieved? <span className="text-gray-400">(optional)</span>
+        </Label>
+        <Input
+          id="bestClientResult"
+          placeholder="e.g. Emma lost 24lbs and ran her first 10k in 14 weeks — after 3 failed diets"
+          {...register("bestClientResult")}
+        />
+        <p className="text-xs text-gray-400">
+          Your most impressive outlier result — becomes the headline anchor and proof ceiling for all copy.
         </p>
       </div>
 

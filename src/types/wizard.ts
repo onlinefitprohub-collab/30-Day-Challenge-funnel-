@@ -9,7 +9,9 @@ export const businessBasicsSchema = z.object({
     required_error: "Please select a delivery mode",
   }),
   targetAudience: z.string().min(10, "Please describe your target audience (at least 10 characters)"),
+  audienceDemographic: z.string().optional(), // age range, gender lean, life stage — sharpens all copy
   coachCredentials: z.string().optional(), // certifications, media, method name — feeds credentialItems AI
+  namedMethod: z.string().optional(), // "The 5-Phase Protocol", "The Identity Shift Method" — unique mechanism anchor
 });
 
 // Step 2: Offer Basics
@@ -71,10 +73,10 @@ export const socialProofSchema = z.object({
   caseStudySnippets: z.string().optional(),
   resultsHighlights: z.string().optional(),
   hasBeforeAfter: z.boolean().default(false),
-  clientCount: z.string().optional(),   // e.g. "500+" — shown in community stats bar
-  yearsCoaching: z.string().optional(), // e.g. "7" — shown in credentials strip
-  // caseStudySnippets and resultsHighlights kept optional for backward compat
+  clientCount: z.string().optional(),
+  yearsCoaching: z.string().optional(),
   clientTransformations: z.string().optional(), // 2-3 structured before→after→time stories
+  bestClientResult: z.string().optional(),       // single most impressive outcome — headline anchor
 });
 
 // Application funnel only — inserted as step 4 when funnelType === "application"

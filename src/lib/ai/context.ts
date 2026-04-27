@@ -21,14 +21,15 @@ const DELIVERY_LABEL: Record<string, string> = {
 export function buildCoachContext(inputs: WizardInputs): string {
   const {
     businessName, coachName, location, deliveryMode,
-    targetAudience, demographicDetails,
+    targetAudience, demographicDetails, audienceDemographic,
     challengeName, challengeType, mainGoal, duration, price, ctaType,
     inclusions, bonuses, videoUrl,
     biggestStruggle, desiredOutcome, objections, whatTheyTried,
     toneOfVoice, phrasesToInclude, phrasesToAvoid, coachPhotoUrl,
     trafficSources, utmNamingPreference, adBudgetRange,
     testimonials, caseStudySnippets, resultsHighlights, hasBeforeAfter,
-    clientCount, yearsCoaching, coachCredentials, clientTransformations,
+    clientCount, yearsCoaching, coachCredentials, clientTransformations, bestClientResult,
+    namedMethod,
     programPillars, uniqueApproach, idealClientProfile, notForWho,
     applicationProcess, coachingCapacity, applicationFormQuestions,
     investmentRange, roiAnchor, cohortStartDate, applicationDeadline,
@@ -48,6 +49,7 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `Coach name: ${coachName}`,
     `Location: ${location}`,
     `Delivery: ${DELIVERY_LABEL[deliveryMode] ?? deliveryMode}`,
+    ...(namedMethod ? [`Named system/method: ${namedMethod}`] : []),
     ``,
     isApplication ? `=== THE PROGRAMME OFFER ===` : `=== THE CHALLENGE OFFER ===`,
     ...(challengeName ? [`${isApplication ? "Program" : "Challenge"} name: ${challengeName}`] : []),
@@ -74,7 +76,8 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `=== TARGET AUDIENCE ===`,
     `Who they are: ${targetAudience}`,
   );
-  if (demographicDetails) lines.push(`Demographic detail: ${demographicDetails}`);
+  if (demographicDetails)    lines.push(`Demographic detail: ${demographicDetails}`);
+  if (audienceDemographic)   lines.push(`Audience demographic: ${audienceDemographic}`);
 
   lines.push(
     ``,
@@ -101,8 +104,9 @@ export function buildCoachContext(inputs: WizardInputs): string {
   if (adBudgetRange)         lines.push(`Budget range: ${adBudgetRange}`);
   if (utmNamingPreference)   lines.push(`UTM/campaign naming preference: ${utmNamingPreference}`);
 
-  if (testimonials || caseStudySnippets || resultsHighlights || clientTransformations) {
+  if (testimonials || caseStudySnippets || resultsHighlights || clientTransformations || bestClientResult) {
     lines.push(``, `=== SOCIAL PROOF ===`);
+    if (bestClientResult)      lines.push(`Best single client result (headline anchor): ${bestClientResult}`);
     if (clientTransformations) lines.push(`Specific client transformations (before → after → timeframe):\n${clientTransformations}`);
     if (testimonials)          lines.push(`Client testimonials:\n${testimonials}`);
     if (caseStudySnippets)     lines.push(`Case study/story:\n${caseStudySnippets}`);

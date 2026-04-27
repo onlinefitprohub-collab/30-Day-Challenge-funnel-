@@ -8,6 +8,8 @@
  * a fully scripted, spoken-word VSL the coach can record directly.
  */
 
+import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-quality";
+
 export function buildVslScriptPrompt(
   context: string,
   styleDescription?: string,
@@ -24,7 +26,11 @@ ${styleDescription}
 
   return `${context}
 
-${styleBlock}=== YOUR TASK ===
+${styleBlock}${buildAudienceAnalysisBlock()}
+
+${buildCopyStandardsBlock()}
+
+=== YOUR TASK ===
 
 You are an elite direct response copywriter specialising in high-ticket coaching VSLs (Video Sales Letters). Write a full, word-for-word VSL script for this application funnel — a 10–20 minute spoken video the coach records and places at the top of their registration page.
 
