@@ -87,6 +87,9 @@ A bold mid-page CTA heading. Creates urgency or scarcity. E.g. "Ready to Finally
 midCtaText:
 The CTA button text for the mid-page CTA. 4–7 words. E.g. "Secure Your Application Spot", "Apply Now — Limited Spaces"
 
+painPointHeading:
+A bold, visceral rhetorical question or statement that names the single biggest pain the ideal client is living right now. Placed as a section heading just after the coach bio, it bridges the coach's personal struggle into the reader's current situation. E.g. "You Know Exactly How Exhausting It Is To Keep Starting Over, Don't You?", "Nobody Wakes Up Wanting To Feel Invisible In Their Own Body." 10–18 words. Must be emotionally direct — no corporate language.
+
 dividerHeading:
 A bold section-break heading used to introduce the qualification section. E.g. "Is This Programme Right For You?", "Before You Apply — Read This Carefully". 5–10 words.
 
@@ -175,6 +178,7 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
     ],
     "midCtaHeading": "...",
     "midCtaText": "...",
+    "painPointHeading": "...",
     "dividerHeading": "...",
     "faqItems": [
       { "question": "...", "answer": "..." }

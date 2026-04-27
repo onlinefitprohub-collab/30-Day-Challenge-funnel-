@@ -3399,6 +3399,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
+  // Pain-point bridge heading (between coach bio and qualification section)
+  if (al.painPointHeading) setH("heading-yuy6jYEoC8b", `<strong>${al.painPointHeading}</strong>`);
+
   // Will This Work For You (section 6)
   setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
 
