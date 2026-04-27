@@ -3369,9 +3369,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     setH("sub-heading-0vtmtqgq1Lg", story.part2 ?? story.part1);
     setH("sub-heading-uegTH1yDDad", story.part3 ?? story.part2 ?? story.part1);
   } else {
-    // Fallback: keep the personalised "Hi, my name is..." heading
+    // Fallback: personalised headings + clear the 3 template story sub-headings so the
+    // original placeholder content (Tom's story) doesn't bleed through in the preview.
     setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
     setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+    setH("sub-heading-FvfzFHkx-9U", `<p>Complete the "Your Story" step in the wizard to generate your AI-written coach bio — or add your own story here in the GHL builder.</p>`);
+    setH("sub-heading-0vtmtqgq1Lg", `<p></p>`);
+    setH("sub-heading-uegTH1yDDad", `<p></p>`);
   }
 
   // Align 4 transformation cards in section 5 to top
