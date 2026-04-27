@@ -121,7 +121,7 @@ export default async function AdminPage() {
 
       <div>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
-          All projects
+          Projects by user
         </h2>
         <AdminProjectsTable
           projects={allProjects}
