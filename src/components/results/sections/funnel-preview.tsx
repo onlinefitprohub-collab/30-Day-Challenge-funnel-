@@ -92,7 +92,7 @@ function BrowserFrame({ url, children }: { url: string; children: React.ReactNod
           <span className="text-xs text-gray-500 truncate">{url}</span>
         </div>
       </div>
-      <div className="overflow-y-auto max-h-[640px] text-left bg-white">{children}</div>
+      <div className="overflow-hidden text-left bg-white">{children}</div>
     </div>
   );
 }

@@ -245,6 +245,25 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
       return `<ul style="list-style:none;padding:0;margin:0;color:${color};font-size:${fontSize};line-height:${lineHeight}">${items.map((item) => `<li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:16px"><span style="color:${iconColor};flex-shrink:0;margin-top:2px;font-size:14px">&#10003;</span><span>${esc(item.text ?? "")}</span></li>`).join("")}</ul>`;
     }
 
+    case "c-faq": {
+      const items = (
+        extra.faqList as { value?: Array<{ id: number; heading: string; text: string; active: boolean }> } | undefined
+      )?.value ?? [];
+      if (!items.length) return children;
+      const color = sv(s.color) ?? "var(--text-color,#1a1a2e)";
+      const faqs = items.map((item) => {
+        const qMatch = item.heading.match(/^<h[1-6][^>]*>([\s\S]*)<\/h[1-6]>$/i);
+        const q = qMatch?.[1] ?? item.heading;
+        const aMatch = item.text.match(/^<p[^>]*>([\s\S]*)<\/p>$/i);
+        const a = aMatch?.[1] ?? item.text;
+        return `<details${item.active ? " open" : ""} style="border-bottom:1px solid rgba(0,0,0,0.1);padding:4px 0;color:${color}">
+  <summary style="font-weight:600;font-size:15px;line-height:1.4;padding:14px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-family:var(--contentfont,'Poppins',sans-serif)">${q}<span style="font-size:11px;margin-left:12px;flex-shrink:0;opacity:0.6">▼</span></summary>
+  <p style="padding:0 0 14px;font-size:14px;line-height:1.6;opacity:0.85;margin:0;font-family:var(--contentfont,'Poppins',sans-serif)">${a}</p>
+</details>`;
+      }).join("\n");
+      return `<div style="width:100%">${faqs}</div>`;
+    }
+
     default:
       return children;
   }
