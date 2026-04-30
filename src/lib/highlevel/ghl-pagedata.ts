@@ -998,7 +998,7 @@ function makeVerticalDivider(b: Builder): string {
 }
 
 // ── Custom Code ───────────────────────────────────────────────────────────────
-// Schema verified from live GHL payload (forclaude/makeCustomCode-smoketest.ts).
+// Schema verified from live GHL payload capture.
 // styles and class MUST be empty — GHL ignores them on this element type.
 // All visual control comes from inline styles inside rawCustomCode HTML.
 
