@@ -308,6 +308,87 @@ export const vslScriptResponseSchema = z.object({
   vslScript: vslScriptSchema,
 });
 
+// ─── Content Calendar schema ─────────────────────────────────────────────────
+
+export const contentPostSchema = z.object({
+  day:     z.number().int().min(1).max(30),
+  theme:   z.string().min(1),
+  format:  z.string().min(1),
+  hook:    z.string().min(1),
+  caption: z.string().min(1),
+  cta:     z.string().min(1),
+});
+
+export const contentCalendarSchema = z.object({
+  strategy: z.string().min(1),
+  posts:    z.array(contentPostSchema).min(28).max(31),
+});
+
+export const contentCalendarResponseSchema = z.object({
+  contentCalendar: contentCalendarSchema,
+});
+
+// ─── Delivery Pack schema ─────────────────────────────────────────────────────
+
+const emailBlockSchema = z.object({ subject: z.string().min(1), body: z.string().min(1) });
+
+export const deliveryPackSchema = z.object({
+  welcomeEmail:     emailBlockSchema,
+  welcomeSms:       z.string().min(1),
+  weeklyEmails:     z.array(z.object({
+    week:    z.number().int().min(1).max(4),
+    theme:   z.string().min(1),
+    subject: z.string().min(1),
+    body:    z.string().min(1),
+  })).min(4).max(4),
+  dailySmsPrompts:  z.array(z.string().min(1)).min(28).max(31),
+  completionEmail:  emailBlockSchema,
+  completionSms:    z.string().min(1),
+});
+
+export const deliveryPackResponseSchema = z.object({
+  deliveryPack: deliveryPackSchema,
+});
+
+// ─── Testimonial Harvest Sequence schema ─────────────────────────────────────
+
+export const testimonialHarvestSchema = z.object({
+  day31Email:   emailBlockSchema,
+  day33Sms:     z.string().min(1),
+  day35Email:   emailBlockSchema,
+  day38Sms:     z.string().min(1),
+  referralEmail: emailBlockSchema,
+});
+
+export const testimonialHarvestResponseSchema = z.object({
+  testimonialHarvestSequence: testimonialHarvestSchema,
+});
+
+// ─── Pricing Guide schema ─────────────────────────────────────────────────────
+
+export const pricingGuideSchema = z.object({
+  recommendedPrice:    z.string().min(1),
+  priceRange:          z.object({ min: z.string().min(1), max: z.string().min(1) }),
+  rationale:           z.string().min(1),
+  valueStack:          z.array(z.object({
+    item:            z.string().min(1),
+    perceivedValue:  z.string().min(1),
+    description:     z.string().min(1),
+  })).min(4).max(8),
+  positioningStatement: z.string().min(1),
+  confidenceScript:     z.string().min(1),
+  objectionHandlers:    z.array(z.object({
+    objection: z.string().min(1),
+    response:  z.string().min(1),
+  })).min(3).max(5),
+  nextSteps:            z.array(z.string().min(1)).min(3).max(6),
+});
+
+export const coachingToolsResponseSchema = z.object({
+  pricingGuide:               pricingGuideSchema,
+  testimonialHarvestSequence: testimonialHarvestSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {
