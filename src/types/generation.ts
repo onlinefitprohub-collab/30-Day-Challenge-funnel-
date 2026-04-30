@@ -196,6 +196,7 @@ export interface ApplicationLandingPage {
   transformationGalleryHeading: string;
   clientWinsHeading: string;
   clientWins: Array<{ name: string; result: string }>;              // 4–8 items
+  clientStories: Array<{ intro: string; story: string }>;           // exactly 4
   finalCtaText: string;
   finalCtaSubtext: string;
 }

@@ -143,6 +143,11 @@ Between 4 and 8 short client win entries. Each has:
 - name: First name + initial only (e.g. "Emma R.", "James K.") — fictional but realistic
 - result: A specific, measurable result (e.g. "Down 22kg and off medication", "Ran first 5k after years of inactivity"). 5–12 words.
 
+clientStories:
+Exactly 4 longer-form client case studies for the "Meet..." testimonial sections. Each has:
+- intro: A compelling single sentence intro naming the client. Uses the "Meet [Name], [a brief situation]..." pattern. Must be specific to the target audience and reflect their situation before joining. E.g. "Meet Sarah, a 38-year-old mum of 2 who had tried every diet going and was ready to give up." 10–20 words.
+- story: A 2–3 paragraph first-person client narrative (80–140 words total). Write as if the client is speaking. Cover: (1) their situation and frustration before joining; (2) what changed and a specific result they achieved; (3) their recommendation. Must reference the coach or programme by name where it fits naturally. Be specific: include numbers (lbs lost, weeks, kg, dress sizes, etc.) and emotional detail. Do NOT name the client — the name is in the intro.
+
 finalCtaText:
 The final page CTA button text. More urgent/decisive than the mid-page CTA. E.g. "Submit Your Application Now", "Claim Your Spot — Apply Today". 4–7 words.
 
@@ -198,6 +203,12 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
     "clientWinsHeading": "...",
     "clientWins": [
       { "name": "...", "result": "..." }
+    ],
+    "clientStories": [
+      { "intro": "Meet [Name], ...", "story": "..." },
+      { "intro": "Meet [Name], ...", "story": "..." },
+      { "intro": "Meet [Name], ...", "story": "..." },
+      { "intro": "Meet [Name], ...", "story": "..." }
     ],
     "finalCtaText": "...",
     "finalCtaSubtext": "..."

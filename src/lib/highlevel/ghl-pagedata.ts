@@ -3140,6 +3140,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (el.extra as Record<string, unknown>).text = { value: `<${tag}>${text}</${tag}>` };
   }
 
+  function setPara(id: string, html: string): void {
+    const el = byId.get(id);
+    if (!el || !html) return;
+    (el.extra as Record<string, unknown>).text = { value: html };
+  }
+
   function setBtn(id: string, text: string): void {
     const el = byId.get(id);
     if (!el || !text) return;
@@ -3419,6 +3425,29 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   // Client wins (section 14)
   setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
+
+  // Client story testimonials ("Meet...") — 4 slots, each with heading + paragraph body
+  if (al.clientStories?.length) {
+    const storySlots: Array<{ hId: string; pId: string }> = [
+      { hId: "heading-wjLhJNffCfJ", pId: "paragraph-TTT5HB7ObG2" },
+      { hId: "heading-BR4dOzOIMUM", pId: "paragraph-kuB6vFalrL1" },
+      { hId: "heading-J9OmZLFKCjs", pId: "paragraph-alo12AY748y" },
+      { hId: "heading-apNyLjFRjAR", pId: "paragraph-5h9jUu0lVNq" },
+    ];
+    for (let i = 0; i < storySlots.length; i++) {
+      const story = al.clientStories[i];
+      if (!story) break;
+      const slot = storySlots[i];
+      setH(slot.hId, `<strong>${story.intro}</strong>`);
+      // Wrap multi-paragraph story as individual <p> blocks
+      const paraHtml = story.story
+        .split(/\n+/)
+        .filter(Boolean)
+        .map((p) => `<p>${p}</p>`)
+        .join("");
+      setPara(slot.pId, paraHtml);
+    }
+  }
 
   // What you get (section 15)
   setH("heading-XpcooI_gth7", al.whatYouGetHeading);
