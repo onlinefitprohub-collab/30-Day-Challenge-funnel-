@@ -62,8 +62,9 @@ function UserProjectsSection({
     try {
       const res = await fetch(`/api/admin/projects?id=${id}`, { method: "DELETE" });
       if (!res.ok) {
-        const d = await res.json() as { error?: string };
-        throw new Error(d.error ?? "Delete failed");
+        let errMsg = `Delete failed (HTTP ${res.status})`;
+        try { const d = await res.json() as { error?: string }; if (d.error) errMsg = d.error; } catch { /* ignore parse errors */ }
+        throw new Error(errMsg);
       }
       onDeleted(id);
       setConfirmId(null);

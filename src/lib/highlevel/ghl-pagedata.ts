@@ -998,7 +998,7 @@ function makeVerticalDivider(b: Builder): string {
 }
 
 // ── Custom Code ───────────────────────────────────────────────────────────────
-// Schema verified from live GHL payload (forclaude/makeCustomCode-smoketest.ts).
+// Schema verified from live GHL payload capture.
 // styles and class MUST be empty — GHL ignores them on this element type.
 // All visual control comes from inline styles inside rawCustomCode HTML.
 
@@ -3140,6 +3140,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (el.extra as Record<string, unknown>).text = { value: `<${tag}>${text}</${tag}>` };
   }
 
+  function setPara(id: string, html: string): void {
+    const el = byId.get(id);
+    if (!el || !html) return;
+    (el.extra as Record<string, unknown>).text = { value: html };
+  }
+
   function setBtn(id: string, text: string): void {
     const el = byId.get(id);
     if (!el || !text) return;
@@ -3361,9 +3367,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Inject AI-generated coach story paragraphs if available, otherwise keep intro heading
   const story = data.coachStory;
   if (story?.part1) {
-    // Replace "Hi, my name is..." headings with the opening of the story
-    setH("heading-EpE-UucuzD_", story.part1);
-    setH("heading-xZ7OY1ZTCQB", story.part1);
+    // Keep the heading as a short 1-sentence intro; story paragraphs go in sub-headings only
+    setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+    setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
     // Fill the 3 story sub-sections with the 3 bio paragraphs
     setH("sub-heading-FvfzFHkx-9U", story.part1);
     setH("sub-heading-0vtmtqgq1Lg", story.part2 ?? story.part1);
@@ -3399,6 +3405,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
+  // Pain-point bridge heading (between coach bio and qualification section)
+  if (al.painPointHeading) setH("heading-yuy6jYEoC8b", `<strong>${al.painPointHeading}</strong>`);
+
   // Will This Work For You (section 6)
   setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
 
@@ -3416,6 +3425,29 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   // Client wins (section 14)
   setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
+
+  // Client story testimonials ("Meet...") — 4 slots, each with heading + paragraph body
+  if (al.clientStories?.length) {
+    const storySlots: Array<{ hId: string; pId: string }> = [
+      { hId: "heading-wjLhJNffCfJ", pId: "paragraph-TTT5HB7ObG2" },
+      { hId: "heading-BR4dOzOIMUM", pId: "paragraph-kuB6vFalrL1" },
+      { hId: "heading-J9OmZLFKCjs", pId: "paragraph-alo12AY748y" },
+      { hId: "heading-apNyLjFRjAR", pId: "paragraph-5h9jUu0lVNq" },
+    ];
+    for (let i = 0; i < storySlots.length; i++) {
+      const story = al.clientStories[i];
+      if (!story) break;
+      const slot = storySlots[i];
+      setH(slot.hId, `<strong>${story.intro}</strong>`);
+      // Wrap multi-paragraph story as individual <p> blocks
+      const paraHtml = story.story
+        .split(/\n+/)
+        .filter(Boolean)
+        .map((p) => `<p>${p}</p>`)
+        .join("");
+      setPara(slot.pId, paraHtml);
+    }
+  }
 
   // What you get (section 15)
   setH("heading-XpcooI_gth7", al.whatYouGetHeading);

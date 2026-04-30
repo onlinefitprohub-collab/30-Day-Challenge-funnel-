@@ -87,6 +87,9 @@ A bold mid-page CTA heading. Creates urgency or scarcity. E.g. "Ready to Finally
 midCtaText:
 The CTA button text for the mid-page CTA. 4–7 words. E.g. "Secure Your Application Spot", "Apply Now — Limited Spaces"
 
+painPointHeading:
+A bold, visceral rhetorical question or statement that names the single biggest pain the ideal client is living right now. Placed as a section heading just after the coach bio, it bridges the coach's personal struggle into the reader's current situation. E.g. "You Know Exactly How Exhausting It Is To Keep Starting Over, Don't You?", "Nobody Wakes Up Wanting To Feel Invisible In Their Own Body." 10–18 words. Must be emotionally direct — no corporate language.
+
 dividerHeading:
 A bold section-break heading used to introduce the qualification section. E.g. "Is This Programme Right For You?", "Before You Apply — Read This Carefully". 5–10 words.
 
@@ -140,6 +143,11 @@ Between 4 and 8 short client win entries. Each has:
 - name: First name + initial only (e.g. "Emma R.", "James K.") — fictional but realistic
 - result: A specific, measurable result (e.g. "Down 22kg and off medication", "Ran first 5k after years of inactivity"). 5–12 words.
 
+clientStories:
+Exactly 4 longer-form client case studies for the "Meet..." testimonial sections. Each has:
+- intro: A compelling single sentence intro naming the client. Uses the "Meet [Name], [a brief situation]..." pattern. Must be specific to the target audience and reflect their situation before joining. E.g. "Meet Sarah, a 38-year-old mum of 2 who had tried every diet going and was ready to give up." 10–20 words.
+- story: A 2–3 paragraph first-person client narrative (80–140 words total). Write as if the client is speaking. Cover: (1) their situation and frustration before joining; (2) what changed and a specific result they achieved; (3) their recommendation. Must reference the coach or programme by name where it fits naturally. Be specific: include numbers (lbs lost, weeks, kg, dress sizes, etc.) and emotional detail. Do NOT name the client — the name is in the intro.
+
 finalCtaText:
 The final page CTA button text. More urgent/decisive than the mid-page CTA. E.g. "Submit Your Application Now", "Claim Your Spot — Apply Today". 4–7 words.
 
@@ -175,6 +183,7 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
     ],
     "midCtaHeading": "...",
     "midCtaText": "...",
+    "painPointHeading": "...",
     "dividerHeading": "...",
     "faqItems": [
       { "question": "...", "answer": "..." }
@@ -194,6 +203,12 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
     "clientWinsHeading": "...",
     "clientWins": [
       { "name": "...", "result": "..." }
+    ],
+    "clientStories": [
+      { "intro": "Meet [Name], ...", "story": "..." },
+      { "intro": "Meet [Name], ...", "story": "..." },
+      { "intro": "Meet [Name], ...", "story": "..." },
+      { "intro": "Meet [Name], ...", "story": "..." }
     ],
     "finalCtaText": "...",
     "finalCtaSubtext": "..."

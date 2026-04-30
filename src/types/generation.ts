@@ -183,6 +183,7 @@ export interface ApplicationLandingPage {
   benefitBlocks: Array<{ heading: string; body: string }>;          // exactly 5
   midCtaHeading: string;
   midCtaText: string;
+  painPointHeading?: string;
   dividerHeading: string;
   faqItems: Array<{ question: string; answer: string }>;            // 4–8 items
   galleryHeading: string;
@@ -195,6 +196,7 @@ export interface ApplicationLandingPage {
   transformationGalleryHeading: string;
   clientWinsHeading: string;
   clientWins: Array<{ name: string; result: string }>;              // 4–8 items
+  clientStories: Array<{ intro: string; story: string }>;           // exactly 4
   finalCtaText: string;
   finalCtaSubtext: string;
 }
