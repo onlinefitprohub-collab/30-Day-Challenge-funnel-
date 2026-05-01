@@ -389,6 +389,40 @@ export const coachingToolsResponseSchema = z.object({
   testimonialHarvestSequence: testimonialHarvestSchema,
 });
 
+// ─── Discovery Call Script schema ────────────────────────────────────────────
+
+const discoveryCallPhaseSchema = z.object({
+  title:         z.string().min(1),
+  duration:      z.string().min(1),
+  script:        z.string().min(1),
+  coachingNotes: z.string().min(1),
+});
+
+const discoveryCallObjectionSchema = z.object({
+  objection: z.string().min(1),
+  response:  z.string().min(1),
+});
+
+export const discoveryCallScriptSchema = z.object({
+  callOverview:       z.string().min(1),
+  prepChecklist:      z.array(z.string().min(1)).min(5),
+  openingRapport:     discoveryCallPhaseSchema,
+  callFrameSetting:   discoveryCallPhaseSchema,
+  painDiscovery:      discoveryCallPhaseSchema,
+  reflectionMirroring: discoveryCallPhaseSchema,
+  futurePacing:       discoveryCallPhaseSchema,
+  offerPresentation:  discoveryCallPhaseSchema,
+  priceReveal:        discoveryCallPhaseSchema,
+  closeAndEnroll:     discoveryCallPhaseSchema,
+  objectionScripts:   z.array(discoveryCallObjectionSchema).min(4),
+  postCallEmail:      z.object({ subject: z.string().min(1), body: z.string().min(1) }),
+  callClosingScript:  z.string().min(1),
+});
+
+export const discoveryCallScriptResponseSchema = z.object({
+  discoveryCallScript: discoveryCallScriptSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {
