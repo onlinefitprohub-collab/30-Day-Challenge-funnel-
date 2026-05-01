@@ -8,11 +8,12 @@ import {
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
+  CalendarRange, Package, Star, BadgeDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide } from "@/types/generation";
 import type { LongFormSalesAssets } from "@/types/longform";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
@@ -32,6 +33,10 @@ import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-let
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
 import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
 import { VslScriptSection, VslScriptPlaceholder }    from "./sections/vsl-script";
+import { ContentCalendarSection }    from "./sections/content-calendar";
+import { DeliveryPackSection }       from "./sections/delivery-pack";
+import { TestimonialHarvestSection } from "./sections/testimonial-harvest";
+import { PricingGuideSection }       from "./sections/pricing-guide";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -50,8 +55,12 @@ const CHALLENGE_TABS = [
   { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
   { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
   { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
-  { id: "workoutPlan",     label: "Workout Plan",           icon: Dumbbell,                         group: "programme" },
-  { id: "salesLetter",     label: "Sales Letter",           icon: FileText,                         group: "longform" },
+  { id: "workoutPlan",          label: "Workout Plan",       icon: Dumbbell,          group: "programme" },
+  { id: "salesLetter",          label: "Sales Letter",       icon: FileText,          group: "longform" },
+  { id: "contentCalendar",      label: "Content Calendar",   icon: CalendarRange,     group: "coaching" },
+  { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching" },
+  { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
+  { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
 ] as const;
 
 const APPLICATION_TABS = [
@@ -69,8 +78,12 @@ const APPLICATION_TABS = [
   { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
   { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
   { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
-  { id: "vslScript",       label: "VSL Script",             icon: Video,                            group: "longform" },
-  { id: "manyChatFlow",    label: "ManyChat Flow",          icon: MessageCircle,                    group: "longform" },
+  { id: "vslScript",            label: "VSL Script",         icon: Video,             group: "longform" },
+  { id: "manyChatFlow",         label: "ManyChat Flow",      icon: MessageCircle,     group: "longform" },
+  { id: "contentCalendar",      label: "Content Calendar",   icon: CalendarRange,     group: "coaching" },
+  { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching" },
+  { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
+  { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
 ] as const;
 
 // Union of all possible tab IDs across both funnel types
@@ -326,6 +339,19 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
         ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} generating />,
     }),
+    // Coaching tools — all funnel types
+    contentCalendar:    assets.contentCalendar
+      ? <ContentCalendarSection data={assets.contentCalendar as ContentCalendar} />
+      : null,
+    deliveryPack:       assets.deliveryPack
+      ? <DeliveryPackSection data={assets.deliveryPack as DeliveryPack} />
+      : null,
+    testimonialHarvest: assets.testimonialHarvestSequence
+      ? <TestimonialHarvestSection data={assets.testimonialHarvestSequence as TestimonialHarvestSequence} />
+      : null,
+    pricingGuide:       assets.pricingGuide
+      ? <PricingGuideSection data={assets.pricingGuide as PricingGuide} />
+      : null,
   };
 
   return (

@@ -217,6 +217,74 @@ export interface VslScript {
   closingScarcity: string;    // Final urgency — deadline, spots, FOMO
 }
 
+// ─── Content Calendar ────────────────────────────────────────────────────────
+
+export interface ContentPost {
+  day: number;
+  theme: string;
+  format: string;        // e.g. "Talking head reel", "Carousel", "Static image"
+  hook: string;          // Opening line / scroll-stopper
+  caption: string;       // Full post caption
+  cta: string;           // Call to action line
+}
+
+export interface ContentCalendar {
+  strategy: string;      // 2-3 sentence overview of the 30-day strategy
+  posts: ContentPost[];  // exactly 30
+}
+
+// ─── Challenge Delivery Pack ──────────────────────────────────────────────────
+
+export interface DeliveryWeeklyEmail {
+  week: number;
+  theme: string;
+  subject: string;
+  body: string;
+}
+
+export interface DeliveryPack {
+  welcomeEmail: { subject: string; body: string };
+  welcomeSms: string;
+  weeklyEmails: DeliveryWeeklyEmail[];  // 4 items
+  dailySmsPrompts: string[];            // 30 items — brief daily motivation/check-in
+  completionEmail: { subject: string; body: string };
+  completionSms: string;
+}
+
+// ─── Testimonial Harvest Sequence ────────────────────────────────────────────
+
+export interface TestimonialHarvestSequence {
+  day31Email: { subject: string; body: string };
+  day33Sms: string;
+  day35Email: { subject: string; body: string };
+  day38Sms: string;
+  referralEmail: { subject: string; body: string };
+}
+
+// ─── Pricing & Offer Guide ───────────────────────────────────────────────────
+
+export interface PricingValueItem {
+  item: string;
+  perceivedValue: string;
+  description: string;
+}
+
+export interface PricingObjectionHandler {
+  objection: string;
+  response: string;
+}
+
+export interface PricingGuide {
+  recommendedPrice: string;
+  priceRange: { min: string; max: string };
+  rationale: string;
+  valueStack: PricingValueItem[];
+  positioningStatement: string;
+  confidenceScript: string;
+  objectionHandlers: PricingObjectionHandler[];
+  nextSteps: string[];
+}
+
 // ─── GeneratedFunnelAssets ───────────────────────────────────────────────────
 
 export interface GeneratedFunnelAssets {
@@ -257,6 +325,11 @@ export interface GeneratedFunnelAssets {
   coachStory?: { part1: string; part2: string; part3: string };
   // Application funnel — AI-generated VSL script (11 sections)
   vslScript?: VslScript;
+  // Coaching tools — generated for all funnel types
+  contentCalendar?: ContentCalendar;
+  deliveryPack?: DeliveryPack;
+  testimonialHarvestSequence?: TestimonialHarvestSequence;
+  pricingGuide?: PricingGuide;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

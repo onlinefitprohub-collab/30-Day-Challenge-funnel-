@@ -1,5 +1,8 @@
 import type { WizardInputs } from "@/types/wizard";
-import type { GeneratedFunnelAssets, ApplicationLandingPage } from "@/types/generation";
+import type {
+  GeneratedFunnelAssets, ApplicationLandingPage,
+  ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide,
+} from "@/types/generation";
 
 /**
  * Mock generation — uses real wizard inputs to produce personalised placeholder output.
@@ -412,5 +415,134 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
 
     finalCtaText: "Submit Your Application Now",
     finalCtaSubtext: `No payment today. A member of the ${businessName} team will review your application and reach out within 24 hours to discuss whether this programme is the right fit for you.`,
+  };
+}
+
+// ─── Mock coaching tools ─────────────────────────────────────────────────────
+
+export function buildMockContentCalendar(inputs: WizardInputs): ContentCalendar {
+  const { coachName, mainGoal, targetAudience, challengeName } = inputs;
+  const goal = mainGoal ?? "achieve their goals";
+  const audience = targetAudience ?? "your ideal clients";
+
+  const themes = [
+    "Pain call-out", "Authority intro", "Quick win tip", "Client result",
+    "Myth bust", "Day-in-life", "Value list", "Social proof",
+    "Behind the scenes", "Pain agitation", "Belief shift", "Transformation story",
+    "Objection handle", "FAQ answer", "Process reveal", "Community moment",
+    "Identity statement", "Mindset tip", "Progress check-in", "Success habit",
+    "Urgency builder", "Offer reveal", "Testimonial spotlight", "Live Q&A tease",
+    "Challenge preview", "Results gallery", "Coach story", "Final call-out",
+    "Countdown", "Enrolment CTA",
+  ];
+
+  const formats = [
+    "Talking head reel", "Text-on-screen reel", "Carousel post", "Talking head reel",
+    "Before/after static", "Day-in-the-life reel", "Value list reel", "Carousel post",
+    "Behind the scenes reel", "Talking head reel", "Text-on-screen reel", "Carousel post",
+    "Talking head reel", "Text-on-screen reel", "Value list reel", "Talking head reel",
+    "Carousel post", "Talking head reel", "Text-on-screen reel", "Value list reel",
+    "Talking head reel", "Carousel post", "Before/after static", "Talking head reel",
+    "Text-on-screen reel", "Carousel post", "Talking head reel", "Text-on-screen reel",
+    "Value list reel", "Talking head reel",
+  ];
+
+  return {
+    strategy: `A 30-day content arc that moves ${audience} from problem-aware to ready-to-join. Weeks 1–2 build authority and trust through education and empathy. Weeks 3–4 layer in social proof, objection handling, and a direct enrolment push for ${challengeName ?? "the challenge"}.`,
+    posts: Array.from({ length: 30 }, (_, i) => ({
+      day:     i + 1,
+      theme:   themes[i],
+      format:  formats[i],
+      hook:    `Day ${i + 1}: ${i < 7 ? `Here's why ${audience} are struggling to ${goal}...` : i < 14 ? `The #1 mistake people make when trying to ${goal}` : i < 21 ? `What happened when my client decided to finally ${goal}` : `${i < 28 ? "This is your sign to stop waiting" : "Doors close soon — here's everything you need to know"}`}`,
+      caption: `[Day ${i + 1} — ${themes[i]}]\n\nThis is placeholder content for your 30-day calendar. Your full AI-generated calendar will include a unique, audience-specific caption for every single day — written in your voice by ${coachName ?? "your coach persona"}.\n\nEach post will speak directly to ${audience} and move them closer to joining.\n\n${i >= 21 ? `👉 ${challengeName ?? "The challenge"} is open now.` : "Save this for later! 🔖"}`,
+      cta:     i >= 21 ? `Link in bio → join ${challengeName ?? "the challenge"} now` : `Drop a 🔥 if this resonates`,
+    })),
+  };
+}
+
+export function buildMockDeliveryPack(inputs: WizardInputs): DeliveryPack {
+  const { coachName, businessName, challengeName, mainGoal } = inputs;
+  const name = challengeName ?? "the challenge";
+  const goal = mainGoal ?? "your goal";
+
+  return {
+    welcomeEmail: {
+      subject: `You're in! Here's everything you need to know 🎉`,
+      body:    `Welcome to ${name}!\n\nI'm ${coachName ?? "your coach"} and I am BEYOND excited to have you here.\n\nHere's what happens next:\n✅ Check your inbox for your welcome pack\n✅ Join the private community group (link below)\n✅ Block out 20–30 minutes each day for the challenge\n\nYour only job for today is to show up. That's it. We'll handle the rest together.\n\nLet's do this,\n${coachName ?? "Your Coach"}\n${businessName ?? ""}`,
+    },
+    welcomeSms:   `You're officially in! 🎉 Welcome to ${name}. Check your email for everything you need to get started. — ${coachName ?? "Your Coach"}`,
+    weeklyEmails: [
+      { week: 1, theme: "Foundation & momentum", subject: `Week 1: Let's build your foundation 💪`, body: `Hey!\n\nWelcome to Week 1 of ${name}.\n\nThis week is all about building the foundation. Don't try to be perfect — just be consistent. One day at a time.\n\nThis week's focus: ${goal}. Start small. Build momentum.\n\nQuestion for you: What's the ONE thing you're committed to doing every single day this week?\n\nReply and let me know — I read every message.\n\n${coachName ?? "Your Coach"}` },
+      { week: 2, theme: "The messy middle",       subject: `Week 2: It's supposed to feel hard right now`, body: `Hey!\n\nWeek 2 is where most people quit. The initial excitement has worn off and the real work begins.\n\nBut here's the truth: the discomfort you feel right now? That's growth.\n\nHere's your midweek reality check: progress isn't always visible yet. But it IS happening. Trust the process.\n\nAsk yourself: am I showing up even when I don't feel like it? THAT is the transformation.\n\n${coachName ?? "Your Coach"}` },
+      { week: 3, theme: "Belief and identity",    subject: `Week 3: You're becoming a different person`, body: `Hey!\n\nWe're 3 weeks in. Take a moment to notice how far you've come.\n\nThis week I want you to shift how you think about yourself. You're not someone trying to ${goal}. You ARE someone who ${goal.replace(/^to /, "")}s.\n\nIdentity drives behaviour. Start owning who you're becoming.\n\nThis week: celebrate every win, no matter how small. You're building evidence that you CAN do this.\n\n${coachName ?? "Your Coach"}` },
+      { week: 4, theme: "Final push",              subject: `Week 4: The home stretch — finish strong 🏁`, body: `Hey!\n\nThis is it. The final week of ${name}.\n\nEverything you've built over the last 3 weeks has been leading to this. Don't slow down now.\n\nFinish strong. Not because you have to — but because future-you will thank present-you for not quitting at the final hurdle.\n\nAnd when you cross that finish line? I want to hear ALL about it. Reply to this email with your biggest win.\n\nProud of you,\n${coachName ?? "Your Coach"}` },
+    ],
+    dailySmsPrompts: Array.from({ length: 30 }, (_, i) => {
+      const prompts = [
+        `Day 1: Today is day ONE. The hardest step is starting — you just did it. Let's go! 💪`,
+        `Day 2: Two days in. How are you feeling? Reply with one word. We're in this together.`,
+        `Day 3: 3 days strong. You're already ahead of the person who quit on day 1. Keep going.`,
+        `Day 4: Halfway through week 1! Small daily actions = big results. Stay consistent today.`,
+        `Day 5: Day 5 check-in! What's your energy like today? Whatever your answer — show up anyway.`,
+        `Day 6: Almost at the end of week 1. One more day. You've got this — don't stop now!`,
+        `Day 7: ONE WEEK DONE. That's 7 days of showing up. Celebrate that. You earned it. 🎉`,
+      ];
+      const cycled = prompts[i % 7];
+      const dayNum = i + 1;
+      if (dayNum === 15) return `Day 15: Halfway through! You're stronger than you were 2 weeks ago. Feel that. Keep going.`;
+      if (dayNum === 30) return `Day 30: THIS IS IT. Final day. Go give it everything you've got. So proud of you. 🏆`;
+      return cycled.replace(/^Day \d+:/, `Day ${dayNum}:`);
+    }),
+    completionEmail: {
+      subject: `You did it. 30 days. I'm so proud of you 🏆`,
+      body:    `I want to take a moment to say something important:\n\nYOU. DID. IT.\n\n30 days of showing up. 30 days of choosing yourself. 30 days of doing the work even when it was hard.\n\nThat's not nothing. That's everything.\n\nI'd love to hear about your journey. Reply to this email and tell me:\n- What was your biggest win?\n- What surprised you most?\n- How do you feel compared to Day 1?\n\nAnd if you're ready to take this further — I want to talk. Reply "READY" and I'll share what's next.\n\nSo proud of you,\n${coachName ?? "Your Coach"}\n${businessName ?? ""}`,
+    },
+    completionSms: `DAY 30 DONE! 🏆 You should be so proud. Reply "WIN" and tell me your biggest result. — ${coachName ?? "Your Coach"}`,
+  };
+}
+
+export function buildMockTestimonialHarvest(inputs: WizardInputs): TestimonialHarvestSequence {
+  const { coachName, businessName, challengeName } = inputs;
+  const name = challengeName ?? "the challenge";
+  return {
+    day31Email:   { subject: `How did it go? I'd love to hear your results 🎉`, body: `Hey!\n\nCongratulations again on completing ${name}!\n\nI'd love to hear how it went for you. Could you take 2 minutes to share:\n\n1. What results did you achieve? (Any numbers are great — weight, energy, fitness level, mindset)\n2. What was your biggest transformation — physical, mental, or both?\n3. How do you feel now vs. Day 1?\n\nYour story genuinely helps other people decide whether this is right for them — and it means the world to me personally.\n\nJust reply directly to this email. Can't wait to read it.\n\n${coachName ?? "Your Coach"}, ${businessName ?? ""}` },
+    day33Sms:     `Hey! Did you catch my email? I'd love to hear your ${name} results — even just a sentence. It means a lot! 🙏`,
+    day35Email:   { subject: `Could I share your story? (Quick ask)`, body: `Hey!\n\nI hope you're still feeling the benefits from ${name}.\n\nI have a quick favour to ask: would you be willing to share a short written testimonial and, if you're comfortable, a before/after photo?\n\nYour story could be exactly what someone else needs to hear to take the leap.\n\nAll you need to do is:\n✅ Write 3–5 sentences about your experience and result\n✅ Attach a before/after if you're happy to share\n✅ Hit reply\n\nI'll never share anything without your explicit permission.\n\nThank you so much,\n${coachName ?? "Your Coach"}` },
+    day38Sms:     `Last nudge — would love to celebrate your ${name} win publicly! A sentence about your result + a photo if you're up for it. Reply here 📸`,
+    referralEmail: { subject: `Know anyone who needs this?`, body: `Hey!\n\nI hope you're doing brilliantly after completing ${name}.\n\nI have one more ask — and this one could genuinely change someone's life.\n\nIs there anyone in your world who could benefit from what you've just been through? A friend, colleague, or family member who's been struggling with the same things you were?\n\nIf so, would you mind sharing my details with them? Even a simple "you should check this out" message could be the nudge they need.\n\n[Link to join/apply: INSERT YOUR LINK]\n\nThank you for trusting me with your journey. It genuinely means everything.\n\n${coachName ?? "Your Coach"}, ${businessName ?? ""}` },
+  };
+}
+
+export function buildMockPricingGuide(inputs: WizardInputs): PricingGuide {
+  const { coachName, challengeName, mainGoal, price, targetAudience } = inputs;
+  const priceNum = parseInt((price ?? "").replace(/[^0-9]/g, "")) || 497;
+  const currency = (price ?? "£").replace(/[0-9.,\s]/g, "").trim() || "£";
+
+  return {
+    recommendedPrice: `${currency}${priceNum}`,
+    priceRange: { min: `${currency}${Math.round(priceNum * 0.6)}`, max: `${currency}${Math.round(priceNum * 1.5)}` },
+    rationale:  `Based on the transformation you deliver (${mainGoal ?? "significant lifestyle change"}), a price of ${currency}${priceNum} positions you firmly in the mid-premium tier — affordable enough to attract committed clients while signalling genuine quality. ${targetAudience ? `Your audience of ${targetAudience} typically value investment-level coaching over budget options` : "Your audience is investing in outcomes, not just information"}. At this price, even one client covers your monthly outgoings and profit begins at client two.`,
+    valueStack: [
+      { item: challengeName ?? "30-Day Challenge Programme", perceivedValue: `${currency}${Math.round(priceNum * 0.6)}`, description: "The core structured programme with daily accountability and expert coaching." },
+      { item: "1-on-1 onboarding call",                      perceivedValue: `${currency}150`,                           description: "A personalised strategy session to set the right targets from day one." },
+      { item: "Custom nutrition or training plan",            perceivedValue: `${currency}200`,                           description: "Professionally designed and tailored specifically to the client's goals and lifestyle." },
+      { item: "Private community access",                     perceivedValue: `${currency}97`,                            description: "Peer support, accountability, and community — proven to double completion rates." },
+      { item: "Weekly check-in calls or messages",            perceivedValue: `${currency}300`,                           description: "Ongoing expert feedback and plan adjustments throughout the programme." },
+      { item: "Lifetime resource library access",             perceivedValue: `${currency}147`,                           description: "Recipes, workouts, mindset tools — accessible long after the programme ends." },
+    ],
+    positioningStatement:  `The price reflects the value of the outcome, not just the time. When someone successfully achieves ${mainGoal ?? "their goal"} with ${coachName ?? "the coach"}'s support, the return on that investment — in health, confidence, and quality of life — is worth many multiples of ${currency}${priceNum}. This isn't an expense; it's an investment with a guaranteed focus on results.`,
+    confidenceScript:      `"I completely understand — it's not a small number. But let me ask you this: how much have you already spent on things that didn't work? Gym memberships, programmes, meal plans that sat unopened? Most of my clients have spent more than this on things that got them nowhere. What I offer is different — you're not buying information, you're buying accountability, expertise, and a system that actually works. And if you don't show up and do the work, I'll be the one chasing you. That's the difference."`,
+    objectionHandlers: [
+      { objection: `"It's too expensive"`,      response: `"I hear you. The question isn't whether you can afford it — it's whether you can afford NOT to. Every month you don't fix this costs you in energy, confidence, and health. Let's talk about what's really holding you back — is it the money, or is it doubt that it will work?"` },
+      { objection: `"I need to think about it"`, response: `"Of course — this is a real commitment and you should feel confident before you say yes. Can I ask what specifically you'd need to know to feel ready? Usually when someone needs to think, there's a specific concern underneath. Let's talk it through."` },
+      { objection: `"I'll wait until after [event]"`, response: `"I used to think the right time would come too. It doesn't — it has to be created. The people who get the best results are the ones who start before they feel ready. What would it cost you to wait another 3 months?"` },
+    ],
+    nextSteps: [
+      "Write out your full value stack and practise saying the price out loud until it feels normal",
+      "Collect 3 specific client results (numbers, not adjectives) to use in your next sales conversation",
+      `Create a simple 'results calculator': show a prospect what ${mainGoal ?? "their goal"} is worth to them over 1 year`,
+      "Film a 60-second 'why this price' video to address the objection before it comes up",
+      "Raise your price by 10% on the next enrolment — test the market and track conversion rate",
+    ],
   };
 }
