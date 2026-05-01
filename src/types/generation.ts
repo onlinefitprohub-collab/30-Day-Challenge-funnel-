@@ -330,6 +330,8 @@ export interface GeneratedFunnelAssets {
   deliveryPack?: DeliveryPack;
   testimonialHarvestSequence?: TestimonialHarvestSequence;
   pricingGuide?: PricingGuide;
+  // Discovery call script — on-demand generation
+  discoveryCallScript?: import("./discovery-call").DiscoveryCallScript;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

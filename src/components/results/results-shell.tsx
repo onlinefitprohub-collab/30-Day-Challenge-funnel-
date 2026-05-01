@@ -8,12 +8,13 @@ import {
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
-  CalendarRange, Package, Star, BadgeDollarSign,
+  CalendarRange, Package, Star, BadgeDollarSign, Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
 import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide } from "@/types/generation";
+import type { DiscoveryCallScript } from "@/types/discovery-call";
 import type { LongFormSalesAssets } from "@/types/longform";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
@@ -37,6 +38,7 @@ import { ContentCalendarSection }    from "./sections/content-calendar";
 import { DeliveryPackSection }       from "./sections/delivery-pack";
 import { TestimonialHarvestSection } from "./sections/testimonial-harvest";
 import { PricingGuideSection }       from "./sections/pricing-guide";
+import { DiscoveryCallSection, DiscoveryCallPlaceholder } from "./sections/discovery-call";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -61,6 +63,7 @@ const CHALLENGE_TABS = [
   { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching" },
   { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
   { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
+  { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching" },
 ] as const;
 
 const APPLICATION_TABS = [
@@ -84,6 +87,7 @@ const APPLICATION_TABS = [
   { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching" },
   { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
   { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
+  { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching" },
 ] as const;
 
 // Union of all possible tab IDs across both funnel types
@@ -160,6 +164,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   const [liveNurtureSequence, setLiveNurtureSequence] = useState<NurtureSequence | undefined>(
     outputs.nurtureSequence as NurtureSequence | undefined,
   );
+  const [liveDiscoveryCallScript, setLiveDiscoveryCallScript] = useState<DiscoveryCallScript | undefined>(
+    outputs.discoveryCallScript as DiscoveryCallScript | undefined,
+  );
 
   // Auto-generate longform for challenge funnels on mount if ManyChat/sales letter not yet present.
   // For application funnels, the registration page is generated synchronously during main generation —
@@ -185,6 +192,11 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   function handleNurtureGenerated(sequence: NurtureSequence) {
     setLiveNurtureSequence(sequence);
     setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, nurtureSequence: sequence }));
+  }
+
+  function handleDiscoveryCallGenerated(script: DiscoveryCallScript) {
+    setLiveDiscoveryCallScript(script);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, discoveryCallScript: script }));
   }
 
   // Strip internal _isMock flag from the copy-all output
@@ -352,6 +364,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     pricingGuide:       assets.pricingGuide
       ? <PricingGuideSection data={assets.pricingGuide as PricingGuide} />
       : null,
+    discoveryCall: liveDiscoveryCallScript
+      ? <DiscoveryCallSection data={liveDiscoveryCallScript} projectId={project.id} onRegenerate={handleDiscoveryCallGenerated} />
+      : <DiscoveryCallPlaceholder projectId={project.id} onGenerated={handleDiscoveryCallGenerated} />,
   };
 
   return (
