@@ -8,13 +8,16 @@ import {
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
-  CalendarRange, Package, Star, BadgeDollarSign, Phone,
+  CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
 import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide } from "@/types/generation";
 import type { DiscoveryCallScript } from "@/types/discovery-call";
+import type { InstagramDmScript } from "@/types/dm-script";
+import type { UpsellSequence } from "@/types/upsell-sequence";
+import type { LaunchRoadmap } from "@/types/launch-roadmap";
 import type { LongFormSalesAssets } from "@/types/longform";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
@@ -39,6 +42,9 @@ import { DeliveryPackSection }       from "./sections/delivery-pack";
 import { TestimonialHarvestSection } from "./sections/testimonial-harvest";
 import { PricingGuideSection }       from "./sections/pricing-guide";
 import { DiscoveryCallSection, DiscoveryCallPlaceholder } from "./sections/discovery-call";
+import { DmScriptSection, DmScriptPlaceholder } from "./sections/dm-script";
+import { UpsellSection, UpsellPlaceholder } from "./sections/upsell-sequence";
+import { LaunchRoadmapSection, LaunchRoadmapPlaceholder } from "./sections/launch-roadmap";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -64,6 +70,9 @@ const CHALLENGE_TABS = [
   { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
   { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
   { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching" },
+  { id: "dmScript",             label: "DM Scripts",         icon: MessageCircle,     group: "coaching" },
+  { id: "upsellSequence",       label: "Upsell Sequence",    icon: TrendingUp,        group: "coaching" },
+  { id: "launchRoadmap",        label: "Launch Roadmap",     icon: Map,               group: "coaching" },
 ] as const;
 
 const APPLICATION_TABS = [
@@ -88,6 +97,9 @@ const APPLICATION_TABS = [
   { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
   { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
   { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching" },
+  { id: "dmScript",             label: "DM Scripts",         icon: MessageCircle,     group: "coaching" },
+  { id: "upsellSequence",       label: "Upsell Sequence",    icon: TrendingUp,        group: "coaching" },
+  { id: "launchRoadmap",        label: "Launch Roadmap",     icon: Map,               group: "coaching" },
 ] as const;
 
 // Union of all possible tab IDs across both funnel types
@@ -167,6 +179,15 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   const [liveDiscoveryCallScript, setLiveDiscoveryCallScript] = useState<DiscoveryCallScript | undefined>(
     outputs.discoveryCallScript as DiscoveryCallScript | undefined,
   );
+  const [liveDmScript, setLiveDmScript]           = useState<InstagramDmScript | undefined>(
+    outputs.instagramDmScript as InstagramDmScript | undefined,
+  );
+  const [liveUpsellSequence, setLiveUpsellSequence] = useState<UpsellSequence | undefined>(
+    outputs.upsellSequence as UpsellSequence | undefined,
+  );
+  const [liveLaunchRoadmap, setLiveLaunchRoadmap]   = useState<LaunchRoadmap | undefined>(
+    outputs.launchRoadmap as LaunchRoadmap | undefined,
+  );
 
   // Auto-generate longform for challenge funnels on mount if ManyChat/sales letter not yet present.
   // For application funnels, the registration page is generated synchronously during main generation —
@@ -197,6 +218,21 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
   function handleDiscoveryCallGenerated(script: DiscoveryCallScript) {
     setLiveDiscoveryCallScript(script);
     setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, discoveryCallScript: script }));
+  }
+
+  function handleDmScriptGenerated(script: InstagramDmScript) {
+    setLiveDmScript(script);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, instagramDmScript: script }));
+  }
+
+  function handleUpsellGenerated(seq: UpsellSequence) {
+    setLiveUpsellSequence(seq);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, upsellSequence: seq }));
+  }
+
+  function handleLaunchRoadmapGenerated(roadmap: LaunchRoadmap) {
+    setLiveLaunchRoadmap(roadmap);
+    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, launchRoadmap: roadmap }));
   }
 
   // Strip internal _isMock flag from the copy-all output
@@ -367,6 +403,15 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     discoveryCall: liveDiscoveryCallScript
       ? <DiscoveryCallSection data={liveDiscoveryCallScript} projectId={project.id} onRegenerate={handleDiscoveryCallGenerated} />
       : <DiscoveryCallPlaceholder projectId={project.id} onGenerated={handleDiscoveryCallGenerated} />,
+    dmScript: liveDmScript
+      ? <DmScriptSection data={liveDmScript} projectId={project.id} onRegenerate={handleDmScriptGenerated} />
+      : <DmScriptPlaceholder projectId={project.id} onGenerated={handleDmScriptGenerated} />,
+    upsellSequence: liveUpsellSequence
+      ? <UpsellSection data={liveUpsellSequence} projectId={project.id} onRegenerate={handleUpsellGenerated} />
+      : <UpsellPlaceholder projectId={project.id} onGenerated={handleUpsellGenerated} />,
+    launchRoadmap: liveLaunchRoadmap
+      ? <LaunchRoadmapSection data={liveLaunchRoadmap} projectId={project.id} onRegenerate={handleLaunchRoadmapGenerated} />
+      : <LaunchRoadmapPlaceholder projectId={project.id} onGenerated={handleLaunchRoadmapGenerated} />,
   };
 
   return (

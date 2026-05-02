@@ -423,6 +423,101 @@ export const discoveryCallScriptResponseSchema = z.object({
   discoveryCallScript: discoveryCallScriptSchema,
 });
 
+// ─── Instagram DM Script schema ───────────────────────────────────────────────
+
+const dmConversationScriptSchema = z.object({
+  trigger:        z.string().min(1),
+  opener:         z.string().min(1),
+  followUps:      z.array(z.string().min(1)).min(2),
+  bookingBridge:  z.string().min(1),
+  coachingNotes:  z.string().min(1),
+});
+
+export const instagramDmScriptSchema = z.object({
+  overview:             z.string().min(1),
+  coldOutreach:         dmConversationScriptSchema,
+  warmLead:             dmConversationScriptSchema,
+  commentToDm:          dmConversationScriptSchema,
+  applicationInquiry:   dmConversationScriptSchema,
+  noResponseFollowUp:   z.string().min(1),
+  dmTips:               z.array(z.string().min(1)).min(5),
+});
+
+export const instagramDmScriptResponseSchema = z.object({
+  instagramDmScript: instagramDmScriptSchema,
+});
+
+// ─── Upsell Email Sequence schema ─────────────────────────────────────────────
+
+export const upsellSequenceSchema = z.object({
+  targetOffer: z.string().min(1),
+  overview:    z.string().min(1),
+  emails:      z.array(z.object({
+    day:     z.number().int().min(1),
+    purpose: z.string().min(1),
+    subject: z.string().min(1),
+    body:    z.string().min(1),
+  })).min(5).max(5),
+  smsNudge:    z.string().min(1),
+});
+
+export const upsellSequenceResponseSchema = z.object({
+  upsellSequence: upsellSequenceSchema,
+});
+
+// ─── Launch Roadmap schema ────────────────────────────────────────────────────
+
+const roadmapTaskSchema = z.object({
+  task:          z.string().min(1),
+  category:      z.enum(["setup", "content", "ads", "sales", "delivery", "growth"]),
+  fitproAsset:   z.string().optional(),
+  timeEstimate:  z.string().min(1),
+});
+
+const roadmapPhaseSchema = z.object({
+  name:              z.string().min(1),
+  timing:            z.string().min(1),
+  goal:              z.string().min(1),
+  tasks:             z.array(roadmapTaskSchema).min(3),
+  completionMarker:  z.string().min(1),
+});
+
+export const launchRoadmapSchema = z.object({
+  overview:               z.string().min(1),
+  totalTimeToLaunch:      z.string().min(1),
+  phases:                 z.array(roadmapPhaseSchema).min(4),
+  quickStartPriorities:   z.array(z.string().min(1)).min(5),
+  commonMistakes:         z.array(z.string().min(1)).min(4),
+});
+
+export const launchRoadmapResponseSchema = z.object({
+  launchRoadmap: launchRoadmapSchema,
+});
+
+// ─── Monthly Content Plan schema ─────────────────────────────────────────────
+
+const monthlyContentPostSchema = z.object({
+  day:     z.number().int().min(1).max(31),
+  theme:   z.string().min(1),
+  format:  z.string().min(1),
+  hook:    z.string().min(1),
+  caption: z.string().min(1),
+  cta:     z.string().min(1),
+});
+
+export const monthlyContentPlanSchema = z.object({
+  month:          z.string().min(1),
+  monthlyTheme:   z.string().min(1),
+  weeklyFocuses:  z.array(z.string().min(1)).min(4).max(4),
+  posts:          z.array(monthlyContentPostSchema).min(28).max(31),
+  storyIdeas:     z.array(z.string().min(1)).min(5),
+  dmStarters:     z.array(z.string().min(1)).min(3),
+});
+
+export const monthlyContentPlanResponseSchema = z.object({
+  monthlyContentPlan: monthlyContentPlanSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {

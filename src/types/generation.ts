@@ -332,6 +332,12 @@ export interface GeneratedFunnelAssets {
   pricingGuide?: PricingGuide;
   // Discovery call script — on-demand generation
   discoveryCallScript?: import("./discovery-call").DiscoveryCallScript;
+  // Instagram DM scripts — on-demand generation
+  instagramDmScript?: import("./dm-script").InstagramDmScript;
+  // Upsell email sequence — on-demand generation
+  upsellSequence?: import("./upsell-sequence").UpsellSequence;
+  // Launch roadmap — on-demand generation
+  launchRoadmap?: import("./launch-roadmap").LaunchRoadmap;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;
