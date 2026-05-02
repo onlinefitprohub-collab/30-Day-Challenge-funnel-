@@ -175,6 +175,7 @@ create table if not exists public.user_settings (
   user_id uuid primary key references auth.users(id) on delete cascade,
   hl_api_key text,
   hl_location_id text,
+  subscription_status text not null default 'free' check (subscription_status in ('free', 'pro', 'annual')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -200,3 +201,26 @@ create policy "Users can update own settings"
 create policy "Users can delete own settings"
   on public.user_settings for delete
   using (auth.uid() = user_id);
+
+-- Monthly content plans (Content Engine — Pro feature)
+create table if not exists public.monthly_content_plans (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  month text not null,              -- "2025-06" (YYYY-MM)
+  plan jsonb not null default '{}',
+  generated_at timestamptz not null default now(),
+  unique(user_id, month)
+);
+
+create index if not exists monthly_content_plans_user_id_idx on public.monthly_content_plans(user_id);
+
+alter table public.monthly_content_plans enable row level security;
+
+create policy "Users can manage own content plans"
+  on public.monthly_content_plans for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Migration: add subscription_status to existing user_settings rows
+-- alter table public.user_settings add column if not exists subscription_status text not null default 'free'
+--   check (subscription_status in ('free', 'pro', 'annual'));

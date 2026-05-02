@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type User } from "@supabase/supabase-js";
-import { Zap, LayoutDashboard, Settings, LogOut, Plus } from "lucide-react";
+import { Zap, LayoutDashboard, Settings, LogOut, Plus, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/account", label: "Settings", icon: Settings },
+  { href: "/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
+  { href: "/content-engine", label: "Content Engine", icon: CalendarDays },
+  { href: "/account",        label: "Settings",       icon: Settings },
 ];
 
 export function DashboardNav({ user }: { user: User }) {

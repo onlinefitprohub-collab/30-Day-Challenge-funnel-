@@ -494,6 +494,30 @@ export const launchRoadmapResponseSchema = z.object({
   launchRoadmap: launchRoadmapSchema,
 });
 
+// ─── Monthly Content Plan schema ─────────────────────────────────────────────
+
+const monthlyContentPostSchema = z.object({
+  day:     z.number().int().min(1).max(31),
+  theme:   z.string().min(1),
+  format:  z.string().min(1),
+  hook:    z.string().min(1),
+  caption: z.string().min(1),
+  cta:     z.string().min(1),
+});
+
+export const monthlyContentPlanSchema = z.object({
+  month:          z.string().min(1),
+  monthlyTheme:   z.string().min(1),
+  weeklyFocuses:  z.array(z.string().min(1)).min(4).max(4),
+  posts:          z.array(monthlyContentPostSchema).min(28).max(31),
+  storyIdeas:     z.array(z.string().min(1)).min(5),
+  dmStarters:     z.array(z.string().min(1)).min(3),
+});
+
+export const monthlyContentPlanResponseSchema = z.object({
+  monthlyContentPlan: monthlyContentPlanSchema,
+});
+
 // ─── Safe parse helpers ──────────────────────────────────────────────────────
 
 interface ParseResult<T> {
