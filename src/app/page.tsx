@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const stats = [
-  { value: "£2,800+", label: "Saved vs. hiring" },
+  { value: "$2,800+", label: "Saved vs. hiring" },
   { value: "<5 min",  label: "Build time" },
   { value: "20+",     label: "Assets generated" },
   { value: "1 day",   label: "From idea to live funnel" },
@@ -41,15 +41,15 @@ const painPoints = [
 ];
 
 const roiItems = [
-  { item: "Landing page copywriter",          market: "£800–£1,500",  fitpro: "Included" },
-  { item: "Email sequence writer (10 emails)", market: "£500–£1,200",  fitpro: "Included" },
-  { item: "Facebook & Instagram ad copy",     market: "£400–£800",    fitpro: "Included" },
-  { item: "Sales call script + training",     market: "£300–£700",    fitpro: "Included" },
-  { item: "Content calendar strategist",      market: "£500–£800/mo", fitpro: "Included" },
-  { item: "DM script + outreach system",      market: "£200–£400",    fitpro: "Included" },
-  { item: "Challenge delivery pack",          market: "£300–£600",    fitpro: "Included" },
-  { item: "Post-challenge upsell sequence",   market: "£300–£500",    fitpro: "Included" },
-  { item: "Launch roadmap + strategy",        market: "£500–£1,000",  fitpro: "Included" },
+  { item: "Landing page copywriter",          market: "$800–$1,500",  fitpro: "Included" },
+  { item: "Email sequence writer (10 emails)", market: "$500–$1,200",  fitpro: "Included" },
+  { item: "Facebook & Instagram ad copy",     market: "$400–$800",    fitpro: "Included" },
+  { item: "Sales call script + training",     market: "$300–$700",    fitpro: "Included" },
+  { item: "Content calendar strategist",      market: "$500–$800/mo", fitpro: "Included" },
+  { item: "DM script + outreach system",      market: "$200–$400",    fitpro: "Included" },
+  { item: "Challenge delivery pack",          market: "$300–$600",    fitpro: "Included" },
+  { item: "Post-challenge upsell sequence",   market: "$300–$500",    fitpro: "Included" },
+  { item: "Launch roadmap + strategy",        market: "$500–$1,000",  fitpro: "Included" },
 ];
 
 const timelineSteps = [
@@ -194,7 +194,7 @@ export default function HomePage() {
             </Link>
             <Link href="/signup">
               <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/25">
-                Start free →
+                Start for $97/month →
               </Button>
             </Link>
           </div>
@@ -235,13 +235,13 @@ export default function HomePage() {
                 size="xl"
                 className="group w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold shadow-2xl shadow-orange-500/30 sm:w-auto"
               >
-                Build my coaching business free
+                Start for $97/month
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
               </Button>
             </Link>
             <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-              <p className="text-sm text-gray-400 font-medium">No credit card · Ready in 5 minutes</p>
-              <p className="text-xs text-gray-600">Replaces £2,800+ of copywriting and strategy</p>
+              <p className="text-sm text-gray-400 font-medium">$97/month · Cancel any time</p>
+              <p className="text-xs text-gray-600">Replaces $2,800+ of copywriting and strategy</p>
             </div>
           </div>
 
@@ -341,9 +341,9 @@ export default function HomePage() {
           </h2>
           <p className="mx-auto mb-12 max-w-xl text-center text-gray-400">
             Hiring professionals to produce everything FitPro Launch generates would cost
-            between <span className="text-white font-semibold">£2,800 and £5,300</span> — and take weeks.
-            FitPro Launch costs{" "}
-            <span className="text-orange-400 font-semibold">£97 one-time</span> and takes an afternoon.
+            between <span className="text-white font-semibold">$2,800 and $5,300</span> — and take weeks.
+            FitPro Launch gives you all of it for{" "}
+            <span className="text-orange-400 font-semibold">$97/month</span> — and takes an afternoon.
           </p>
 
           <div className="overflow-hidden rounded-2xl border border-white/10">
@@ -366,15 +366,15 @@ export default function HomePage() {
             {/* Totals row */}
             <div className="grid grid-cols-3 border-t border-white/20 bg-white/8 px-5 py-4">
               <p className="font-bold text-white">Total</p>
-              <p className="text-right font-bold text-gray-400 line-through">£2,800–£5,300+</p>
-              <p className="text-right font-extrabold text-orange-400">£97</p>
+              <p className="text-right font-bold text-gray-400 line-through">$2,800–$5,300+</p>
+              <p className="text-right font-extrabold text-orange-400">$97/mo</p>
             </div>
           </div>
 
           {/* Callout */}
           <div className="mt-6 flex flex-col gap-4 sm:flex-row">
             <div className="flex-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
-              <p className="text-3xl font-extrabold text-emerald-400">£2,700+</p>
+              <p className="text-3xl font-extrabold text-emerald-400">$2,700+</p>
               <p className="mt-1 text-sm text-emerald-200">Saved vs. hiring professionals</p>
             </div>
             <div className="flex-1 rounded-xl border border-blue-500/30 bg-blue-500/10 p-5 text-center">
@@ -383,13 +383,13 @@ export default function HomePage() {
             </div>
             <div className="flex-1 rounded-xl border border-orange-500/30 bg-orange-500/10 p-5 text-center">
               <p className="text-3xl font-extrabold text-orange-400">1 client</p>
-              <p className="mt-1 text-sm text-orange-200">Pays for it. Every client after is pure profit.</p>
+              <p className="mt-1 text-sm text-orange-200">Covers your first month. Every client after is pure profit.</p>
             </div>
           </div>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            If your challenge costs £200+, a single client from your first launch covers the entire cost.
-            Everything else — every challenge, every sale, every upsell — is built on assets that cost you nothing more.
+            If your challenge costs $200+, a single client from your first launch more than covers your first month&apos;s subscription.
+            Everything else — every cohort, every sale, every upsell — runs on assets that are always there, always yours.
           </p>
         </div>
       </section>
@@ -481,11 +481,11 @@ export default function HomePage() {
                 size="lg"
                 className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/25"
               >
-                Get all 22 assets free
+                Start for $97/month
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <p className="mt-3 text-sm text-gray-600">No credit card required. Build your first funnel completely free.</p>
+            <p className="mt-3 text-sm text-gray-600">Cancel any time · All 22 assets on your first login</p>
           </div>
         </div>
       </section>
@@ -546,7 +546,7 @@ export default function HomePage() {
                 <p className="mt-3 text-gray-400 leading-relaxed">
                   The Monthly Content Engine generates a fresh 30-post social media plan every month —
                   seasonally themed, personalised to your niche, with DM conversation starters and story ideas.
-                  Every. Single. Month. For £39.
+                  Every. Single. Month. Included in your $97/month subscription.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-3">
                   {[
@@ -560,19 +560,14 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className="flex shrink-0 flex-col items-center gap-3 text-center">
-                <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 px-8 py-5">
-                  <p className="text-4xl font-extrabold text-white">£39</p>
-                  <p className="text-sm text-brand-300">/month</p>
-                  <p className="mt-2 text-xs text-gray-400">Cancel any time</p>
+                <div className="mt-6">
+                  <Link href="/signup">
+                    <Button className="bg-brand-600 hover:bg-brand-700 text-white font-semibold">
+                      Start for $97/month →
+                    </Button>
+                  </Link>
+                  <p className="mt-2 text-xs text-gray-500">All features included · Cancel any time</p>
                 </div>
-                <Link href="/signup">
-                  <Button className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold">
-                    Start Pro
-                  </Button>
-                </Link>
-                <p className="text-xs text-gray-500">Funnel build sold separately (£97)</p>
               </div>
             </div>
           </div>
@@ -603,13 +598,13 @@ export default function HomePage() {
                 size="xl"
                 className="w-full bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-2xl shadow-black/25 sm:w-auto text-base"
               >
-                Build my coaching toolkit free
+                Start for $97/month
                 <ChevronRight className="h-5 w-5" />
               </Button>
             </Link>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-sm text-white/70">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> No credit card</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Cancel any time</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Ready in under 5 minutes</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> 22 assets. One wizard.</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> 1-click HighLevel push</span>
