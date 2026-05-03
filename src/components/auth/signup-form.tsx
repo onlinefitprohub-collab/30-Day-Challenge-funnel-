@@ -139,7 +139,7 @@ export function SignupForm() {
             Creating account...
           </>
         ) : (
-          "Create free account"
+          "Create account"
         )}
       </Button>
 
