@@ -199,22 +199,39 @@ export const workoutPlanSchema = z.object({
 
 // ─── Long-Form Sales Assets schemas ─────────────────────────────────────────
 
+const problemItemSchema = z.object({
+  title:    z.string().min(1),
+  headline: z.string().min(1),
+  body:     z.string().min(1),
+});
+
+const testimonialCaseStudySchema = z.object({
+  sectionHeadline: z.string().min(1),
+  clientHeadline:  z.string().min(1),
+  quote:           z.string().min(1),
+  result:          z.string().min(1),
+});
+
 export const salesLetterSchema = z.object({
-  headline:             z.string().min(1),
-  subheadline:          z.string().min(1),
-  openingHook:          z.string().min(1),
-  problemAgitation:     z.string().min(1),
-  bridgeToPossibility:  z.string().min(1),
-  coachCredentials:     z.string().min(1),
-  offerReveal:          z.string().min(1),
-  whatYouGet:           z.array(z.object({ name: z.string().min(1), description: z.string().min(1) })).min(1),
-  socialProofFramework: z.string().min(1),
-  bonusStack:           z.array(z.object({ name: z.string().min(1), description: z.string().min(1), valueLabel: z.string().min(1) })).min(1),
-  priceReveal:          z.string().min(1),
-  guarantee:            z.string().min(1),
-  objectionHandling:    z.array(z.object({ objection: z.string().min(1), response: z.string().min(1) })).min(1),
-  urgencySection:       z.string().min(1),
-  finalCta:             z.string().min(1),
+  headline:                z.string().min(1),
+  subheadline:             z.string().min(1),
+  painPointHeadline:       z.string().min(1),
+  openingHook:             z.string().min(1),
+  problemAgitation:        z.string().min(1),
+  problemBreakdown:        z.array(problemItemSchema).min(2).max(4),
+  bridgeToPossibility:     z.string().min(1),
+  coachCredentials:        z.string().min(1),
+  offerReveal:             z.string().min(1),
+  whatYouGet:              z.array(z.object({ name: z.string().min(1), description: z.string().min(1) })).min(1),
+  testimonialCaseStudies:  z.array(testimonialCaseStudySchema).min(1),
+  testimonialQuotes:       z.array(z.string().min(1)).min(4).max(8),
+  socialProofFramework:    z.string().min(1),
+  bonusStack:              z.array(z.object({ name: z.string().min(1), description: z.string().min(1), valueLabel: z.string().min(1) })).min(1),
+  priceReveal:             z.string().min(1),
+  guarantee:               z.string().min(1),
+  objectionHandling:       z.array(z.object({ objection: z.string().min(1), response: z.string().min(1) })).min(1),
+  urgencySection:          z.string().min(1),
+  finalCta:                z.string().min(1),
 });
 
 const manyChatMessageSchema = z.object({
