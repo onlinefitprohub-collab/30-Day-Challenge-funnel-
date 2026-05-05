@@ -164,10 +164,28 @@ function buildMockSalesLetter(challengeName: string): SalesLetter {
   return {
     headline: `Finally: A Proven System That Gets Real Results From Your ${challengeName}`,
     subheadline: "How coaches are transforming their clients' lives with this step-by-step challenge framework — and how you can too",
-    openingHook: "Let me ask you something. How many times have you started a new programme, full of hope and excitement, only to find yourself back at square one three weeks later? If you're nodding your head right now, you're not alone. I've spoken to hundreds of people who felt exactly the same way — frustrated, defeated, and wondering if change was even possible for them.",
-    problemAgitation: "The truth is, most programmes fail not because of the person — but because of the programme. They're designed for averages, not for you. They ignore your schedule, your starting point, your specific obstacles. And when you inevitably can't keep up, you blame yourself instead of the system. That self-blame is the most damaging part. It builds a story in your head: 'I'm not the kind of person who succeeds at this.'",
-    bridgeToPossibility: "But what if the problem was never you? What if you just needed the right structure, the right community, and the right level of personal support? What if 30 days from now, you had proof — real, undeniable proof — that you can do this?",
-    coachCredentials: `I've been where you are. Before I became a coach, I struggled with the same challenges my clients face today. That struggle is exactly why I built this programme differently. Over the past several years, I've worked with hundreds of clients to deliver real, measurable results — not through motivation hacks, but through proven structure.`,
+    painPointHeadline: "There Is No One On The Planet Who Actually Wants To Keep Struggling With The Same Problem Year After Year — Is There?",
+    openingHook: "Let me ask you something. How many times have you started a new programme, full of hope and excitement, only to find yourself back at square one three weeks later?\n\nIf you're nodding your head right now, you're not alone. I've spoken to **hundreds of people** who felt exactly the same way — frustrated, defeated, and wondering if change was even possible for them.\n\nThe worst part? They were doing everything they thought they were supposed to do. They weren't lazy. They weren't uncommitted. They just had the wrong system.",
+    problemAgitation: "The truth is, **most programmes fail not because of the person — but because of the programme.** They're designed for averages, not for you. They ignore your schedule, your starting point, your specific obstacles.\n\nAnd when you inevitably can't keep up, you blame yourself instead of the system. That self-blame is the most damaging part. It builds a story in your head: 'I'm not the kind of person who succeeds at this.'\n\nThat story is a lie. But when you've failed at the same thing three or four times, it starts to feel like the truth.",
+    problemBreakdown: [
+      {
+        title: "PROBLEM #1 – THE WRONG APPROACH",
+        headline: "THE METHODS YOU'VE TRIED AREN'T BUILT FOR SOMEONE IN YOUR SITUATION",
+        body: "Generic programmes assume you have unlimited time, no competing priorities, and a body that responds the way the average person's does.\n\nThey weren't designed with **your specific life** in mind. So of course they don't work. It's not a failure of willpower — it's a failure of fit.\n\nUntil you find an approach that's built around who you actually are, you'll keep hitting the same wall.",
+      },
+      {
+        title: "PROBLEM #2 – NO REAL ACCOUNTABILITY",
+        headline: "GOING IT ALONE IS THE SINGLE BIGGEST REASON PEOPLE QUIT",
+        body: "Research consistently shows that people with **structured accountability** are significantly more likely to achieve their goals.\n\nYet most programmes hand you a PDF and wish you luck. There's no check-in, no community, no human on the other end who notices when you go quiet.\n\nAccountability isn't a nice-to-have. For most people, it's the entire difference between finishing and quitting.",
+      },
+      {
+        title: "PROBLEM #3 – INCONSISTENCY",
+        headline: "YOU HAVE GREAT WEEKS AND TERRIBLE WEEKS — AND NO SYSTEM TO BRIDGE THEM",
+        body: "Motivation comes in waves. You feel unstoppable for two weeks, then life happens — stress, a bad day, a missed session — and suddenly you've lost all momentum.\n\n**Results don't come from perfect weeks. They come from consistent ones.** The 30-day structure solves this by removing the need to rely on motivation at all. You just follow the system.",
+      },
+    ],
+    bridgeToPossibility: "But what if the problem was never you? What if you just needed the right structure, the right community, and the right level of personal support?\n\nWhat if **30 days from now**, you had proof — real, undeniable proof — that you can do this?",
+    coachCredentials: `I've been where you are. Before I became a coach, I struggled with the same challenges my clients face today. That struggle is exactly why I built this programme differently.\n\nOver the past several years, I've worked with **hundreds of clients** to deliver real, measurable results — not through motivation hacks, but through proven structure and genuine accountability.\n\nI don't teach theory. Everything in the ${challengeName} is something I've tested, refined, and watched work — on real people, in real life, with real schedules.`,
     offerReveal: `That's why I created the ${challengeName}. A 30-day structured programme designed specifically to give you the accountability, the community, and the daily actions you need to see real change.`,
     whatYouGet: [
       { name: "Daily Guided Sessions", description: "Step-by-step guidance every single day so you always know exactly what to do — no guesswork, no decision fatigue." },
@@ -175,13 +193,29 @@ function buildMockSalesLetter(challengeName: string): SalesLetter {
       { name: "Personal Check-ins", description: "Direct access to your coach throughout the 30 days so you can ask questions and get personalised guidance." },
       { name: "Proven Framework", description: "A battle-tested system that's already produced results for hundreds of clients — adapted for your specific starting point." },
     ],
-    socialProofFramework: `Clients who've completed this challenge describe it as a turning point. People who had tried and failed before finally got the results they were after — because this time, they weren't doing it alone. "I can't believe how different I feel after 30 days," is something I hear regularly. "I've tried everything. This was the first thing that actually worked."`,
+    testimonialCaseStudies: [
+      {
+        sectionHeadline: "WHAT WOULD IT MEAN TO FINALLY GET THE RESULT YOU'VE BEEN CHASING?",
+        clientHeadline: "Meet Sarah, A Busy Mum Who Finally Made It Work Around Her Life",
+        quote: "I honestly didn't think it was possible with my schedule. I'd tried everything — apps, programmes, you name it. But this was different. The daily structure meant I never had to think about what to do next, and knowing someone was checking in on me made all the difference. I can't believe where I am now compared to 30 days ago.",
+        result: "Transformed in 30 days",
+      },
+    ],
+    testimonialQuotes: [
+      "I honestly didn't think it was possible at my age and with my schedule.",
+      "The support made all the difference — I've never had that before.",
+      "30 days in and I can't believe the change. Best decision I made this year.",
+      "Finally something that actually fits around real life.",
+      "I was sceptical. Now I'm recommending it to everyone I know.",
+      "The accountability element was everything. I needed that.",
+    ],
+    socialProofFramework: `Clients who've completed this challenge describe it as a turning point. People who had tried and failed before finally got the results they were after — because this time, **they weren't doing it alone**.\n\n"I can't believe how different I feel after 30 days," is something I hear regularly. "I've tried everything. This was the first thing that actually worked."\n\nThat's not a coincidence. It's the result of structure, accountability, and a system that was built for real people with real lives.`,
     bonusStack: [
       { name: "Quick-Start Guide", description: "A step-by-step guide to get you set up and ready before Day 1, so you hit the ground running.", valueLabel: "Worth $47" },
       { name: "Resource Library", description: "Templates, trackers, and reference guides to support you throughout the 30 days.", valueLabel: "Worth $37" },
     ],
-    priceReveal: "When you add everything up — the daily programme, the community, the coaching access, and the bonuses — the total value is well over $500. But because this is a challenge model designed to get you results fast, the investment is a fraction of that. For a limited time, you can join for just the challenge fee.",
-    guarantee: "I'm so confident in this programme that I'll back it with a simple guarantee: if you show up, do the work, and don't see results — I'll make it right. No hoops, no conditions. I want you to succeed, and I stand behind this programme.",
+    priceReveal: "When you add everything up — the daily programme, the community, the coaching access, and the bonuses — the total value is well over **$500**.\n\nBut because this is a challenge model designed to get you results fast, the investment is a fraction of that. For a limited time, you can join for just the challenge fee.\n\n**One result. One conversation. One transformation. That's all it takes to make this worthwhile.**",
+    guarantee: "I'm so confident in this programme that I'll back it with a simple guarantee: if you show up, do the work, and don't see results — I'll make it right. No hoops, no conditions.\n\nI want you to succeed, and I stand behind this programme.",
     objectionHandling: [
       { objection: "I don't have time for a 30-day programme.", response: "I designed this specifically for busy people. Sessions are structured to fit around your existing schedule — not replace it." },
       { objection: "I've tried programmes before and they didn't work.", response: "Most programmes fail because they're generic. This one is built around your specific situation and supported by real coaching accountability." },
