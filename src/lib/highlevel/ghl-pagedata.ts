@@ -1060,7 +1060,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const countdownLabel = makeParagraph(b, "Challenge starts in:",
     { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), paddingBottom: sv(4) });
   const countdown = makeCountdown(b, _heroCountdownEnd(), { paddingBottom: sv(20) });
-  const videoEl = makeVideo(b, "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  const videoEl = makeVideo(b, "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
     { borderRadius: sv(16), boxShadow: ss(`0 24px 64px rgba(0,0,0,0.5)`) });
   const videoNote = makeParagraph(b, "▶  Replace this video with your own challenge intro",
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
