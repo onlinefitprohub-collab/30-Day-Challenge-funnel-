@@ -48,16 +48,19 @@ Generate content for every field in the JSON schema below. Every piece of copy m
 === FIELD-BY-FIELD INSTRUCTIONS ===
 
 valuePropHeadline:
-A bold, benefit-rich headline stating exactly what the programme delivers. Format: "[Join/Discover/Unlock] [specific transformation], even if [common objection]". Make it specific to the niche. 10–15 words max.
+A bold, benefit-rich headline in a 2-column image+text layout. Must use the EXACT audience and programme from the context — never write a generic fitness headline. Pull directly from mainGoal, targetAudience, and the biggest objection in the context.
+Format: "[Achieve specific goal] with [Programme Name], even if you [Most common objection #1] and [Most common objection #2]"
+Example structure: "Get Back In Shape As A Busy Dad, Even If You've 'Tried Everything' And Think You Don't Have The Time"
+DO NOT use generic phrases like "transform your body" or "reach your goals" — name the specific result (e.g. "lose 2 stone", "build visible muscle", "run your first 5k"), the specific audience identity, and their specific objections from the context.
 
 valuePropSubheadline:
-One sentence expanding the headline — what the prospect will achieve and in what timeframe. Specific, not vague. Max 25 words.
+One sentence expanding the headline — what the prospect will achieve and in what timeframe. Must reference the actual programme name and a specific measurable outcome. Max 25 words.
 
 videoSectionHeading:
-A compelling h1 placed above the coach's intro video. Should create curiosity or make a bold promise. 8–14 words. E.g. "Watch This Short Video Before You Apply — It Will Change How You See [Goal]"
+A compelling h1 placed above the coach's intro video. Use the programme name and speak to the audience's identity — what are they trying to become? Format the heading as two stacked lines like a proper video overlay: first line is a short context label (e.g. "BECOMING A STRONGER, HEALTHIER [AUDIENCE IDENTITY]"), second line is a bold curiosity question or promise (e.g. "WHAT IS [PROGRAMME NAME]?"). Both lines should be specific to the niche — never generic. 8–14 words total.
 
 videoSectionSubheading:
-A supporting line below the video heading that reinforces why watching is important. 12–20 words.
+A supporting line below the video heading explaining why they should watch now. Must reference the transformation or outcome specific to this programme. 12–20 words. Example: "Watch this short video to see exactly how [Programme Name] has helped [audience type] achieve [specific result]."
 
 heroCtaText:
 The primary call-to-action button text. Action-oriented. E.g. "Start Your Application Now", "Apply For Your Spot Today", "Begin Your Application — It Takes 3 Minutes". 4–8 words.
@@ -77,15 +80,17 @@ Exactly 4 credential/authority items that establish the coach's credibility. Eac
 - description: 1–2 sentences expanding on the credential and why it matters to the prospect.
 
 benefitBlocks:
-Exactly 5 programme pillars or benefit sections. Each represents a core component of what the client gets. Each has:
-- heading: A compelling benefit-focused heading (NOT a feature). 5–10 words. E.g. "Stop Guessing — Get a Personalised Nutrition Plan That Actually Works"
-- body: 2–3 sentences explaining what this pillar delivers and how it changes the client's life. Be specific to the niche.
+Exactly 5 programme pillars or benefit sections. Draw these DIRECTLY from the `inclusions`, `programPillars`, and `uniqueApproach` in the context — do not invent generic pillars. If the programme includes nutrition, training, accountability calls, or community, use those exact inclusions.
+
+Each has:
+- heading: A benefit-focused heading written as what the CLIENT gets/feels/achieves — NOT the feature name. Never write "A Customised Nutrition Plan" as the heading — write "Stop Guessing What to Eat — Your Plan Is Built Around Your Life, Goals, and Preferences". The heading should make the prospect feel the value. 8–14 words.
+- body: 2–3 sentences. First sentence: what this pillar includes specifically (referencing the actual inclusion). Second sentence: the transformation it creates — what changes in the client's daily life. Third sentence (optional): a specific detail that makes it feel premium and personal. Be specific to the niche and audience in the context.
 
 midCtaHeading:
-A bold mid-page CTA heading. Creates urgency or scarcity. E.g. "Ready to Finally [Achieve Goal]? Applications Are Now Open — But Spaces Are Limited". 10–18 words.
+A bold mid-page CTA heading placed directly below the coach bio section. It must reference the audience's biggest struggle from the context (biggestStruggle field) and position the strategy call as the solution to THAT specific problem — not a generic coaching call. Structure: "Tired of [specific pain from biggestStruggle]? Click Below — Let's Build Your Plan Together." Make the struggle name feel real and personal. 10–18 words.
 
 midCtaText:
-The CTA button text for the mid-page CTA. 4–7 words. E.g. "Secure Your Application Spot", "Apply Now — Limited Spaces"
+The CTA button text for the mid-page CTA. Action verb first. Must reference the programme name or the specific transformation. 4–7 words. E.g. "Book My [Programme Name] Strategy Call", "Apply — Get Your Free Plan"
 
 painPointHeading:
 A bold, visceral rhetorical question or statement that names the single biggest pain the ideal client is living right now. Placed as a section heading just after the coach bio, it bridges the coach's personal struggle into the reader's current situation. E.g. "You Know Exactly How Exhausting It Is To Keep Starting Over, Don't You?", "Nobody Wakes Up Wanting To Feel Invisible In Their Own Body." 10–18 words. Must be emotionally direct — no corporate language.
@@ -102,23 +107,17 @@ galleryHeading:
 A heading for the transformation/results gallery section. E.g. "Real Results From Real Clients", "What's Possible When You Commit to [Programme Name]". 5–12 words.
 
 qualificationSectionHeading:
-A heading introducing the red/green qualification section. E.g. "This Programme Is Designed For a Very Specific Type of Person", "Not Everyone Is Ready For This — Are You?". 8–16 words.
+A heading introducing the red/green qualification section. Must be specific to this niche and audience — not generic coaching language. Reference the type of person this programme is designed for. E.g. "This Is For [Audience Identity] Who Are Done Making Excuses And Ready To Change". 8–16 words.
 
 shouldNotApply:
-Between 4 and 8 bullet points for the "You Should NOT Apply If..." disqualifier list. These should:
-- Describe the wrong mindset (not ready to invest time, money, or effort)
-- Mention people who want quick fixes or magic pills
-- Mention those who won't implement or are not coachable
-- Be specific enough to create contrast — but not aggressive or insulting
-Write each as a short phrase (8–18 words).
+Between 5 and 7 bullet points. Each must be a complete, specific sentence — NOT a vague phrase. They should create a clear mental image of the wrong person and make the right person nod in relief. Pull from objections and audience psychology in the context. Cover: mindset not ready for investment; wanting a magic pill or shortcut; unwilling to follow a structured system; not coachable or open to feedback; looking for results without accountability.
+Each bullet = 12–22 words. Write as full sentences, not fragments.
+Example: "You're looking for a cheap quick fix that promises results without changing your habits."
 
 shouldApply:
-Between 4 and 8 bullet points for the "You SHOULD Apply If..." qualifier list. These should:
-- Describe the motivated, committed, coachable ideal client
-- Reference being ready to invest in themselves and trust a structured system
-- Mention specific desires or goals aligned with the programme
-- Create a sense of recognition — the right person reads these and thinks "that's me"
-Write each as a short phrase (8–18 words).
+Between 5 and 7 bullet points. Each must create a strong identification moment — the ideal client reads this and thinks "that's exactly me." Pull from idealClientProfile, mainGoal, and targetAudience in the context. Cover: readiness to invest in structured support; tired of doing it alone and getting inconsistent results; committed to following a proven system; a specific life situation that matches the target audience; desire for the specific transformation this programme delivers.
+Each bullet = 12–22 words. Write as full sentences, not fragments.
+Example: "You're a busy dad who's tried the gym alone but keeps falling off — and you're ready for real accountability."
 
 textTestimonials:
 Exactly 3 text-based client testimonials. Each has:
@@ -127,10 +126,13 @@ Exactly 3 text-based client testimonials. Each has:
 - result: A short bold result badge (4–8 words). E.g. "Lost 18kg in 12 weeks", "Went from burnout to thriving"
 
 whatYouGetHeading:
-Heading for the "What's Included" section. E.g. "Everything You Get When You Join [Programme Name]", "Here's What's Waiting For You Inside". 6–12 words.
+Heading for the "What's Included" section. Must name the programme. E.g. "Everything You Get When You Join [Programme Name]". 6–12 words.
 
 whatYouGetItems:
-Between 6 and 8 items listing what's included in the programme. Write each as a compelling benefit statement, not just a feature name. E.g. "Weekly 1-on-1 coaching calls — personalised accountability and strategy every step of the way". 10–20 words each.
+Between 6 and 8 items. Draw DIRECTLY from the wizard's `inclusions` and `programPillars` — list the ACTUAL things included, not invented ones. Each item follows this format:
+"[Feature name] — [specific benefit in the client's language, referencing the outcome it creates]"
+Example: "A fully customised nutrition plan — built around your daily routine, calorie target, and food preferences so you always know exactly what to eat"
+The feature name is short and specific. The benefit after the dash must be outcome-focused and personal — 12–20 words after the dash. Never use vague language like "helps you achieve your goals".
 
 transformationGalleryHeading:
 Heading for the before/after transformation gallery section. E.g. "The Proof Is In The Results", "These Are Real Transformations From Real People". 5–10 words.
