@@ -2,7 +2,7 @@ import { SignupForm } from "@/components/auth/signup-form";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Sign up | Challenge Funnel in a Box",
+  title: "Sign up | FitPro Launch",
 };
 
 export default function SignupPage() {
@@ -10,10 +10,10 @@ export default function SignupPage() {
     <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900">
-          Generate your funnel free
+          Start your FitPro Launch account
         </h1>
         <p className="mt-2 text-gray-500">
-          Create an account and launch your first challenge in minutes
+          Generate 20+ assets and launch your first paid challenge this week
         </p>
       </div>
       <SignupForm />
