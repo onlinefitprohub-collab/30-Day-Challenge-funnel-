@@ -80,7 +80,7 @@ Exactly 4 credential/authority items that establish the coach's credibility. Eac
 - description: 1–2 sentences expanding on the credential and why it matters to the prospect.
 
 benefitBlocks:
-Exactly 5 programme pillars or benefit sections. Draw these DIRECTLY from the `inclusions`, `programPillars`, and `uniqueApproach` in the context — do not invent generic pillars. If the programme includes nutrition, training, accountability calls, or community, use those exact inclusions.
+Exactly 5 programme pillars or benefit sections. Draw these DIRECTLY from the 'inclusions', 'programPillars', and 'uniqueApproach' in the context — do not invent generic pillars. If the programme includes nutrition, training, accountability calls, or community, use those exact inclusions.
 
 Each has:
 - heading: A benefit-focused heading written as what the CLIENT gets/feels/achieves — NOT the feature name. Never write "A Customised Nutrition Plan" as the heading — write "Stop Guessing What to Eat — Your Plan Is Built Around Your Life, Goals, and Preferences". The heading should make the prospect feel the value. 8–14 words.
@@ -129,7 +129,7 @@ whatYouGetHeading:
 Heading for the "What's Included" section. Must name the programme. E.g. "Everything You Get When You Join [Programme Name]". 6–12 words.
 
 whatYouGetItems:
-Between 6 and 8 items. Draw DIRECTLY from the wizard's `inclusions` and `programPillars` — list the ACTUAL things included, not invented ones. Each item follows this format:
+Between 6 and 8 items. Draw DIRECTLY from the wizard's 'inclusions' and 'programPillars' — list the ACTUAL things included, not invented ones. Each item follows this format:
 "[Feature name] — [specific benefit in the client's language, referencing the outcome it creates]"
 Example: "A fully customised nutrition plan — built around your daily routine, calorie target, and food preferences so you always know exactly what to eat"
 The feature name is short and specific. The benefit after the dash must be outcome-focused and personal — 12–20 words after the dash. Never use vague language like "helps you achieve your goals".
