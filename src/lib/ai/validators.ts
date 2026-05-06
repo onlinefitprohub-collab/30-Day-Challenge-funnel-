@@ -260,6 +260,17 @@ const faqItemSchema        = z.object({ question: z.string().min(1), answer: z.s
 const textTestimonialSchema = z.object({ quote: z.string().min(1), attribution: z.string().min(1), result: z.string().min(1) });
 const clientWinSchema      = z.object({ name: z.string().min(1), result: z.string().min(1) });
 
+const problemBreakdownItemSchema = z.object({
+  title:    z.string().min(1),
+  headline: z.string().min(1),
+  body:     z.string().min(1),
+});
+
+const clientStorySchema = z.object({
+  intro: z.string().min(1),
+  story: z.string().min(1),
+});
+
 export const applicationLandingPageSchema = z.object({
   valuePropHeadline:            z.string().min(1),
   valuePropSubheadline:         z.string().min(1),
@@ -273,6 +284,7 @@ export const applicationLandingPageSchema = z.object({
   benefitBlocks:                z.array(benefitBlockSchema).length(5),
   midCtaHeading:                z.string().min(1),
   midCtaText:                   z.string().min(1),
+  painPointHeading:             z.string().min(1).optional(),
   dividerHeading:               z.string().min(1),
   faqItems:                     z.array(faqItemSchema).min(4).max(8),
   galleryHeading:               z.string().min(1),
@@ -285,6 +297,8 @@ export const applicationLandingPageSchema = z.object({
   transformationGalleryHeading: z.string().min(1),
   clientWinsHeading:            z.string().min(1),
   clientWins:                   z.array(clientWinSchema).min(4).max(8),
+  clientStories:                z.array(clientStorySchema).min(2).max(6),
+  problemBreakdown:             z.array(problemBreakdownItemSchema).min(3).max(5).optional(),
   finalCtaText:                 z.string().min(1),
   finalCtaSubtext:              z.string().min(1),
 });

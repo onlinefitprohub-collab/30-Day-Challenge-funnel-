@@ -3415,41 +3415,51 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
-  // Pain-point bridge heading (between coach bio and qualification section)
+  // Pain-point bridge heading (between coach bio and qualification section) — Image 1
   if (al.painPointHeading) setH("heading-yuy6jYEoC8b", `<strong>${al.painPointHeading}</strong>`);
 
   // Will This Work For You (section 6)
   setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
+
+  // Qualification text boxes: shouldNotApply / shouldApply — Image 5
+  if (al.shouldNotApply?.length) {
+    setPara("paragraph-ziOu3aGDIemA",
+      al.shouldNotApply.map(b => `<p>${b}</p>`).join(""));
+  }
+  if (al.shouldApply?.length) {
+    setPara("paragraph-zGtOd4tfS9Jj",
+      al.shouldApply.map(b => `<p>${b}</p>`).join(""));
+  }
 
   // Individual testimonial quote headings (sections 7–9) — first sentence only, white font
   const firstSentence = (q: string): string => {
     const m = q.match(/^[^.!?]*[.!?]/);
     return (m ? m[0] : q).trim();
   };
-  setH("heading-gGTM7pLAWp1", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[0]?.quote ?? "")}</strong></font>`);
-  setH("heading-DxtKO-nccYj", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[1]?.quote ?? "")}</strong></font>`);
-  setH("heading-ry34q51jror", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[2]?.quote ?? "")}</strong></font>`);
+  // Section banners sec7, sec8, sec9, sec10 — quote pull from textTestimonials (cycling)
+  const tq = al.textTestimonials ?? [];
+  setH("heading-_En8uWhKmVA",  `<font color="#ffffff"><strong>${firstSentence(tq[0]?.quote ?? "")}</strong></font>`);
+  setH("heading-gGTM7pLAWp1",  `<font color="#ffffff"><strong>${firstSentence(tq[1]?.quote ?? "")}</strong></font>`);
+  setH("heading-DxtKO-nccYj",  `<font color="#ffffff"><strong>${firstSentence(tq[2]?.quote ?? "")}</strong></font>`);
+  setH("heading-ry34q51jror",  `<font color="#ffffff"><strong>${firstSentence(tq[0]?.quote ?? "")}</strong></font>`);
+  setH("heading-RIn1NtrlXS8",  `<font color="#ffffff"><strong>${firstSentence(tq[1]?.quote ?? "")}</strong></font>`);
+  setH("heading-viOg4MlCPp6",  `<font color="#ffffff"><strong>${firstSentence(tq[2]?.quote ?? "")}</strong></font>`);
 
-  // 5-problems divider (section 12)
-  setH("heading-VNPStBY-834", al.dividerHeading);
-
-  // Client wins (section 14)
-  setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
-
-  // Client story testimonials ("Meet...") — 4 slots, each with heading + paragraph body
+  // Client story testimonials ("Meet...") — 6 slots, cycling through 4 AI stories — Image 2
   if (al.clientStories?.length) {
+    const stories = al.clientStories;
     const storySlots: Array<{ hId: string; pId: string }> = [
-      { hId: "heading-wjLhJNffCfJ", pId: "paragraph-TTT5HB7ObG2" },
-      { hId: "heading-BR4dOzOIMUM", pId: "paragraph-kuB6vFalrL1" },
-      { hId: "heading-J9OmZLFKCjs", pId: "paragraph-alo12AY748y" },
-      { hId: "heading-apNyLjFRjAR", pId: "paragraph-5h9jUu0lVNq" },
+      { hId: "heading-XpRYNHYvq8z", pId: "paragraph-_Y-l5Y0qw9r" }, // sec7
+      { hId: "heading-wjLhJNffCfJ", pId: "paragraph-TTT5HB7ObG2" }, // sec8
+      { hId: "heading-BR4dOzOIMUM", pId: "paragraph-kuB6vFalrL1" }, // sec9
+      { hId: "heading-J9OmZLFKCjs", pId: "paragraph-alo12AY748y" }, // sec10
+      { hId: "heading-apNyLjFRjAR", pId: "paragraph-5h9jUu0lVNq" }, // sec11
+      { hId: "heading-TQmPc9fazcv", pId: "paragraph-2YZN-gztJPR" }, // sec12
     ];
     for (let i = 0; i < storySlots.length; i++) {
-      const story = al.clientStories[i];
-      if (!story) break;
+      const story = stories[i % stories.length];
       const slot = storySlots[i];
       setH(slot.hId, `<strong>${story.intro}</strong>`);
-      // Wrap multi-paragraph story as individual <p> blocks
       const paraHtml = story.story
         .split(/\n+/)
         .filter(Boolean)
@@ -3459,8 +3469,59 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     }
   }
 
-  // What you get (section 15)
+  // 5-problems divider (section 13)
+  setH("heading-VNPStBY-834", al.dividerHeading);
+
+  // Problem breakdown — 5 problems section (sec14) — Image 3
+  if (al.problemBreakdown?.length) {
+    const pbHeadings  = ["heading-QX_mHLy8qEq", "heading-bM5TzQyiz8p", "heading-3a9nBfpbpKU", "heading-gTlAF3yL1mV", "heading-9e-PLhPNKzp"];
+    const pbSublines  = ["sub-heading-3e2thqidJa5", "sub-heading-4EddE7bDMbu", "sub-heading-m_ioVFgJMdo", "sub-heading-JFG7rZTRk3j", "sub-heading-zf9lbN9K2Pd"];
+    const pbBodylines = ["sub-heading-vkjZxqzI_YB", "sub-heading-frqM65qZ53e", "sub-heading-UPjxYTeX5OC", "sub-heading-F4H6DkSjJwp", "sub-heading-FooRjOVQlKF"];
+    for (let i = 0; i < al.problemBreakdown.length && i < 5; i++) {
+      const pb = al.problemBreakdown[i];
+      setH(pbHeadings[i],  `<strong>${pb.title}</strong>`);
+      setH(pbSublines[i],  `<strong>${pb.headline}</strong>`);
+      setPara(pbBodylines[i], bioPara(pb.body));
+    }
+  }
+
+  // Client wins (section 15)
+  setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
+
+  // What you get — feature headings + paragraph bodies (sec16) — Image 4
+  if (al.whatYouGetItems?.length) {
+    const wygHeadings = [
+      "heading-KSi5Gr4J5v0", "heading-KY8qQqFsiid", "heading-EvE6-9xa9PID",
+      "heading-mDH6w6uji2rc", "heading-JLQkrveM1KnE", "heading-GatWECyOonx4",
+    ];
+    const wygParas = [
+      "paragraph-lzUIWL0SbxY", "paragraph-lFYWPVEtX935", "paragraph-XgE-kbfjrkYk",
+      "paragraph-fQGDUE4LR-Uy", "paragraph-ALy7DPf01W0u", "paragraph-1kDBNGfKvBXx",
+    ];
+    const items = al.whatYouGetItems;
+    for (let i = 0; i < 6; i++) {
+      const item = items[i] ?? items[items.length - 1] ?? "";
+      const dash = item.indexOf("—");
+      const featureName = (dash > 0 ? item.slice(0, dash) : item).trim();
+      const benefitText = (dash > 0 ? item.slice(dash + 1) : "").trim();
+      setH(wygHeadings[i], `<strong>${featureName.toUpperCase()}</strong>`);
+      if (benefitText) setPara(wygParas[i], `<p>${benefitText}</p>`);
+    }
+  }
   setH("heading-XpcooI_gth7", al.whatYouGetHeading);
+  setH("heading-MYwP6zucWywQ", al.whatYouGetHeading);
+
+  // What you get recap bullet list (sec18)
+  if (al.whatYouGetItems?.length) {
+    const recapBulletEl = byId.get("bulletList-y_I3SqcE1w2C");
+    if (recapBulletEl) {
+      const ulHtml = `<ul>${al.whatYouGetItems.map(item => {
+        const dash = item.indexOf("—");
+        return `<li>${(dash > 0 ? item.slice(0, dash) : item).trim()}</li>`;
+      }).join("")}</ul>`;
+      (recapBulletEl.extra as Record<string, unknown>).text = { value: ulHtml };
+    }
+  }
 
   // More transformations (section 18)
   setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);

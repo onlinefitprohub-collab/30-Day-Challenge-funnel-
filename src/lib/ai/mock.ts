@@ -413,6 +413,55 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
       { name: "Dan P.", result: "Dropped 4 trouser sizes and beat his insomnia" },
     ],
 
+    painPointHeading: `Are You ${audienceShort.charAt(0).toUpperCase() + audienceShort.slice(1)} Who's Sick And Tired Of Trying Everything And Still Not ${desiredOutcome}?`,
+
+    clientStories: [
+      {
+        intro: `Meet James, a ${audienceShort} who had tried everything and was ready to give up.`,
+        story: `"I'd been spinning my wheels for two years. I tried every programme out there — nothing seemed to work for someone in my situation.\n\nWhen I joined ${programmeName} everything clicked. Within 8 weeks I had more progress than I'd made in the previous two years combined. ${coachName} built everything around my life, not some generic template.\n\nIf you're on the fence, don't be. This changed everything for me."`,
+      },
+      {
+        intro: `Meet Sarah, a 42-year-old who'd struggled with ${biggestStruggle} for years before finding ${programmeName}.`,
+        story: `"I honestly didn't think change was possible at my stage of life. I'd accepted that this was just how things were going to be.\n\nBut ${coachName} showed me exactly what I'd been missing — and the results followed almost immediately. Down 3 dress sizes, more energy than I've had in a decade.\n\nThe support and accountability made the difference. I never felt alone in the process."`,
+      },
+      {
+        intro: `Meet Mark, a busy professional who finally found a system that fit around his life.`,
+        story: `"My schedule is insane — I travel constantly and thought there was no way I could commit to anything structured.\n\n${coachName} designed everything around my reality. Not what a programme expects of me, but what I could actually do. And the results were remarkable.\n\nI'm in the best shape of my adult life. Best decision I've made for myself in years."`,
+      },
+      {
+        intro: `Meet Lisa, who went from frustrated and stuck to thriving in just 12 weeks.`,
+        story: `"I'd tried every shortcut going. Nothing was working. I was frustrated, embarrassed, and genuinely starting to wonder if I was just one of those people who couldn't change.\n\n${programmeName} showed me I was wrong. Within weeks I started seeing and feeling the difference. By week 12 I barely recognised myself.\n\nIf you're where I was — please just take the leap. You won't regret it."`,
+      },
+    ],
+
+    problemBreakdown: [
+      {
+        title: `PROBLEM #1 — THE WRONG APPROACH!`,
+        headline: `GENERIC PROGRAMMES AREN'T BUILT FOR ${audienceShort.toUpperCase()} — AND THEY NEVER WILL BE`,
+        body: `Most programmes assume you have unlimited time, a perfectly consistent schedule, and a body that responds like a textbook case. That's not you — and it's not most people.\n\nUntil you have a programme built specifically around your situation, you'll keep hitting the same wall. It's not a failure of willpower. It's a failure of fit.`,
+      },
+      {
+        title: `PROBLEM #2 — NO ACCOUNTABILITY!`,
+        headline: `GOING IT ALONE IS THE SINGLE BIGGEST REASON PEOPLE QUIT BEFORE THEY SEE RESULTS`,
+        body: `Research consistently shows that people with structured accountability are significantly more likely to achieve their goals. Yet most programmes hand you a plan and wish you luck.\n\nAccountability isn't a nice-to-have. For most people, it's the entire difference between finishing and quitting — and between results that stick and results that fade.`,
+      },
+      {
+        title: `PROBLEM #3 — INFORMATION OVERLOAD!`,
+        headline: `TOO MUCH CONFLICTING ADVICE KEEPS YOU PARALYSED — NEVER KNOWING WHAT WILL ACTUALLY WORK`,
+        body: `Eat this. Don't eat that. Do cardio. Don't do cardio. The amount of conflicting information online is overwhelming — and most of it is generic at best, damaging at worst.\n\nWhen you don't have a clear, personalised plan from someone who knows your situation, you end up trying everything and committing to nothing.`,
+      },
+      {
+        title: `PROBLEM #4 — INCONSISTENCY!`,
+        headline: `GREAT WEEKS AND TERRIBLE WEEKS WITH NO SYSTEM TO BRIDGE THE GAP MEANS YOU NEVER BUILD MOMENTUM`,
+        body: `Motivation comes in waves. You feel unstoppable for two weeks, then life hits — a bad day, a missed session, a stressful week — and suddenly you've lost all momentum.\n\nReal results don't come from perfect weeks. They come from consistent ones. Without the right structure and support, consistency stays a goal rather than a habit.`,
+      },
+      {
+        title: `PROBLEM #5 — ${biggestStruggle.toUpperCase().slice(0, 40)}!`,
+        headline: `THE REAL REASON YOU'RE STILL STUCK IS THAT NOBODY HAS GIVEN YOU A PLAN BUILT FOR YOUR SPECIFIC SITUATION`,
+        body: `Everything you've tried has been built for someone else's problem — not yours. The solution isn't to try harder. It's to find the right system.\n\nThat's exactly what ${programmeName} delivers. A proven framework, personalised to you, with the coaching and accountability to make it stick.`,
+      },
+    ],
+
     finalCtaText: "Submit Your Application Now",
     finalCtaSubtext: `No payment today. A member of the ${businessName} team will review your application and reach out within 24 hours to discuss whether this programme is the right fit for you.`,
   };
