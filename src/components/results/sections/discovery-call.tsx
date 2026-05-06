@@ -175,7 +175,7 @@ export function DiscoveryCallPlaceholder({ projectId, onGenerated }: DiscoveryCa
       </h3>
       <p className="mb-6 max-w-sm text-sm text-gray-500">
         {loading
-          ? "This takes about 30 seconds — your word-for-word call script is being written."
+          ? "This usually takes 1–2 minutes — your word-for-word call script is being written."
           : "Create a complete, personalised 45–60 minute discovery call script with 8 call phases, objection handlers, and a post-call follow-up email — all tailored to your offer and audience."}
       </p>
       {!loading && (
