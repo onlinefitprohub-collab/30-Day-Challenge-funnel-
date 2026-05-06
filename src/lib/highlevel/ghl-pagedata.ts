@@ -3353,11 +3353,21 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     };
   }
 
+  // Fallback placeholder video used whenever the coach hasn't provided their own URL
+  const PLACEHOLDER_VIDEO = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
   // Hero (section 2)
+  setH("sub-heading-oAZ3MQORtdf", al.valuePropHeadline);   // main visible hero headline
   setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
-  setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
-  setVid("video-20p-7VhVtF4", videoUrl);
+  setH("sub-heading-JjZ1uBR6bqd", al.heroCtaSubtext);      // CTA-driving text below video
+  setVid("video-20p-7VhVtF4", videoUrl || PLACEHOLDER_VIDEO);
+
+  // Testimonial video section — replace original video with placeholder; use AI-generated quote
+  setH("heading-eu5M2j4fixD", al.testimonialIntroHeading);
+  setVid("video-s26YMI7Zhs9", PLACEHOLDER_VIDEO);
+  setH("sub-heading-i8Utr-7v5AK", `“${al.testimonialVideoQuote}”`);
+  setH("sub-heading-SAFNlazCKKT", "— A Recent Client");
 
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
   const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
@@ -3366,22 +3376,22 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   // Inject AI-generated coach story paragraphs if available, otherwise keep intro heading
   const story = data.coachStory;
+  // Helper: split multi-paragraph AI text into proper <p> blocks (not h2 headings)
+  const bioPara = (text: string) =>
+    text.split(/\n+/).filter(Boolean).map(p => `<p>${p}</p>`).join("");
   if (story?.part1) {
-    // Keep the heading as a short 1-sentence intro; story paragraphs go in sub-headings only
     setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
     setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-    // Fill the 3 story sub-sections with the 3 bio paragraphs
-    setH("sub-heading-FvfzFHkx-9U", story.part1);
-    setH("sub-heading-0vtmtqgq1Lg", story.part2 ?? story.part1);
-    setH("sub-heading-uegTH1yDDad", story.part3 ?? story.part2 ?? story.part1);
+    setPara("sub-heading-FvfzFHkx-9U", bioPara(story.part1));
+    setPara("sub-heading-0vtmtqgq1Lg", bioPara(story.part2 ?? story.part1));
+    setPara("sub-heading-uegTH1yDDad", bioPara(story.part3 ?? story.part2 ?? story.part1));
   } else {
-    // Fallback: personalised headings + clear the 3 template story sub-headings so the
-    // original placeholder content (Tom's story) doesn't bleed through in the preview.
+    // Fallback: clear original template content so Tom's story doesn't show through
     setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
     setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-    setH("sub-heading-FvfzFHkx-9U", `<p>Complete the "Your Story" step in the wizard to generate your AI-written coach bio — or add your own story here in the GHL builder.</p>`);
-    setH("sub-heading-0vtmtqgq1Lg", `<p></p>`);
-    setH("sub-heading-uegTH1yDDad", `<p></p>`);
+    setPara("sub-heading-FvfzFHkx-9U", `<p>Complete the "Your Story" step in the wizard to generate your AI-written coach bio — or add your own story here in the GHL builder.</p>`);
+    setPara("sub-heading-0vtmtqgq1Lg", `<p></p>`);
+    setPara("sub-heading-uegTH1yDDad", `<p></p>`);
   }
 
   // Align 4 transformation cards in section 5 to top
@@ -3390,10 +3400,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (transformRow.styles as Record<string, unknown>).alignItems = { value: "flex-start" };
   }
 
-  // Reduce line spacing to single-line for all 3 coach bio text blocks
+  // Comfortable line spacing for coach bio body paragraphs
   for (const shId of ["sub-heading-FvfzFHkx-9U", "sub-heading-0vtmtqgq1Lg", "sub-heading-uegTH1yDDad"]) {
     const shEl = byId.get(shId);
-    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1.4", unit: "em" };
+    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1.7", unit: "em" };
   }
 
   // Add spacing below bullet list elements (sections 15, 17)
