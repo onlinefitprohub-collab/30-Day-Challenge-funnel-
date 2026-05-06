@@ -5,7 +5,7 @@ import { User, CreditCard, Puzzle, Download } from "lucide-react";
 import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-card";
 
 export const metadata = {
-  title: "Account Settings | Challenge Funnel in a Box",
+  title: "Account Settings | FitPro Launch",
 };
 
 export default async function AccountPage() {

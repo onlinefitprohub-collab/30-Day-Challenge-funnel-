@@ -9,7 +9,7 @@ import { AdminCreateFolder } from "@/components/admin/admin-create-folder";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Admin | Challenge Funnel in a Box",
+  title: "Admin | FitPro Launch",
 };
 
 interface ProjectRow {
