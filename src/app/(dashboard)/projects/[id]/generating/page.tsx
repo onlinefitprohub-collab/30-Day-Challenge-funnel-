@@ -4,7 +4,7 @@ import { GeneratingView } from "@/components/projects/generating-view";
 import type { ProjectRow } from "@/types/project";
 
 export const metadata = {
-  title: "Generating your funnel… | Challenge Funnel in a Box",
+  title: "Generating your funnel… | FitPro Launch",
 };
 
 export default async function GeneratingPage({

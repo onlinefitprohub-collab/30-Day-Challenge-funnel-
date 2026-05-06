@@ -99,7 +99,7 @@ export function HighLevelSection({ data, projectId: _projectId, hlConnected: _hl
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-sm">Inject pages directly into HighLevel builder</p>
-            <p className="text-xs text-gray-400">Uses the Challenge Funnel Chrome extension — takes about 2 minutes to set up</p>
+            <p className="text-xs text-gray-400">Uses the FitPro Launch Chrome extension — takes about 2 minutes to set up</p>
           </div>
         </div>
         <div className="p-5 space-y-3">

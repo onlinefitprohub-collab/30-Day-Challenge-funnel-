@@ -5,7 +5,7 @@ import type { ProjectRow, ProjectInputRow } from "@/types/project";
 import type { WizardInputs } from "@/types/wizard";
 
 export const metadata = {
-  title: "New Funnel Project | Challenge Funnel in a Box",
+  title: "New Funnel Project | FitPro Launch",
 };
 
 interface PageProps {
