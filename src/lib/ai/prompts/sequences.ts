@@ -8,6 +8,8 @@
  * Each message has a specific job tied to where the lead is in the journey.
  */
 
+import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-quality";
+
 const SMS_RULES = `─── SMS RULES ───
 
 Hard limits:
@@ -75,6 +77,10 @@ function buildChallengeSequencesPrompt(context: string, style: string): string {
 
 ${style}
 
+${buildAudienceAnalysisBlock()}
+
+${buildCopyStandardsBlock()}
+
 === YOUR TASK: CHALLENGE FOLLOW-UP SEQUENCES ===
 
 Write a complete SMS and email sequence for this challenge funnel. These are not one-off messages — they form a lifecycle arc from opt-in through the challenge to post-challenge follow-up. Each message must feel like it was written specifically for that moment. Use all available context — audience psychology, objections, tone, and any social proof.
@@ -113,6 +119,10 @@ function buildApplicationSequencesPrompt(context: string, style: string): string
 === COPYWRITING STYLE ===
 
 ${style}
+
+${buildAudienceAnalysisBlock()}
+
+${buildCopyStandardsBlock()}
 
 === YOUR TASK: APPLICATION FUNNEL FOLLOW-UP SEQUENCES ===
 

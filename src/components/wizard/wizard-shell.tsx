@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, AlertCircle } from "lucide-react";
-import { WIZARD_STEPS, type WizardInputs } from "@/types/wizard";
+import { CHALLENGE_WIZARD_STEPS, APPLICATION_WIZARD_STEPS, type WizardInputs } from "@/types/wizard";
 import { WizardProgress } from "@/components/wizard/wizard-progress";
 import { StepFunnelType } from "@/components/wizard/steps/step-funnel-type";
 import { StepBusinessBasics } from "@/components/wizard/steps/step-business-basics";
 import { StepOfferBasics } from "@/components/wizard/steps/step-offer-basics";
+import { StepApplicationDetails } from "@/components/wizard/steps/step-application-details";
+import { StepCoachStory } from "@/components/wizard/steps/step-coach-story";
 import { StepAudiencePain } from "@/components/wizard/steps/step-audience-pain";
 import { StepBrandVoice } from "@/components/wizard/steps/step-brand-voice";
 import { StepTrafficInputs } from "@/components/wizard/steps/step-traffic-inputs";
@@ -16,10 +18,22 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
 
-const STEP_COMPONENTS = [
+const CHALLENGE_STEP_COMPONENTS = [
   StepFunnelType,
   StepBusinessBasics,
   StepOfferBasics,
+  StepAudiencePain,
+  StepBrandVoice,
+  StepTrafficInputs,
+  StepSocialProof,
+];
+
+const APPLICATION_STEP_COMPONENTS = [
+  StepFunnelType,
+  StepBusinessBasics,
+  StepOfferBasics,
+  StepCoachStory,
+  StepApplicationDetails,
   StepAudiencePain,
   StepBrandVoice,
   StepTrafficInputs,
@@ -41,8 +55,12 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
     initialData ?? { duration: 30, trafficSources: [], hasBeforeAfter: false }
   );
 
-  const StepComponent = STEP_COMPONENTS[currentStep];
-  const isLastStep = currentStep === WIZARD_STEPS.length - 1;
+  const isApplication = formData.funnelType === "application";
+  const activeSteps      = isApplication ? APPLICATION_WIZARD_STEPS : CHALLENGE_WIZARD_STEPS;
+  const activeComponents = isApplication ? APPLICATION_STEP_COMPONENTS : CHALLENGE_STEP_COMPONENTS;
+
+  const StepComponent = activeComponents[currentStep];
+  const isLastStep = currentStep === activeSteps.length - 1;
   const isFirstStep = currentStep === 0;
 
   // Upsert inputs to DB — called silently after each step
@@ -177,7 +195,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
     }
   }
 
-  const step = WIZARD_STEPS[currentStep];
+  const step = activeSteps[currentStep];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -194,12 +212,12 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
         <p className="mt-2 text-gray-500">
           {initialProjectId
             ? "Pick up where you left off — your answers are saved."
-            : "Answer 7 short sections. We'll generate your complete funnel."}
+            : `Answer ${activeSteps.length} short sections. We'll generate your complete funnel.`}
         </p>
       </div>
 
       {/* Progress bar */}
-      <WizardProgress currentStep={currentStep} steps={WIZARD_STEPS} onStepClick={handleJumpToStep} />
+      <WizardProgress currentStep={currentStep} steps={activeSteps} onStepClick={handleJumpToStep} />
 
       {/* Save error banner */}
       {saveError && (
@@ -217,7 +235,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
         <div className="mb-6">
           <div className="mb-1 flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-widest text-brand-600">
-              Step {step.id} of {WIZARD_STEPS.length}
+              Step {step.id} of {activeSteps.length}
             </span>
           </div>
           <h2 className="text-xl font-bold text-gray-900">{step.title}</h2>

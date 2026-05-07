@@ -1,18 +1,23 @@
 "use client";
 
-import { useState, Fragment, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
-  Dumbbell, MessageCircle, CalendarDays,
+  Dumbbell, MessageCircle, CalendarDays, Pen, Video,
+  CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide } from "@/types/generation";
+import type { DiscoveryCallScript } from "@/types/discovery-call";
+import type { InstagramDmScript } from "@/types/dm-script";
+import type { UpsellSequence } from "@/types/upsell-sequence";
+import type { LaunchRoadmap } from "@/types/launch-roadmap";
 import type { LongFormSalesAssets } from "@/types/longform";
 import { OfferSummarySection }    from "./sections/offer-summary";
 import { LandingPageSection }     from "./sections/landing-page";
@@ -31,50 +36,80 @@ import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-p
 import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
 import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
+import { VslScriptSection, VslScriptPlaceholder }    from "./sections/vsl-script";
+import { ContentCalendarSection }    from "./sections/content-calendar";
+import { DeliveryPackSection }       from "./sections/delivery-pack";
+import { TestimonialHarvestSection } from "./sections/testimonial-harvest";
+import { PricingGuideSection }       from "./sections/pricing-guide";
+import { DiscoveryCallSection, DiscoveryCallPlaceholder } from "./sections/discovery-call";
+import { DmScriptSection, DmScriptPlaceholder } from "./sections/dm-script";
+import { UpsellSection, UpsellPlaceholder } from "./sections/upsell-sequence";
+import { LaunchRoadmapSection, LaunchRoadmapPlaceholder } from "./sections/launch-roadmap";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
-const CHALLENGE_TABS = [
-  { id: "highlevel",       label: "HighLevel",              icon: Layers,          highlight: true, group: "export" },
-  { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export" },
-  { id: "funnelPreview",   label: "Funnel Preview",         icon: LayoutTemplate,                   group: "preview" },
-  { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview" },
-  { id: "landingPage",     label: "Landing Page",           icon: FileText,                         group: "pages" },
-  { id: "optInForm",       label: "Opt-in Form",            icon: FormInput,                        group: "pages" },
-  { id: "thankYouPage",    label: "Thank You",              icon: ThumbsUp,                         group: "pages" },
-  { id: "bookingPage",     label: "Booking Page",           icon: Calendar,                         group: "pages" },
-  { id: "smsSequence",     label: "SMS Sequence",           icon: MessageSquare,                    group: "sequences" },
-  { id: "emailSequence",   label: "Email Sequence",         icon: Mail,                             group: "sequences" },
-  { id: "nurtureSequence", label: "52-Wk Nurture",          icon: CalendarDays,                     group: "sequences" },
-  { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
-  { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
-  { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
-  { id: "workoutPlan",     label: "Workout Plan",           icon: Dumbbell,                         group: "programme" },
-  { id: "salesLetter",     label: "Sales Letter",           icon: FileText,                         group: "longform" },
-] as const;
+type NavTab = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  group: string;
+  groupLabel?: string;     // defined only on the first tab of each group
+  highlight?: boolean;
+};
 
-const APPLICATION_TABS = [
-  { id: "highlevel",       label: "HighLevel",              icon: Layers,          highlight: true, group: "export" },
-  { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export" },
-  { id: "funnelPreview",   label: "Funnel Preview",         icon: LayoutTemplate,                   group: "preview" },
-  { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview" },
-  { id: "landingPage",     label: "Registration Page",       icon: FileText,                         group: "pages" },
-  { id: "optInForm",       label: "Application Form",       icon: FormInput,                        group: "pages" },
-  { id: "thankYouPage",    label: "App Received",           icon: ThumbsUp,                         group: "pages" },
-  { id: "bookingPage",     label: "Strategy Call",          icon: Calendar,                         group: "pages" },
-  { id: "smsSequence",     label: "SMS Sequence",           icon: MessageSquare,                    group: "sequences" },
-  { id: "emailSequence",   label: "Email Sequence",         icon: Mail,                             group: "sequences" },
-  { id: "nurtureSequence", label: "52-Wk Nurture",          icon: CalendarDays,                     group: "sequences" },
-  { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
-  { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
-  { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
-  { id: "manyChatFlow",    label: "ManyChat Flow",          icon: MessageCircle,                    group: "longform" },
-] as const;
+const CHALLENGE_TABS: NavTab[] = [
+  { id: "highlevel",     label: "Clone to GHL",     icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
+  { id: "ghlInspector",  label: "GHL Inspector",    icon: Microscope,                     group: "export" },
+  { id: "funnelPreview", label: "Funnel Preview",   icon: LayoutTemplate,                 group: "export" },
+  { id: "offerSummary",  label: "Offer Summary",    icon: Target,                         group: "overview",   groupLabel: "Overview" },
+  { id: "landingPage",   label: "Landing Page",     icon: FileText,                       group: "pages",      groupLabel: "Pages" },
+  { id: "optInForm",     label: "Opt-in Form",      icon: FormInput,                      group: "pages" },
+  { id: "thankYouPage",  label: "Thank You",        icon: ThumbsUp,                       group: "pages" },
+  { id: "bookingPage",   label: "Booking Page",     icon: Calendar,                       group: "pages" },
+  { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "sequences",  groupLabel: "Sequences" },
+  { id: "smsSequence",   label: "SMS Sequence",     icon: MessageSquare,                  group: "sequences" },
+  { id: "nurtureSequence",label:"52-Wk Nurture",    icon: CalendarDays,                   group: "sequences" },
+  { id: "adCopy",        label: "Ad Copy",          icon: Megaphone,                      group: "ads",        groupLabel: "Ads" },
+  { id: "creativePrompts",label:"Creatives",         icon: ImageIcon,                      group: "ads" },
+  { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
+  { id: "salesLetter",   label: "Sales Letter",     icon: FileText,                       group: "longform",   groupLabel: "Long-Form" },
+  { id: "workoutPlan",   label: "Workout Plan",     icon: Dumbbell,                       group: "longform" },
+  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
+  { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
+  { id: "contentCalendar",label:"Content Calendar", icon: CalendarRange,                  group: "coaching" },
+  { id: "deliveryPack",  label: "Delivery Pack",    icon: Package,                        group: "coaching" },
+  { id: "testimonialHarvest",label:"Testimonials",  icon: Star,                           group: "coaching" },
+  { id: "dmScript",      label: "DM Scripts",       icon: MessageCircle,                  group: "coaching" },
+  { id: "upsellSequence",label: "Upsell Sequence",  icon: TrendingUp,                     group: "coaching" },
+  { id: "launchRoadmap", label: "Launch Roadmap",   icon: Map,                            group: "coaching" },
+];
 
-// Union of all possible tab IDs across both funnel types
-type TabId =
-  | (typeof CHALLENGE_TABS)[number]["id"]
-  | (typeof APPLICATION_TABS)[number]["id"];
+const APPLICATION_TABS: NavTab[] = [
+  { id: "highlevel",     label: "Clone to GHL",     icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
+  { id: "ghlInspector",  label: "GHL Inspector",    icon: Microscope,                     group: "export" },
+  { id: "funnelPreview", label: "Page Preview",     icon: LayoutTemplate,                 group: "export" },
+  { id: "offerSummary",  label: "Offer Summary",    icon: Target,                         group: "overview",   groupLabel: "Overview" },
+  { id: "landingPage",   label: "Registration Page",icon: FileText,                       group: "pages",      groupLabel: "Pages" },
+  { id: "optInForm",     label: "Application Form", icon: FormInput,                      group: "pages" },
+  { id: "thankYouPage",  label: "App Received",     icon: ThumbsUp,                       group: "pages" },
+  { id: "bookingPage",   label: "Strategy Call",    icon: Calendar,                       group: "pages" },
+  { id: "vslScript",     label: "VSL Script",       icon: Video,                          group: "content",    groupLabel: "Content" },
+  { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "content" },
+  { id: "smsSequence",   label: "SMS Follow-Up",    icon: MessageSquare,                  group: "content" },
+  { id: "nurtureSequence",label:"52-Wk Nurture",    icon: CalendarDays,                   group: "content" },
+  { id: "adCopy",        label: "Ad Copy",          icon: Megaphone,                      group: "ads",        groupLabel: "Ads" },
+  { id: "creativePrompts",label:"Creatives",         icon: ImageIcon,                      group: "ads" },
+  { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
+  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
+  { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
+  { id: "contentCalendar",label:"Content Calendar", icon: CalendarRange,                  group: "coaching" },
+  { id: "testimonialHarvest",label:"Testimonials",  icon: Star,                           group: "coaching" },
+  { id: "dmScript",      label: "DM Scripts",       icon: MessageCircle,                  group: "coaching" },
+  { id: "upsellSequence",label: "Upsell Sequence",  icon: TrendingUp,                     group: "coaching" },
+  { id: "launchRoadmap", label: "Launch Roadmap",   icon: Map,                            group: "coaching" },
+];
+
+type TabId = string;
 
 interface ResultsShellProps {
   project: ProjectRow;
@@ -85,7 +120,6 @@ interface ResultsShellProps {
 
 type SectionGroup = "offer-pages" | "sequences" | "ads";
 
-// Maps each tab to its AI generation group (tabs without a group can't be section-regenerated)
 const TAB_SECTION_GROUP: Partial<Record<TabId, SectionGroup>> = {
   offerSummary:    "offer-pages",
   landingPage:     "offer-pages",
@@ -99,7 +133,13 @@ const TAB_SECTION_GROUP: Partial<Record<TabId, SectionGroup>> = {
   campaignNaming:  "ads",
 };
 
-async function triggerLongFormGeneration(projectId: string): Promise<import("@/types/longform").LongFormSalesAssets | null> {
+const GROUP_LABEL: Record<SectionGroup, string> = {
+  "offer-pages": "Pages & Offer",
+  "sequences":   "Sequences",
+  "ads":         "Ads & Campaign",
+};
+
+async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
   try {
     const res = await fetch("/api/generate-longform", {
       method:  "POST",
@@ -107,72 +147,65 @@ async function triggerLongFormGeneration(projectId: string): Promise<import("@/t
       body:    JSON.stringify({ projectId }),
     });
     if (!res.ok) return null;
-    const { longFormAssets } = await res.json() as { longFormAssets: import("@/types/longform").LongFormSalesAssets };
+    const { longFormAssets } = await res.json() as { longFormAssets: LongFormSalesAssets };
     return longFormAssets ?? null;
   } catch {
     return null;
   }
 }
 
-const GROUP_LABEL: Record<SectionGroup, string> = {
-  "offer-pages": "Pages & Offer",
-  "sequences":   "Sequences",
-  "ads":         "Ads & Campaign",
-};
-
 export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsShellProps) {
   const router = useRouter();
 
-  // Determine funnel type — default to "challenge" for backward compat
   const funnelType = (outputs.funnelType as "challenge" | "application" | undefined) ?? "challenge";
   const isApplication = funnelType === "application";
   const tabs = isApplication ? APPLICATION_TABS : CHALLENGE_TABS;
 
-  const [activeTab, setActiveTab]           = useState<TabId>("highlevel");
-  const [copiedAll, setCopiedAll]           = useState(false);
-  const [regenerating, setRegenerating]     = useState(false);
-  const [regenSection, setRegenSection]     = useState<SectionGroup | null>(null);
-  // Live outputs — updated in-place after section regeneration so the UI refreshes immediately
-  const [liveOutputs, setLiveOutputs]       = useState<Record<string, unknown>>(outputs);
+  const [activeTab, setActiveTab]     = useState<TabId>("highlevel");
+  const [copiedAll, setCopiedAll]     = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenSection, setRegenSection] = useState<SectionGroup | null>(null);
+  const [liveOutputs, setLiveOutputs]   = useState<Record<string, unknown>>(outputs);
 
-  // On-demand extras — managed in local state and merged back into liveOutputs on generation
-  const [liveWorkoutPlan, setLiveWorkoutPlan]         = useState<WorkoutPlan | undefined>(
-    outputs.workoutPlan as WorkoutPlan | undefined,
-  );
-  const [liveLongFormAssets, setLiveLongFormAssets]   = useState<LongFormSalesAssets | undefined>(
-    outputs.longFormAssets as LongFormSalesAssets | undefined,
-  );
-  const [liveNurtureSequence, setLiveNurtureSequence] = useState<NurtureSequence | undefined>(
-    outputs.nurtureSequence as NurtureSequence | undefined,
-  );
+  const [liveWorkoutPlan, setLiveWorkoutPlan]         = useState<WorkoutPlan | undefined>(outputs.workoutPlan as WorkoutPlan | undefined);
+  const [liveLongFormAssets, setLiveLongFormAssets]   = useState<LongFormSalesAssets | undefined>(outputs.longFormAssets as LongFormSalesAssets | undefined);
+  const [liveNurtureSequence, setLiveNurtureSequence] = useState<NurtureSequence | undefined>(outputs.nurtureSequence as NurtureSequence | undefined);
+  const [liveDiscoveryCallScript, setLiveDiscoveryCallScript] = useState<DiscoveryCallScript | undefined>(outputs.discoveryCallScript as DiscoveryCallScript | undefined);
+  const [liveDmScript, setLiveDmScript]               = useState<InstagramDmScript | undefined>(outputs.instagramDmScript as InstagramDmScript | undefined);
+  const [liveUpsellSequence, setLiveUpsellSequence]   = useState<UpsellSequence | undefined>(outputs.upsellSequence as UpsellSequence | undefined);
+  const [liveLaunchRoadmap, setLiveLaunchRoadmap]     = useState<LaunchRoadmap | undefined>(outputs.launchRoadmap as LaunchRoadmap | undefined);
 
-  // Auto-generate longform for challenge funnels on mount if ManyChat/sales letter not yet present.
-  // For application funnels, the registration page is generated synchronously during main generation —
-  // no separate longform auto-trigger needed.
-  useEffect(() => {
-    if (!isApplication && !liveLongFormAssets?.salesLetter) {
-      // Challenge funnels only — pre-warm the long-form sales letter if not yet generated.
-      // (ManyChat flow is application-only; handled separately via the manual trigger.)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { void triggerLongFormGeneration; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleWorkoutGenerated(plan: WorkoutPlan) {
     setLiveWorkoutPlan(plan);
-    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, workoutPlan: plan }));
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, workoutPlan: plan }));
   }
-
   function handleLongFormGenerated(assets: LongFormSalesAssets) {
     setLiveLongFormAssets(assets);
-    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, longFormAssets: assets }));
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, longFormAssets: assets }));
   }
-
   function handleNurtureGenerated(sequence: NurtureSequence) {
     setLiveNurtureSequence(sequence);
-    setLiveOutputs((prev: Record<string, unknown>) => ({ ...prev, nurtureSequence: sequence }));
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, nurtureSequence: sequence }));
+  }
+  function handleDiscoveryCallGenerated(script: DiscoveryCallScript) {
+    setLiveDiscoveryCallScript(script);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, discoveryCallScript: script }));
+  }
+  function handleDmScriptGenerated(script: InstagramDmScript) {
+    setLiveDmScript(script);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, instagramDmScript: script }));
+  }
+  function handleUpsellGenerated(seq: UpsellSequence) {
+    setLiveUpsellSequence(seq);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, upsellSequence: seq }));
+  }
+  function handleLaunchRoadmapGenerated(roadmap: LaunchRoadmap) {
+    setLiveLaunchRoadmap(roadmap);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, launchRoadmap: roadmap }));
   }
 
-  // Strip internal _isMock flag from the copy-all output
   const { _isMock: _removed, ...cleanOutputs } = liveOutputs;
   const assets = cleanOutputs as unknown as GeneratedFunnelAssets;
 
@@ -187,30 +220,18 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     if (regenerating) return;
     setRegenerating(true);
     try {
-      // Step 1: mark project as "generating" and get saved inputs back (awaited)
       const startRes = await fetch(`/api/regenerate/${project.id}`, { method: "POST" });
       if (!startRes.ok) {
         const err = await startRes.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error ?? `HTTP ${startRes.status}`);
       }
       const { inputs } = await startRes.json() as { inputs: unknown; projectId: string };
-
-      // Step 2: fire the heavy AI generation with keepalive so it survives navigation
       fetch("/api/generate", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ projectId: project.id, inputs }),
         keepalive: true,
-      }).then(async (res) => {
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({})) as { error?: string };
-          console.error("[regenerate] generation API failed:", err.error ?? `HTTP ${res.status}`);
-        }
-      }).catch((err) => {
-        console.error("[regenerate] generation fetch error:", err);
-      });
-
-      // Step 3: navigate to the generating screen (status is now "generating")
+      }).catch((err) => { console.error("[regenerate] fetch error:", err); });
       router.push(`/projects/${project.id}/generating`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
@@ -245,10 +266,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
-    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} />,
+    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} />,
-    // Landing page: challenge → short-form copy | application → registration page summary card
     landingPage: isApplication
       ? (
           <div className="space-y-4">
@@ -256,7 +276,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
               <p className="font-semibold text-blue-900">22-Section Registration Page</p>
               <p className="text-sm text-blue-700 mt-1">
                 Your registration page has been generated and is ready to preview and export to GHL.
-                Use the <strong>Funnel Preview</strong> tab to see it in full, or click{" "}
+                Use the <strong>Page Preview</strong> tab to see it in full, or click{" "}
                 <strong>Clone to GHL</strong> to inject it directly into your funnel.
               </p>
             </div>
@@ -273,8 +293,8 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
                     <p className="text-gray-800 font-medium">{assets.applicationLandingPage.heroCtaText}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Benefit Sections</p>
-                    <p className="text-gray-800">{assets.applicationLandingPage.benefitBlocks.length} programme pillars</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Programme Pillars</p>
+                    <p className="text-gray-800">{assets.applicationLandingPage.benefitBlocks.length} benefit blocks</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">FAQ Items</p>
@@ -302,11 +322,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     adCopy:          <AdCopySection          data={assets.adCopy} />,
     creativePrompts: <CreativePromptsSection data={assets.creativePrompts} generatedAdImages={assets.generatedAdImages} isMock={isMock} />,
     campaignNaming:  <CampaignNamingSection  data={assets.campaignNaming} />,
-    // Nurture — both funnel types
     nurtureSequence: liveNurtureSequence
       ? <NurtureSection data={liveNurtureSequence} projectId={project.id} onRegenerate={handleNurtureGenerated} />
       : <NurturePlaceholder projectId={project.id} onGenerated={handleNurtureGenerated} />,
-    // Challenge-only extras
     ...((!isApplication) && {
       workoutPlan: liveWorkoutPlan
         ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
@@ -314,52 +332,86 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       salesLetter: liveLongFormAssets
         ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,
+      deliveryPack: assets.deliveryPack
+        ? <DeliveryPackSection data={assets.deliveryPack as DeliveryPack} />
+        : null,
     }),
-    // Application-only extras
     ...(isApplication && {
+      vslScript: assets.vslScript
+        ? <VslScriptSection data={assets.vslScript} />
+        : <VslScriptPlaceholder />,
       manyChatFlow: liveLongFormAssets
         ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} generating />,
     }),
+    contentCalendar:    assets.contentCalendar
+      ? <ContentCalendarSection data={assets.contentCalendar as ContentCalendar} />
+      : null,
+    testimonialHarvest: assets.testimonialHarvestSequence
+      ? <TestimonialHarvestSection data={assets.testimonialHarvestSequence as TestimonialHarvestSequence} />
+      : null,
+    pricingGuide:       assets.pricingGuide
+      ? <PricingGuideSection data={assets.pricingGuide as PricingGuide} />
+      : null,
+    discoveryCall: liveDiscoveryCallScript
+      ? <DiscoveryCallSection data={liveDiscoveryCallScript} projectId={project.id} onRegenerate={handleDiscoveryCallGenerated} />
+      : <DiscoveryCallPlaceholder projectId={project.id} onGenerated={handleDiscoveryCallGenerated} />,
+    dmScript: liveDmScript
+      ? <DmScriptSection data={liveDmScript} projectId={project.id} onRegenerate={handleDmScriptGenerated} />
+      : <DmScriptPlaceholder projectId={project.id} onGenerated={handleDmScriptGenerated} />,
+    upsellSequence: liveUpsellSequence
+      ? <UpsellSection data={liveUpsellSequence} projectId={project.id} onRegenerate={handleUpsellGenerated} />
+      : <UpsellPlaceholder projectId={project.id} onGenerated={handleUpsellGenerated} />,
+    launchRoadmap: liveLaunchRoadmap
+      ? <LaunchRoadmapSection data={liveLaunchRoadmap} projectId={project.id} onRegenerate={handleLaunchRoadmapGenerated} />
+      : <LaunchRoadmapPlaceholder projectId={project.id} onGenerated={handleLaunchRoadmapGenerated} />,
   };
 
+  // Build grouped nav structure from tabs
+  const grouped: Array<{ label: string; items: NavTab[] }> = [];
+  for (const tab of tabs) {
+    if (tab.groupLabel !== undefined) {
+      grouped.push({ label: tab.groupLabel, items: [tab] });
+    } else {
+      grouped[grouped.length - 1]?.items.push(tab);
+    }
+  }
+
+  const activeTabDef = tabs.find(t => t.id === activeTab);
+  const sectionGroup = TAB_SECTION_GROUP[activeTab];
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-4">
 
-      {/* Demo mode banner */}
-      {isMock && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-          <div>
-            <p className="font-semibold text-amber-900">Demo content — based on your inputs</p>
-            <p className="text-sm text-amber-700">
-              This funnel was generated without an AI key, so the copy is structured but not fully AI-written.
-              Add <code className="rounded bg-amber-100 px-1 font-mono text-xs">ANTHROPIC_API_KEY</code> to your
-              environment and regenerate for fully tailored copy.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
-              Dashboard
+              <span className="hidden sm:inline">Dashboard</span>
             </Button>
           </Link>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-sm text-gray-500">
-            {isApplication ? "Your application funnel" : "Your complete challenge funnel"}
-          </p>
-              {outputs.templateVariant && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 border border-indigo-200">
-                  <LayoutTemplate className="h-3 w-3" />
-                  {String(outputs.templateVariant).replace(/-/g, " ")}
+            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                isApplication
+                  ? "bg-violet-50 text-violet-700 border border-violet-200"
+                  : "bg-blue-50 text-blue-700 border border-blue-200"
+              }`}>
+                {isApplication ? "Application Funnel" : "Challenge Funnel"}
+              </span>
+              {typeof outputs.copywriterStyle === "string" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 border border-orange-200">
+                  <Pen className="h-3 w-3" />
+                  {outputs.copywriterStyle.split(" — ")[0]}
+                </span>
+              )}
+              {isMock && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 border border-amber-200">
+                  <FlaskConical className="h-3 w-3" />
+                  Demo content
                 </span>
               )}
             </div>
@@ -368,82 +420,97 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={handleRegenerate}
             disabled={regenerating}
-            title="Re-run AI generation with your saved inputs"
           >
-            <RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
             {regenerating ? "Starting…" : "Regenerate"}
           </Button>
-          <Button variant="outline" onClick={handleCopyAll}>
+          <Button variant="outline" size="sm" onClick={handleCopyAll}>
             {copiedAll
-              ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
-              : <><Copy className="h-4 w-4" /> Copy all</>
+              ? <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+              : <><Copy className="h-3.5 w-3.5" /> Export JSON</>
             }
           </Button>
         </div>
       </div>
 
-      {/* Tab bar — scrollable on mobile */}
-      <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 w-max min-w-full sm:min-w-0">
-          {(tabs as readonly { id: TabId; label: string; icon: React.ComponentType<{ className?: string }>; group: string; highlight?: boolean }[]).map((tab, i) => {
-            const isHL = !!tab.highlight;
-            const isActive = activeTab === tab.id;
-            const showSeparator = i > 0 && tab.group !== tabs[i - 1].group;
-            return (
-              <Fragment key={tab.id}>
-                {showSeparator && (
-                  <div className="flex items-center px-0.5">
-                    <div className="h-5 w-px rounded-full bg-gray-300" />
-                  </div>
-                )}
-                <button
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                    isActive && isHL
-                      ? "bg-[#1a56db] text-white shadow-sm"
-                      : isActive
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : isHL
-                      ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  data-tab={tab.id}
-                >
-                  <tab.icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="hidden sm:block">{tab.label}</span>
-                </button>
-              </Fragment>
-            );
-          })}
+      {/* ── Body: sidebar + content ─────────────────────────────────────── */}
+      <div className="flex gap-5 items-start">
+
+        {/* Sidebar */}
+        <nav className="w-52 shrink-0 rounded-2xl border border-gray-200 bg-white py-4 overflow-hidden sticky top-4">
+          {grouped.map(({ label, items }) => (
+            <div key={label} className="mb-5 last:mb-0">
+              <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                {label}
+              </p>
+              <div className="space-y-0.5 px-2">
+                {items.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  const isHL = !!tab.highlight;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${
+                        isActive && isHL
+                          ? "bg-[#1a56db] text-white shadow-sm"
+                          : isActive
+                          ? "bg-gray-100 text-gray-900"
+                          : isHL
+                          ? "text-[#1a56db] hover:bg-[#e8f0fe]"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                      }`}
+                    >
+                      <tab.icon className="h-4 w-4 shrink-0 opacity-80" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Content area */}
+        <div className="flex-1 min-w-0 space-y-4">
+
+          {/* Section header */}
+          <div className="flex items-center justify-between">
+            <div>
+              {activeTabDef && (
+                <div className="flex items-center gap-2">
+                  <activeTabDef.icon className="h-5 w-5 text-gray-400" />
+                  <h2 className="text-lg font-semibold text-gray-900">{activeTabDef.label}</h2>
+                </div>
+              )}
+            </div>
+            {sectionGroup && (
+              <button
+                onClick={() => handleRegenerateSection(sectionGroup)}
+                disabled={!!regenSection}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 transition-colors"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${regenSection === sectionGroup ? "animate-spin" : ""}`} />
+                {regenSection === sectionGroup ? "Regenerating…" : "Regenerate section"}
+              </button>
+            )}
+          </div>
+
+          {/* Section content */}
+          <div key={activeTab} className="animate-fade-in">
+            {sections[activeTab] ?? (
+              <div className="flex items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-sm text-gray-400">
+                No content available for this section yet.
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 
-      {/* Active section */}
-      {(() => {
-        const tab = activeTab as TabId;
-        const sectionGroup = TAB_SECTION_GROUP[tab];
-        return (
-          <div className="animate-fade-in" key={tab}>
-            {/* Per-section regenerate button */}
-            {sectionGroup && (
-              <div className="mb-4 flex items-center justify-end">
-                <button
-                  onClick={() => handleRegenerateSection(sectionGroup)}
-                  disabled={!!regenSection}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 transition-colors"
-                  title={`Re-run AI for ${GROUP_LABEL[sectionGroup]} without regenerating the whole funnel`}
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${regenSection === sectionGroup ? "animate-spin" : ""}`} />
-                  {regenSection === sectionGroup ? "Regenerating…" : "Regenerate this section"}
-                </button>
-              </div>
-            )}
-            {sections[tab] ?? null}
-          </div>
-        );
-      })()}
     </div>
   );
 }

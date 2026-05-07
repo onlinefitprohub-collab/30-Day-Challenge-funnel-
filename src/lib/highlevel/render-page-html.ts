@@ -42,6 +42,28 @@ interface GhlNode {
 
 type NodeMap = Map<string, GhlNode>;
 
+// Firebase-native element types use plain names; the renderer expects "c-*" prefixed names.
+// This mapping lets both formats share the same switch block.
+const FIREBASE_TO_C: Record<string, string> = {
+  "row":          "c-row",
+  "col":          "c-column",
+  "heading":      "c-heading",
+  "sub-heading":  "c-sub-heading",
+  "paragraph":    "c-paragraph",
+  "button":       "c-button",
+  "image":        "c-image",
+  "video":        "c-video",
+  "bulletList":   "c-bullet-list",
+  "custom-code":  "c-custom-code",
+};
+
+function normalizeTag(node: GhlNode): string {
+  const t = node.tagName ?? "";
+  if (t.startsWith("c-")) return t;
+  const m = node.meta ?? "";
+  return FIREBASE_TO_C[t] ?? FIREBASE_TO_C[m] ?? t;
+}
+
 function renderNode(nodeId: string, nodeMap: NodeMap): string {
   const node = nodeMap.get(nodeId);
   if (!node) return "";
@@ -49,7 +71,7 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
   const extra = node.extra ?? {};
   const children = node.child.map((id) => renderNode(id, nodeMap)).join("");
 
-  switch (node.tagName) {
+  switch (normalizeTag(node)) {
     case "c-row": {
       const style = css({
         display: "flex",
@@ -243,6 +265,25 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
       const fontSize = sv(s.fontSize) ?? "16px";
       const lineHeight = sv(s.lineHeight) ?? "1.7em";
       return `<ul style="list-style:none;padding:0;margin:0;color:${color};font-size:${fontSize};line-height:${lineHeight}">${items.map((item) => `<li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:16px"><span style="color:${iconColor};flex-shrink:0;margin-top:2px;font-size:14px">&#10003;</span><span>${esc(item.text ?? "")}</span></li>`).join("")}</ul>`;
+    }
+
+    case "c-faq": {
+      const items = (
+        extra.faqList as { value?: Array<{ id: number; heading: string; text: string; active: boolean }> } | undefined
+      )?.value ?? [];
+      if (!items.length) return children;
+      const color = sv(s.color) ?? "var(--text-color,#1a1a2e)";
+      const faqs = items.map((item) => {
+        const qMatch = item.heading.match(/^<h[1-6][^>]*>([\s\S]*)<\/h[1-6]>$/i);
+        const q = qMatch?.[1] ?? item.heading;
+        const aMatch = item.text.match(/^<p[^>]*>([\s\S]*)<\/p>$/i);
+        const a = aMatch?.[1] ?? item.text;
+        return `<details${item.active ? " open" : ""} style="border-bottom:1px solid rgba(0,0,0,0.1);padding:4px 0;color:${color}">
+  <summary style="font-weight:600;font-size:15px;line-height:1.4;padding:14px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-family:var(--contentfont,'Poppins',sans-serif)">${q}<span style="font-size:11px;margin-left:12px;flex-shrink:0;opacity:0.6">▼</span></summary>
+  <p style="padding:0 0 14px;font-size:14px;line-height:1.6;opacity:0.85;margin:0;font-family:var(--contentfont,'Poppins',sans-serif)">${a}</p>
+</details>`;
+      }).join("\n");
+      return `<div style="width:100%">${faqs}</div>`;
     }
 
     default:
