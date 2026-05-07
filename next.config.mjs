@@ -18,6 +18,7 @@ const nextConfig = {
         ...(replitDevDomain ? [replitDevDomain] : []),
       ],
     },
+    optimizePackageImports: [],
   },
 };
 

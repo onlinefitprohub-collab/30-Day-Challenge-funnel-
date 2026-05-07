@@ -24,13 +24,16 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 const inputs: WizardInputs = {
+  funnelType: "challenge",
   businessName: "Brighton Fit Reset",
   coachName: "Tom",
   location: "Brighton",
   deliveryMode: "hybrid",
   targetAudience: "Busy men aged 30-45 who have gained weight and lost their routine",
   demographicDetails: "Mostly working professionals, some with families, sedentary jobs, limited free time",
+  challengeName: "Brighton 30-Day Body Reset",
   challengeType: "30-day body reset",
+  colourScheme: "navy-orange",
   mainGoal: "Lose 8-12 lbs, rebuild consistency, and improve energy levels",
   duration: 30,
   price: "£49",

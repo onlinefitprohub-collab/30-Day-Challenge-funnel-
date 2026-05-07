@@ -402,10 +402,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
               }`}>
                 {isApplication ? "Application Funnel" : "Challenge Funnel"}
               </span>
-              {outputs.copywriterStyle && (
+              {typeof outputs.copywriterStyle === "string" && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 border border-orange-200">
                   <Pen className="h-3 w-3" />
-                  {String(outputs.copywriterStyle).split(" — ")[0]}
+                  {outputs.copywriterStyle.split(" — ")[0]}
                 </span>
               )}
               {isMock && (
