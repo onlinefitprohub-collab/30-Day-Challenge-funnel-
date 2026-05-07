@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CF Funnel — HighLevel Builder</title>
+  <title>FitPro Launch — HighLevel Builder</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -35,7 +35,7 @@
     .logo {
       width: 32px; height: 32px; background: var(--orange); border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 13px; color: #fff;
+      font-weight: 900; font-size: 11px; color: #fff; letter-spacing: -0.5px;
     }
     .title { color: #fff; font-weight: 700; font-size: 14px; }
     .sub   { color: rgba(255,255,255,0.55); font-size: 11px; }
@@ -59,7 +59,6 @@
     .copied-card.has  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .copied-card.none { background: #fff7ed; border: 1px solid #fed7aa; color: #92400e; }
     .copied-card strong { display: block; font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    .copied-meta { font-size: 10px; color: var(--muted); margin-top: 4px; }
 
     /* ── Buttons ── */
     .btn {
@@ -87,17 +86,6 @@
     }
     .btn-clear:hover { color: #dc2626; border-color: #fecaca; }
 
-    /* ── Inline copy button next to debug trigger buttons ── */
-    .debug-btn-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-    .debug-btn-row .btn-clear { margin-top: 0; flex: 1; }
-    .btn-copy-debug {
-      background: transparent; color: #6b7280;
-      border: 1px solid #e5e7eb; border-radius: 5px;
-      padding: 4px 8px; font-size: 9px; font-weight: 600; cursor: pointer;
-      white-space: nowrap; display: none;
-    }
-    .btn-copy-debug:hover { color: #1d4ed8; border-color: #bfdbfe; }
-
     /* ── Copy action result ── */
     .copy-result {
       border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
@@ -115,36 +103,6 @@
     .paste-result.err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
     .paste-result.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; display: block; }
     .paste-result.info { background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b;  display: block; }
-
-    /* ── Divider ── */
-    .divider {
-      border: none; border-top: 1px solid var(--border); margin: 0;
-    }
-
-    /* ── Capture section ── */
-    .capture-url-row {
-      display: flex; gap: 6px; align-items: center;
-    }
-    .capture-input {
-      flex: 1; border: 1px solid var(--border); border-radius: 7px;
-      padding: 7px 10px; font-size: 11px; color: var(--dark);
-      background: #f8fafc; outline: none;
-      min-width: 0;
-    }
-    .capture-input:focus { border-color: var(--blue); background: #fff; }
-    .btn-capture {
-      background: var(--blue); color: #fff; border: none; border-radius: 7px;
-      padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
-      white-space: nowrap; flex-shrink: 0; transition: background 0.15s;
-    }
-    .btn-capture:hover:not(:disabled) { background: #0284c7; }
-    .btn-capture:disabled { opacity: 0.45; cursor: not-allowed; }
-    .capture-result {
-      border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
-      margin-top: 8px; display: none;
-    }
-    .capture-result.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
-    .capture-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
 
     /* ── Empty state ── */
     .empty-state {
@@ -250,10 +208,10 @@
   <!-- Header -->
   <div class="header">
     <div class="brand">
-      <div class="logo">CF</div>
+      <div class="logo">FL</div>
       <div>
-        <div class="title">Challenge Funnel</div>
-        <div class="sub">HighLevel Page Cloner</div>
+        <div class="title">FitPro Launch</div>
+        <div class="sub">GoHighLevel Page Injector</div>
       </div>
     </div>
   </div>
@@ -261,11 +219,6 @@
   <!-- ── COPY / PASTE SECTION (always visible) ── -->
   <div class="section" id="copy-paste-section">
     <div class="section-title">Clone any GHL page</div>
-
-    <!-- Copy All Debug: collects all debug info in one click -->
-    <div class="debug-btn-row" style="margin-bottom:6px;">
-      <button class="btn-clear" id="copy-all-debug-btn" style="font-size:10px;color:#fff;background:#374151;border-color:#374151;flex:1;">Copy All Debug</button>
-    </div>
 
     <!-- What's currently copied -->
     <div class="copied-card none" id="copied-card">
@@ -293,83 +246,17 @@
 
     <!-- Paste result message -->
     <div class="paste-result" id="paste-result"></div>
-
-    <!-- Debug: full state dump -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="debug-inject-btn" style="font-size:10px;">Debug Info</button>
-      <button class="btn-copy-debug" id="debug-inject-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="debug-inject-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Roundtrip test: read existing Firebase data, write it back unchanged, probe structure -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="roundtrip-btn" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">Roundtrip Test (diagnostic)</button>
-      <button class="btn-copy-debug" id="roundtrip-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="roundtrip-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Schema Diff: compare GHL native Firebase schema vs our inject output (no write) -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="schema-diff-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Schema Diff (native vs inject)</button>
-      <button class="btn-copy-debug" id="schema-diff-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="schema-diff-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- GHL API Log: shows captured GHL API calls including 500 response bodies -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="api-log-btn" style="font-size:10px;color:#b45309;border-color:#fde68a;">Show GHL API Log</button>
-      <button class="btn-copy-debug" id="api-log-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="api-log-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Clone Baseline Capture: reads full Firebase data of current cloned page & stores for deep-diff in GHL Inspector -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="capture-clone-baseline-btn" style="font-size:10px;color:#059669;border-color:#a7f3d0;">Capture Clone Baseline (for deep diff)</button>
-      <button class="btn-copy-debug" id="capture-clone-baseline-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="capture-clone-baseline-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Native Firebase Payload: shows the raw Firebase Storage data GHL reads for this page -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="native-firebase-btn" style="font-size:10px;color:#9333ea;border-color:#e9d5ff;">Native Firebase Payload</button>
-      <button class="btn-copy-debug" id="native-firebase-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="native-firebase-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-    <div class="debug-btn-row" style="margin-top:4px;">
-      <button class="btn-clear" id="native-firebase-download" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">⬇ Download Full JSON</button>
-    </div>
-
-    <!-- Page Load Errors: shows JS errors captured by bridge.js error trap after inject -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="page-load-errors-btn" style="font-size:10px;color:#dc2626;border-color:#fecaca;">Page Load Errors</button>
-      <button class="btn-copy-debug" id="page-load-errors-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="page-load-errors-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Page Metadata: shows GHL backend page meta captured by bridge.js v2.12.0 -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="page-meta-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Show Page Metadata</button>
-      <button class="btn-copy-debug" id="page-meta-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="page-meta-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Schema Validator: checks AI sections against native GHL required fields -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="validate-schema-btn" style="font-size:10px;color:#166534;border-color:#bbf7d0;">Validate AI Schema</button>
-      <button class="btn-copy-debug" id="validate-schema-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="validate-schema-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;"></div>
   </div>
 
   <!-- ── AI CONTENT SECTION (project library) ── -->
   <div class="section" id="ai-section">
-    <div class="section-title">AI pages — inject into builder (no API key)</div>
+    <div class="section-title">AI pages — inject into builder</div>
 
     <!-- Empty state (no project saved) -->
     <div id="empty-state" class="empty-state" style="display:none;">
       <span class="emoji">📂</span>
       <strong>No project saved yet</strong>
-      Open your Challenge Funnel results page, then click this extension icon — your funnel will be saved automatically.
+      Open your FitPro Launch results page, then click this extension icon — your funnel will be saved automatically.
     </div>
 
     <!-- Saving in progress -->
@@ -381,7 +268,7 @@
     <!-- Save error -->
     <div id="save-error-state" class="save-error" style="display:none;">
       <strong>⚠ Could not load funnel</strong>
-      Make sure you are logged into the Challenge Funnel app and on the results page, then reopen this extension.
+      Make sure you are logged into FitPro Launch and on the results page, then reopen this extension.
     </div>
 
     <!-- Library (project saved) -->
@@ -396,12 +283,12 @@
       <!-- Currently loaded page badge -->
       <div class="loaded-badge" id="loaded-badge">
         <span>🟩</span>
-        <span><strong id="loaded-page-name">Landing Page</strong> is ready — go to GHL builder and click "Paste into GHL Builder" or the orange CF button</span>
+        <span><strong id="loaded-page-name">Landing Page</strong> is ready — go to GHL builder and click "Paste into GHL Builder" or the orange FL button</span>
       </div>
 
       <!-- Project name + change link -->
       <div class="project-header show" id="project-header">
-        <div class="project-name" id="project-name">Challenge Funnel</div>
+        <div class="project-name" id="project-name">My Funnel</div>
         <button class="change-btn" id="change-btn">Clear / Change</button>
       </div>
 
@@ -443,17 +330,6 @@
       <div class="note" id="note"></div>
 
     </div>
-  </div>
-
-  <!-- ── CAPTURE SECTION (URL → schema inspector) ── -->
-  <div class="section" id="capture-section">
-    <div class="section-title">Capture any GHL page schema</div>
-    <div class="capture-url-row">
-      <input class="capture-input" id="capture-url" type="url"
-             placeholder="https://your-domain.com/funnel-page" />
-      <button class="btn-capture" id="capture-btn">Capture</button>
-    </div>
-    <div class="capture-result" id="capture-result"></div>
   </div>
 
   <script src="popup.js"></script>
