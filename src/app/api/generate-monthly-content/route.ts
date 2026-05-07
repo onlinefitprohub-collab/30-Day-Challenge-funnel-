@@ -90,7 +90,15 @@ export async function POST(request: Request) {
         { user_id: user.id, month: monthParam, plan, generated_at: new Date().toISOString() },
         { onConflict: "user_id,month" },
       );
-    if (upsertError) throw new Error(upsertError.message);
+    if (upsertError) {
+      // Detect missing table — user needs to run the schema migration
+      if (upsertError.message.includes("schema cache") || upsertError.message.includes("monthly_content_plans") || upsertError.code === "42P01") {
+        return NextResponse.json({
+          error: "Database table not found. Please run the following SQL in your Supabase SQL editor:\n\nCREATE TABLE IF NOT EXISTS public.monthly_content_plans (\n  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),\n  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,\n  month text NOT NULL,\n  plan jsonb NOT NULL DEFAULT '{}',\n  generated_at timestamptz NOT NULL DEFAULT now(),\n  UNIQUE(user_id, month)\n);\nALTER TABLE public.monthly_content_plans ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can manage own content plans\" ON public.monthly_content_plans FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);",
+        }, { status: 503 });
+      }
+      throw new Error(upsertError.message);
+    }
 
     return NextResponse.json({ success: true, plan });
   } catch (error) {
