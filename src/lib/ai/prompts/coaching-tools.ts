@@ -31,7 +31,10 @@ Generate:
 - recommendedPrice: The specific price point to charge (e.g. "£497", "$997")
 - priceRange: A sensible minimum and maximum (e.g. min: "£297", max: "£797")
 - rationale: 3–4 sentences explaining WHY this price is right — based on transformation value, market position, and audience ability to pay
-- valueStack: 5–7 items. Each has: item (what it is), perceivedValue (e.g. "£300 value"), description (1 sentence on why it's valuable)
+- valueStack: 5–7 items. Each item has:
+  - item: the feature or component name (e.g. "1-on-1 onboarding call")
+  - perceivedValue: a plain currency value ONLY — currency symbol + number, optionally followed by "value". E.g. "£497", "£300 value", "$997". NEVER include words like "single pay", "per month", "×", payment plan details, or anything other than a currency symbol and a number.
+  - description: 1 sentence on why it matters to the client
 - positioningStatement: 2–3 sentences — the coach's "elevator pitch" for the price when someone asks "why so much?"
 - confidenceScript: What the coach actually says word-for-word when someone pushes back on price. 80–120 words. Conversational, not salesy.
 - objectionHandlers: 3–5 common pricing objections with direct scripted responses (50–80 words each)

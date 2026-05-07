@@ -5,6 +5,14 @@ import { Copy, Check, ChevronDown, ChevronRight, DollarSign, CheckCircle2 } from
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 
+// Sanitise AI-generated perceivedValue — extract just the currency+number if the AI
+// hallucinated payment-plan language (e.g. "£singlepayor×£179838659")
+function cleanPerceivedValue(raw: string): string {
+  if (!raw) return raw;
+  const match = raw.match(/[£$€¥][\d,]+(?:\s*(?:value|val))?/i);
+  return match ? match[0].replace(/val$/i, "value") : raw;
+}
+
 interface ValueStackItem {
   item: string;
   perceivedValue: string;
@@ -120,7 +128,7 @@ export function PricingGuideSection({ data }: { data: PricingGuide }) {
               {data.valueStack.map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">{row.item}</td>
-                  <td className="px-4 py-3 font-semibold text-emerald-700 whitespace-nowrap">{row.perceivedValue}</td>
+                  <td className="px-4 py-3 font-semibold text-emerald-700 whitespace-nowrap">{cleanPerceivedValue(row.perceivedValue)}</td>
                   <td className="px-4 py-3 text-gray-600 leading-relaxed">{row.description}</td>
                 </tr>
               ))}

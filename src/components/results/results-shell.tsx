@@ -49,57 +49,54 @@ import { LaunchRoadmapSection, LaunchRoadmapPlaceholder } from "./sections/launc
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
 const CHALLENGE_TABS = [
-  { id: "highlevel",       label: "HighLevel",              icon: Layers,          highlight: true, group: "export" },
-  { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export" },
-  { id: "funnelPreview",   label: "Funnel Preview",         icon: LayoutTemplate,                   group: "preview" },
-  { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview" },
-  { id: "landingPage",     label: "Landing Page",           icon: FileText,                         group: "pages" },
-  { id: "optInForm",       label: "Opt-in Form",            icon: FormInput,                        group: "pages" },
-  { id: "thankYouPage",    label: "Thank You",              icon: ThumbsUp,                         group: "pages" },
-  { id: "bookingPage",     label: "Booking Page",           icon: Calendar,                         group: "pages" },
-  { id: "smsSequence",     label: "SMS Sequence",           icon: MessageSquare,                    group: "sequences" },
-  { id: "emailSequence",   label: "Email Sequence",         icon: Mail,                             group: "sequences" },
-  { id: "nurtureSequence", label: "52-Wk Nurture",          icon: CalendarDays,                     group: "sequences" },
-  { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
-  { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
-  { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
-  { id: "workoutPlan",          label: "Workout Plan",       icon: Dumbbell,          group: "programme" },
-  { id: "salesLetter",          label: "Sales Letter",       icon: FileText,          group: "longform" },
-  { id: "contentCalendar",      label: "Content Calendar",   icon: CalendarRange,     group: "coaching" },
-  { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching" },
-  { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
-  { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
-  { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching" },
-  { id: "dmScript",             label: "DM Scripts",         icon: MessageCircle,     group: "coaching" },
-  { id: "upsellSequence",       label: "Upsell Sequence",    icon: TrendingUp,        group: "coaching" },
-  { id: "launchRoadmap",        label: "Launch Roadmap",     icon: Map,               group: "coaching" },
+  { id: "highlevel",       label: "HighLevel",              icon: Layers,          highlight: true, group: "export",    groupLabel: "Export" },
+  { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export",    groupLabel: undefined },
+  { id: "funnelPreview",   label: "Funnel Preview",         icon: LayoutTemplate,                   group: "export",    groupLabel: undefined },
+  { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview",  groupLabel: "Overview" },
+  { id: "landingPage",     label: "Landing Page",           icon: FileText,                         group: "pages",     groupLabel: "Pages" },
+  { id: "optInForm",       label: "Opt-in Form",            icon: FormInput,                        group: "pages",     groupLabel: undefined },
+  { id: "thankYouPage",    label: "Thank You",              icon: ThumbsUp,                         group: "pages",     groupLabel: undefined },
+  { id: "bookingPage",     label: "Booking Page",           icon: Calendar,                         group: "pages",     groupLabel: undefined },
+  { id: "smsSequence",     label: "SMS Sequence",           icon: MessageSquare,                    group: "sequences", groupLabel: "Sequences" },
+  { id: "emailSequence",   label: "Email Sequence",         icon: Mail,                             group: "sequences", groupLabel: undefined },
+  { id: "nurtureSequence", label: "52-Wk Nurture",          icon: CalendarDays,                     group: "sequences", groupLabel: undefined },
+  { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads",       groupLabel: "Ads" },
+  { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads",       groupLabel: undefined },
+  { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads",       groupLabel: undefined },
+  { id: "workoutPlan",          label: "Workout Plan",       icon: Dumbbell,          group: "programme", groupLabel: "Programme" },
+  { id: "salesLetter",          label: "Sales Letter",       icon: FileText,          group: "longform",  groupLabel: "Long-Form" },
+  { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching",  groupLabel: "Coaching" },
+  { id: "contentCalendar",      label: "Content Calendar",   icon: CalendarRange,     group: "coaching",  groupLabel: undefined },
+  { id: "testimonialHarvest",   label: "Testimonials",       icon: Star,              group: "coaching",  groupLabel: undefined },
+  { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching",  groupLabel: undefined },
+  { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching",  groupLabel: undefined },
+  { id: "dmScript",             label: "DM Scripts",         icon: MessageCircle,     group: "coaching",  groupLabel: undefined },
+  { id: "upsellSequence",       label: "Upsell Sequence",    icon: TrendingUp,        group: "coaching",  groupLabel: undefined },
+  { id: "launchRoadmap",        label: "Launch Roadmap",     icon: Map,               group: "coaching",  groupLabel: undefined },
 ] as const;
 
 const APPLICATION_TABS = [
-  { id: "highlevel",       label: "HighLevel",              icon: Layers,          highlight: true, group: "export" },
-  { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export" },
-  { id: "funnelPreview",   label: "Funnel Preview",         icon: LayoutTemplate,                   group: "preview" },
-  { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview" },
-  { id: "landingPage",     label: "Registration Page",       icon: FileText,                         group: "pages" },
-  { id: "optInForm",       label: "Application Form",       icon: FormInput,                        group: "pages" },
-  { id: "thankYouPage",    label: "App Received",           icon: ThumbsUp,                         group: "pages" },
-  { id: "bookingPage",     label: "Strategy Call",          icon: Calendar,                         group: "pages" },
-  { id: "smsSequence",     label: "SMS Sequence",           icon: MessageSquare,                    group: "sequences" },
-  { id: "emailSequence",   label: "Email Sequence",         icon: Mail,                             group: "sequences" },
-  { id: "nurtureSequence", label: "52-Wk Nurture",          icon: CalendarDays,                     group: "sequences" },
-  { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads" },
-  { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads" },
-  { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads" },
-  { id: "vslScript",            label: "VSL Script",         icon: Video,             group: "longform" },
-  { id: "manyChatFlow",         label: "ManyChat Flow",      icon: MessageCircle,     group: "longform" },
-  { id: "contentCalendar",      label: "Content Calendar",   icon: CalendarRange,     group: "coaching" },
-  { id: "deliveryPack",         label: "Delivery Pack",      icon: Package,           group: "coaching" },
-  { id: "testimonialHarvest",   label: "Testimonial Harvest",icon: Star,              group: "coaching" },
-  { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching" },
-  { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching" },
-  { id: "dmScript",             label: "DM Scripts",         icon: MessageCircle,     group: "coaching" },
-  { id: "upsellSequence",       label: "Upsell Sequence",    icon: TrendingUp,        group: "coaching" },
-  { id: "launchRoadmap",        label: "Launch Roadmap",     icon: Map,               group: "coaching" },
+  { id: "highlevel",       label: "HighLevel",              icon: Layers,          highlight: true, group: "export",    groupLabel: "Export" },
+  { id: "ghlInspector",    label: "GHL Inspector",          icon: Microscope,                       group: "export",    groupLabel: undefined },
+  { id: "offerSummary",    label: "Offer Summary",          icon: Target,                           group: "overview",  groupLabel: "Overview" },
+  { id: "landingPage",     label: "Registration Page",      icon: FileText,                         group: "pages",     groupLabel: "Pages" },
+  { id: "optInForm",       label: "Application Form",       icon: FormInput,                        group: "pages",     groupLabel: undefined },
+  { id: "thankYouPage",    label: "App Received",           icon: ThumbsUp,                         group: "pages",     groupLabel: undefined },
+  { id: "bookingPage",     label: "Strategy Call",          icon: Calendar,                         group: "pages",     groupLabel: undefined },
+  { id: "vslScript",       label: "VSL Script",             icon: Video,                            group: "content",   groupLabel: "Content" },
+  { id: "emailSequence",   label: "Email Sequence",         icon: Mail,                             group: "content",   groupLabel: undefined },
+  { id: "smsSequence",     label: "SMS Follow-Up",          icon: MessageSquare,                    group: "content",   groupLabel: undefined },
+  { id: "nurtureSequence", label: "52-Wk Nurture",          icon: CalendarDays,                     group: "content",   groupLabel: undefined },
+  { id: "adCopy",          label: "Ad Copy",                icon: Megaphone,                        group: "ads",       groupLabel: "Ads" },
+  { id: "creativePrompts", label: "Creatives",              icon: ImageIcon,                        group: "ads",       groupLabel: undefined },
+  { id: "campaignNaming",  label: "Campaign",               icon: BarChart3,                        group: "ads",       groupLabel: undefined },
+  { id: "pricingGuide",         label: "Pricing Guide",      icon: BadgeDollarSign,   group: "coaching",  groupLabel: "Coaching" },
+  { id: "discoveryCall",        label: "Discovery Call",     icon: Phone,             group: "coaching",  groupLabel: undefined },
+  { id: "contentCalendar",      label: "Content Calendar",   icon: CalendarRange,     group: "coaching",  groupLabel: undefined },
+  { id: "testimonialHarvest",   label: "Testimonials",       icon: Star,              group: "coaching",  groupLabel: undefined },
+  { id: "dmScript",             label: "DM Scripts",         icon: MessageCircle,     group: "coaching",  groupLabel: undefined },
+  { id: "upsellSequence",       label: "Upsell Sequence",    icon: TrendingUp,        group: "coaching",  groupLabel: undefined },
+  { id: "launchRoadmap",        label: "Launch Roadmap",     icon: Map,               group: "coaching",  groupLabel: undefined },
 ] as const;
 
 // Union of all possible tab IDs across both funnel types
@@ -481,41 +478,58 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
         </div>
       </div>
 
-      {/* Tab bar — scrollable on mobile */}
-      <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 w-max min-w-full sm:min-w-0">
-          {(tabs as readonly { id: TabId; label: string; icon: React.ComponentType<{ className?: string }>; group: string; highlight?: boolean }[]).map((tab, i) => {
-            const isHL = !!tab.highlight;
-            const isActive = activeTab === tab.id;
-            const showSeparator = i > 0 && tab.group !== tabs[i - 1].group;
-            return (
-              <Fragment key={tab.id}>
-                {showSeparator && (
-                  <div className="flex items-center px-0.5">
-                    <div className="h-5 w-px rounded-full bg-gray-300" />
+      {/* Tab bar — scrollable, tabs grouped with visible section labels */}
+      {(() => {
+        type AnyTab = { id: TabId; label: string; icon: React.ComponentType<{ className?: string }>; group: string; groupLabel?: string; highlight?: boolean };
+        const typedTabs = tabs as readonly AnyTab[];
+        // Build groups: a new group starts each time groupLabel is defined
+        const grouped: Array<{ label: string; tabs: AnyTab[] }> = [];
+        for (const tab of typedTabs) {
+          if (tab.groupLabel !== undefined) {
+            grouped.push({ label: tab.groupLabel, tabs: [tab] });
+          } else {
+            grouped[grouped.length - 1]?.tabs.push(tab);
+          }
+        }
+        return (
+          <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex items-end gap-2 w-max min-w-full sm:min-w-0">
+              {grouped.map(({ label, tabs: groupTabs }) => (
+                <div key={label} className="flex flex-col">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-2 pb-1 leading-none">
+                    {label}
+                  </span>
+                  <div className="flex gap-0.5 rounded-xl border border-gray-200 bg-gray-100 p-1">
+                    {groupTabs.map((tab) => {
+                      const isHL = !!tab.highlight;
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                            isActive && isHL
+                              ? "bg-[#1a56db] text-white shadow-sm"
+                              : isActive
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : isHL
+                              ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
+                              : "text-gray-500 hover:text-gray-700"
+                          }`}
+                          data-tab={tab.id}
+                        >
+                          <tab.icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="hidden sm:block">{tab.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-                <button
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                    isActive && isHL
-                      ? "bg-[#1a56db] text-white shadow-sm"
-                      : isActive
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : isHL
-                      ? "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d0e2ff]"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  data-tab={tab.id}
-                >
-                  <tab.icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="hidden sm:block">{tab.label}</span>
-                </button>
-              </Fragment>
-            );
-          })}
-        </div>
-      </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Active section */}
       {(() => {
