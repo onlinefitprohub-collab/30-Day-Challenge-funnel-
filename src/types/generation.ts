@@ -130,6 +130,20 @@ export interface SectionLayoutVariants {
   'final-cta'?: string;
 }
 
+// ─── Testimonial Card ────────────────────────────────────────────────────────
+
+export interface TestimonialCard {
+  quote: string;
+  attribution: string;
+}
+
+// ─── Qualification Section ───────────────────────────────────────────────────
+
+export interface QualificationSection {
+  shouldntApply: string[];  // 3–6 disqualifiers — who this is NOT for
+  shouldApply:   string[];  // 3–6 qualifiers   — who this IS for
+}
+
 // ─── Workout Plan types ──────────────────────────────────────────────────────
 
 export interface WorkoutExercise {
@@ -332,6 +346,10 @@ export interface GeneratedFunnelAssets {
   deliveryPack?: DeliveryPack;
   testimonialHarvestSequence?: TestimonialHarvestSequence;
   pricingGuide?: PricingGuide;
+  // Testimonial cards — used by GHL page builder testimonials section
+  testimonialCards?: TestimonialCard[];
+  // Qualification section — who should/shouldn't apply (used by GHL page builder)
+  qualificationSection?: QualificationSection;
   // Discovery call script — on-demand generation
   discoveryCallScript?: import("./discovery-call").DiscoveryCallScript;
   // Instagram DM scripts — on-demand generation
