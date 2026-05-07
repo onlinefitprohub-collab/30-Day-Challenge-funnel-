@@ -204,7 +204,7 @@ export function GhlInspectorSection({ projectId }: { projectId: string }) {
       window.removeEventListener("message", onMsg);
       setLoading(false);
       setLoadError(
-        "Extension not responding. Make sure the latest FitPro Launch extension is installed, then reload this page."
+        "Extension not responding. Make sure the latest Challenge Funnel extension is installed, then reload this page."
       );
       setExtPresent(false);
     }, 4000);

@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, Loader2, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -26,12 +25,10 @@ export function StepSocialProof({
   } = useForm<SocialProof>({
     resolver: zodResolver(socialProofSchema),
     defaultValues: {
-      testimonials:          defaultValues.testimonials          ?? "",
-      caseStudySnippets:     defaultValues.caseStudySnippets     ?? "",
-      resultsHighlights:     defaultValues.resultsHighlights     ?? "",
-      hasBeforeAfter:        defaultValues.hasBeforeAfter        ?? false,
-      clientTransformations: defaultValues.clientTransformations ?? "",
-      bestClientResult:      defaultValues.bestClientResult      ?? "",
+      testimonials:      defaultValues.testimonials ?? "",
+      caseStudySnippets: defaultValues.caseStudySnippets ?? "",
+      resultsHighlights: defaultValues.resultsHighlights ?? "",
+      hasBeforeAfter:    defaultValues.hasBeforeAfter ?? false,
     },
   });
 
@@ -71,37 +68,6 @@ export function StepSocialProof({
         />
         <p className="text-xs text-gray-400">
           Include quotes, stats, short client stories — whatever you have. Real results dramatically improve conversions.
-        </p>
-      </div>
-
-      {/* Structured transformations */}
-      <div className="space-y-1.5">
-        <Label htmlFor="clientTransformations">
-          2–3 specific client transformations <span className="text-gray-400">(optional — highest impact)</span>
-        </Label>
-        <Textarea
-          id="clientTransformations"
-          placeholder={`Give the AI structured before → after → timeframe stories:\n\nEmma, 42, nurse and mum of 3 — was 3 stone overweight, exhausted, had tried Slimming World twice. Lost 24lbs and ran her first 10k. 14 weeks.\n\nMark, 51, company director — hadn't exercised in 10 years, back pain, low energy. Dropped 18kg, off blood pressure meds, now trains 4x per week. 16 weeks.\n\nSarah, 35, teacher — postpartum, couldn't shift baby weight after 2 years of trying. Lost 16lbs, regained confidence, back in her pre-pregnancy clothes. 12 weeks.`}
-          rows={7}
-          {...register("clientTransformations")}
-        />
-        <p className="text-xs text-gray-400">
-          Specific stories with real numbers and timelines are far more powerful than generic quotes. The more detail you give, the stronger the AI-generated copy.
-        </p>
-      </div>
-
-      {/* Best single result */}
-      <div className="space-y-1.5">
-        <Label htmlFor="bestClientResult">
-          What's the single best result any client has achieved? <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Input
-          id="bestClientResult"
-          placeholder="e.g. Emma lost 24lbs and ran her first 10k in 14 weeks — after 3 failed diets"
-          {...register("bestClientResult")}
-        />
-        <p className="text-xs text-gray-400">
-          Your most impressive outlier result — becomes the headline anchor and proof ceiling for all copy.
         </p>
       </div>
 

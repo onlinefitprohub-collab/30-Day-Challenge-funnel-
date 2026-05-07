@@ -183,7 +183,6 @@ export interface ApplicationLandingPage {
   benefitBlocks: Array<{ heading: string; body: string }>;          // exactly 5
   midCtaHeading: string;
   midCtaText: string;
-  painPointHeading?: string;
   dividerHeading: string;
   faqItems: Array<{ question: string; answer: string }>;            // 4–8 items
   galleryHeading: string;
@@ -192,99 +191,12 @@ export interface ApplicationLandingPage {
   shouldApply: string[];      // 4–8 qualifiers
   textTestimonials: Array<{ quote: string; attribution: string; result: string }>; // 3
   whatYouGetHeading: string;
-  whatYouGetBodyCopy: string;  // 2-3 persuasive paragraphs (newline-separated) below the checklist
   whatYouGetItems: string[];  // 6–8 items
   transformationGalleryHeading: string;
   clientWinsHeading: string;
   clientWins: Array<{ name: string; result: string }>;              // 4–8 items
-  clientStories: Array<{ intro: string; story: string }>;           // exactly 4
-  problemBreakdown?: Array<{ title: string; headline: string; body: string }>; // 5 items
   finalCtaText: string;
   finalCtaSubtext: string;
-}
-
-// ─── VSL Script ─────────────────────────────────────────────────────────────
-
-export interface VslScript {
-  hook: string;               // First 30–60s — pattern interrupt + bold statement
-  problemStatement: string;   // The pain — vivid and specific
-  agitation: string;          // Make it worse — cost of staying stuck
-  coachStoryBridge: string;   // Coach journey + turning point + how they solved it
-  solutionReveal: string;     // Unique mechanism — why THIS approach works
-  programmeWalkthrough: string; // What they get — pillars, deliverables, timeline
-  socialProof: string;        // Client results and transformations (scripted)
-  offerPresentation: string;  // The investment, value stack, payment options
-  objectionHandling: string;  // Top 3 objections addressed in script form
-  callToAction: string;       // The close — specific action to take right now
-  closingScarcity: string;    // Final urgency — deadline, spots, FOMO
-}
-
-// ─── Content Calendar ────────────────────────────────────────────────────────
-
-export interface ContentPost {
-  day: number;
-  theme: string;
-  format: string;        // e.g. "Talking head reel", "Carousel", "Static image"
-  hook: string;          // Opening line / scroll-stopper
-  caption: string;       // Full post caption
-  cta: string;           // Call to action line
-}
-
-export interface ContentCalendar {
-  strategy: string;      // 2-3 sentence overview of the 30-day strategy
-  posts: ContentPost[];  // exactly 30
-}
-
-// ─── Challenge Delivery Pack ──────────────────────────────────────────────────
-
-export interface DeliveryWeeklyEmail {
-  week: number;
-  theme: string;
-  subject: string;
-  body: string;
-}
-
-export interface DeliveryPack {
-  welcomeEmail: { subject: string; body: string };
-  welcomeSms: string;
-  weeklyEmails: DeliveryWeeklyEmail[];  // 4 items
-  dailySmsPrompts: string[];            // 30 items — brief daily motivation/check-in
-  completionEmail: { subject: string; body: string };
-  completionSms: string;
-}
-
-// ─── Testimonial Harvest Sequence ────────────────────────────────────────────
-
-export interface TestimonialHarvestSequence {
-  day31Email: { subject: string; body: string };
-  day33Sms: string;
-  day35Email: { subject: string; body: string };
-  day38Sms: string;
-  referralEmail: { subject: string; body: string };
-}
-
-// ─── Pricing & Offer Guide ───────────────────────────────────────────────────
-
-export interface PricingValueItem {
-  item: string;
-  perceivedValue: string;
-  description: string;
-}
-
-export interface PricingObjectionHandler {
-  objection: string;
-  response: string;
-}
-
-export interface PricingGuide {
-  recommendedPrice: string;
-  priceRange: { min: string; max: string };
-  rationale: string;
-  valueStack: PricingValueItem[];
-  positioningStatement: string;
-  confidenceScript: string;
-  objectionHandlers: PricingObjectionHandler[];
-  nextSteps: string[];
 }
 
 // ─── GeneratedFunnelAssets ───────────────────────────────────────────────────
@@ -323,23 +235,6 @@ export interface GeneratedFunnelAssets {
   nurtureSequence?: NurtureSequence;
   // Application funnel — 22-section registration page (generated in parallel with other copy)
   applicationLandingPage?: ApplicationLandingPage;
-  // Application funnel — AI-generated first-person coach bio (3 paragraphs from wizard story inputs)
-  coachStory?: { part1: string; part2: string; part3: string };
-  // Application funnel — AI-generated VSL script (11 sections)
-  vslScript?: VslScript;
-  // Coaching tools — generated for all funnel types
-  contentCalendar?: ContentCalendar;
-  deliveryPack?: DeliveryPack;
-  testimonialHarvestSequence?: TestimonialHarvestSequence;
-  pricingGuide?: PricingGuide;
-  // Discovery call script — on-demand generation
-  discoveryCallScript?: import("./discovery-call").DiscoveryCallScript;
-  // Instagram DM scripts — on-demand generation
-  instagramDmScript?: import("./dm-script").InstagramDmScript;
-  // Upsell email sequence — on-demand generation
-  upsellSequence?: import("./upsell-sequence").UpsellSequence;
-  // Launch roadmap — on-demand generation
-  launchRoadmap?: import("./launch-roadmap").LaunchRoadmap;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

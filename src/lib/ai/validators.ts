@@ -199,39 +199,22 @@ export const workoutPlanSchema = z.object({
 
 // ─── Long-Form Sales Assets schemas ─────────────────────────────────────────
 
-const problemItemSchema = z.object({
-  title:    z.string().min(1),
-  headline: z.string().min(1),
-  body:     z.string().min(1),
-});
-
-const testimonialCaseStudySchema = z.object({
-  sectionHeadline: z.string().min(1),
-  clientHeadline:  z.string().min(1),
-  quote:           z.string().min(1),
-  result:          z.string().min(1),
-});
-
 export const salesLetterSchema = z.object({
-  headline:                z.string().min(1),
-  subheadline:             z.string().min(1),
-  painPointHeadline:       z.string().min(1),
-  openingHook:             z.string().min(1),
-  problemAgitation:        z.string().min(1),
-  problemBreakdown:        z.array(problemItemSchema).min(2).max(4),
-  bridgeToPossibility:     z.string().min(1),
-  coachCredentials:        z.string().min(1),
-  offerReveal:             z.string().min(1),
-  whatYouGet:              z.array(z.object({ name: z.string().min(1), description: z.string().min(1) })).min(1),
-  testimonialCaseStudies:  z.array(testimonialCaseStudySchema).min(1),
-  testimonialQuotes:       z.array(z.string().min(1)).min(4).max(8),
-  socialProofFramework:    z.string().min(1),
-  bonusStack:              z.array(z.object({ name: z.string().min(1), description: z.string().min(1), valueLabel: z.string().min(1) })).min(1),
-  priceReveal:             z.string().min(1),
-  guarantee:               z.string().min(1),
-  objectionHandling:       z.array(z.object({ objection: z.string().min(1), response: z.string().min(1) })).min(1),
-  urgencySection:          z.string().min(1),
-  finalCta:                z.string().min(1),
+  headline:             z.string().min(1),
+  subheadline:          z.string().min(1),
+  openingHook:          z.string().min(1),
+  problemAgitation:     z.string().min(1),
+  bridgeToPossibility:  z.string().min(1),
+  coachCredentials:     z.string().min(1),
+  offerReveal:          z.string().min(1),
+  whatYouGet:           z.array(z.object({ name: z.string().min(1), description: z.string().min(1) })).min(1),
+  socialProofFramework: z.string().min(1),
+  bonusStack:           z.array(z.object({ name: z.string().min(1), description: z.string().min(1), valueLabel: z.string().min(1) })).min(1),
+  priceReveal:          z.string().min(1),
+  guarantee:            z.string().min(1),
+  objectionHandling:    z.array(z.object({ objection: z.string().min(1), response: z.string().min(1) })).min(1),
+  urgencySection:       z.string().min(1),
+  finalCta:             z.string().min(1),
 });
 
 const manyChatMessageSchema = z.object({
@@ -260,17 +243,6 @@ const faqItemSchema        = z.object({ question: z.string().min(1), answer: z.s
 const textTestimonialSchema = z.object({ quote: z.string().min(1), attribution: z.string().min(1), result: z.string().min(1) });
 const clientWinSchema      = z.object({ name: z.string().min(1), result: z.string().min(1) });
 
-const problemBreakdownItemSchema = z.object({
-  title:    z.string().min(1),
-  headline: z.string().min(1),
-  body:     z.string().min(1),
-});
-
-const clientStorySchema = z.object({
-  intro: z.string().min(1),
-  story: z.string().min(1),
-});
-
 export const applicationLandingPageSchema = z.object({
   valuePropHeadline:            z.string().min(1),
   valuePropSubheadline:         z.string().min(1),
@@ -284,7 +256,6 @@ export const applicationLandingPageSchema = z.object({
   benefitBlocks:                z.array(benefitBlockSchema).length(5),
   midCtaHeading:                z.string().min(1),
   midCtaText:                   z.string().min(1),
-  painPointHeading:             z.string().min(1).optional(),
   dividerHeading:               z.string().min(1),
   faqItems:                     z.array(faqItemSchema).min(4).max(8),
   galleryHeading:               z.string().min(1),
@@ -293,261 +264,16 @@ export const applicationLandingPageSchema = z.object({
   shouldApply:                  z.array(z.string().min(1)).min(4).max(8),
   textTestimonials:             z.array(textTestimonialSchema).length(3),
   whatYouGetHeading:            z.string().min(1),
-  whatYouGetBodyCopy:           z.string().min(1),
   whatYouGetItems:              z.array(z.string().min(1)).min(4).max(10),
   transformationGalleryHeading: z.string().min(1),
   clientWinsHeading:            z.string().min(1),
   clientWins:                   z.array(clientWinSchema).min(4).max(8),
-  clientStories:                z.array(clientStorySchema).min(2).max(6),
-  problemBreakdown:             z.array(problemBreakdownItemSchema).min(3).max(5).optional(),
   finalCtaText:                 z.string().min(1),
   finalCtaSubtext:              z.string().min(1),
 });
 
 export const applicationLandingResponseSchema = z.object({
   applicationLandingPage: applicationLandingPageSchema,
-});
-
-// ─── Coach Story schema ──────────────────────────────────────────────────────
-
-export const coachStoryPartsSchema = z.object({
-  part1: z.string().min(1),
-  part2: z.string().min(1),
-  part3: z.string().min(1),
-});
-
-export const coachStoryResponseSchema = z.object({
-  coachStory: coachStoryPartsSchema,
-});
-
-// ─── VSL Script schema ───────────────────────────────────────────────────────
-
-export const vslScriptSchema = z.object({
-  hook:                   z.string().min(1),
-  problemStatement:       z.string().min(1),
-  agitation:              z.string().min(1),
-  coachStoryBridge:       z.string().min(1),
-  solutionReveal:         z.string().min(1),
-  programmeWalkthrough:   z.string().min(1),
-  socialProof:            z.string().min(1),
-  offerPresentation:      z.string().min(1),
-  objectionHandling:      z.string().min(1),
-  callToAction:           z.string().min(1),
-  closingScarcity:        z.string().min(1),
-});
-
-export const vslScriptResponseSchema = z.object({
-  vslScript: vslScriptSchema,
-});
-
-// ─── Content Calendar schema ─────────────────────────────────────────────────
-
-export const contentPostSchema = z.object({
-  day:     z.number().int().min(1).max(30),
-  theme:   z.string().min(1),
-  format:  z.string().min(1),
-  hook:    z.string().min(1),
-  caption: z.string().min(1),
-  cta:     z.string().min(1),
-});
-
-export const contentCalendarSchema = z.object({
-  strategy: z.string().min(1),
-  posts:    z.array(contentPostSchema).min(28).max(31),
-});
-
-export const contentCalendarResponseSchema = z.object({
-  contentCalendar: contentCalendarSchema,
-});
-
-// ─── Delivery Pack schema ─────────────────────────────────────────────────────
-
-const emailBlockSchema = z.object({ subject: z.string().min(1), body: z.string().min(1) });
-
-export const deliveryPackSchema = z.object({
-  welcomeEmail:     emailBlockSchema,
-  welcomeSms:       z.string().min(1),
-  weeklyEmails:     z.array(z.object({
-    week:    z.number().int().min(1).max(4),
-    theme:   z.string().min(1),
-    subject: z.string().min(1),
-    body:    z.string().min(1),
-  })).min(4).max(4),
-  dailySmsPrompts:  z.array(z.string().min(1)).min(28).max(31),
-  completionEmail:  emailBlockSchema,
-  completionSms:    z.string().min(1),
-});
-
-export const deliveryPackResponseSchema = z.object({
-  deliveryPack: deliveryPackSchema,
-});
-
-// ─── Testimonial Harvest Sequence schema ─────────────────────────────────────
-
-export const testimonialHarvestSchema = z.object({
-  day31Email:   emailBlockSchema,
-  day33Sms:     z.string().min(1),
-  day35Email:   emailBlockSchema,
-  day38Sms:     z.string().min(1),
-  referralEmail: emailBlockSchema,
-});
-
-export const testimonialHarvestResponseSchema = z.object({
-  testimonialHarvestSequence: testimonialHarvestSchema,
-});
-
-// ─── Pricing Guide schema ─────────────────────────────────────────────────────
-
-export const pricingGuideSchema = z.object({
-  recommendedPrice:    z.string().min(1),
-  priceRange:          z.object({ min: z.string().min(1), max: z.string().min(1) }),
-  rationale:           z.string().min(1),
-  valueStack:          z.array(z.object({
-    item:            z.string().min(1),
-    perceivedValue:  z.string().min(1),
-    description:     z.string().min(1),
-  })).min(4).max(8),
-  positioningStatement: z.string().min(1),
-  confidenceScript:     z.string().min(1),
-  objectionHandlers:    z.array(z.object({
-    objection: z.string().min(1),
-    response:  z.string().min(1),
-  })).min(3).max(5),
-  nextSteps:            z.array(z.string().min(1)).min(3).max(6),
-});
-
-export const coachingToolsResponseSchema = z.object({
-  pricingGuide:               pricingGuideSchema,
-  testimonialHarvestSequence: testimonialHarvestSchema,
-});
-
-// ─── Discovery Call Script schema ────────────────────────────────────────────
-
-const discoveryCallPhaseSchema = z.object({
-  title:         z.string().min(1),
-  duration:      z.string().min(1),
-  script:        z.string().min(1),
-  coachingNotes: z.string().min(1),
-});
-
-const discoveryCallObjectionSchema = z.object({
-  objection: z.string().min(1),
-  response:  z.string().min(1),
-});
-
-export const discoveryCallScriptSchema = z.object({
-  callOverview:       z.string().min(1),
-  prepChecklist:      z.array(z.string().min(1)).min(5),
-  openingRapport:     discoveryCallPhaseSchema,
-  callFrameSetting:   discoveryCallPhaseSchema,
-  painDiscovery:      discoveryCallPhaseSchema,
-  reflectionMirroring: discoveryCallPhaseSchema,
-  futurePacing:       discoveryCallPhaseSchema,
-  offerPresentation:  discoveryCallPhaseSchema,
-  priceReveal:        discoveryCallPhaseSchema,
-  closeAndEnroll:     discoveryCallPhaseSchema,
-  objectionScripts:   z.array(discoveryCallObjectionSchema).min(4),
-  postCallEmail:      z.object({ subject: z.string().min(1), body: z.string().min(1) }),
-  callClosingScript:  z.string().min(1),
-});
-
-export const discoveryCallScriptResponseSchema = z.object({
-  discoveryCallScript: discoveryCallScriptSchema,
-});
-
-// ─── Instagram DM Script schema ───────────────────────────────────────────────
-
-const dmConversationScriptSchema = z.object({
-  trigger:        z.string().min(1),
-  opener:         z.string().min(1),
-  followUps:      z.array(z.string().min(1)).min(2),
-  bookingBridge:  z.string().min(1),
-  coachingNotes:  z.string().min(1),
-});
-
-export const instagramDmScriptSchema = z.object({
-  overview:             z.string().min(1),
-  coldOutreach:         dmConversationScriptSchema,
-  warmLead:             dmConversationScriptSchema,
-  commentToDm:          dmConversationScriptSchema,
-  applicationInquiry:   dmConversationScriptSchema,
-  noResponseFollowUp:   z.string().min(1),
-  dmTips:               z.array(z.string().min(1)).min(5),
-});
-
-export const instagramDmScriptResponseSchema = z.object({
-  instagramDmScript: instagramDmScriptSchema,
-});
-
-// ─── Upsell Email Sequence schema ─────────────────────────────────────────────
-
-export const upsellSequenceSchema = z.object({
-  targetOffer: z.string().min(1),
-  overview:    z.string().min(1),
-  emails:      z.array(z.object({
-    day:     z.number().int().min(1),
-    purpose: z.string().min(1),
-    subject: z.string().min(1),
-    body:    z.string().min(1),
-  })).min(5).max(5),
-  smsNudge:    z.string().min(1),
-});
-
-export const upsellSequenceResponseSchema = z.object({
-  upsellSequence: upsellSequenceSchema,
-});
-
-// ─── Launch Roadmap schema ────────────────────────────────────────────────────
-
-const roadmapTaskSchema = z.object({
-  task:          z.string().min(1),
-  category:      z.enum(["setup", "content", "ads", "sales", "delivery", "growth"]),
-  fitproAsset:   z.string().optional(),
-  timeEstimate:  z.string().min(1),
-});
-
-const roadmapPhaseSchema = z.object({
-  name:              z.string().min(1),
-  timing:            z.string().min(1),
-  goal:              z.string().min(1),
-  tasks:             z.array(roadmapTaskSchema).min(3),
-  completionMarker:  z.string().min(1),
-});
-
-export const launchRoadmapSchema = z.object({
-  overview:               z.string().min(1),
-  totalTimeToLaunch:      z.string().min(1),
-  phases:                 z.array(roadmapPhaseSchema).min(4),
-  quickStartPriorities:   z.array(z.string().min(1)).min(5),
-  commonMistakes:         z.array(z.string().min(1)).min(4),
-});
-
-export const launchRoadmapResponseSchema = z.object({
-  launchRoadmap: launchRoadmapSchema,
-});
-
-// ─── Monthly Content Plan schema ─────────────────────────────────────────────
-
-const monthlyContentPostSchema = z.object({
-  day:     z.number().int().min(1).max(31),
-  theme:   z.string().min(1),
-  format:  z.string().min(1),
-  hook:    z.string().min(1),
-  caption: z.string().min(1),
-  cta:     z.string().min(1),
-});
-
-export const monthlyContentPlanSchema = z.object({
-  month:          z.string().min(1),
-  monthlyTheme:   z.string().min(1),
-  weeklyFocuses:  z.array(z.string().min(1)).min(4).max(4),
-  posts:          z.array(monthlyContentPostSchema).min(28).max(31),
-  storyIdeas:     z.array(z.string().min(1)).min(5),
-  dmStarters:     z.array(z.string().min(1)).min(3),
-});
-
-export const monthlyContentPlanResponseSchema = z.object({
-  monthlyContentPlan: monthlyContentPlanSchema,
 });
 
 // ─── Safe parse helpers ──────────────────────────────────────────────────────

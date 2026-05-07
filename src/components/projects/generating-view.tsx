@@ -166,7 +166,7 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
       </div>
 
       <p className="mt-8 text-xs text-gray-400">
-        This usually takes 1–2 minutes. Don&apos;t close this tab.
+        This takes about 30 seconds. Don&apos;t close this tab.
       </p>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">

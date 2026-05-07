@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "FitPro Launch | Build Your Coaching Business Fast",
+  title: "Challenge Funnel in a Box | Launch Your 30-Day Challenge Fast",
   description:
     "Generate a complete, conversion-ready 30-day fitness challenge funnel in minutes. Landing pages, email sequences, ad copy, and more — built for coaches.",
   keywords: [
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     "challenge funnel generator",
   ],
   openGraph: {
-    title: "FitPro Launch",
+    title: "Challenge Funnel in a Box",
     description: "Launch your 30-day challenge funnel in minutes, not days.",
     type: "website",
   },

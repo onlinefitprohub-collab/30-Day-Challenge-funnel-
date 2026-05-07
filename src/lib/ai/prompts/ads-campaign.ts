@@ -6,18 +6,12 @@
  * Must hook fast, build just enough trust to click, and hand off cleanly to the landing page.
  */
 
-import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-quality";
-
 export function buildAdsCampaignPrompt(context: string, style: string): string {
   return `${context}
 
 === COPYWRITING STYLE ===
 
 ${style}
-
-${buildAudienceAnalysisBlock()}
-
-${buildCopyStandardsBlock()}
 
 === YOUR TASK: AD COPY, CREATIVE PROMPTS & CAMPAIGN SETUP ===
 

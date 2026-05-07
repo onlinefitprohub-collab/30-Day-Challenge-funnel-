@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import type { ProjectRow } from "@/types/project";
 
 export const metadata = {
-  title: "Dashboard | FitPro Launch",
+  title: "Dashboard | Challenge Funnel in a Box",
 };
 
 const HOW_IT_WORKS = [

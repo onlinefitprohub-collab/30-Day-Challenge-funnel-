@@ -6,7 +6,7 @@ import type { ProjectRow, ProjectOutputRow } from "@/types/project";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Funnel Results | FitPro Launch",
+  title: "Funnel Results | Challenge Funnel in a Box",
 };
 
 export default async function ResultsPage({

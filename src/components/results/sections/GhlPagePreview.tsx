@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { GhlPageData, GhlSection } from "@/lib/highlevel/ghl-pagedata";
+import type { GhlPageData } from "@/lib/highlevel/ghl-pagedata";
 
 interface Props {
   projectId: string;
@@ -782,56 +782,6 @@ function LoadingSkeleton() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/*  Scaled iframe wrapper                                                      */
-/*  Renders the page at 1200px (matching GHL desktop width) and scales it     */
-/*  down proportionally to fit whatever container width we have.              */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-const GHL_PAGE_WIDTH = 1200;
-const GHL_PAGE_HEIGHT = 4000; // tall enough for all landing page sections
-
-function ScaledPagePreview({ src }: { src: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.67); // reasonable starting value
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const w = el.getBoundingClientRect().width;
-      if (w > 0) setScale(w / GHL_PAGE_WIDTH);
-    };
-
-    update();
-
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ width: "100%", height: `${GHL_PAGE_HEIGHT * scale}px`, overflow: "hidden" }}
-    >
-      <iframe
-        src={src}
-        style={{
-          width: `${GHL_PAGE_WIDTH}px`,
-          height: `${GHL_PAGE_HEIGHT}px`,
-          border: "none",
-          display: "block",
-          transformOrigin: "top left",
-          transform: `scale(${scale})`,
-        }}
-        title="Page preview"
-      />
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
 /*  Main component                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
@@ -912,11 +862,17 @@ export function GhlPagePreview({ projectId, page, templateVariant, onLoad, onErr
     );
   }
 
-  // Render via ScaledPagePreview: iframe at 1200px (GHL desktop width) scaled
-  // to the container — CSS variables, fonts, and backgrounds all resolve
-  // natively so the preview matches what GHL actually renders.
+  // Render via server-generated HTML iframe so CSS variables from pageStyles
+  // resolve natively (var(--primary) etc.) and fonts load correctly — giving a
+  // much more accurate representation of the GHL page builder output.
   const qs = new URLSearchParams({ page, projectId: projectId ?? "" });
   if (templateVariant) qs.set("templateVariant", templateVariant);
 
-  return <ScaledPagePreview src={`/api/highlevel/page-preview?${qs}`} />;
+  return (
+    <iframe
+      src={`/api/highlevel/page-preview?${qs}`}
+      style={{ width: "100%", height: "640px", border: "none", display: "block" }}
+      title="Page preview"
+    />
+  );
 }

@@ -998,7 +998,7 @@ function makeVerticalDivider(b: Builder): string {
 }
 
 // ── Custom Code ───────────────────────────────────────────────────────────────
-// Schema verified from live GHL payload capture.
+// Schema verified from live GHL payload (forclaude/makeCustomCode-smoketest.ts).
 // styles and class MUST be empty — GHL ignores them on this element type.
 // All visual control comes from inline styles inside rawCustomCode HTML.
 
@@ -1060,7 +1060,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const countdownLabel = makeParagraph(b, "Challenge starts in:",
     { color: ss(s.primary), fontSize: sv(12), fontWeight: ss("700"), textAlign: ss("center"), letterSpacing: ss("0.1em"), textTransform: ss("uppercase"), paddingBottom: sv(4) });
   const countdown = makeCountdown(b, _heroCountdownEnd(), { paddingBottom: sv(20) });
-  const videoEl = makeVideo(b, "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+  const videoEl = makeVideo(b, "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     { borderRadius: sv(16), boxShadow: ss(`0 24px 64px rgba(0,0,0,0.5)`) });
   const videoNote = makeParagraph(b, "▶  Replace this video with your own challenge intro",
     { color: ss("rgba(148,163,184,0.6)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
@@ -3140,12 +3140,6 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (el.extra as Record<string, unknown>).text = { value: `<${tag}>${text}</${tag}>` };
   }
 
-  function setPara(id: string, html: string): void {
-    const el = byId.get(id);
-    if (!el || !html) return;
-    (el.extra as Record<string, unknown>).text = { value: html };
-  }
-
   function setBtn(id: string, text: string): void {
     const el = byId.get(id);
     if (!el || !text) return;
@@ -3353,46 +3347,18 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     };
   }
 
-  // Fallback placeholder video used whenever the coach hasn't provided their own URL
-  const PLACEHOLDER_VIDEO = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-
   // Hero (section 2)
-  setH("sub-heading-oAZ3MQORtdf", al.valuePropHeadline);   // main visible hero headline
   setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
-  setH("sub-heading-JjZ1uBR6bqd", al.heroCtaSubtext);      // CTA-driving text below video
-  setVid("video-20p-7VhVtF4", videoUrl || PLACEHOLDER_VIDEO);
-
-  // Testimonial video section — replace original video with placeholder; use AI-generated quote
-  setH("heading-eu5M2j4fixD", al.testimonialIntroHeading);
-  setVid("video-s26YMI7Zhs9", PLACEHOLDER_VIDEO);
-  setH("sub-heading-i8Utr-7v5AK", `“${al.testimonialVideoQuote}”`);
-  setH("sub-heading-SAFNlazCKKT", "— A Recent Client");
+  setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
+  setVid("video-20p-7VhVtF4", videoUrl);
 
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
   const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
   setH("heading-3u8EPoD9Qou", `<strong>Who Is ${data.coachName ?? "Your Coach"}, And Why Should I Listen To Them?</strong>`);
+  setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
+  setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
   setImg("image-HxJsjcn1-rj", photoUrl);
-
-  // Inject AI-generated coach story paragraphs if available, otherwise keep intro heading
-  const story = data.coachStory;
-  // Helper: split multi-paragraph AI text into proper <p> blocks (not h2 headings)
-  const bioPara = (text: string) =>
-    text.split(/\n+/).filter(Boolean).map(p => `<p>${p}</p>`).join("");
-  if (story?.part1) {
-    setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-    setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-    setPara("sub-heading-FvfzFHkx-9U", bioPara(story.part1));
-    setPara("sub-heading-0vtmtqgq1Lg", bioPara(story.part2 ?? story.part1));
-    setPara("sub-heading-uegTH1yDDad", bioPara(story.part3 ?? story.part2 ?? story.part1));
-  } else {
-    // Fallback: clear original template content so Tom's story doesn't show through
-    setH("heading-EpE-UucuzD_", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-    setH("heading-xZ7OY1ZTCQB", `<strong>Hi, my name is ${coachFirstName}...</strong>`);
-    setPara("sub-heading-FvfzFHkx-9U", `<p>Complete the "Your Story" step in the wizard to generate your AI-written coach bio — or add your own story here in the GHL builder.</p>`);
-    setPara("sub-heading-0vtmtqgq1Lg", `<p></p>`);
-    setPara("sub-heading-uegTH1yDDad", `<p></p>`);
-  }
 
   // Align 4 transformation cards in section 5 to top
   const transformRow = byId.get("row-LgRplJ7QXHv");
@@ -3400,10 +3366,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (transformRow.styles as Record<string, unknown>).alignItems = { value: "flex-start" };
   }
 
-  // Comfortable line spacing for coach bio body paragraphs
+  // Reduce line spacing to single-line for all 3 coach bio text blocks
   for (const shId of ["sub-heading-FvfzFHkx-9U", "sub-heading-0vtmtqgq1Lg", "sub-heading-uegTH1yDDad"]) {
     const shEl = byId.get(shId);
-    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1.7", unit: "em" };
+    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1", unit: "em" };
   }
 
   // Add spacing below bullet list elements (sections 15, 17)
@@ -3415,145 +3381,26 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
-  // Pain-point bridge heading (between coach bio and qualification section) — Image 1
-  if (al.painPointHeading) setH("heading-yuy6jYEoC8b", `<strong>${al.painPointHeading}</strong>`);
-
   // Will This Work For You (section 6)
   setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
-
-  // Qualification text boxes: shouldNotApply / shouldApply — Image 5
-  if (al.shouldNotApply?.length) {
-    setPara("paragraph-ziOu3aGDIemA",
-      al.shouldNotApply.map(b => `<p>${b}</p>`).join(""));
-  }
-  if (al.shouldApply?.length) {
-    setPara("paragraph-zGtOd4tfS9Jj",
-      al.shouldApply.map(b => `<p>${b}</p>`).join(""));
-  }
 
   // Individual testimonial quote headings (sections 7–9) — first sentence only, white font
   const firstSentence = (q: string): string => {
     const m = q.match(/^[^.!?]*[.!?]/);
     return (m ? m[0] : q).trim();
   };
-  // Section banners sec7, sec8, sec9, sec10 — quote pull from textTestimonials (cycling)
-  const tq = al.textTestimonials ?? [];
-  setH("heading-_En8uWhKmVA",  `<font color="#ffffff"><strong>${firstSentence(tq[0]?.quote ?? "")}</strong></font>`);
-  setH("heading-gGTM7pLAWp1",  `<font color="#ffffff"><strong>${firstSentence(tq[1]?.quote ?? "")}</strong></font>`);
-  setH("heading-DxtKO-nccYj",  `<font color="#ffffff"><strong>${firstSentence(tq[2]?.quote ?? "")}</strong></font>`);
-  setH("heading-ry34q51jror",  `<font color="#ffffff"><strong>${firstSentence(tq[0]?.quote ?? "")}</strong></font>`);
-  setH("heading-RIn1NtrlXS8",  `<font color="#ffffff"><strong>${firstSentence(tq[1]?.quote ?? "")}</strong></font>`);
-  setH("heading-viOg4MlCPp6",  `<font color="#ffffff"><strong>${firstSentence(tq[2]?.quote ?? "")}</strong></font>`);
+  setH("heading-gGTM7pLAWp1", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[0]?.quote ?? "")}</strong></font>`);
+  setH("heading-DxtKO-nccYj", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[1]?.quote ?? "")}</strong></font>`);
+  setH("heading-ry34q51jror", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[2]?.quote ?? "")}</strong></font>`);
 
-  // Client story testimonials ("Meet...") — 6 slots, cycling through 4 AI stories — Image 2
-  if (al.clientStories?.length) {
-    const stories = al.clientStories;
-    const storySlots: Array<{ hId: string; pId: string }> = [
-      { hId: "heading-XpRYNHYvq8z", pId: "paragraph-_Y-l5Y0qw9r" }, // sec7
-      { hId: "heading-wjLhJNffCfJ", pId: "paragraph-TTT5HB7ObG2" }, // sec8
-      { hId: "heading-BR4dOzOIMUM", pId: "paragraph-kuB6vFalrL1" }, // sec9
-      { hId: "heading-J9OmZLFKCjs", pId: "paragraph-alo12AY748y" }, // sec10
-      { hId: "heading-apNyLjFRjAR", pId: "paragraph-5h9jUu0lVNq" }, // sec11
-      { hId: "heading-TQmPc9fazcv", pId: "paragraph-2YZN-gztJPR" }, // sec12
-    ];
-    for (let i = 0; i < storySlots.length; i++) {
-      const story = stories[i % stories.length];
-      const slot = storySlots[i];
-      setH(slot.hId, `<strong>${story.intro}</strong>`);
-      const paraHtml = story.story
-        .split(/\n+/)
-        .filter(Boolean)
-        .map((p) => `<p>${p}</p>`)
-        .join("");
-      setPara(slot.pId, paraHtml);
-    }
-  }
-
-  // 5-problems divider (section 13)
+  // 5-problems divider (section 12)
   setH("heading-VNPStBY-834", al.dividerHeading);
 
-  // Problem breakdown — 5 problems section (sec14) — Image 3
-  if (al.problemBreakdown?.length) {
-    const pbHeadings  = ["heading-QX_mHLy8qEq", "heading-bM5TzQyiz8p", "heading-3a9nBfpbpKU", "heading-gTlAF3yL1mV", "heading-9e-PLhPNKzp"];
-    const pbSublines  = ["sub-heading-3e2thqidJa5", "sub-heading-4EddE7bDMbu", "sub-heading-m_ioVFgJMdo", "sub-heading-JFG7rZTRk3j", "sub-heading-zf9lbN9K2Pd"];
-    const pbBodylines = ["sub-heading-vkjZxqzI_YB", "sub-heading-frqM65qZ53e", "sub-heading-UPjxYTeX5OC", "sub-heading-F4H6DkSjJwp", "sub-heading-FooRjOVQlKF"];
-    for (let i = 0; i < al.problemBreakdown.length && i < 5; i++) {
-      const pb = al.problemBreakdown[i];
-      setH(pbHeadings[i],  `<strong>${pb.title}</strong>`);
-      setH(pbSublines[i],  `<strong>${pb.headline}</strong>`);
-      setPara(pbBodylines[i], bioPara(pb.body));
-    }
-  }
-
-  // Client wins (section 15)
+  // Client wins (section 14)
   setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
 
-  // What you get — feature headings + paragraph bodies (sec16) — Image 4
-  if (al.whatYouGetItems?.length) {
-    const wygHeadings = [
-      "heading-KSi5Gr4J5v0", "heading-KY8qQqFsiid", "heading-EvE6-9xa9PID",
-      "heading-mDH6w6uji2rc", "heading-JLQkrveM1KnE", "heading-GatWECyOonx4",
-    ];
-    const wygParas = [
-      "paragraph-lzUIWL0SbxY", "paragraph-lFYWPVEtX935", "paragraph-XgE-kbfjrkYk",
-      "paragraph-fQGDUE4LR-Uy", "paragraph-ALy7DPf01W0u", "paragraph-1kDBNGfKvBXx",
-    ];
-    const items = al.whatYouGetItems;
-    for (let i = 0; i < 6; i++) {
-      const item = items[i] ?? items[items.length - 1] ?? "";
-      const dash = item.indexOf("—");
-      const featureName = (dash > 0 ? item.slice(0, dash) : item).trim();
-      const benefitText = (dash > 0 ? item.slice(dash + 1) : "").trim();
-      setH(wygHeadings[i], `<strong>${featureName.toUpperCase()}</strong>`);
-      if (benefitText) setPara(wygParas[i], `<p>${benefitText}</p>`);
-    }
-  }
+  // What you get (section 15)
   setH("heading-XpcooI_gth7", al.whatYouGetHeading);
-  setH("heading-MYwP6zucWywQ", al.whatYouGetHeading);
-
-  // What you get recap bullet list (sec18)
-  if (al.whatYouGetItems?.length) {
-    const recapBulletEl = byId.get("bulletList-y_I3SqcE1w2C");
-    if (recapBulletEl) {
-      const ulHtml = `<ul>${al.whatYouGetItems.map(item => {
-        const dash = item.indexOf("—");
-        return `<li>${(dash > 0 ? item.slice(0, dash) : item).trim()}</li>`;
-      }).join("")}</ul>`;
-      (recapBulletEl.extra as Record<string, unknown>).text = { value: ulHtml };
-    }
-  }
-
-  // What you get body copy — persuasive prose below the recap checklist (paragraph-YV_AiHC7iM_Y)
-  if (al.whatYouGetBodyCopy) {
-    setPara("paragraph-YV_AiHC7iM_Y", bioPara(al.whatYouGetBodyCopy));
-  }
-
-  // Benefit blocks — map to the "What YOU Can Expect..." subheadings and supporting paragraphs
-  // in section-mamQkS7y-C (the detailed feature card section). These 5 blocks are AI-generated
-  // but were previously never injected into the page.
-  if (al.benefitBlocks?.length) {
-    const bbSubheadings = [
-      "heading-VxbkCfpE6NJ",   // feature 1 subheading
-      "heading-4dybsQy9eOAF",  // feature 2 subheading
-      "heading--sMU_mZtyLaE",  // feature 3 subheading
-      "heading-asDT1uWqhoN5",  // feature 4 subheading
-      "heading-yaERxJiOv9_H",  // feature 5 subheading
-      "heading-U-8LmsMA3G_s",  // feature 6 subheading (cycles block 4)
-    ];
-    // Extra supporting paragraphs that exist for some feature slots
-    const bbExtraParas: Array<string | null> = [null, null, "paragraph-oWuah9Cy3b0y", "paragraph-0mHS23-nP_mm", null, null];
-    for (let i = 0; i < bbSubheadings.length; i++) {
-      const block = al.benefitBlocks[Math.min(i, al.benefitBlocks.length - 1)];
-      setH(bbSubheadings[i], `<strong>${block.heading}</strong>`);
-      if (bbExtraParas[i]) setPara(bbExtraParas[i]!, `<p>${block.body}</p>`);
-    }
-  }
-
-  // Clear hardcoded pricing / guarantee text from the template
-  // (These reference Tom's specific programme price and are never relevant to a generated funnel)
-  setPara("paragraph-N7vkxbXlpY7U", `<p></p>`);
-  setH("heading-tb2QJYNbXfce", `<strong>${al.whatYouGetHeading}</strong>`);
-  setH("heading-Ea23qxbk5Lbs", `<strong>${al.finalCtaText}</strong>`);
 
   // More transformations (section 18)
   setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);

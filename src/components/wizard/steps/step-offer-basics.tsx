@@ -14,14 +14,12 @@ const ctaOptions = [
   {
     value: "booking",
     label: "Book a call",
-    descriptionChallenge: "Lead books a strategy / sales call",
-    descriptionApplication: "Lead books a free strategy call to discuss fit",
+    description: "Lead books a strategy / sales call",
   },
   {
     value: "signup",
     label: "Direct sign-up",
-    descriptionChallenge: "Lead registers or purchases directly",
-    descriptionApplication: "Lead submits an application form directly",
+    description: "Lead registers or purchases directly",
   },
 ] as const;
 
@@ -40,18 +38,14 @@ export function StepOfferBasics({
   } = useForm<OfferBasics>({
     resolver: zodResolver(offerBasicsSchema),
     defaultValues: {
-      challengeName:       defaultValues.challengeName       ?? "",
-      challengeType:       defaultValues.challengeType       ?? "",
-      mainGoal:            defaultValues.mainGoal            ?? "",
-      duration:            defaultValues.duration            ?? 30,
-      price:               defaultValues.price               ?? "",
-      ctaType:             defaultValues.ctaType             ?? (isApplication ? "booking" : undefined),
-      inclusions:          defaultValues.inclusions          ?? "",
-      bonuses:             defaultValues.bonuses             ?? "",
-      investmentRange:     defaultValues.investmentRange     ?? "",
-      roiAnchor:           defaultValues.roiAnchor           ?? "",
-      cohortStartDate:     defaultValues.cohortStartDate     ?? "",
-      applicationDeadline: defaultValues.applicationDeadline ?? "",
+      challengeName: defaultValues.challengeName ?? "",
+      challengeType: defaultValues.challengeType ?? "",
+      mainGoal: defaultValues.mainGoal ?? "",
+      duration: defaultValues.duration ?? 30,
+      price: defaultValues.price ?? "",
+      ctaType: defaultValues.ctaType,
+      inclusions: defaultValues.inclusions ?? "",
+      bonuses: defaultValues.bonuses ?? "",
     },
   });
 
@@ -95,7 +89,7 @@ export function StepOfferBasics({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="duration">Duration (days)</Label>
+          <Label htmlFor="duration">{isApplication ? "Program duration (days)" : "Duration (days)"}</Label>
           <Input
             id="duration"
             type="number"
@@ -103,21 +97,16 @@ export function StepOfferBasics({
             max={90}
             {...register("duration", { valueAsNumber: true })}
           />
-          {isApplication && (
-            <p className="text-xs text-gray-400">e.g. 84 days = 12-week programme</p>
-          )}
           {errors.duration && (
             <p className="text-sm text-red-500">{errors.duration.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="price">Price / investment</Label>
+          <Label htmlFor="price">Price / offer type</Label>
           <Input
             id="price"
-            placeholder={isApplication
-              ? "e.g. By application only · From £5,000 · Shared on strategy call"
-              : "e.g. Free, £47, $97/month, Free trial"}
+            placeholder="e.g. Free, £47, $97/month, Free trial"
             {...register("price")}
           />
           {errors.price && (
@@ -147,9 +136,7 @@ export function StepOfferBasics({
               >
                 {option.label}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">
-                {isApplication ? option.descriptionApplication : option.descriptionChallenge}
-              </p>
+              <p className="mt-0.5 text-xs text-gray-400">{option.description}</p>
             </button>
           ))}
         </div>
@@ -186,63 +173,6 @@ export function StepOfferBasics({
           {...register("bonuses")}
         />
       </div>
-
-      {isApplication && (
-        <>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="investmentRange">
-                Exact investment <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Input
-                id="investmentRange"
-                placeholder="e.g. £4,997 or 3× £1,799"
-                {...register("investmentRange")}
-              />
-              <p className="text-xs text-gray-400">
-                Enables value-stacking and ROI copy even if price isn't shown on the page.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="roiAnchor">
-                ROI / comparison frame <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Input
-                id="roiAnchor"
-                placeholder="e.g. One new client pays for the programme"
-                {...register("roiAnchor")}
-              />
-              <p className="text-xs text-gray-400">
-                The AI uses this to make the investment feel logical, not large.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="cohortStartDate">
-                Next cohort / start date <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Input
-                id="cohortStartDate"
-                placeholder="e.g. 5 May 2025"
-                {...register("cohortStartDate")}
-              />
-              <p className="text-xs text-gray-400">Creates real, honest urgency — not artificial scarcity.</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="applicationDeadline">
-                Application deadline <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Input
-                id="applicationDeadline"
-                placeholder="e.g. 30 April — 3 days before cohort starts"
-                {...register("applicationDeadline")}
-              />
-            </div>
-          </div>
-        </>
-      )}
 
       <div className="flex justify-between pt-2">
         <Button type="button" variant="outline" size="lg" onClick={onBack}>

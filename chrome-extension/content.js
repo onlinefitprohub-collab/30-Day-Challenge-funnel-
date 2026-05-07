@@ -290,9 +290,237 @@
     } catch (_) {}
   }
 
+  var HOST_ID = "cf-fab-host";
+  var shadow  = null;
+  var pasting = false;
+
+  /* ─── FAB CSS (shadow DOM — isolated from GHL styles) ───────────────── */
+  var CSS = `
+    :host { all: initial; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    #fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 2147483647;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff; font-weight: 900; font-size: 12px; letter-spacing: -0.5px;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(249,115,22,.5), 0 0 0 3px rgba(249,115,22,.15);
+      display: flex; align-items: center; justify-content: center;
+      transition: box-shadow 0.15s, transform 0.1s, opacity 0.15s;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #fab:hover:not(:disabled) {
+      box-shadow: 0 6px 28px rgba(249,115,22,.7), 0 0 0 4px rgba(249,115,22,.2);
+      transform: scale(1.06);
+    }
+    #fab:active:not(:disabled) { transform: scale(0.96); }
+    #fab:disabled { opacity: 0.5; cursor: not-allowed; }
+    #fab.no-page {
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+      box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    }
+
+    #badge {
+      position: absolute; top: 1px; right: 1px;
+      width: 13px; height: 13px; border-radius: 50%;
+      background: #22c55e;
+      border: 2px solid #fff;
+      display: none;
+    }
+    #badge.show     { display: block; }
+    #badge.show.ghl { background: #0ea5e9; }
+
+    #toast {
+      position: fixed; bottom: 82px; right: 24px; z-index: 2147483647;
+      min-width: 210px; max-width: 290px;
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 12px; line-height: 1.55; font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.16);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #toast.show          { opacity: 1; }
+    #toast.ok  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    #toast.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    #toast.spin { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+  `;
+
+  /* ─── Build FAB ─────────────────────────────────────────────────────── */
+  function buildFab() {
+    var host = document.createElement("div");
+    host.id    = HOST_ID;
+    document.body.appendChild(host);
+    shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
+      <style>${CSS}</style>
+      <button id="fab" class="no-page" title="CF Funnel — loading…" disabled>
+        <span id="fab-text">CF</span>
+        <span id="badge"></span>
+      </button>
+      <div id="toast"></div>
+    `;
+    shadow.getElementById("fab").addEventListener("click", doPaste);
+    updateFab();
+  }
+
+  /* ─── Update FAB badge + tooltip ────────────────────────────────────── */
+  function setFabNoPage(fab, badge) {
+    fab.title    = "CF Funnel — click Clone to GHL in the app to load a page";
+    fab.disabled = true;
+    fab.classList.add("no-page");
+    badge.className = "";
+  }
+
+  function updateFab() {
+    if (!shadow) return;
+    var fab   = shadow.getElementById("fab");
+    var badge = shadow.getElementById("badge");
+    if (!fab || !badge) return;
+
+    var PAGE_LABELS = { landing: "Landing Page", optin: "Opt-In Page", thankyou: "Thank You Page", booking: "Booking Page" };
+    var isBuilder = /\/(page-builder|funnel-builder)\//.test(window.location.href);
+
+    // Safety net: if storage callbacks never fire (e.g. service worker restart),
+    // 8 s is enough for the service worker to cold-start after browser/extension restart.
+    var fallbackTimer = setTimeout(function() { setFabNoPage(fab, badge); }, 8000);
+
+    try {
+      chrome.storage.local.get(["cfReady"], function(ls) {
+        if (chrome.runtime.lastError) {
+          clearTimeout(fallbackTimer);
+          setFabNoPage(fab, badge);
+          return;
+        }
+        chrome.storage.session.get(["cf_copied_page"], function(ss) {
+          clearTimeout(fallbackTimer);
+          if (chrome.runtime.lastError) {
+            setFabNoPage(fab, badge);
+            return;
+          }
+
+          var ready  = ls.cfReady       || null;
+          var copied = ss.cf_copied_page || null;
+
+          var hasAiCopy   = !!(copied && copied.type === "ai-inject" && copied.pageData);
+          var hasUrlClone = !!(copied && copied.type === "url-clone" && copied.pageData);
+          var hasGHLCopy  = !!(copied && copied.funnelId && copied.stepId);
+          var hasAIOnly   = !hasAiCopy && !hasUrlClone && !hasGHLCopy && !!(ready && ready.pageData);
+
+          if (hasGHLCopy) {
+            var name = copied.pageName || "GHL Page";
+            fab.title   = isBuilder
+              ? "GHL Clone ready: " + name + " — click to paste"
+              : "GHL Clone: " + name + " — open a GHL builder tab to paste";
+            fab.disabled = !isBuilder || pasting;
+            fab.classList.remove("no-page");
+            badge.className = "show ghl";
+
+          } else if (hasUrlClone) {
+            var name2 = copied.pageName || "Captured GHL Page";
+            fab.title   = isBuilder
+              ? "Captured: " + name2 + " — click to paste"
+              : "Captured: " + name2 + " — open a GHL builder tab to paste";
+            fab.disabled = !isBuilder || pasting;
+            fab.classList.remove("no-page");
+            badge.className = "show";
+
+          } else if (hasAiCopy || hasAIOnly) {
+            var pg    = hasAiCopy ? copied.page : ready.page;
+            var label = PAGE_LABELS[pg] || "AI Page";
+            fab.title   = isBuilder
+              ? "AI Page Ready: " + label + " — click to paste"
+              : "AI Page: " + label + " — open a GHL builder tab to paste";
+            fab.disabled = !isBuilder || pasting;
+            fab.classList.remove("no-page");
+            badge.className = "show";
+
+          } else {
+            setFabNoPage(fab, badge);
+          }
+
+          if (pasting) fab.disabled = true;
+        });
+      });
+    } catch (e) {
+      clearTimeout(fallbackTimer);
+      setFabNoPage(fab, badge);
+    }
+  }
+
+  /* ─── Paste action ──────────────────────────────────────────────────── */
+  function setFabText(txt) {
+    var t = shadow && shadow.getElementById("fab-text");
+    if (t) t.textContent = txt;
+  }
+
+  function doPaste() {
+    if (pasting) return;
+    pasting = true;
+    var fab = shadow && shadow.getElementById("fab");
+    if (fab) fab.disabled = true;
+    setFabText("…");
+    showToast("spin", "Pasting page…");
+
+    Promise.race([
+      new Promise(function(resolve) { chrome.runtime.sendMessage({ type: "CF_PASTE_PAGE" }, resolve); }),
+      new Promise(function(resolve) { setTimeout(
+        function() { resolve({ ok: false, error: "Timed out (10s) — the extension took too long. Try reloading the GHL builder tab and clicking the CF button again." }); },
+        10000
+      ); }),
+    ]).then(function(result) {
+      if (result && result.ok) {
+        setFabText("✓");
+        var msg = (result.toast)
+          || "Pasted! Builder is reloading — your content will appear in a few seconds.";
+        showToast("ok", msg);
+        setTimeout(function() { resetFab(); hideToast(); }, 4000);
+      } else {
+        var err = (result && result.error) || "Unknown error";
+        setFabText("!");
+        showToast("err", err.slice(0, 220));
+        setTimeout(function() { resetFab(); hideToast(); }, 7000);
+      }
+    }).catch(function(e) {
+      setFabText("!");
+      showToast("err", "Error: " + e.message.slice(0, 180));
+      setTimeout(function() { resetFab(); hideToast(); }, 7000);
+    }).finally(function() {
+      pasting = false;
+    });
+  }
+
+  function resetFab() {
+    setFabText("CF");
+    updateFab();
+  }
+
+  /* ─── Toast helpers ─────────────────────────────────────────────────── */
+  function showToast(type, msg) {
+    var t = shadow && shadow.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.className   = "show " + type;
+  }
+
+  function hideToast() {
+    var t = shadow && shadow.getElementById("toast");
+    if (t) { t.className = ""; t.textContent = ""; }
+  }
+
+  /* ─── Listen for storage changes ────────────────────────────────────── */
+  chrome.storage.onChanged.addListener(function(changes, area) {
+    if (area === "session" && changes.cf_copied_page) updateFab();
+    if (area === "local"   && changes.cfReady)        updateFab();
+  });
+
   /* ─── Mount ─────────────────────────────────────────────────────────── */
   function mount() {
+    var existing = document.getElementById(HOST_ID);
+    if (existing) existing.remove();
     injectBridge();
+    buildFab();
     checkAndInjectSniff();
   }
 

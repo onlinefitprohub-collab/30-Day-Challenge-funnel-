@@ -21,19 +21,14 @@ const DELIVERY_LABEL: Record<string, string> = {
 export function buildCoachContext(inputs: WizardInputs): string {
   const {
     businessName, coachName, location, deliveryMode,
-    targetAudience, demographicDetails, audienceDemographic,
+    targetAudience, demographicDetails,
     challengeName, challengeType, mainGoal, duration, price, ctaType,
     inclusions, bonuses, videoUrl,
-    biggestStruggle, desiredOutcome, objections, whatTheyTried,
+    biggestStruggle, desiredOutcome, objections,
     toneOfVoice, phrasesToInclude, phrasesToAvoid, coachPhotoUrl,
     trafficSources, utmNamingPreference, adBudgetRange,
     testimonials, caseStudySnippets, resultsHighlights, hasBeforeAfter,
-    clientCount, yearsCoaching, coachCredentials, clientTransformations, bestClientResult,
-    namedMethod,
-    programPillars, uniqueApproach, idealClientProfile, notForWho,
-    applicationProcess, coachingCapacity, applicationFormQuestions,
-    investmentRange, roiAnchor, cohortStartDate, applicationDeadline,
-    coachBeforeState, coachTurningPoint, coachPersonalResult, coachWhyCoach,
+    clientCount, yearsCoaching,
   } = inputs;
 
   const isFree = price.toLowerCase().includes("free");
@@ -49,7 +44,6 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `Coach name: ${coachName}`,
     `Location: ${location}`,
     `Delivery: ${DELIVERY_LABEL[deliveryMode] ?? deliveryMode}`,
-    ...(namedMethod ? [`Named system/method: ${namedMethod}`] : []),
     ``,
     isApplication ? `=== THE PROGRAMME OFFER ===` : `=== THE CHALLENGE OFFER ===`,
     ...(challengeName ? [`${isApplication ? "Program" : "Challenge"} name: ${challengeName}`] : []),
@@ -63,21 +57,12 @@ export function buildCoachContext(inputs: WizardInputs): string {
 
   if (bonuses) lines.push(`Bonuses: ${bonuses}`);
 
-  if (isApplication && (investmentRange || roiAnchor || cohortStartDate || applicationDeadline)) {
-    lines.push(``, `=== INVESTMENT & URGENCY ===`);
-    if (investmentRange)      lines.push(`Exact investment: ${investmentRange}`);
-    if (roiAnchor)            lines.push(`ROI frame: ${roiAnchor}`);
-    if (cohortStartDate)      lines.push(`Next cohort start: ${cohortStartDate}`);
-    if (applicationDeadline)  lines.push(`Application deadline: ${applicationDeadline}`);
-  }
-
   lines.push(
     ``,
     `=== TARGET AUDIENCE ===`,
     `Who they are: ${targetAudience}`,
   );
-  if (demographicDetails)    lines.push(`Demographic detail: ${demographicDetails}`);
-  if (audienceDemographic)   lines.push(`Audience demographic: ${audienceDemographic}`);
+  if (demographicDetails) lines.push(`Demographic detail: ${demographicDetails}`);
 
   lines.push(
     ``,
@@ -85,10 +70,6 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `Biggest struggle right now: ${biggestStruggle}`,
     `What they actually want: ${desiredOutcome || mainGoal}`,
     `Their objections before joining: ${objections}`,
-  );
-  if (whatTheyTried) lines.push(`What they've already tried (that didn't work):\n${whatTheyTried}`);
-
-  lines.push(
     ``,
     `=== BRAND VOICE ===`,
     `Tone: ${TONE_GUIDE[toneOfVoice] ?? TONE_GUIDE.friendly}`,
@@ -104,42 +85,20 @@ export function buildCoachContext(inputs: WizardInputs): string {
   if (adBudgetRange)         lines.push(`Budget range: ${adBudgetRange}`);
   if (utmNamingPreference)   lines.push(`UTM/campaign naming preference: ${utmNamingPreference}`);
 
-  if (testimonials || caseStudySnippets || resultsHighlights || clientTransformations || bestClientResult) {
+  if (testimonials || caseStudySnippets || resultsHighlights) {
     lines.push(``, `=== SOCIAL PROOF ===`);
-    if (bestClientResult)      lines.push(`Best single client result (headline anchor): ${bestClientResult}`);
-    if (clientTransformations) lines.push(`Specific client transformations (before → after → timeframe):\n${clientTransformations}`);
-    if (testimonials)          lines.push(`Client testimonials:\n${testimonials}`);
-    if (caseStudySnippets)     lines.push(`Case study/story:\n${caseStudySnippets}`);
-    if (resultsHighlights)     lines.push(`Results/stats: ${resultsHighlights}`);
-    if (hasBeforeAfter)        lines.push(`Before/after content: available`);
+    if (testimonials)       lines.push(`Client testimonials:\n${testimonials}`);
+    if (caseStudySnippets)  lines.push(`Case study/story:\n${caseStudySnippets}`);
+    if (resultsHighlights)  lines.push(`Results/stats: ${resultsHighlights}`);
+    if (hasBeforeAfter)     lines.push(`Before/after content: available`);
   }
 
-  if (clientCount || yearsCoaching || videoUrl || coachPhotoUrl || coachCredentials) {
+  if (clientCount || yearsCoaching || videoUrl || coachPhotoUrl) {
     lines.push(``, `=== COACH CREDIBILITY ===`);
-    if (coachCredentials) lines.push(`Credentials & authority:\n${coachCredentials}`);
-    if (clientCount)      lines.push(`Clients helped: ${clientCount}`);
-    if (yearsCoaching)    lines.push(`Years coaching: ${yearsCoaching}`);
-    if (videoUrl)         lines.push(`Intro video URL: ${videoUrl}`);
-    if (coachPhotoUrl)    lines.push(`Coach photo URL: ${coachPhotoUrl}`);
-  }
-
-  if (isApplication && (programPillars || uniqueApproach || idealClientProfile || notForWho || applicationProcess || coachingCapacity || applicationFormQuestions)) {
-    lines.push(``, `=== APPLICATION PROGRAMME DETAILS ===`);
-    if (programPillars)            lines.push(`Programme pillars:\n${programPillars}`);
-    if (uniqueApproach)            lines.push(`Unique approach/method: ${uniqueApproach}`);
-    if (idealClientProfile)        lines.push(`Ideal client (qualifiers):\n${idealClientProfile}`);
-    if (notForWho)                 lines.push(`Who this is NOT for:\n${notForWho}`);
-    if (applicationProcess)        lines.push(`Application process: ${applicationProcess}`);
-    if (coachingCapacity)          lines.push(`Coaching capacity (scarcity): ${coachingCapacity}`);
-    if (applicationFormQuestions)  lines.push(`Application form questions:\n${applicationFormQuestions}`);
-  }
-
-  if (isApplication && (coachBeforeState || coachTurningPoint || coachPersonalResult || coachWhyCoach)) {
-    lines.push(``, `=== COACH PERSONAL STORY (for bio generation) ===`);
-    if (coachBeforeState)    lines.push(`Coach before state:\n${coachBeforeState}`);
-    if (coachTurningPoint)   lines.push(`Coach turning point:\n${coachTurningPoint}`);
-    if (coachPersonalResult) lines.push(`Coach personal result: ${coachPersonalResult}`);
-    if (coachWhyCoach)       lines.push(`Coach's mission/why:\n${coachWhyCoach}`);
+    if (clientCount)    lines.push(`Clients helped: ${clientCount}`);
+    if (yearsCoaching)  lines.push(`Years coaching: ${yearsCoaching}`);
+    if (videoUrl)       lines.push(`Intro video URL: ${videoUrl}`);
+    if (coachPhotoUrl)  lines.push(`Coach photo URL: ${coachPhotoUrl}`);
   }
 
   return lines.join("\n");

@@ -1,7 +1,7 @@
 /**
  * Core AI generation orchestrator.
  *
- * Makes 5 focused API calls in parallel for challenge funnels — 8 for application funnels.
+ * Makes 3 focused API calls in parallel for challenge funnels — 4 for application funnels.
  * Each call has its own token budget and is validated independently.
  * If a group fails (or ANTHROPIC_API_KEY is absent), it falls back to
  * personalised mock data.
@@ -10,9 +10,6 @@
  * Group 2 — Follow-up Sequences: smsSequence, emailSequence
  * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
  * Group 4 — Application Landing Page (application funnels only): applicationLandingPage
- * Group 5 — Content Calendar: 30-day organic social plan
- * Group 6 — Delivery Pack: challenge participant communication templates
- * Group 7 — Coaching Tools: testimonialHarvestSequence + pricingGuide
  *
  * Model routing:
  *   Group 1 → claude-sonnet-4-6              (offer pages — most complex)
@@ -31,28 +28,14 @@ import { buildOfferPagesPrompt } from "./prompts/offer-pages";
 import { buildSequencesPrompt } from "./prompts/sequences";
 import { buildAdsCampaignPrompt } from "./prompts/ads-campaign";
 import { buildApplicationLandingPrompt } from "./prompts/application-landing";
-import { buildCoachStoryPrompt } from "./prompts/coach-story";
-import { buildVslScriptPrompt } from "./prompts/vsl-script";
-import { buildContentCalendarPrompt } from "./prompts/content-calendar";
-import { buildDeliveryPackPrompt } from "./prompts/delivery-pack";
-import { buildCoachingToolsPrompt } from "./prompts/coaching-tools";
 import { pickRandomStyle } from "./copywriter-styles";
 import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
   adsCampaignResponseSchema,
   applicationLandingResponseSchema,
-  coachStoryResponseSchema,
-  vslScriptResponseSchema,
-  contentCalendarResponseSchema,
-  deliveryPackResponseSchema,
-  coachingToolsResponseSchema,
 } from "./validators";
-import {
-  generateMockAssets, buildMockApplicationLandingPage,
-  buildMockContentCalendar, buildMockDeliveryPack,
-  buildMockTestimonialHarvest, buildMockPricingGuide,
-} from "./mock";
+import { generateMockAssets, buildMockApplicationLandingPage } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
@@ -61,15 +44,10 @@ const MODEL_FAST    = "claude-haiku-4-5-20251001";
 
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
-  offerPages:          4096,  // 5 sections + design spec + framework/voice/layout variants
-  sequences:           4500,  // 7 SMS + 10 emails with subject + body
-  adsCampaign:         3200,  // ad copy, creative prompts, campaign naming
+  offerPages:          4096,  // 5 sections + design spec + framework/voice/layout variants (was 2800 — truncated)
+  sequences:           4500,  // 7 SMS + 10 emails with subject + body (expanded lifecycle sequence)
+  adsCampaign:         3200,  // ad copy, creative prompts, campaign naming (was 2400 — truncated)
   applicationLanding:  3200,  // 22-section registration page content
-  coachStory:          1000,  // 3 bio paragraphs (~300–400 words)
-  vslScript:           4000,  // 11-section VSL — full spoken-word script
-  contentCalendar:     4096,  // 30 posts with hook + caption + CTA
-  deliveryPack:        4500,  // welcome + 4 weekly emails + 30 daily SMS + completion
-  coachingTools:       3000,  // testimonial harvest sequence + pricing guide
 } as const;
 
 interface GroupResult<T> {
@@ -110,24 +88,8 @@ export async function generateFunnelAssets(
 
   const isApplication = inputs.funnelType === "application";
 
-  const coachStoryInputs = {
-    coachName:           inputs.coachName,
-    coachBeforeState:    inputs.coachBeforeState,
-    coachTurningPoint:   inputs.coachTurningPoint,
-    coachPersonalResult: inputs.coachPersonalResult,
-    coachWhyCoach:       inputs.coachWhyCoach,
-    targetAudience:      inputs.targetAudience,
-    mainGoal:            inputs.mainGoal,
-    challengeName:       inputs.challengeName,
-  };
-
-  const hasStoryInputs = !!(
-    inputs.coachBeforeState || inputs.coachTurningPoint ||
-    inputs.coachPersonalResult || inputs.coachWhyCoach
-  );
-
-  // Fire groups in parallel — up to 8 calls for application funnels, 5 for challenge funnels
-  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult, coachStoryResult, vslScriptResult, contentCalendarResult, deliveryPackResult, coachingToolsResult] =
+  // Fire groups in parallel — 4 calls for application funnels, 3 for challenge funnels
+  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult] =
     await Promise.all([
       callCopyGroup(
         buildOfferPagesPrompt(context, style.promptDescription),
@@ -159,56 +121,12 @@ export async function generateFunnelAssets(
             MODEL_PRIMARY,
           )
         : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ applicationLandingPage: import("@/types/generation").ApplicationLandingPage }>),
-      isApplication && hasStoryInputs
-        ? callCopyGroup(
-            buildCoachStoryPrompt(context, style.promptDescription, coachStoryInputs),
-            coachStoryResponseSchema,
-            "coach-story",
-            TOKENS.coachStory,
-            MODEL_PRIMARY,
-          )
-        : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ coachStory: import("@/types/generation").GeneratedFunnelAssets["coachStory"] }>),
-      isApplication
-        ? callCopyGroup(
-            buildVslScriptPrompt(context, style.promptDescription),
-            vslScriptResponseSchema,
-            "vsl-script",
-            TOKENS.vslScript,
-            MODEL_PRIMARY,
-          )
-        : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ vslScript: import("@/types/generation").VslScript }>),
-      // Group 5 — Content Calendar (all funnels)
-      callCopyGroup(
-        buildContentCalendarPrompt(context, style.promptDescription),
-        contentCalendarResponseSchema,
-        "content-calendar",
-        TOKENS.contentCalendar,
-        MODEL_FAST,
-      ),
-      // Group 6 — Delivery Pack (all funnels)
-      callCopyGroup(
-        buildDeliveryPackPrompt(context, style.promptDescription),
-        deliveryPackResponseSchema,
-        "delivery-pack",
-        TOKENS.deliveryPack,
-        MODEL_FAST,
-      ),
-      // Group 7 — Coaching Tools: testimonial harvest + pricing guide (all funnels)
-      callCopyGroup(
-        buildCoachingToolsPrompt(context, style.promptDescription),
-        coachingToolsResponseSchema,
-        "coaching-tools",
-        TOKENS.coachingTools,
-        MODEL_FAST,
-      ),
     ]);
 
   console.log("[design] Claude returned:", offerPagesResult.data?.design);
   console.log("[framework] Claude selected:", offerPagesResult.data?.copywritingFramework, offerPagesResult.data?.copywriterVoice);
   if (isApplication) {
     console.log("[application-landing] result:", appLandingResult.error ?? "ok");
-    console.log("[coach-story] result:", coachStoryResult.error ?? (coachStoryResult.data ? "ok" : "skipped"));
-    console.log("[vsl-script] result:", vslScriptResult.error ?? (vslScriptResult.data ? "ok" : "skipped"));
   }
 
   // Log any errors for observability
@@ -217,11 +135,6 @@ export async function generateFunnelAssets(
     sequencesResult.error,
     adsCampaignResult.error,
     isApplication ? appLandingResult.error : null,
-    isApplication ? coachStoryResult.error : null,
-    isApplication ? vslScriptResult.error : null,
-    contentCalendarResult.error,
-    deliveryPackResult.error,
-    coachingToolsResult.error,
   ].filter(Boolean);
   if (errors.length > 0) {
     console.warn(
@@ -237,14 +150,6 @@ export async function generateFunnelAssets(
 
   const applicationLandingPage = isApplication
     ? (appLandingResult.data?.applicationLandingPage ?? buildMockApplicationLandingPage(inputs))
-    : undefined;
-
-  const coachStory = isApplication
-    ? (coachStoryResult.data?.coachStory ?? undefined)
-    : undefined;
-
-  const vslScript = isApplication
-    ? (vslScriptResult.data?.vslScript ?? undefined)
     : undefined;
 
   return {
@@ -264,11 +169,5 @@ export async function generateFunnelAssets(
     design:                offerPages.design,
     sectionLayoutVariants: offerPages.sectionLayoutVariants,
     applicationLandingPage,
-    coachStory,
-    vslScript,
-    contentCalendar:             contentCalendarResult.data?.contentCalendar             ?? buildMockContentCalendar(inputs),
-    deliveryPack:                deliveryPackResult.data?.deliveryPack                   ?? buildMockDeliveryPack(inputs),
-    testimonialHarvestSequence:  coachingToolsResult.data?.testimonialHarvestSequence   ?? buildMockTestimonialHarvest(inputs),
-    pricingGuide:                coachingToolsResult.data?.pricingGuide                 ?? buildMockPricingGuide(inputs),
   };
 }

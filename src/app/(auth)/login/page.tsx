@@ -2,7 +2,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Log in | FitPro Launch",
+  title: "Log in | Challenge Funnel in a Box",
 };
 
 export default function LoginPage() {
@@ -21,7 +21,7 @@ export default function LoginPage() {
           href="/signup"
           className="font-semibold text-brand-600 hover:text-brand-700"
         >
-          Sign up
+          Sign up free
         </Link>
       </p>
     </div>

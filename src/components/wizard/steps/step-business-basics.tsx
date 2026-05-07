@@ -30,14 +30,11 @@ export function StepBusinessBasics({
   } = useForm<BusinessBasics>({
     resolver: zodResolver(businessBasicsSchema),
     defaultValues: {
-      businessName:        defaultValues.businessName        ?? "",
-      coachName:           defaultValues.coachName           ?? "",
-      location:            defaultValues.location            ?? "",
-      deliveryMode:        defaultValues.deliveryMode,
-      targetAudience:      defaultValues.targetAudience      ?? "",
-      audienceDemographic: defaultValues.audienceDemographic ?? "",
-      coachCredentials:    defaultValues.coachCredentials    ?? "",
-      namedMethod:         defaultValues.namedMethod         ?? "",
+      businessName: defaultValues.businessName ?? "",
+      coachName: defaultValues.coachName ?? "",
+      location: defaultValues.location ?? "",
+      deliveryMode: defaultValues.deliveryMode,
+      targetAudience: defaultValues.targetAudience ?? "",
     },
   });
 
@@ -135,49 +132,6 @@ export function StepBusinessBasics({
         {errors.targetAudience && (
           <p className="text-sm text-red-500">{errors.targetAudience.message}</p>
         )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="audienceDemographic">
-          Audience demographic breakdown <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Input
-          id="audienceDemographic"
-          placeholder="e.g. Women 35–50, mums returning to fitness · Men 40–60, professional / executive · Mixed 30–45"
-          {...register("audienceDemographic")}
-        />
-        <p className="text-xs text-gray-400">
-          Age range, gender lean, and life stage — sharpens ad copy targeting and the "who this is for" framing.
-        </p>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="namedMethod">
-          Does your method or system have a name? <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Input
-          id="namedMethod"
-          placeholder="e.g. The 5-Phase Protocol · The Identity Shift Method · The LEAN System"
-          {...register("namedMethod")}
-        />
-        <p className="text-xs text-gray-400">
-          A named system makes your offer non-comparable. Leave blank and the AI will suggest one from your inputs.
-        </p>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="coachCredentials">
-          Your credentials &amp; authority signals <span className="text-gray-400">(optional)</span>
-        </Label>
-        <Textarea
-          id="coachCredentials"
-          placeholder={`e.g.\n• Level 3 Personal Trainer + Precision Nutrition L2 certified\n• Featured in Women's Health, The Sun, and BBC Radio\n• Creator of the 5-Phase Protocol — used by 300+ clients\n• Former NHS dietitian turned performance coach`}
-          rows={4}
-          {...register("coachCredentials")}
-        />
-        <p className="text-xs text-gray-400">
-          Certifications, media appearances, named methods, notable results — the AI uses these for your authority section.
-        </p>
       </div>
 
       <div className="flex justify-end pt-2">
