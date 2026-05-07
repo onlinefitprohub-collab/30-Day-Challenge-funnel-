@@ -390,6 +390,7 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
     ],
 
     whatYouGetHeading: `Everything You Get When You Join ${programmeName}`,
+    whatYouGetBodyCopy: `Your plan is fully tailored to your body, goals, preferences, and lifestyle — it's everything you need to finally ${outcomeLC} without the guesswork, confusion, or wasted effort. ${coachName} builds this around you, not around a generic template.\n\nEvery week you'll know exactly what to do, when to do it, and why. You'll have the accountability and expert guidance to stay on track even when life gets in the way — because it will. That's when the support structure makes all the difference.\n\nThe ultimate goal isn't just short-term results — it's building the habits and systems that keep you fit, energised, and confident for years to come. This is how you become the person you've always wanted to be.`,
     whatYouGetItems: [
       `Fully personalised ${inputs.duration ?? "12"}-week programme built around your goals and lifestyle`,
       `Weekly 1-on-1 coaching sessions with ${coachName} — expert guidance every step of the way`,
