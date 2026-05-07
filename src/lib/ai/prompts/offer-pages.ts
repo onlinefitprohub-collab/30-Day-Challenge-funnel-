@@ -44,6 +44,10 @@ LANDING PAGE
 - faqItems: Write 4 FAQ pairs. Tackle real objections from the context. Answers must be direct and specific. Never start with "Great question!".
 - urgencyIdeas: 3 urgency tactics — real scarcity, social proof momentum, cost of inaction. No fake urgency.
 
+QUALIFICATION SECTION
+- qualificationSection.shouldApply: 5–6 bullets. Each begins "You're [descriptor]" or "You want [specific thing]". These describe the IDEAL client — someone who is serious, committed, and ready. Pull traits from targetAudience and desiredOutcome. Be specific — name the outcome or situation.
+- qualificationSection.shouldntApply: 5 bullets. Each begins "You're looking for [wrong thing]" or "You're not [ready/willing/open to]". These describe people who AREN'T a fit — quick-fix seekers, people not willing to follow structure, people who won't commit. Pull from objections and the inverse of the ideal client. Be honest, not harsh.
+
 COACH BIO
 - coachBio: 3–4 sentences written in first person, as if the coach is speaking. Should cover: who they are, why they created this programme (personal motivation or professional expertise), and the core transformation they've helped clients achieve. Specific and warm — not a résumé. If a case study or testimonial snippet exists in the context, weave in one concrete result. Do NOT use phrases like "I am passionate about" or "I help people achieve their goals".
 
@@ -82,6 +86,10 @@ Return ONLY this JSON structure. Every string field must contain actual copy, no
 
 {
   "colourScheme": "rose-pink",
+  "qualificationSection": {
+    "shouldApply": ["...", "...", "...", "...", "...", "..."],
+    "shouldntApply": ["...", "...", "...", "...", "..."]
+  },
   "coachBio": "...",
   "testimonialCards": [
     { "quote": "...", "attribution": "..." },

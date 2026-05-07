@@ -30,7 +30,7 @@ const TEMPERATURE = 0.72;
 
 // Token budgets per group — sized to comfortably fit each group's JSON
 const TOKENS = {
-  offerPages: 3200,   // 5 sections, most complex
+  offerPages: 4200,   // 5 sections + coachBio + testimonialCards + qualificationSection
   sequences: 2800,    // 5 SMS + 5 emails with subject + body
   adsCampaign: 2400,  // ad copy, creative prompts, campaign naming
 } as const;
@@ -130,9 +130,10 @@ export async function generateFunnelAssets(
     adCopy:        adsCampaign.adCopy,
     creativePrompts: adsCampaign.creativePrompts,
     campaignNaming:  adsCampaign.campaignNaming,
-    colourScheme:     offerPages.colourScheme,
-    design:           offerPages.design,
-    coachBio:         offerPages.coachBio,
-    testimonialCards: offerPages.testimonialCards,
+    colourScheme:         offerPages.colourScheme,
+    design:               offerPages.design,
+    coachBio:             offerPages.coachBio,
+    testimonialCards:     offerPages.testimonialCards,
+    qualificationSection: offerPages.qualificationSection,
   };
 }

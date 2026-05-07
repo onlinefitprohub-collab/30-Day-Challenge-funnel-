@@ -64,10 +64,14 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
       const pages = buildAllPageData(assets);
       const slug  = project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const files: Array<{ name: string; data: unknown }> = [
-        { name: `${slug}-landing.json`,  data: pages.landing  },
-        { name: `${slug}-optin.json`,    data: pages.optin    },
-        { name: `${slug}-thankyou.json`, data: pages.thankYou },
-        { name: `${slug}-booking.json`,  data: pages.booking  },
+        { name: `${slug}-landing.json`,          data: pages.landing         },
+        { name: `${slug}-optin.json`,            data: pages.optin           },
+        { name: `${slug}-thankyou.json`,         data: pages.thankYou        },
+        { name: `${slug}-booking.json`,          data: pages.booking         },
+        { name: `${slug}-registration.json`,     data: pages.registration    },
+        { name: `${slug}-app-form.json`,         data: pages.applicationForm },
+        { name: `${slug}-app-received.json`,     data: pages.appReceived     },
+        { name: `${slug}-strategy-call.json`,    data: pages.strategyCall    },
       ];
       for (const file of files) {
         const blob = new Blob([JSON.stringify(file.data, null, 2)], { type: "application/json" });
@@ -78,7 +82,7 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
         a.click();
         URL.revokeObjectURL(url);
       }
-      toast({ title: "GHL pages exported!", description: "4 JSON files downloaded — import each into GoHighLevel." });
+      toast({ title: "GHL pages exported!", description: "8 JSON files downloaded — import each into GoHighLevel." });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Export failed";
       toast({ title: "Export failed", description: msg, variant: "destructive" });

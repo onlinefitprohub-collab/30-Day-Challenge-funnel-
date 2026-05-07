@@ -253,6 +253,24 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
 
     colourScheme: "navy-orange",
 
+    qualificationSection: {
+      shouldApply: [
+        `You're ${audienceShort} who is serious about finally ${outcomeLC}`,
+        `You're coachable, open-minded, and ready to follow a proven system`,
+        `You're committed to showing up — even on the days it's uncomfortable`,
+        `You understand that real results require consistent effort over ${duration} days`,
+        `You want personalised support, not just another generic programme`,
+        `You're ready to stop going it alone and get structured help`,
+      ],
+      shouldntApply: [
+        `You're looking for a quick fix or overnight results without putting in the work`,
+        `You're not willing to follow a structured plan or take expert guidance`,
+        `You're not ready to invest the time and energy your transformation requires`,
+        `You want information only — not real accountability or coaching support`,
+        `You've already decided ${firstObjection.toLowerCase()} — and you're not open to working through it`,
+      ],
+    },
+
     coachBio: `I created the ${challengeTitle} because I kept seeing the same pattern — ${audienceShort} who were working hard but not getting anywhere, usually because they had no structure and no one in their corner. I've been coaching ${targetAudience} for years, and the one thing that changes everything is a clear daily plan combined with real accountability. In the past few rounds, clients have ${outcomeYou} without overhauling their whole life. That's what this programme is built around.`,
 
     testimonialCards: testimonials

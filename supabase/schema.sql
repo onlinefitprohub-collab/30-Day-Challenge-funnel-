@@ -153,3 +153,42 @@ create policy "Users can insert own project outputs"
     where projects.id = project_outputs.project_id
     and projects.user_id = auth.uid()
   ));
+
+-- Monthly content plans (content engine)
+create table if not exists public.monthly_content_plans (
+  id uuid primary key default uuid_generate_v4(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  month_year text not null,                          -- e.g. "2025-06"
+  platform text not null default 'instagram',        -- instagram | facebook | tiktok | linkedin
+  content jsonb not null default '[]',               -- array of content day objects
+  status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists monthly_content_plans_project_id_idx on public.monthly_content_plans(project_id);
+create index if not exists monthly_content_plans_user_id_idx on public.monthly_content_plans(user_id);
+create index if not exists monthly_content_plans_month_year_idx on public.monthly_content_plans(user_id, month_year);
+
+create trigger monthly_content_plans_updated_at
+  before update on public.monthly_content_plans
+  for each row execute function public.handle_updated_at();
+
+alter table public.monthly_content_plans enable row level security;
+
+create policy "Users can view own content plans"
+  on public.monthly_content_plans for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own content plans"
+  on public.monthly_content_plans for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own content plans"
+  on public.monthly_content_plans for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own content plans"
+  on public.monthly_content_plans for delete
+  using (auth.uid() = user_id);

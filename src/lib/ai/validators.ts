@@ -87,6 +87,11 @@ const testimonialCardSchema = z.object({
   attribution: z.string().min(1),
 });
 
+const qualificationSectionSchema = z.object({
+  shouldApply:   z.array(z.string()).min(1),
+  shouldntApply: z.array(z.string()).min(1),
+});
+
 const ghlDesignOverrideSchema = z.object({
   primaryColor:               z.string().optional(),
   darkBackground:             z.string().optional(),
@@ -104,8 +109,9 @@ export const offerPagesResponseSchema = z.object({
   bookingPage:      bookingPageSchema,
   colourScheme:     z.string().optional(),
   design:           ghlDesignOverrideSchema,
-  coachBio:         z.string().optional(),
-  testimonialCards: z.array(testimonialCardSchema).optional(),
+  coachBio:             z.string().optional(),
+  testimonialCards:     z.array(testimonialCardSchema).optional(),
+  qualificationSection: qualificationSectionSchema.optional(),
 });
 
 export const sequencesResponseSchema = z.object({

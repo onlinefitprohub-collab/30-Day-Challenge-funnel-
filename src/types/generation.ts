@@ -30,6 +30,11 @@ export interface TestimonialCard {
   attribution: string;
 }
 
+export interface QualificationSection {
+  shouldApply: string[];
+  shouldntApply: string[];
+}
+
 export interface OptInFormSuggestions {
   recommendedFields: string[];
   formIntroText: string;
@@ -103,6 +108,7 @@ export interface GeneratedFunnelAssets {
   design?: GhlDesignOverride;
   coachBio?: string;
   testimonialCards?: TestimonialCard[];
+  qualificationSection?: QualificationSection;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;
