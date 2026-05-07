@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Bell } from "lucide-react";
 
 export const metadata = {
-  title: "Account Settings | Challenge Funnel in a Box",
+  title: "Account Settings | FitPro Launch",
 };
 
 export default function AccountPage() {

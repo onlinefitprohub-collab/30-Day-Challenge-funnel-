@@ -129,7 +129,7 @@ export function StepSocialProof({
           <div>
             <p className="font-semibold text-brand-900">You're ready to generate</p>
             <p className="mt-1 text-sm text-brand-700">
-              We'll now build your complete challenge funnel — landing page, emails, SMS, ad copy,
+              We'll now build your complete FitPro Launch funnel — landing page, emails, SMS, ad copy,
               creative prompts, and campaign setup. Takes about 30 seconds.
             </p>
           </div>

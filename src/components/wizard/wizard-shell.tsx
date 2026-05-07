@@ -118,7 +118,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
             <Zap className="h-5 w-5 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Build your challenge funnel</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Build your FitPro Launch funnel</h1>
         <p className="mt-2 text-gray-500">
           {initialProjectId
             ? "Pick up where you left off — your answers are saved."

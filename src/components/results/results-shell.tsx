@@ -131,7 +131,7 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
           </Link>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-sm text-gray-500">Your complete challenge funnel</p>
+            <p className="text-sm text-gray-500">Your complete FitPro Launch funnel</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

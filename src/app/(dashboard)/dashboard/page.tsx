@@ -24,7 +24,7 @@ export default function DashboardPage() {
           <p className="mt-1 text-gray-500">
             {projects.length > 0
               ? `You have ${projects.length} funnel project${projects.length === 1 ? "" : "s"}.`
-              : "Ready to build your first challenge funnel?"}
+              : "Ready to build your first funnel with FitPro Launch?"}
           </p>
         </div>
         <Link href="/projects/new">

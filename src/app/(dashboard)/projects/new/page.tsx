@@ -1,7 +1,7 @@
 import { WizardShell } from "@/components/wizard/wizard-shell";
 
 export const metadata = {
-  title: "New Funnel Project | Challenge Funnel in a Box",
+  title: "New Funnel Project | FitPro Launch",
 };
 
 interface PageProps {

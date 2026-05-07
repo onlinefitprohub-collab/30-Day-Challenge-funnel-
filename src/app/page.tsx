@@ -34,7 +34,7 @@ const steps = [
   {
     number: "02",
     title: "We generate everything",
-    description: "Our AI builds your full challenge funnel — copy, sequences, ads and all.",
+    description: "FitPro Launch builds your full funnel — copy, sequences, ads and all.",
   },
   {
     number: "03",
@@ -84,7 +84,7 @@ export default function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-600 to-accent-500">
               <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900">Challenge Funnel</span>
+            <span className="font-bold text-gray-900">FitPro Launch</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -111,7 +111,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-balance text-5xl font-bold leading-tight tracking-tight text-gray-900 sm:text-6xl lg:text-7xl">
             Launch your{" "}
-            <span className="gradient-text">30-day challenge funnel</span>
+            <span className="gradient-text">30-day challenge funnel</span>{" "}
             {" "}in minutes, not days.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-gray-600">
@@ -248,7 +248,7 @@ export default function HomePage() {
       <section className="px-6 py-24">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-            Ready to launch your challenge funnel?
+            Ready to launch your funnel with FitPro Launch?
           </h2>
           <p className="mt-4 text-xl text-gray-600">
             Join hundreds of fitness coaches who stopped guessing and started generating.
@@ -274,10 +274,10 @@ export default function HomePage() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-600 to-accent-500">
               <Zap className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-semibold text-gray-700">Challenge Funnel in a Box</span>
+            <span className="font-semibold text-gray-700">FitPro Launch</span>
           </div>
           <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} Challenge Funnel in a Box. All rights reserved.
+            © {new Date().getFullYear()} FitPro Launch. All rights reserved.
           </p>
         </div>
       </footer>

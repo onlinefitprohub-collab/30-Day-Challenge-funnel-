@@ -12,7 +12,7 @@ export function EmptyState() {
         No funnel projects yet
       </h2>
       <p className="mt-2 max-w-sm text-gray-500">
-        Create your first challenge funnel project and have a complete,
+        Create your first FitPro Launch project and have a complete,
         launch-ready funnel generated in minutes.
       </p>
       <Link href="/projects/new" className="mt-8">

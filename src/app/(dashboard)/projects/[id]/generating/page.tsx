@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Generating your funnel… | Challenge Funnel in a Box",
+  title: "Generating your funnel… | FitPro Launch",
 };
 
 // Generation is now handled inline by the wizard — this route is no longer used.
