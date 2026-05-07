@@ -192,6 +192,7 @@ export interface ApplicationLandingPage {
   shouldApply: string[];      // 4–8 qualifiers
   textTestimonials: Array<{ quote: string; attribution: string; result: string }>; // 3
   whatYouGetHeading: string;
+  whatYouGetBodyCopy: string;  // 2-3 persuasive paragraphs (newline-separated) below the checklist
   whatYouGetItems: string[];  // 6–8 items
   transformationGalleryHeading: string;
   clientWinsHeading: string;

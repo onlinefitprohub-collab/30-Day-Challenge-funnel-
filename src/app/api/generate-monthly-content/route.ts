@@ -5,7 +5,6 @@ import { callClaudeGroup } from "@/lib/ai/claude-generate";
 import { buildCoachContext } from "@/lib/ai/context";
 import { buildMonthlyContentPrompt } from "@/lib/ai/prompts/monthly-content";
 import { monthlyContentPlanResponseSchema } from "@/lib/ai/validators";
-import { getUserSubscriptionStatus, isPro } from "@/lib/subscription";
 import { wizardInputsSchema } from "@/types/wizard";
 import type { MonthlyContentPlan } from "@/types/monthly-content";
 import type { ProjectInputRow } from "@/types/project";
@@ -21,12 +20,6 @@ export async function POST(request: Request) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    // Subscription gate
-    const subscriptionStatus = await getUserSubscriptionStatus(supabase, user.id);
-    if (!isPro(subscriptionStatus)) {
-      return NextResponse.json({ error: "subscription_required" }, { status: 403 });
-    }
 
     const body = await request.json() as { month?: string; projectId?: string };
     if (!body.projectId) return NextResponse.json({ error: "projectId is required" }, { status: 400 });

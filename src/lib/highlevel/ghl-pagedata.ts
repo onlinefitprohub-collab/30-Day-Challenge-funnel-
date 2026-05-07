@@ -3523,6 +3523,38 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     }
   }
 
+  // What you get body copy — persuasive prose below the recap checklist (paragraph-YV_AiHC7iM_Y)
+  if (al.whatYouGetBodyCopy) {
+    setPara("paragraph-YV_AiHC7iM_Y", bioPara(al.whatYouGetBodyCopy));
+  }
+
+  // Benefit blocks — map to the "What YOU Can Expect..." subheadings and supporting paragraphs
+  // in section-mamQkS7y-C (the detailed feature card section). These 5 blocks are AI-generated
+  // but were previously never injected into the page.
+  if (al.benefitBlocks?.length) {
+    const bbSubheadings = [
+      "heading-VxbkCfpE6NJ",   // feature 1 subheading
+      "heading-4dybsQy9eOAF",  // feature 2 subheading
+      "heading--sMU_mZtyLaE",  // feature 3 subheading
+      "heading-asDT1uWqhoN5",  // feature 4 subheading
+      "heading-yaERxJiOv9_H",  // feature 5 subheading
+      "heading-U-8LmsMA3G_s",  // feature 6 subheading (cycles block 4)
+    ];
+    // Extra supporting paragraphs that exist for some feature slots
+    const bbExtraParas: Array<string | null> = [null, null, "paragraph-oWuah9Cy3b0y", "paragraph-0mHS23-nP_mm", null, null];
+    for (let i = 0; i < bbSubheadings.length; i++) {
+      const block = al.benefitBlocks[Math.min(i, al.benefitBlocks.length - 1)];
+      setH(bbSubheadings[i], `<strong>${block.heading}</strong>`);
+      if (bbExtraParas[i]) setPara(bbExtraParas[i]!, `<p>${block.body}</p>`);
+    }
+  }
+
+  // Clear hardcoded pricing / guarantee text from the template
+  // (These reference Tom's specific programme price and are never relevant to a generated funnel)
+  setPara("paragraph-N7vkxbXlpY7U", `<p></p>`);
+  setH("heading-tb2QJYNbXfce", `<strong>${al.whatYouGetHeading}</strong>`);
+  setH("heading-Ea23qxbk5Lbs", `<strong>${al.finalCtaText}</strong>`);
+
   // More transformations (section 18)
   setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);
 

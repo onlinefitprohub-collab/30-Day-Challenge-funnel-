@@ -54,7 +54,8 @@ Example structure: "Get Back In Shape As A Busy Dad, Even If You've 'Tried Every
 DO NOT use generic phrases like "transform your body" or "reach your goals" — name the specific result (e.g. "lose 2 stone", "build visible muscle", "run your first 5k"), the specific audience identity, and their specific objections from the context.
 
 valuePropSubheadline:
-One sentence expanding the headline — what the prospect will achieve and in what timeframe. Must reference the actual programme name and a specific measurable outcome. Max 25 words.
+1–2 sentences beneath the headline that expand on the specific transformation the prospect can expect. Must name the programme and include a concrete outcome (timeframe, measurement, or vivid result).
+CRITICAL: This field MUST reflect the chosen copywriter style in rhythm, word choice, and personality. If the style is punchy and direct (Dan Kennedy, Alex Hormozi), write short declarative sentences with no fluff. If the style is conversational and warm (Frank Kern, Ryan Deiss), use friendly personal language. If story-driven or NLP-based, hint at the journey or the identity shift. 30–45 words.
 
 videoSectionHeading:
 A compelling h1 placed above the coach's intro video. Use the programme name and speak to the audience's identity — what are they trying to become? Format the heading as two stacked lines like a proper video overlay: first line is a short context label (e.g. "BECOMING A STRONGER, HEALTHIER [AUDIENCE IDENTITY]"), second line is a bold curiosity question or promise (e.g. "WHAT IS [PROGRAMME NAME]?"). Both lines should be specific to the niche — never generic. 8–14 words total.
@@ -127,6 +128,13 @@ Exactly 3 text-based client testimonials. Each has:
 
 whatYouGetHeading:
 Heading for the "What's Included" section. Must name the programme. E.g. "Everything You Get When You Join [Programme Name]". 6–12 words.
+
+whatYouGetBodyCopy:
+2–3 persuasive paragraphs (separated by a blank line — use \n\n) that appear below the "what you get" checklist as the final selling copy before the CTA. This is where the reader makes their decision — write it accordingly.
+- Paragraph 1 (2–3 sentences): The done-for-you promise — the programme is fully tailored, personalised, and designed specifically for this audience and their situation. Reference the programme name. Make it feel bespoke.
+- Paragraph 2 (2–3 sentences): The transformation outcome — what specifically changes in their daily life, energy, confidence, or results. Be concrete and niche-specific. Reference a measurable change where possible.
+- Paragraph 3 (2 sentences, optional): The long-term vision — sustainable results, not just a short-term fix. Connect to the reader's deeper motivation (family, identity, health, career).
+Must reflect the chosen copywriter style throughout. 100–180 words total.
 
 whatYouGetItems:
 Between 6 and 8 items. Draw DIRECTLY from the wizard's 'inclusions' and 'programPillars' — list the ACTUAL things included, not invented ones. Each item follows this format:
@@ -207,6 +215,7 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
       { "quote": "...", "attribution": "...", "result": "..." }
     ],
     "whatYouGetHeading": "...",
+    "whatYouGetBodyCopy": "...",
     "whatYouGetItems": ["...", "..."],
     "transformationGalleryHeading": "...",
     "clientWinsHeading": "...",

@@ -293,6 +293,7 @@ export const applicationLandingPageSchema = z.object({
   shouldApply:                  z.array(z.string().min(1)).min(4).max(8),
   textTestimonials:             z.array(textTestimonialSchema).length(3),
   whatYouGetHeading:            z.string().min(1),
+  whatYouGetBodyCopy:           z.string().min(1),
   whatYouGetItems:              z.array(z.string().min(1)).min(4).max(10),
   transformationGalleryHeading: z.string().min(1),
   clientWinsHeading:            z.string().min(1),
