@@ -130,7 +130,9 @@ export async function generateFunnelAssets(
     adCopy:        adsCampaign.adCopy,
     creativePrompts: adsCampaign.creativePrompts,
     campaignNaming:  adsCampaign.campaignNaming,
-    colourScheme:  offerPages.colourScheme,
-    design:        offerPages.design,
+    colourScheme:     offerPages.colourScheme,
+    design:           offerPages.design,
+    coachBio:         offerPages.coachBio,
+    testimonialCards: offerPages.testimonialCards,
   };
 }

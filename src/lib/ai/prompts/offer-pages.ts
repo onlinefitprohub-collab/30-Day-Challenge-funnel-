@@ -1,6 +1,7 @@
 /**
  * Group 1: Strategy & Pages
- * Generates: offerSummary, landingPage, optInForm, thankYouPage, bookingPage
+ * Generates: offerSummary, landingPage, coachBio, testimonialCards,
+ *            optInForm, thankYouPage, bookingPage
  *
  * The conversion assets — what the prospect sees before and just after opting in.
  * Every word here either earns trust or loses it. No filler.
@@ -11,62 +12,64 @@ export function buildOfferPagesPrompt(context: string): string {
 
 === YOUR TASK: STRATEGY & PAGES ===
 
-Write the five core funnel assets for this specific coach and challenge. Use the context above to make every piece of copy feel like it was written for this exact person and audience — not a generic fitness challenge template.
+Write the conversion assets for this specific coach and challenge. Use the context above to make every piece of copy feel like it was written for this exact person and audience — not a generic template.
 
 ─── ASSET-SPECIFIC RULES ───
 
 OFFER SUMMARY
 - challengeConcept: 2–3 sentences. Say what it is, who runs it, how long, and what makes it work. Be concrete — name the duration, the format, the coach. No fluff.
 - targetAudienceSummary: Name the person this is for. Use their language for their frustration and their goal. If the context mentions demographic details, use them. Make the right person feel instantly seen.
-- offerPositioning: Why this vs doing nothing or buying a generic programme? Give a real reason — not "because it's the best". Be honest about what makes it different. Could be the coach's approach, the support structure, the format, the audience specificity.
+- offerPositioning: Why this vs doing nothing or buying a generic programme? Give a real reason — not "because it's the best". Be honest about what makes it different.
 - corePromise: One sentence. The single most specific and believable outcome. Not the biggest claim — the most credible one.
 
 LANDING PAGE
-- headlineOptions: Write 3 headlines, each taking a different angle. Rules:
-  * Angle 1: Outcome-led — the specific result they want, tied to the timeframe
-  * Angle 2: Pain-led or problem-framing — makes them feel understood
-  * Angle 3: Challenge-specific — references the format or structure in a compelling way
-  * No headline should start with "Are you..." or "Want to..."
-  * No headline should use any of the banned phrases
-  * Each headline should be testable on its own — different angle, not just rephrased
-- subheadline: 1–2 sentences that follow naturally from whichever headline they pick. Expands what the challenge is and who it's for. Sets up the opt-in without overselling.
-- bulletPoints: Write exactly 6. Format: "[specific benefit] — [brief reason it matters]". Rules:
-  * The benefit must be tied to what's in the inclusions or the challenge structure
-  * The reason must be specific to this audience's situation — not generic
-  * Don't start every bullet the same way
-  * At least one bullet should address a likely objection
-  * If bonuses exist in the context, include at least one
-- ctaText: The primary button text. Action verb first. Benefit-hinted or specificity-added. Under 6 words. Not "Click here" or "Get started".
-- sectionIdeas: 7 section briefs for the page builder. Each brief says what the section is, what goes in it, and one specific direction based on the coach's context. Not just section names — actual guidance.
-- faqItems: Write 4 FAQ pairs. Each must tackle a real objection from the context (check the "Their objections" field). Rules:
-  * Questions should sound like something the prospect would actually type or say
-  * Answers should be direct, honest, and specific — not reassuring in a vague way
-  * At least one answer should reference something specific from the inclusions or structure
-  * Don't use "Great question!" or similar opener
-- urgencyIdeas: 3 urgency tactics. Rules:
-  * Urgency 1: Real scarcity or deadline — something they can actually implement (cohort spots, intake dates, price increase)
-  * Urgency 2: Social proof momentum — others joining creates its own urgency
-  * Urgency 3: Cost of inaction — what staying stuck actually costs them (time, money, self-respect)
-  * Do NOT use fake urgency like "limited time" with no specific limit
+- headlineOptions: Write 3 headlines. HARD RULES that cannot be broken:
+  * MAXIMUM 12 WORDS per headline — count every word, cut if over limit
+  * NEVER start with "Are you", "Do you", "Want to", "Who is", or "Who's"
+  * NEVER copy the targetAudience field verbatim into a headline
+  * Angle 1: Outcome-led — specific result + timeframe. Example: "Lose Your First Stone in 30 Days"
+  * Angle 2: Pain-framing — the struggle they recognise. 2 short punchy sentences, max 6 words each
+  * Angle 3: Challenge-specific — format, coach, or structure as the hook
+  * Each headline tests a completely different angle — not the same thought rephrased
+- subheadline: 1–2 sentences. Expands the offer and who it's for. Must NOT reuse any headline wording.
+- bulletPoints: Write exactly 6. Format: "[specific mechanism or inclusion] — [why it matters for this audience]". HARD RULES:
+  * Every bullet must describe a SPECIFIC INCLUSION, structure feature, or support mechanism from the context — not the overall outcome
+  * NO bullet may repeat or closely paraphrase any of the 3 headline options
+  * NO bullet may start with "Join", "Experience", or "Achieve"
+  * At least one bullet must name a specific inclusion from "What's included" in the context
+  * At least one bullet must address a likely objection from the context
+  * If bonuses exist, include at least one
+- ctaText: The primary button text. Action verb first. Under 6 words. Not "Click here" or "Get started".
+- sectionIdeas: 7 section briefs for the page builder. Each gives actual content direction, not just a section name.
+- faqItems: Write 4 FAQ pairs. Tackle real objections from the context. Answers must be direct and specific. Never start with "Great question!".
+- urgencyIdeas: 3 urgency tactics — real scarcity, social proof momentum, cost of inaction. No fake urgency.
+
+COACH BIO
+- coachBio: 3–4 sentences written in first person, as if the coach is speaking. Should cover: who they are, why they created this programme (personal motivation or professional expertise), and the core transformation they've helped clients achieve. Specific and warm — not a résumé. If a case study or testimonial snippet exists in the context, weave in one concrete result. Do NOT use phrases like "I am passionate about" or "I help people achieve their goals".
+
+TESTIMONIAL CARDS
+- testimonialCards: Extract and format up to 4 testimonial cards from the "Client testimonials", "Case study/story", and "Results/stats" fields in the context. If no testimonials are provided, leave this as an empty array []. For each card:
+  * quote: the actual testimonial text. Clean it up for readability but keep it authentic. 1–3 sentences max.
+  * attribution: first name + age or descriptor if available (e.g. "Emma T., 38" or "Sarah, busy mum of 3"). If no name given, use a descriptor that matches the target audience. IMPORTANT: attribution must match the gender of the target audience — if the programme targets women, every attribution must be a woman's name.
 
 OPT-IN FORM
-- recommendedFields: The minimum fields needed for the CTA type. If CTA is booking, include phone. Don't over-collect.
-- formIntroText: 1–2 lines above the form. Reinforces the main promise, reduces friction. Should feel like the coach speaking, not a UI label.
-- ctaButtonText: Matches the landing page CTA in tone and style. Same action, same voice.
+- recommendedFields: Minimum fields for the CTA type. If booking, include phone. Don't over-collect.
+- formIntroText: 1–2 lines above the form. Reinforces the main promise, reduces friction. Coach's voice.
+- ctaButtonText: Matches the landing page CTA in tone. Same action, same voice.
 
 THANK YOU PAGE
-- confirmationMessage: First thing they see after opting in. Warm and specific — confirms what they just signed up for. Uses {first_name} naturally. Sets the right expectation immediately.
-- nextSteps: 3 steps, ordered by priority. The most important action first. Each step is clear and specific — not "check your inbox" as a standalone instruction. Tell them what they'll find there.
-- bookingEncouragement: If CTA is booking — make skipping the call feel like a mistake. Specific about what they'll get from the call. If direct sign-up — tell them the most valuable next thing to do (join community, watch intro video, etc.).
+- confirmationMessage: First thing they see. Warm and specific — confirms what they signed up for. Uses {first_name}. Sets expectation immediately.
+- nextSteps: 3 steps ordered by priority. Each clear and specific.
+- bookingEncouragement: Makes skipping the call feel like a mistake (if booking CTA), or names the most valuable next action (if direct sign-up).
 
 BOOKING PAGE
-- shortIntro: 2–3 sentences at the top of the booking calendar page. Reassures them they made the right decision. Sets expectations without overselling the call. Acknowledges they're about to book something.
-- whyBook: 3 specific reasons to book. Each should be concrete — what they'll walk away with, not just "get expert advice".
-- expectationSetting: What happens on the call. Duration, format (Zoom/phone), rough agenda, what they don't need to prepare. Should make the call feel low-effort and high-value.
+- shortIntro: 2–3 sentences at the top. Reassures, sets expectations, acknowledges they're about to book.
+- whyBook: 3 specific reasons — what they'll walk away with, not vague "expert advice".
+- expectationSetting: Duration, format, rough agenda, what not to prepare. Low-effort and high-value framing.
 
 COLOUR SCHEME & LAYOUT VARIANTS
-- colourScheme: Pick the ONE scheme key that best suits this brand's energy and audience. Options: "navy-orange" (bold, energetic — fitness/performance), "rose-pink" (warm, feminine — health/wellness/women's coaching), "teal-forest" (calm, trustworthy — nutrition/mindfulness), "purple-lilac" (inspiring, premium — mindset/coaching), "sky-blue" (fresh, professional — business/productivity). Pick the best fit; don't default to navy-orange unless it genuinely suits.
-- sectionLayoutVariants: Choose ONE variant key per section. These control how the GHL page builder lays out each section. Pick whatever fits the brand and message best. Options by section:
+- colourScheme: Pick the ONE key that best fits this brand. "navy-orange" (bold, fitness/performance), "rose-pink" (warm, women's health/wellness), "teal-forest" (calm, nutrition/mindfulness), "purple-lilac" (premium, mindset/coaching), "sky-blue" (professional, business/productivity). Don't default to navy-orange unless it genuinely suits.
+- sectionLayoutVariants: Pick ONE variant key per section based on what best fits the brand and message.
   * "hero": "hero-two-col-video" | "hero-centered" | "hero-two-col-image" | "hero-two-col-countdown" | "hero-full-width"
   * "social-proof-bar": "social-proof-stars-bullets" | "social-proof-centered-stat" | "social-proof-three-stats" | "social-proof-single-quote" | "social-proof-horizontal-badges"
   * "whats-included": "included-three-col-checks" | "included-two-col-bullets" | "included-image-left-list" | "included-single-col-numbered" | "included-alternating-rows"
@@ -78,7 +81,12 @@ COLOUR SCHEME & LAYOUT VARIANTS
 Return ONLY this JSON structure. Every string field must contain actual copy, not a description of what to write:
 
 {
-  "colourScheme": "navy-orange",
+  "colourScheme": "rose-pink",
+  "coachBio": "...",
+  "testimonialCards": [
+    { "quote": "...", "attribution": "..." },
+    { "quote": "...", "attribution": "..." }
+  ],
   "offerSummary": {
     "challengeConcept": "...",
     "targetAudienceSummary": "...",

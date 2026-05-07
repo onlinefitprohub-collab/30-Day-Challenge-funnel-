@@ -82,6 +82,11 @@ export const campaignNamingSchema = z.object({
 
 // ─── Group response schemas ──────────────────────────────────────────────────
 
+const testimonialCardSchema = z.object({
+  quote:       z.string().min(1),
+  attribution: z.string().min(1),
+});
+
 const ghlDesignOverrideSchema = z.object({
   primaryColor:               z.string().optional(),
   darkBackground:             z.string().optional(),
@@ -92,13 +97,15 @@ const ghlDesignOverrideSchema = z.object({
 }).optional();
 
 export const offerPagesResponseSchema = z.object({
-  offerSummary:  offerSummarySchema,
-  landingPage:   landingPageSchema,
-  optInForm:     optInFormSchema,
-  thankYouPage:  thankYouPageSchema,
-  bookingPage:   bookingPageSchema,
-  colourScheme:  z.string().optional(),
-  design:        ghlDesignOverrideSchema,
+  offerSummary:     offerSummarySchema,
+  landingPage:      landingPageSchema,
+  optInForm:        optInFormSchema,
+  thankYouPage:     thankYouPageSchema,
+  bookingPage:      bookingPageSchema,
+  colourScheme:     z.string().optional(),
+  design:           ghlDesignOverrideSchema,
+  coachBio:         z.string().optional(),
+  testimonialCards: z.array(testimonialCardSchema).optional(),
 });
 
 export const sequencesResponseSchema = z.object({

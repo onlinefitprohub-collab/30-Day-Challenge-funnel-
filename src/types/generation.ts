@@ -25,6 +25,11 @@ export interface GhlDesignOverride {
   heroGradient?: string;
 }
 
+export interface TestimonialCard {
+  quote: string;
+  attribution: string;
+}
+
 export interface OptInFormSuggestions {
   recommendedFields: string[];
   formIntroText: string;
@@ -96,6 +101,8 @@ export interface GeneratedFunnelAssets {
   campaignNaming: CampaignNaming;
   colourScheme?: string;
   design?: GhlDesignOverride;
+  coachBio?: string;
+  testimonialCards?: TestimonialCard[];
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;

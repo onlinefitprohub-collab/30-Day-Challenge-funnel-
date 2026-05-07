@@ -1,4 +1,4 @@
-import type { GeneratedFunnelAssets, LandingPageCopy } from "@/types/generation";
+import type { GeneratedFunnelAssets, LandingPageCopy, TestimonialCard } from "@/types/generation";
 
 // ── Colour Scheme ─────────────────────────────────────────────────────────────
 
@@ -790,6 +790,59 @@ function makeBulletList(b: Builder, items: string[], primary: string, styles: St
   return id;
 }
 
+// ── Coach bio section ─────────────────────────────────────────────────────────
+
+function buildCoachBioSection(b: Builder, s: SchemeColors, coachName: string, coachBio: string): void {
+  const eyebrow = makeParagraph(b, "Your Coach",
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) });
+  const name = makeHeading(b, `Hi, my name is ${coachName}…`, "h2",
+    { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("900"), lineHeight: ss("1.2"), paddingBottom: sv(16) },
+    { fontSize: sv(24) });
+  const bio = makeParagraph(b, coachBio,
+    { color: ss("#374151"), fontSize: sv(16), lineHeight: ss("1.7"), paddingBottom: sv(0) });
+  const img = makeImage(b, { width: 480 });
+  const imgNote = makeParagraph(b, "📸 Replace with your photo",
+    { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
+  const imgCol  = makeCol(b, [img, imgNote], 40, { padH: 24, valign: "middle" });
+  const textCol = makeCol(b, [eyebrow, name, bio], 60, { padH: 24, valign: "middle" });
+  const r = makeRow(b, [imgCol, textCol], 1100, 0);
+  makeSection(b, [r], { bgColor: "#ffffff", ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
+}
+
+// ── Testimonials section ──────────────────────────────────────────────────────
+
+function buildTestimonialsSection(b: Builder, s: SchemeColors, cards: TestimonialCard[], concept: string): void {
+  const eyebrow = makeParagraph(b, "What Clients Say",
+    { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
+  const h2 = makeHeading(b, `Real results from the ${concept}`, "h2",
+    { color: ss("#111827"), fontSize: sv(32), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.2"), paddingBottom: sv(44) },
+    { fontSize: sv(22) });
+  const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
+  const headingRow = makeRow(b, [headingCol], 700, 0);
+
+  const cardRows: string[] = [];
+  const perRow = cards.length >= 3 ? 3 : cards.length;
+  const colWidth = perRow > 0 ? Math.floor(100 / perRow) : 100;
+
+  for (let i = 0; i < cards.length; i += perRow) {
+    const rowCards = cards.slice(i, i + perRow);
+    const colIds = rowCards.map((card) => {
+      const openQ = makeParagraph(b, "“",
+        { color: ss(s.primary), fontSize: sv(36), fontWeight: ss("900"), lineHeight: ss("1"), paddingBottom: sv(4) });
+      const quote = makeParagraph(b, card.quote,
+        { color: ss("#374151"), fontSize: sv(15), lineHeight: ss("1.7"), fontStyle: ss("italic"), paddingBottom: sv(12) });
+      const attr = makeParagraph(b, `— ${card.attribution}`,
+        { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700") });
+      return makeCol(b, [openQ, quote, attr], colWidth, {
+        padH: 24, padV: 24,
+      });
+    });
+    cardRows.push(makeRow(b, colIds, 1100, 0));
+  }
+
+  makeSection(b, [headingRow, ...cardRows], { bgColor: "#f8fafc", ptD: 80, pbD: 80, ptM: 48, pbM: 48 });
+}
+
 // ── LANDING PAGE ──────────────────────────────────────────────────────────────
 
 // ── Hero layout variants ───────────────────────────────────────────────────
@@ -991,14 +1044,14 @@ function buildSocialProofHorizontalBadges(b: Builder, s: SchemeColors, corePromi
 
 // ── What's included layout variants ────────────────────────────────────────
 
-function buildIncludedThreeColChecks(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+function buildIncludedThreeColChecks(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const coachImg = makeImage(b, { width: 480 });
   const imgNote  = makeParagraph(b, "📸 Replace with your coach/before-after photo",
     { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const imgCol   = makeCol(b, [coachImg, imgNote], 40, { padH: 24, valign: "middle" });
   const eyebrow  = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) });
-  const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
+  const h2 = makeHeading(b, `Everything included in the ${concept}`, "h2",
     { color: ss("#111827"), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(16), maxWidth: sv(520) },
     { fontSize: sv(24), paddingBottom: sv(12) });
   const textCol   = makeCol(b, [eyebrow, h2], 60, { padH: 24, valign: "middle" });
@@ -1019,10 +1072,10 @@ function buildIncludedThreeColChecks(b: Builder, s: SchemeColors, lp: LandingPag
   makeSection(b, [headerRow, ...bulletRows], { bgColor: s.alt, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
-function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const eyebrow = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
+  const h2 = makeHeading(b, `Everything included in the ${concept}`, "h2",
     { color: ss("#111827"), fontSize: sv(36), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
     { fontSize: sv(24) });
   const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
@@ -1042,14 +1095,14 @@ function buildIncludedTwoColBullets(b: Builder, s: SchemeColors, lp: LandingPage
   makeSection(b, [headingRow, bulletsRow], { bgColor: s.alt, ptD: 88, pbD: 72, ptM: 56, pbM: 48 });
 }
 
-function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const img     = makeImage(b, { width: 520 });
   const imgNote = makeParagraph(b, "📸 Replace with your programme photo",
     { color: ss("rgba(107,114,128,0.7)"), fontSize: sv(11), textAlign: ss("center"), paddingTop: sv(8) });
   const imgCol  = makeCol(b, [img, imgNote], 45, { padH: 24, valign: "middle" });
   const eyebrow = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8) });
-  const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
+  const h2 = makeHeading(b, `Everything included in the ${concept}`, "h2",
     { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(16) },
     { fontSize: sv(22) });
   const listItems = lp.bulletPoints.slice(0, 6).flatMap((txt) => [
@@ -1061,10 +1114,10 @@ function buildIncludedImageLeftList(b: Builder, s: SchemeColors, lp: LandingPage
   makeSection(b, [r], { bgColor: s.alt, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
-function buildIncludedSingleColNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+function buildIncludedSingleColNumbered(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const eyebrow = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
+  const h2 = makeHeading(b, `Everything included in the ${concept}`, "h2",
     { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(40), textAlign: ss("center") },
     { fontSize: sv(22) });
   const bullets = lp.bulletPoints.slice(0, 6);
@@ -1080,10 +1133,10 @@ function buildIncludedSingleColNumbered(b: Builder, s: SchemeColors, lp: Landing
   makeSection(b, [r], { bgColor: s.alt, ptD: 88, pbD: 88, ptM: 56, pbM: 56 });
 }
 
-function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPageCopy): void {
+function buildIncludedAlternatingRows(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept: string): void {
   const eyebrow = makeParagraph(b, "What You'll Get",
     { color: ss(s.primary), fontSize: sv(11), fontWeight: ss("700"), letterSpacing: ss("0.12em"), textTransform: ss("uppercase"), paddingBottom: sv(8), textAlign: ss("center") });
-  const h2 = makeHeading(b, "Everything included in your free challenge", "h2",
+  const h2 = makeHeading(b, `Everything included in the ${concept}`, "h2",
     { color: ss("#111827"), fontSize: sv(34), fontWeight: ss("800"), lineHeight: ss("1.2"), paddingBottom: sv(0), textAlign: ss("center") },
     { fontSize: sv(22) });
   const headingCol = makeCol(b, [eyebrow, h2], 100, { align: "center", padH: 24 });
@@ -1298,17 +1351,17 @@ function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, v
   }
 }
 
-function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string): void {
+function dispatchWhatsIncluded(b: Builder, s: SchemeColors, lp: LandingPageCopy, variant: string, concept: string): void {
   const VALID = new Set(["included-three-col-checks","included-two-col-bullets","included-image-left-list","included-single-col-numbered","included-alternating-rows"]);
   const v = VALID.has(variant) ? variant : "included-three-col-checks";
   if (!VALID.has(variant)) console.warn(`[layout-variant] whats-included: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
   console.log(`[layout-variant] whats-included → ${v}`);
   switch (v) {
-    case "included-two-col-bullets":     return buildIncludedTwoColBullets(b, s, lp);
-    case "included-image-left-list":     return buildIncludedImageLeftList(b, s, lp);
-    case "included-single-col-numbered": return buildIncludedSingleColNumbered(b, s, lp);
-    case "included-alternating-rows":    return buildIncludedAlternatingRows(b, s, lp);
-    default:                             return buildIncludedThreeColChecks(b, s, lp);
+    case "included-two-col-bullets":     return buildIncludedTwoColBullets(b, s, lp, concept);
+    case "included-image-left-list":     return buildIncludedImageLeftList(b, s, lp, concept);
+    case "included-single-col-numbered": return buildIncludedSingleColNumbered(b, s, lp, concept);
+    case "included-alternating-rows":    return buildIncludedAlternatingRows(b, s, lp, concept);
+    default:                             return buildIncludedThreeColChecks(b, s, lp, concept);
   }
 }
 
@@ -1381,8 +1434,19 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   }
 
   snap = countBefore("whats-included");
-  dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "");
+  dispatchWhatsIncluded(b, s, lp, slv["whats-included"] ?? "", concept);
   countAfter(snap, slv["whats-included"] ?? "(none)");
+
+  // Coach bio — always included when coachBio is present
+  if (data.coachBio) {
+    const coachNameForBio = data.offerSummary.challengeConcept.match(/led by ([^,.]+)/i)?.[1]?.trim() ?? "Your Coach";
+    buildCoachBioSection(b, s, coachNameForBio, data.coachBio);
+  }
+
+  // Testimonials — included when testimonialCards has at least one card
+  if (data.testimonialCards && data.testimonialCards.length > 0) {
+    buildTestimonialsSection(b, s, data.testimonialCards, concept);
+  }
 
   if (lp.faqItems.length > 0) {
     snap = countBefore("faq");

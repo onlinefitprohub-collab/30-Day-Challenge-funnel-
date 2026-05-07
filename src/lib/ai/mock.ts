@@ -252,5 +252,20 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     },
 
     colourScheme: "navy-orange",
+
+    coachBio: `I created the ${challengeTitle} because I kept seeing the same pattern — ${audienceShort} who were working hard but not getting anywhere, usually because they had no structure and no one in their corner. I've been coaching ${targetAudience} for years, and the one thing that changes everything is a clear daily plan combined with real accountability. In the past few rounds, clients have ${outcomeYou} without overhauling their whole life. That's what this programme is built around.`,
+
+    testimonialCards: testimonials
+      ? testimonials
+          .split(/\n+/)
+          .filter((line) => line.trim().length > 20)
+          .slice(0, 3)
+          .map((line) => {
+            const match = line.match(/^["']?(.+?)["']?\s*[—–-]\s*(.+)$/);
+            return match
+              ? { quote: match[1].trim(), attribution: match[2].trim() }
+              : { quote: line.replace(/^["']|["']$/g, "").trim(), attribution: audienceShort };
+          })
+      : [],
   };
 }
