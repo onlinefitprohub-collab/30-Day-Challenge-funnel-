@@ -23,7 +23,7 @@ import type { WizardInputs } from "../src/types/wizard";
 
 const SUPABASE_URL          = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const APP_URL               = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const APP_URL               = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:5000";
 const TARGET_EMAIL          = process.env.TEST_USER_EMAIL;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
