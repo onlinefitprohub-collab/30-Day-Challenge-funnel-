@@ -1392,8 +1392,8 @@ function dispatchHero(b: Builder, s: SchemeColors, lp: LandingPageCopy, concept:
 function dispatchSocialProof(b: Builder, s: SchemeColors, corePromise: string, variant: string): void {
   const VALID = new Set(["social-proof-stars-bullets","social-proof-centered-stat","social-proof-three-stats","social-proof-single-quote","social-proof-horizontal-badges"]);
   const v = VALID.has(variant) ? variant : "social-proof-stars-bullets";
-  if (!VALID.has(variant)) console.warn(`[layout-variant] social-proof-bar: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
-  console.log(`[layout-variant] social-proof-bar → ${v}`);
+  if (!VALID.has(variant)) console.warn(`[layout-variant] social-proof: ${variant ? `unknown variant "${variant}"` : "key absent"}, falling back to "${v}"`);
+  console.log(`[layout-variant] social-proof → ${v}`);
   switch (v) {
     case "social-proof-centered-stat":     return buildSocialProofCenteredStat(b, s, corePromise);
     case "social-proof-three-stats":       return buildSocialProofThreeStats(b, s, corePromise);
@@ -1481,9 +1481,9 @@ export function buildLandingPageData(data: GeneratedFunnelAssets): GhlPageData {
   const skipSocialProof = slv["final-cta"] === "cta-social-proof-cta";
   console.log("[diag] skip-social-proof:", skipSocialProof, "finalCtaVariant:", slv["final-cta"] ?? "(none)");
   if (!skipSocialProof) {
-    snap = countBefore("social-proof-bar");
-    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof-bar"] ?? "");
-    countAfter(snap, slv["social-proof-bar"] ?? "(none)");
+    snap = countBefore("social-proof");
+    dispatchSocialProof(b, s, data.offerSummary.corePromise, slv["social-proof"] ?? "");
+    countAfter(snap, slv["social-proof"] ?? "(none)");
   }
 
   snap = countBefore("whats-included");
