@@ -150,6 +150,13 @@ Exactly 4 longer-form client case studies for the "Meet..." testimonial sections
 - intro: A compelling single sentence intro naming the client. Uses the "Meet [Name], [a brief situation]..." pattern. Must be specific to the target audience and reflect their situation before joining. E.g. "Meet Sarah, a 38-year-old mum of 2 who had tried every diet going and was ready to give up." 10–20 words.
 - story: A 2–3 paragraph first-person client narrative (80–140 words total). Write as if the client is speaking. Cover: (1) their situation and frustration before joining; (2) what changed and a specific result they achieved; (3) their recommendation. Must reference the coach or programme by name where it fits naturally. Be specific: include numbers (lbs lost, weeks, kg, dress sizes, etc.) and emotional detail. Do NOT name the client — the name is in the intro.
 
+problemBreakdown:
+Exactly 5 problems that your ideal client faces. These appear as a "5 Problems" section with red banner headers. Each must be rooted in the actual pain points, objections, and struggles from the context (biggestStruggle, targetAudience, mainGoal). Do NOT use generic fitness problems — name the SPECIFIC issues this audience faces.
+Each has:
+- title: The red banner headline in ALL CAPS format: "PROBLEM #[N] — [SHORT TITLE]!" (4–6 words after the number). Must be specific to this niche. E.g. "PROBLEM #1 — YOYO DIETS RUINING YOUR PROGRESS!" or "PROBLEM #2 — NO STRUCTURE OR ACCOUNTABILITY!"
+- headline: A bold ALL-CAPS sub-headline (10–16 words) that expands the problem with emotional directness. E.g. "THE DIETS YOU'VE TRIED DON'T WORK BECAUSE THEY WEREN'T BUILT FOR YOUR LIFE"
+- body: 2 short paragraphs (60–100 words total) that agitate the pain — describe what this problem feels like day-to-day, why it keeps happening, and why willpower alone can't solve it. Reference the specific audience identity and their world. Write in second person ("you").
+
 finalCtaText:
 The final page CTA button text. More urgent/decisive than the mid-page CTA. E.g. "Submit Your Application Now", "Claim Your Spot — Apply Today". 4–7 words.
 
@@ -211,6 +218,13 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
       { "intro": "Meet [Name], ...", "story": "..." },
       { "intro": "Meet [Name], ...", "story": "..." },
       { "intro": "Meet [Name], ...", "story": "..." }
+    ],
+    "problemBreakdown": [
+      { "title": "PROBLEM #1 — ...", "headline": "...", "body": "..." },
+      { "title": "PROBLEM #2 — ...", "headline": "...", "body": "..." },
+      { "title": "PROBLEM #3 — ...", "headline": "...", "body": "..." },
+      { "title": "PROBLEM #4 — ...", "headline": "...", "body": "..." },
+      { "title": "PROBLEM #5 — ...", "headline": "...", "body": "..." }
     ],
     "finalCtaText": "...",
     "finalCtaSubtext": "..."

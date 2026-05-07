@@ -165,7 +165,7 @@ export function LaunchRoadmapPlaceholder({ projectId, onGenerated }: LaunchRoadm
       </h3>
       <p className="mb-6 max-w-sm text-sm text-gray-500">
         {loading
-          ? "This takes about 30 seconds — your complete 6-phase launch plan is being built."
+          ? "This usually takes 1–2 minutes — your complete 6-phase launch plan is being built."
           : "Create a complete week-by-week launch roadmap — from technical setup to post-challenge growth — with every task mapped to the FitPro Launch assets you've already generated."}
       </p>
       {!loading && (

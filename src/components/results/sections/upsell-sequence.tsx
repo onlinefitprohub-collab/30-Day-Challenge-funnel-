@@ -100,7 +100,7 @@ export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderP
       </h3>
       <p className="mb-6 max-w-sm text-sm text-gray-500">
         {loading
-          ? "This takes about 25 seconds — your post-challenge email sequence is being written."
+          ? "This usually takes about 60 seconds — your post-challenge email sequence is being written."
           : "Create a 5-email post-challenge sequence that converts completers into your next-tier offer — personalised to your coaching programme and audience."}
       </p>
       {!loading && (

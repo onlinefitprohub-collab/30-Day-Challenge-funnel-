@@ -78,7 +78,7 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
       </h3>
       <p className="mb-6 max-w-sm text-sm text-gray-500">
         {isGenerating
-          ? "This takes about 30 seconds — your sales letter and ManyChat DM flow are being written."
+          ? "This usually takes 1–2 minutes — your sales letter and ManyChat DM flow are being written."
           : "Create a long-form direct-response sales letter (3,000–5,000 words) and a complete ManyChat DM flow for organic lead nurture — both tailored to your challenge and audience."}
       </p>
       {!isGenerating && (

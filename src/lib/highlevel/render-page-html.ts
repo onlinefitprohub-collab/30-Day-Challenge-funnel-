@@ -42,6 +42,28 @@ interface GhlNode {
 
 type NodeMap = Map<string, GhlNode>;
 
+// Firebase-native element types use plain names; the renderer expects "c-*" prefixed names.
+// This mapping lets both formats share the same switch block.
+const FIREBASE_TO_C: Record<string, string> = {
+  "row":          "c-row",
+  "col":          "c-column",
+  "heading":      "c-heading",
+  "sub-heading":  "c-sub-heading",
+  "paragraph":    "c-paragraph",
+  "button":       "c-button",
+  "image":        "c-image",
+  "video":        "c-video",
+  "bulletList":   "c-bullet-list",
+  "custom-code":  "c-custom-code",
+};
+
+function normalizeTag(node: GhlNode): string {
+  const t = node.tagName ?? "";
+  if (t.startsWith("c-")) return t;
+  const m = node.meta ?? "";
+  return FIREBASE_TO_C[t] ?? FIREBASE_TO_C[m] ?? t;
+}
+
 function renderNode(nodeId: string, nodeMap: NodeMap): string {
   const node = nodeMap.get(nodeId);
   if (!node) return "";
@@ -49,7 +71,7 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
   const extra = node.extra ?? {};
   const children = node.child.map((id) => renderNode(id, nodeMap)).join("");
 
-  switch (node.tagName) {
+  switch (normalizeTag(node)) {
     case "c-row": {
       const style = css({
         display: "flex",

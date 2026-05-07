@@ -197,6 +197,7 @@ export interface ApplicationLandingPage {
   clientWinsHeading: string;
   clientWins: Array<{ name: string; result: string }>;              // 4–8 items
   clientStories: Array<{ intro: string; story: string }>;           // exactly 4
+  problemBreakdown?: Array<{ title: string; headline: string; body: string }>; // 5 items
   finalCtaText: string;
   finalCtaSubtext: string;
 }

@@ -176,7 +176,7 @@ export function DmScriptPlaceholder({ projectId, onGenerated }: DmScriptPlacehol
       </h3>
       <p className="mb-6 max-w-sm text-sm text-gray-500">
         {loading
-          ? "This takes about 20 seconds — your personalised conversation scripts are being written."
+          ? "This usually takes about 60 seconds — your personalised conversation scripts are being written."
           : "Create word-for-word Instagram DM scripts for cold outreach, warm leads, comment-to-DM, and inbound enquiries — all personalised to your niche and offer."}
       </p>
       {!loading && (
