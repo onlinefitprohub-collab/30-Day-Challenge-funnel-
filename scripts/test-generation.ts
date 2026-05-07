@@ -7,11 +7,14 @@ import { generateMockAssets } from "../src/lib/ai/mock";
 import type { WizardInputs } from "../src/types/wizard";
 
 const inputs: WizardInputs = {
+  funnelType: "challenge",
   businessName: "Brighton Fit Reset",
   coachName: "Tom",
   location: "Brighton",
   deliveryMode: "hybrid",
   targetAudience: "Busy men aged 30-45 who have gained weight and lost their routine",
+  challengeName: "The 30-Day Brighton Fit Reset",
+  colourScheme: "navy-orange",
   demographicDetails: "Mostly working professionals, some with families, sedentary jobs, limited free time",
   challengeType: "30-day body reset",
   mainGoal: "Lose 8-12 lbs, rebuild consistency, and improve energy levels",

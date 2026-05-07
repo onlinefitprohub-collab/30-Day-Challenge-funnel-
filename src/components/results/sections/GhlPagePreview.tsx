@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { GhlPageData } from "@/lib/highlevel/ghl-pagedata";
+import type { GhlPageData, GhlSection } from "@/lib/highlevel/ghl-pagedata";
 
 interface Props {
   projectId: string;
