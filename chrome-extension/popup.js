@@ -1,4 +1,4 @@
-// popup.js v2.59.0 — Challenge Funnel Extension
+// popup.js v2.59.0 — FitPro Launch Extension
 // Handles: Copy any GHL page + Paste into GHL builder (clone-funnel-step)
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
@@ -188,7 +188,7 @@ function refreshCopiedCard() {
           }
         } else {
           card.className = "copied-card none";
-          card.innerHTML = `<strong>Nothing copied yet</strong>Go to your Challenge Funnel results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
+          card.innerHTML = `<strong>Nothing copied yet</strong>Go to your FitPro Launch results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
           clearBtn.style.display = "none";
           pasteBtn.disabled      = true;
         }

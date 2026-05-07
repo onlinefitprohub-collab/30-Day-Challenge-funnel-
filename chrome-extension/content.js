@@ -1,4 +1,4 @@
-// content.js v2.49.4 — Challenge Funnel in a Box
+// content.js v2.49.4 — FitPro Launch
 // On app pages (*.replit.*): intercepts CF_SAVE_PAGE and CF_SAVE_URL_PAGE and saves
 //   pageData to chrome.storage.session (cf_copied_page). CF_SAVE_PAGE also writes
 //   chrome.storage.local (cfReady) for the popup.

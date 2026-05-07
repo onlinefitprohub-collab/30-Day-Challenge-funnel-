@@ -2,7 +2,7 @@ import { SignupForm } from "@/components/auth/signup-form";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Sign up | Challenge Funnel in a Box",
+  title: "Sign up | FitPro Launch",
 };
 
 export default function SignupPage() {

@@ -122,7 +122,7 @@ export default function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-600">
               <Flame className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-white">Challenge Funnel</span>
+            <span className="font-bold text-white">FitPro Launch</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login">
@@ -221,7 +221,7 @@ export default function HomePage() {
               <span className="text-orange-400">You just need the right tool.</span>
             </p>
             <p className="mt-2 text-gray-400">
-              Challenge Funnel in a Box does the copy, strategy, and sequencing for you — so you can focus on coaching.
+              FitPro Launch does the copy, strategy, and sequencing for you — so you can focus on coaching.
             </p>
           </div>
         </div>
@@ -406,10 +406,10 @@ export default function HomePage() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-600">
               <Flame className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-semibold text-gray-400">Challenge Funnel in a Box</span>
+            <span className="font-semibold text-gray-400">FitPro Launch</span>
           </div>
           <p className="text-sm text-gray-600">
-            © {new Date().getFullYear()} Challenge Funnel in a Box. All rights reserved.
+            © {new Date().getFullYear()} FitPro Launch. All rights reserved.
           </p>
         </div>
       </footer>

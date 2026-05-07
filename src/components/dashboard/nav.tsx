@@ -35,7 +35,7 @@ export function DashboardNav({ user }: { user: User }) {
             <Zap className="h-4 w-4 text-white" />
           </div>
           <span className="hidden font-bold text-white sm:block tracking-tight">
-            Challenge Funnel
+            FitPro Launch
           </span>
         </Link>
 

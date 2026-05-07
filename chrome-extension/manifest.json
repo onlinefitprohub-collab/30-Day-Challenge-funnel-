@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Challenge Funnel in a Box",
+  "name": "FitPro Launch",
   "short_name": "CF Funnel",
   "version": "2.60.0",
   "description": "GHL page inject — write AI sections directly to Firebase + sync pageData",
