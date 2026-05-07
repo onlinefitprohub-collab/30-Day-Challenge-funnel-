@@ -350,6 +350,8 @@ export interface GeneratedFunnelAssets {
   testimonialCards?: TestimonialCard[];
   // Qualification section — who should/shouldn't apply (used by GHL page builder)
   qualificationSection?: QualificationSection;
+  // Coach bio — used by GHL page builder coach bio section
+  coachBio?: string;
   // Discovery call script — on-demand generation
   discoveryCallScript?: import("./discovery-call").DiscoveryCallScript;
   // Instagram DM scripts — on-demand generation
