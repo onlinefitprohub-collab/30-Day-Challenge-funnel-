@@ -10,13 +10,14 @@ export const offerSummarySchema = z.object({
 });
 
 export const landingPageSchema = z.object({
-  headlineOptions: z.array(z.string()).min(1),
-  subheadline:     z.string().min(1),
-  bulletPoints:    z.array(z.string()).min(1),
-  ctaText:         z.string().min(1),
-  sectionIdeas:    z.array(z.string()).min(1),
-  faqItems:        z.array(z.object({ question: z.string(), answer: z.string() })).min(1),
-  urgencyIdeas:    z.array(z.string()).min(1),
+  headlineOptions:       z.array(z.string()).min(1),
+  subheadline:           z.string().min(1),
+  bulletPoints:          z.array(z.string()).min(1),
+  ctaText:               z.string().min(1),
+  sectionIdeas:          z.array(z.string()).min(1),
+  faqItems:              z.array(z.object({ question: z.string(), answer: z.string() })).min(1),
+  urgencyIdeas:          z.array(z.string()).min(1),
+  sectionLayoutVariants: z.record(z.string()).optional(),
 });
 
 export const optInFormSchema = z.object({
@@ -81,12 +82,23 @@ export const campaignNamingSchema = z.object({
 
 // ─── Group response schemas ──────────────────────────────────────────────────
 
+const ghlDesignOverrideSchema = z.object({
+  primaryColor:               z.string().optional(),
+  darkBackground:             z.string().optional(),
+  midBackground:              z.string().optional(),
+  accentColor:                z.string().optional(),
+  alternateSectionBackground: z.string().optional(),
+  heroGradient:               z.string().optional(),
+}).optional();
+
 export const offerPagesResponseSchema = z.object({
-  offerSummary: offerSummarySchema,
-  landingPage:  landingPageSchema,
-  optInForm:    optInFormSchema,
-  thankYouPage: thankYouPageSchema,
-  bookingPage:  bookingPageSchema,
+  offerSummary:  offerSummarySchema,
+  landingPage:   landingPageSchema,
+  optInForm:     optInFormSchema,
+  thankYouPage:  thankYouPageSchema,
+  bookingPage:   bookingPageSchema,
+  colourScheme:  z.string().optional(),
+  design:        ghlDesignOverrideSchema,
 });
 
 export const sequencesResponseSchema = z.object({

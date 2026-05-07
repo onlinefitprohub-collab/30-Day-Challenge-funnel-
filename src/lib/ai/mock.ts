@@ -112,6 +112,13 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
         `Start date: registrations close [DATE]. Build a countdown on the page in the final 48 hours.`,
         `Cost of waiting: staying stuck with ${firstStruggle} for another month costs more than ${price}. Name the real price of inaction.`,
       ],
+      sectionLayoutVariants: {
+        "hero":             "hero-two-col-video",
+        "social-proof-bar": "social-proof-stars-bullets",
+        "whats-included":   "included-three-col-checks",
+        "faq":              "faq-single-col",
+        "final-cta":        "cta-centered-color-bg",
+      },
     },
 
     optInForm: {
@@ -243,5 +250,7 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
       utmCampaign: `${challengeType.toLowerCase().replace(/\s+/g, "_")}_${duration}day_${new Date().getFullYear()}`,
       utmContent: `hook1_v1`,
     },
+
+    colourScheme: "navy-orange",
   };
 }

@@ -64,11 +64,21 @@ BOOKING PAGE
 - whyBook: 3 specific reasons to book. Each should be concrete — what they'll walk away with, not just "get expert advice".
 - expectationSetting: What happens on the call. Duration, format (Zoom/phone), rough agenda, what they don't need to prepare. Should make the call feel low-effort and high-value.
 
+COLOUR SCHEME & LAYOUT VARIANTS
+- colourScheme: Pick the ONE scheme key that best suits this brand's energy and audience. Options: "navy-orange" (bold, energetic — fitness/performance), "rose-pink" (warm, feminine — health/wellness/women's coaching), "teal-forest" (calm, trustworthy — nutrition/mindfulness), "purple-lilac" (inspiring, premium — mindset/coaching), "sky-blue" (fresh, professional — business/productivity). Pick the best fit; don't default to navy-orange unless it genuinely suits.
+- sectionLayoutVariants: Choose ONE variant key per section. These control how the GHL page builder lays out each section. Pick whatever fits the brand and message best. Options by section:
+  * "hero": "hero-two-col-video" | "hero-centered" | "hero-two-col-image" | "hero-two-col-countdown" | "hero-full-width"
+  * "social-proof-bar": "social-proof-stars-bullets" | "social-proof-centered-stat" | "social-proof-three-stats" | "social-proof-single-quote" | "social-proof-horizontal-badges"
+  * "whats-included": "included-three-col-checks" | "included-two-col-bullets" | "included-image-left-list" | "included-single-col-numbered" | "included-alternating-rows"
+  * "faq": "faq-single-col" | "faq-two-col" | "faq-image-left" | "faq-numbered" | "faq-with-inline-cta"
+  * "final-cta": "cta-centered-color-bg" | "cta-two-col-form" | "cta-with-countdown" | "cta-dark-minimal" | "cta-social-proof-cta"
+
 ─── OUTPUT FORMAT ───
 
 Return ONLY this JSON structure. Every string field must contain actual copy, not a description of what to write:
 
 {
+  "colourScheme": "navy-orange",
   "offerSummary": {
     "challengeConcept": "...",
     "targetAudienceSummary": "...",
@@ -87,7 +97,14 @@ Return ONLY this JSON structure. Every string field must contain actual copy, no
       { "question": "...", "answer": "..." },
       { "question": "...", "answer": "..." }
     ],
-    "urgencyIdeas": ["...", "...", "..."]
+    "urgencyIdeas": ["...", "...", "..."],
+    "sectionLayoutVariants": {
+      "hero": "hero-two-col-video",
+      "social-proof-bar": "social-proof-stars-bullets",
+      "whats-included": "included-three-col-checks",
+      "faq": "faq-single-col",
+      "final-cta": "cta-centered-color-bg"
+    }
   },
   "optInForm": {
     "recommendedFields": ["...", "..."],

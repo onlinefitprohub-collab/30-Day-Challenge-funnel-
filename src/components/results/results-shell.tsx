@@ -5,10 +5,11 @@ import Link from "next/link";
 import {
   ArrowLeft, Copy, Check, Target, FileText, FormInput,
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
-  ImageIcon, BarChart3, FlaskConical,
+  ImageIcon, BarChart3, FlaskConical, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { buildAllPageData } from "@/lib/ghl/builder";
 import type { StoredProject } from "@/lib/storage";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import { OfferSummarySection }    from "./sections/offer-summary";
@@ -58,6 +59,32 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
     setTimeout(() => setCopiedAll(false), 2000);
   }
 
+  function handleExportGhl() {
+    try {
+      const pages = buildAllPageData(assets);
+      const slug  = project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const files: Array<{ name: string; data: unknown }> = [
+        { name: `${slug}-landing.json`,  data: pages.landing  },
+        { name: `${slug}-optin.json`,    data: pages.optin    },
+        { name: `${slug}-thankyou.json`, data: pages.thankYou },
+        { name: `${slug}-booking.json`,  data: pages.booking  },
+      ];
+      for (const file of files) {
+        const blob = new Blob([JSON.stringify(file.data, null, 2)], { type: "application/json" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      toast({ title: "GHL pages exported!", description: "4 JSON files downloaded — import each into GoHighLevel." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Export failed";
+      toast({ title: "Export failed", description: msg, variant: "destructive" });
+    }
+  }
+
   const sections: Record<TabId, React.ReactNode> = {
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} />,
     landingPage:     <LandingPageSection     data={assets.landingPage} />,
@@ -103,12 +130,18 @@ export function ResultsShell({ project, outputs, isMock }: ResultsShellProps) {
             <p className="text-sm text-gray-500">Your complete challenge funnel</p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleCopyAll}>
-          {copiedAll
-            ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
-            : <><Copy className="h-4 w-4" /> Copy all</>
-          }
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleCopyAll}>
+            {copiedAll
+              ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
+              : <><Copy className="h-4 w-4" /> Copy all</>
+            }
+          </Button>
+          <Button variant="outline" onClick={handleExportGhl} title="Download 4 GHL page JSON files">
+            <Download className="h-4 w-4" />
+            Export GHL
+          </Button>
+        </div>
       </div>
 
       {/* Tab bar — scrollable on mobile */}

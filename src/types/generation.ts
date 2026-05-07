@@ -13,6 +13,16 @@ export interface LandingPageCopy {
   sectionIdeas: string[];
   faqItems: Array<{ question: string; answer: string }>;
   urgencyIdeas: string[];
+  sectionLayoutVariants?: Record<string, string>;
+}
+
+export interface GhlDesignOverride {
+  primaryColor?: string;
+  darkBackground?: string;
+  midBackground?: string;
+  accentColor?: string;
+  alternateSectionBackground?: string;
+  heroGradient?: string;
 }
 
 export interface OptInFormSuggestions {
@@ -84,6 +94,8 @@ export interface GeneratedFunnelAssets {
   adCopy: AdCopy;
   creativePrompts: CreativePrompts;
   campaignNaming: CampaignNaming;
+  colourScheme?: string;
+  design?: GhlDesignOverride;
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;
