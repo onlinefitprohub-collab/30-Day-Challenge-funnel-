@@ -57,16 +57,32 @@ export async function POST(request: Request) {
         validatedInputs.targetAudience ?? "people",
       );
     } else {
-      const { system, user: userPrompt } = buildMonthlyContentPrompt(context, monthName, monthNumber, year);
-      const result = await callClaudeGroup<{ monthlyContentPlan: MonthlyContentPlan }>(
-        `${system}\n\n${userPrompt}`,
-        monthlyContentPlanResponseSchema,
-        "monthly-content",
-        8000,
-        "claude-sonnet-4-6",
-      );
-      if (result.error || !result.data) {
-        console.warn("[generate-monthly-content] fallback:", result.error);
+      // Split into two calls (days 1–15 and 16–30) so each batch has enough
+      // token budget to write complete, unique, placeholder-free captions.
+      const [promptA, promptB] = [
+        buildMonthlyContentPrompt(context, monthName, monthNumber, year, { start: 1, end: 15 }),
+        buildMonthlyContentPrompt(context, monthName, monthNumber, year, { start: 16, end: 30 }),
+      ];
+
+      const [resultA, resultB] = await Promise.all([
+        callClaudeGroup<{ monthlyContentPlan: MonthlyContentPlan }>(
+          `${promptA.system}\n\n${promptA.user}`,
+          monthlyContentPlanResponseSchema,
+          "monthly-content-A",
+          8000,
+          "claude-sonnet-4-6",
+        ),
+        callClaudeGroup<{ monthlyContentPlan: MonthlyContentPlan }>(
+          `${promptB.system}\n\n${promptB.user}`,
+          monthlyContentPlanResponseSchema,
+          "monthly-content-B",
+          8000,
+          "claude-sonnet-4-6",
+        ),
+      ]);
+
+      if ((resultA.error || !resultA.data) || (resultB.error || !resultB.data)) {
+        console.warn("[generate-monthly-content] fallback — A:", resultA.error, "B:", resultB.error);
         plan = buildMockMonthlyContentPlan(
           monthName, year,
           validatedInputs.coachName ?? "Coach",
@@ -74,7 +90,15 @@ export async function POST(request: Request) {
           validatedInputs.targetAudience ?? "people",
         );
       } else {
-        plan = result.data.monthlyContentPlan;
+        const planA = resultA.data.monthlyContentPlan;
+        const planB = resultB.data.monthlyContentPlan;
+        // Merge: use planA's metadata + combined posts from both halves
+        plan = {
+          ...planA,
+          posts: [...planA.posts, ...planB.posts].sort((a, b) => a.day - b.day),
+          storyIdeas: [...new Set([...(planA.storyIdeas ?? []), ...(planB.storyIdeas ?? [])])].slice(0, 7),
+          dmStarters: [...new Set([...(planA.dmStarters ?? []), ...(planB.dmStarters ?? [])])].slice(0, 5),
+        };
       }
     }
 
@@ -285,15 +309,15 @@ function buildMockMonthlyContentPlan(
       theme: "Community",
       format: "Day-in-the-life reel",
       hook: `What happens inside the ${challengeName} community (you'd be surprised)`,
-      caption: `People join the ${challengeName} for the programme.\n\nThey stay because of the community.\n\nThere's something that happens when ${audience} realise they're not struggling alone.\n\nThe check-ins at 6am. The \"I nearly quit today\" messages that get 40 replies. The wins that get celebrated like they're everyone's wins.\n\nYou can follow a plan on your own. But you can't replicate that.\n\nIf you've been doing this solo and wondering why it keeps stalling — this might be what's missing.`,
+      caption: `People join the ${challengeName} for the programme.\n\nThey stay because of the community.\n\nThere's something that happens when ${audience} realise they're not struggling alone.\n\nThe check-ins at 6am. The "I nearly quit today" messages that get 40 replies. The wins that get celebrated like they're everyone's wins.\n\nYou can follow a plan on your own. But you can't replicate that.\n\nIf you've been doing this solo and wondering why it keeps stalling — this might be what's missing.`,
       cta: "Comment 'COMMUNITY' to find out how to join us",
     },
     // Day 23
     {
       theme: "Testimonial",
       format: "Text-on-screen reel",
-      hook: `\"I've tried everything. This is the first thing that actually worked.\"`,
-      caption: `That's a direct quote from someone who completed the ${challengeName} last month.\n\nShe'd done three other programmes before. Lost weight, put it back on, lost confidence each time.\n\nWhat was different this time wasn't the workouts or the meal plan.\n\nIt was having a coach who understood why she kept stopping — and helped her build something that worked around her actual life.\n\nIf \"I've tried everything\" sounds familiar, I want to hear your story.`,
+      hook: `"I've tried everything. This is the first thing that actually worked."`,
+      caption: `That's a direct quote from someone who completed the ${challengeName} last month.\n\nShe'd done three other programmes before. Lost weight, put it back on, lost confidence each time.\n\nWhat was different this time wasn't the workouts or the meal plan.\n\nIt was having a coach who understood why she kept stopping — and helped her build something that worked around her actual life.\n\nIf "I've tried everything" sounds familiar, I want to hear your story.`,
       cta: "DM me and tell me what you've already tried",
     },
     // Day 24
@@ -309,7 +333,7 @@ function buildMockMonthlyContentPlan(
       theme: "Motivation vs discipline",
       format: "Talking head reel",
       hook: `Stop waiting to feel ready. This is what actually gets results.`,
-      caption: `The most common thing I hear from ${audience} before they start is: \"I just need to get my head right first.\"\n\nI understand why they say it.\n\nBut here's the truth: your head gets right by taking action. Not the other way around.\n\nClarity comes from movement. Confidence comes from doing hard things. Motivation follows action — it doesn't lead it.\n\nThe ${challengeName} is designed to get you moving before you feel ready. Because waiting for ready is how months turn into years.`,
+      caption: `The most common thing I hear from ${audience} before they start is: "I just need to get my head right first."\n\nI understand why they say it.\n\nBut here's the truth: your head gets right by taking action. Not the other way around.\n\nClarity comes from movement. Confidence comes from doing hard things. Motivation follows action — it doesn't lead it.\n\nThe ${challengeName} is designed to get you moving before you feel ready. Because waiting for ready is how months turn into years.`,
       cta: "Drop a 🙌 if you needed to hear this today",
     },
     // Day 26
@@ -317,7 +341,7 @@ function buildMockMonthlyContentPlan(
       theme: "Family & lifestyle",
       format: "Day-in-the-life reel",
       hook: `How ${audience} fit training around a full life (not the other way around)`,
-      caption: `I don't work with people who have empty schedules.\n\nI work with ${audience} who have jobs, families, social lives, and exactly 45 minutes on a good day.\n\nThe ${challengeName} is built for real life. Not Instagram life.\n\nThat means sessions that fit in your lunch break. Meal ideas that take 15 minutes. Check-ins that meet you where you actually are.\n\nIf you've ever felt like the \"right time\" never comes — this is how you stop waiting for it.`,
+      caption: `I don't work with people who have empty schedules.\n\nI work with ${audience} who have jobs, families, social lives, and exactly 45 minutes on a good day.\n\nThe ${challengeName} is built for real life. Not Instagram life.\n\nThat means sessions that fit in your lunch break. Meal ideas that take 15 minutes. Check-ins that meet you where you actually are.\n\nIf you've ever felt like the "right time" never comes — this is how you stop waiting for it.`,
       cta: "DM me 'REAL LIFE' and I'll show you how this fits your schedule",
     },
     // Day 27
@@ -349,7 +373,7 @@ function buildMockMonthlyContentPlan(
       theme: "Month wrap-up",
       format: "Talking head reel",
       hook: `${monthName} is almost over — let's talk about what's next`,
-      caption: `I always do a quick reflection at the end of the month.\n\nWhat worked this ${monthName}. What didn't. What I'm doing differently next month.\n\nAnd one thing I consistently hear from ${audience} who completed the ${challengeName} this month:\n\n\"I wish I'd started sooner.\"\n\nNot because it was easy. Because they finally feel like they're moving in the right direction.\n\nIf that's where you want to be at the end of next month — the doors are open.\n\nLet's make it happen.`,
+      caption: `I always do a quick reflection at the end of the month.\n\nWhat worked this ${monthName}. What didn't. What I'm doing differently next month.\n\nAnd one thing I consistently hear from ${audience} who completed the ${challengeName} this month:\n\n"I wish I'd started sooner."\n\nNot because it was easy. Because they finally feel like they're moving in the right direction.\n\nIf that's where you want to be at the end of next month — the doors are open.\n\nLet's make it happen.`,
       cta: "Comment 'NEXT MONTH' and I'll send you the details",
     },
   ];
@@ -378,13 +402,13 @@ function buildMockMonthlyContentPlan(
     ],
     posts,
     storyIdeas: [
-      `Poll: \"What's your #1 fitness challenge this ${monthName}?\" — use the results to shape your next week of content`,
+      `Poll: "What's your #1 fitness challenge this ${monthName}?" — use the results to shape your next week of content`,
       `Behind-the-scenes of a real client check-in — blurred face, real conversation, real progress update`,
       `Day-in-the-life of someone inside the ${challengeName} — their morning routine, their meals, their evening wind-down`,
-      `\"React with 🔥 if you've ever felt like you're doing everything right but not seeing results\"`,
+      `"React with 🔥 if you've ever felt like you're doing everything right but not seeing results"`,
       `Screenshot a client win (with permission) and share the context — what changed, how long it took, what they said`,
-      `Q&A box: \"Ask me anything about getting results as a ${audience.split(" ").slice(0, 3).join(" ")} this ${monthName}\"`,
-      `Countdown story: \"${challengeName} next cohort opens in X days — tap to get on the waitlist\"`,
+      `Q&A box: "Ask me anything about getting results as a ${audience.split(" ").slice(0, 3).join(" ")} this ${monthName}"`,
+      `Countdown story: "${challengeName} next cohort opens in X days — tap to get on the waitlist"`,
     ],
     dmStarters: [
       `Hey [name] — saw you've been engaging with my content lately. Quick question: what's the #1 thing you'd love to crack with your fitness before the end of ${monthName}?`,
