@@ -24,12 +24,12 @@ export function WizardProgress({ currentStep, steps, onStepClick }: WizardProgre
       {/* Mobile: simple bar + label */}
       <div className="sm:hidden">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-gray-700">{steps[currentStep]?.title}</span>
-          <span className="text-gray-400">{currentStep + 1} / {steps.length}</span>
+          <span className="font-medium text-zinc-300">{steps[currentStep]?.title}</span>
+          <span className="text-zinc-500">{currentStep + 1} / {steps.length}</span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.08]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-500"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
@@ -38,9 +38,9 @@ export function WizardProgress({ currentStep, steps, onStepClick }: WizardProgre
       {/* Desktop: step dots */}
       <div className="relative hidden sm:block">
         {/* Track line */}
-        <div className="absolute left-0 right-0 top-4 h-0.5 bg-gray-200" />
+        <div className="absolute left-0 right-0 top-4 h-0.5 bg-white/[0.08]" />
         <div
-          className="absolute left-0 top-4 h-0.5 bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-500"
+          className="absolute left-0 top-4 h-0.5 bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-500"
           style={{ width: `${progressPct}%` }}
         />
 
@@ -52,10 +52,10 @@ export function WizardProgress({ currentStep, steps, onStepClick }: WizardProgre
 
             const dotClasses = cn(
               "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
-              isComplete ? "border-brand-600 bg-brand-600 text-white"
-              : isCurrent  ? "border-brand-600 bg-white text-brand-600 shadow-sm"
-              :              "border-gray-200 bg-white text-gray-400",
-              isClickable && "cursor-pointer hover:ring-2 hover:ring-brand-300 hover:ring-offset-1"
+              isComplete ? "border-orange-500 bg-orange-500 text-white"
+              : isCurrent  ? "border-orange-500 bg-[#18181b] text-orange-400 shadow-sm"
+              :              "border-white/[0.12] bg-[#18181b] text-zinc-600",
+              isClickable && "cursor-pointer hover:ring-2 hover:ring-orange-500/30 hover:ring-offset-1 hover:ring-offset-[#09090b]"
             );
 
             return (
@@ -77,9 +77,9 @@ export function WizardProgress({ currentStep, steps, onStepClick }: WizardProgre
                 <span
                   className={cn(
                     "mt-2 max-w-[72px] text-center text-xs font-medium leading-tight",
-                    isCurrent  ? "text-brand-700"
-                    : isComplete ? "text-gray-500"
-                    :              "text-gray-400"
+                    isCurrent  ? "text-orange-400"
+                    : isComplete ? "text-zinc-500"
+                    :              "text-zinc-600"
                   )}
                 >
                   {step.title}

@@ -61,20 +61,20 @@ export default async function DashboardPage() {
     <div className="space-y-6">
 
       {/* Hero header */}
-      <div className="rounded-2xl bg-[#0f172a] px-6 py-6 sm:px-8">
+      <div className="rounded-2xl border border-white/[0.07] bg-[#111113] px-6 py-6 sm:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-zinc-100">
               Welcome back, {displayName}
             </h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-zinc-500">
               {hasProjects
                 ? `${typedProjects.length} funnel project${typedProjects.length === 1 ? "" : "s"} · ${completeCount} complete`
                 : "Ready to build your first challenge funnel?"}
             </p>
           </div>
           <Link href="/projects/new">
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold border-0 shadow-sm" size="lg">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0 shadow-sm" size="lg">
               <Plus className="h-4 w-4" />
               New funnel
             </Button>
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
       ) : (
         <>
           <div>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <h2 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
               Your projects
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,17 +103,17 @@ export default async function DashboardPage() {
           </div>
 
           {/* How it works strip */}
-          <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-400">How it works</p>
+          <div className="rounded-xl border border-white/[0.07] bg-[#111113] p-5">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-zinc-600">How it works</p>
             <div className="grid gap-4 sm:grid-cols-3">
               {HOW_IT_WORKS.map(({ icon: Icon, step, title, body }) => (
                 <div key={step} className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100">
-                    <Icon className="h-4 w-4 text-orange-500" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10">
+                    <Icon className="h-4 w-4 text-orange-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">{title}</p>
-                    <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{body}</p>
+                    <p className="text-sm font-semibold text-zinc-300">{title}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500 leading-relaxed">{body}</p>
                   </div>
                 </div>
               ))}

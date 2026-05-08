@@ -387,29 +387,29 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="gap-1.5">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
+            <h1 className="text-xl font-bold text-zinc-100">{project.name}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-0.5">
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                 isApplication
-                  ? "bg-violet-50 text-violet-700 border border-violet-200"
-                  : "bg-blue-50 text-blue-700 border border-blue-200"
+                  ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
+                  : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
               }`}>
                 {isApplication ? "Application Funnel" : "Challenge Funnel"}
               </span>
               {typeof outputs.copywriterStyle === "string" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 border border-orange-200">
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-400 border border-orange-500/20">
                   <Pen className="h-3 w-3" />
                   {outputs.copywriterStyle.split(" — ")[0]}
                 </span>
               )}
               {isMock && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 border border-amber-200">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20">
                   <FlaskConical className="h-3 w-3" />
                   Demo content
                 </span>
@@ -419,17 +419,17 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
             size="sm"
             onClick={handleRegenerate}
             disabled={regenerating}
+            className="border border-white/[0.10] bg-transparent text-zinc-300 hover:bg-white/[0.06] hover:text-zinc-100"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
             {regenerating ? "Starting…" : "Regenerate"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCopyAll}>
+          <Button size="sm" onClick={handleCopyAll} className="border border-white/[0.10] bg-transparent text-zinc-300 hover:bg-white/[0.06] hover:text-zinc-100">
             {copiedAll
-              ? <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+              ? <><Check className="h-3.5 w-3.5 text-green-400" /> Copied!</>
               : <><Copy className="h-3.5 w-3.5" /> Export JSON</>
             }
           </Button>
@@ -440,10 +440,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       <div className="flex gap-5 items-start">
 
         {/* Sidebar */}
-        <nav className="w-52 shrink-0 rounded-2xl border border-gray-200 bg-white py-4 overflow-hidden sticky top-4">
+        <nav className="w-52 shrink-0 rounded-2xl border border-white/[0.07] bg-[#111113] py-4 overflow-hidden sticky top-4">
           {grouped.map(({ label, items }) => (
             <div key={label} className="mb-5 last:mb-0">
-              <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
                 {label}
               </p>
               <div className="space-y-0.5 px-2">
@@ -456,12 +456,12 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
                       onClick={() => setActiveTab(tab.id)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${
                         isActive && isHL
-                          ? "bg-[#1a56db] text-white shadow-sm"
+                          ? "bg-orange-500 text-white shadow-sm"
                           : isActive
-                          ? "bg-gray-100 text-gray-900"
+                          ? "bg-white/[0.08] text-zinc-100"
                           : isHL
-                          ? "text-[#1a56db] hover:bg-[#e8f0fe]"
-                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                          ? "text-orange-400 hover:bg-orange-500/10"
+                          : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-300"
                       }`}
                     >
                       <tab.icon className="h-4 w-4 shrink-0 opacity-80" />
@@ -482,8 +482,8 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
             <div>
               {activeTabDef && (
                 <div className="flex items-center gap-2">
-                  <activeTabDef.icon className="h-5 w-5 text-gray-400" />
-                  <h2 className="text-lg font-semibold text-gray-900">{activeTabDef.label}</h2>
+                  <activeTabDef.icon className="h-5 w-5 text-zinc-500" />
+                  <h2 className="text-lg font-semibold text-zinc-100">{activeTabDef.label}</h2>
                 </div>
               )}
             </div>
@@ -491,7 +491,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
               <button
                 onClick={() => handleRegenerateSection(sectionGroup)}
                 disabled={!!regenSection}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 disabled:opacity-50 transition-colors"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${regenSection === sectionGroup ? "animate-spin" : ""}`} />
                 {regenSection === sectionGroup ? "Regenerating…" : "Regenerate section"}
@@ -502,7 +502,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
           {/* Section content */}
           <div key={activeTab} className="animate-fade-in">
             {sections[activeTab] ?? (
-              <div className="flex items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-sm text-gray-400">
+              <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/[0.08] bg-[#111113] py-16 text-sm text-zinc-600">
                 No content available for this section yet.
               </div>
             )}

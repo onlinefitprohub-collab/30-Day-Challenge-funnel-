@@ -202,14 +202,14 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
       {/* Header */}
       <div className="mb-8 text-center">
         <div className="mb-3 flex justify-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-accent-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg">
             <Zap className="h-5 w-5 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-zinc-100">
           {formData.funnelType === "application" ? "Build your application funnel" : "Build your challenge funnel"}
         </h1>
-        <p className="mt-2 text-gray-500">
+        <p className="mt-2 text-zinc-400">
           {initialProjectId
             ? "Pick up where you left off — your answers are saved."
             : `Answer ${activeSteps.length} short sections. We'll generate your complete funnel.`}
@@ -221,25 +221,25 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
 
       {/* Save error banner */}
       {saveError && (
-        <div className="mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+        <div className="mt-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/[0.08] p-4">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
           <div>
-            <p className="text-sm font-medium text-red-800">Something went wrong</p>
-            <p className="text-sm text-red-600">{saveError}</p>
+            <p className="text-sm font-medium text-red-300">Something went wrong</p>
+            <p className="text-sm text-red-400">{saveError}</p>
           </div>
         </div>
       )}
 
       {/* Step card */}
-      <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mt-5 rounded-2xl border border-white/[0.07] bg-[#18181b] p-6 shadow-sm sm:p-8">
         <div className="mb-6">
           <div className="mb-1 flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-widest text-brand-600">
+            <span className="text-xs font-semibold uppercase tracking-widest text-orange-500">
               Step {step.id} of {activeSteps.length}
             </span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900">{step.title}</h2>
-          <p className="mt-1 text-gray-500">{step.description}</p>
+          <h2 className="text-xl font-bold text-zinc-100">{step.title}</h2>
+          <p className="mt-1 text-zinc-400">{step.description}</p>
         </div>
 
         <StepComponent
@@ -254,7 +254,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
 
       {/* Auto-save note */}
       {projectId && !isSubmitting && (
-        <p className="mt-3 text-center text-xs text-gray-400">
+        <p className="mt-3 text-center text-xs text-zinc-600">
           Progress saved — you can close this tab and return any time.
         </p>
       )}
