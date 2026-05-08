@@ -198,7 +198,7 @@ export function WizardShell({ initialProjectId, initialData }: WizardShellProps)
   const step = activeSteps[currentStep];
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl pb-12">
       {/* Header */}
       <div className="mb-8 text-center">
         <div className="mb-3 flex justify-center">

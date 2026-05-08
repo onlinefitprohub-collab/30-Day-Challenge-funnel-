@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Plus, Wand2, Download, Rocket } from "lucide-react";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { ProjectCard } from "@/components/dashboard/project-card";
+import { ProjectList } from "@/components/dashboard/project-list";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import type { ProjectRow } from "@/types/project";
 
@@ -10,18 +10,12 @@ export const metadata = {
   title: "Dashboard | FitPro Launch",
 };
 
-const HOW_IT_WORKS = [
-  { icon: Wand2,    step: "1", title: "Fill in the wizard",    body: "Tell us about your niche, audience and challenge — about 3 minutes." },
-  { icon: Download, step: "2", title: "Get your full funnel",  body: "4 pages, emails, SMS, and ad copy — all generated and ready to use." },
-  { icon: Rocket,   step: "3", title: "Import into HighLevel", body: "Download the JSON or clone pages directly with one click." },
-];
-
 function deriveSubtitle(inputs: Record<string, unknown>): string {
   const challenge = typeof inputs.challengeName === "string" ? inputs.challengeName.trim() : "";
   const audience  = typeof inputs.targetAudience === "string" ? inputs.targetAudience.trim() : "";
   if (challenge) return challenge;
   if (audience)  return audience;
-  return "Challenge funnel project";
+  return "";
 }
 
 export default async function DashboardPage() {
@@ -58,68 +52,38 @@ export default async function DashboardPage() {
   const completeCount = typedProjects.filter((p) => p.status === "complete").length;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
 
-      {/* Hero header */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#111113] px-6 py-6 sm:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-100">
-              Welcome back, {displayName}
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              {hasProjects
-                ? `${typedProjects.length} funnel project${typedProjects.length === 1 ? "" : "s"} · ${completeCount} complete`
-                : "Ready to build your first challenge funnel?"}
-            </p>
-          </div>
-          <Link href="/projects/new">
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0 shadow-sm" size="lg">
-              <Plus className="h-4 w-4" />
-              New funnel
-            </Button>
-          </Link>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-zinc-100">
+            {hasProjects ? `Welcome back, ${displayName}` : `Hey ${displayName} 👋`}
+          </h1>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            {hasProjects
+              ? `${typedProjects.length} funnel${typedProjects.length === 1 ? "" : "s"} · ${completeCount} complete`
+              : "Create your first funnel to get started."}
+          </p>
         </div>
+        <Link href="/projects/new">
+          <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0 shadow-sm h-9 px-4 text-sm">
+            <Plus className="h-4 w-4" />
+            New funnel
+          </Button>
+        </Link>
       </div>
 
-      {/* Projects list or empty state */}
+      {/* Projects */}
       {!hasProjects ? (
         <EmptyState />
       ) : (
-        <>
-          <div>
-            <h2 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-              Your projects
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {typedProjects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  subtitle={subtitleMap[project.id] ?? "Challenge funnel project"}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* How it works strip */}
-          <div className="rounded-xl border border-white/[0.07] bg-[#111113] p-5">
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-zinc-600">How it works</p>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {HOW_IT_WORKS.map(({ icon: Icon, step, title, body }) => (
-                <div key={step} className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10">
-                    <Icon className="h-4 w-4 text-orange-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-300">{title}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500 leading-relaxed">{body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+            Your funnels
+          </p>
+          <ProjectList projects={typedProjects} subtitles={subtitleMap} />
+        </div>
       )}
     </div>
   );

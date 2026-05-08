@@ -440,7 +440,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       <div className="flex gap-5 items-start">
 
         {/* Sidebar */}
-        <nav className="w-52 shrink-0 rounded-2xl border border-white/[0.07] bg-[#111113] py-4 overflow-hidden sticky top-4">
+        <nav className="w-56 shrink-0 rounded-2xl border border-white/[0.07] bg-[#0d0d10] py-4 overflow-hidden sticky top-4">
           {grouped.map(({ label, items }) => (
             <div key={label} className="mb-5 last:mb-0">
               <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
