@@ -59,16 +59,18 @@ import type { GeneratedFunnelAssets } from "@/types/generation";
 const MODEL_PRIMARY = "claude-sonnet-4-6";
 const MODEL_FAST    = "claude-haiku-4-5-20251001";
 
-// Token budgets per group — sized to comfortably fit each group's JSON
+// Token budgets per group — sized to comfortably fit each group's JSON output.
+// Sequences and delivery pack produce the most text (10 full email bodies + 30 SMS);
+// bumping them to 6000 prevents mid-JSON truncation on longer coaching contexts.
 const TOKENS = {
   offerPages:          4096,  // 5 sections + design spec + framework/voice/layout variants
-  sequences:           4500,  // 7 SMS + 10 emails with subject + body
+  sequences:           6000,  // 7 SMS + 10 emails with subject + body (was 4500, bumped for long copy)
   adsCampaign:         3200,  // ad copy, creative prompts, campaign naming
-  applicationLanding:  3200,  // 22-section registration page content
+  applicationLanding:  4096,  // 22-section registration page content (was 3200)
   coachStory:          1000,  // 3 bio paragraphs (~300–400 words)
-  vslScript:           4000,  // 11-section VSL — full spoken-word script
+  vslScript:           5000,  // 11-section VSL — full spoken-word script (was 4000)
   contentCalendar:     4096,  // 30 posts with hook + caption + CTA
-  deliveryPack:        4500,  // welcome + 4 weekly emails + 30 daily SMS + completion
+  deliveryPack:        6000,  // welcome + 4 weekly emails + 30 daily SMS + completion (was 4500)
   coachingTools:       3000,  // testimonial harvest sequence + pricing guide
 } as const;
 

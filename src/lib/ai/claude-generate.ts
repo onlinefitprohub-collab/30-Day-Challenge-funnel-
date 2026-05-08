@@ -31,6 +31,71 @@ function is529(err: unknown): boolean {
   return false;
 }
 
+/**
+ * Strip markdown code fences from an AI response.
+ *
+ * Handles all variants Claude produces despite system-prompt instructions:
+ *   ```json\n{...}\n```          — standard json fence
+ *   ```\n{...}\n```              — bare fence
+ *   ```JSON\n{...}\n```          — uppercase language tag
+ *   ```json\n{...}\n```\n prose  — fence with trailing commentary
+ *   prose\n```json\n{...}\n```   — preamble before fence (pass-through; brace-counting handles it)
+ */
+function stripCodeFences(raw: string): string {
+  const trimmed = raw.trim();
+
+  // Fence wraps the entire response (most common case)
+  const fullFence = trimmed.match(/^```[a-zA-Z0-9]*\s*\n([\s\S]*?)\n?```\s*$/);
+  if (fullFence) return fullFence[1].trim();
+
+  // Fence at start but trailing text after closing fence
+  const openFence = trimmed.match(/^```[a-zA-Z0-9]*\s*\n([\s\S]*)/);
+  if (openFence) {
+    const body = openFence[1];
+    const closingIdx = body.lastIndexOf("\n```");
+    if (closingIdx !== -1) return body.slice(0, closingIdx).trim();
+    // No closing fence — return body as-is (brace-counting will extract the object)
+    return body.trim();
+  }
+
+  return trimmed;
+}
+
+/**
+ * Extract the outermost JSON object from a string by counting brace depth.
+ *
+ * Unlike lastIndexOf("}"), this correctly handles:
+ *   - Trailing commentary containing "}" characters
+ *   - Nested objects and arrays
+ *   - Escaped characters inside string values
+ *
+ * Returns null if the JSON is truncated (unclosed braces — hit max_tokens).
+ */
+function extractOutermostObject(content: string): string | null {
+  const start = content.indexOf("{");
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i];
+    if (escape)          { escape = false; continue; }
+    if (ch === "\\" && inString) { escape = true;  continue; }
+    if (ch === '"')      { inString = !inString;    continue; }
+    if (inString)        continue;
+    if (ch === "{")      depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return content.slice(start, i + 1);
+    }
+  }
+
+  // depth > 0 means the JSON was cut off before closing — likely a max_tokens truncation
+  return null;
+}
+
 export async function callClaudeGroup<T>(
   prompt: string,
   schema: Parameters<typeof safeParse<T>>[0],
@@ -57,33 +122,37 @@ export async function callClaudeGroup<T>(
         return { data: null, error: `${groupName}: empty response from Claude`, usedFallback: false };
       }
 
-      // Claude sometimes wraps JSON in ```json fences despite instructions — strip them
-      const fenceStripped = content
-        .replace(/^```(?:json)?\s*/i, "")
-        .replace(/\s*```\s*$/, "")
-        .trim();
+      // Detect response truncated at max_tokens before attempting any extraction
+      const stopReason = response.stop_reason;
+      if (stopReason === "max_tokens") {
+        console.warn(
+          `[claude-generate] ${groupName} response hit max_tokens (${maxTokens}) — JSON may be truncated`,
+        );
+      }
 
-      // Step 1: parse the fence-stripped string directly
+      // Step 1: strip code fences, then try direct parse
+      const fenceStripped = stripCodeFences(content);
       let parsed = safeParse(schema, fenceStripped, groupName);
 
-      // Step 2: if that fails, try extracting the outermost { … } — handles preamble
-      // prose or trailing text Claude occasionally adds despite system prompt instructions
+      // Step 2: brace-counting extraction — handles preamble prose and trailing commentary
       if (parsed.error) {
         console.error(
           `[claude-generate] ${groupName} primary parse failed: ${parsed.error} | raw[0..300]: ${content.slice(0, 300).replace(/\n/g, " ")}`,
         );
-        const first = fenceStripped.indexOf("{");
-        const last  = fenceStripped.lastIndexOf("}");
-        if (first !== -1 && last > first) {
-          const bracketSlice = fenceStripped.slice(first, last + 1);
-          const fallbackParsed = safeParse(schema, bracketSlice, groupName);
+        const jsonObj = extractOutermostObject(fenceStripped);
+        if (jsonObj) {
+          const fallbackParsed = safeParse(schema, jsonObj, groupName);
           if (!fallbackParsed.error) {
             parsed = fallbackParsed;
           } else {
             console.error(
-              `[claude-generate] ${groupName} bracket-extraction fallback also failed: ${fallbackParsed.error}`,
+              `[claude-generate] ${groupName} brace-extraction fallback also failed: ${fallbackParsed.error}`,
             );
           }
+        } else {
+          console.error(
+            `[claude-generate] ${groupName} brace-extraction found no complete JSON object — response may be truncated (stop_reason: ${stopReason})`,
+          );
         }
       }
 
