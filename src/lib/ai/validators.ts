@@ -311,9 +311,10 @@ export const applicationLandingResponseSchema = z.object({
 // ─── Coach Story schema ──────────────────────────────────────────────────────
 
 export const coachStoryPartsSchema = z.object({
-  part1: z.string().min(1),
-  part2: z.string().min(1),
-  part3: z.string().min(1),
+  part1:          z.string().min(1),
+  part2:          z.string().min(1),
+  part3:          z.string().min(1),
+  bridgeHeadline: z.string().min(1),
 });
 
 export const coachStoryResponseSchema = z.object({

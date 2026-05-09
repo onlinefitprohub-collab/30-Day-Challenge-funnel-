@@ -2,25 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  CheckCircle2, Clock, AlertCircle, Loader2,
-  ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RefreshCw, ExternalLink,
-} from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, Loader2, MoreHorizontal, ExternalLink, RefreshCw } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { CloneButton } from "./clone-button";
 import type { ProjectRow } from "@/types/project";
 
-type SortKey = "name" | "status" | "updated_at";
-type SortDir = "asc" | "desc";
-
 const STATUS_CONFIG: Record<
   ProjectRow["status"],
-  { label: string; dot: string; text: string }
+  { label: string; dot: string; text: string; icon: React.ComponentType<{ className?: string }> }
 > = {
-  complete:   { label: "Complete",      dot: "bg-green-400",  text: "text-green-400" },
-  generating: { label: "Generating…",   dot: "bg-blue-400 animate-pulse", text: "text-blue-400" },
-  draft:      { label: "Draft",         dot: "bg-zinc-500",   text: "text-zinc-500" },
-  error:      { label: "Error",         dot: "bg-red-400",    text: "text-red-400" },
+  complete:   { label: "Complete",    dot: "bg-green-400",              text: "text-green-400",  icon: CheckCircle2 },
+  generating: { label: "Generating…", dot: "bg-blue-400 animate-pulse", text: "text-blue-400",   icon: Loader2 },
+  draft:      { label: "Draft",       dot: "bg-zinc-500",               text: "text-zinc-500",   icon: Clock },
+  error:      { label: "Error",       dot: "bg-red-400",                text: "text-red-400",    icon: AlertCircle },
 };
 
 interface Props {
@@ -29,99 +23,34 @@ interface Props {
 }
 
 export function ProjectList({ projects, subtitles }: Props) {
-  const [sortKey, setSortKey]   = useState<SortKey>("updated_at");
-  const [sortDir, setSortDir]   = useState<SortDir>("desc");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
-  function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
-  const sorted = [...projects].sort((a, b) => {
-    let av: string = "", bv: string = "";
-    if (sortKey === "name")       { av = a.name; bv = b.name; }
-    if (sortKey === "status")     { av = a.status; bv = b.status; }
-    if (sortKey === "updated_at") { av = a.updated_at; bv = b.updated_at; }
-    return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-  });
-
-  function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 text-zinc-600" />;
-    return sortDir === "asc"
-      ? <ArrowUp className="h-3 w-3 text-orange-400" />
-      : <ArrowDown className="h-3 w-3 text-orange-400" />;
-  }
-
   return (
-    <div className="overflow-hidden rounded-xl border border-white/[0.07]">
-      {/* Header row */}
-      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 border-b border-white/[0.07] bg-[#111113] px-4 py-2.5">
-        <button
-          onClick={() => handleSort("name")}
-          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors text-left"
-        >
-          Project <SortIcon col="name" />
-        </button>
-        <button
-          onClick={() => handleSort("status")}
-          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors"
-        >
-          Status <SortIcon col="status" />
-        </button>
-        <button
-          onClick={() => handleSort("updated_at")}
-          className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors"
-        >
-          Updated <SortIcon col="updated_at" />
-        </button>
-        <span className="w-6" />
-      </div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((project) => {
+        const cfg  = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.draft;
+        const Icon = cfg.icon;
+        const href = project.status === "complete"
+          ? `/projects/${project.id}/results`
+          : `/projects/${project.id}`;
+        const sub = subtitles[project.id];
 
-      {/* Rows */}
-      <div className="divide-y divide-white/[0.04] bg-[#0d0d10]">
-        {sorted.map((project) => {
-          const cfg  = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.draft;
-          const href = project.status === "complete"
-            ? `/projects/${project.id}/results`
-            : `/projects/${project.id}`;
-          const sub = subtitles[project.id];
-
-          return (
-            <div
-              key={project.id}
-              className="group grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3.5 hover:bg-white/[0.025] transition-colors"
-            >
-              {/* Name + subtitle */}
-              <Link href={href} className="min-w-0">
-                <p className="truncate text-sm font-medium text-zinc-200 group-hover:text-white transition-colors">
-                  {project.name}
-                </p>
-                {sub && (
-                  <p className="truncate text-xs text-zinc-600 mt-0.5">{sub}</p>
-                )}
-              </Link>
-
-              {/* Status */}
-              <div className="flex items-center gap-2 shrink-0">
+        return (
+          <div
+            key={project.id}
+            className="group relative flex flex-col rounded-xl border border-white/[0.07] bg-[#18181b] p-4 transition-all hover:border-white/[0.12] hover:bg-[#1f1f23] hover:shadow-lg"
+          >
+            {/* Status + actions row */}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
                 <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                <span className={`text-xs font-medium ${cfg.text} hidden sm:block`}>{cfg.label}</span>
+                <span className={`text-[11px] font-semibold ${cfg.text}`}>{cfg.label}</span>
               </div>
 
-              {/* Updated */}
-              <span className="hidden sm:block text-xs text-zinc-600 shrink-0 tabular-nums">
-                {formatDate(project.updated_at)}
-              </span>
-
-              {/* Actions */}
-              <div className="relative shrink-0">
+              <div className="relative">
                 <button
                   onClick={() => setMenuOpen(menuOpen === project.id ? null : project.id)}
-                  className="flex h-6 w-6 items-center justify-center rounded-md text-zinc-600 hover:bg-white/[0.08] hover:text-zinc-300 transition-colors"
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-zinc-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/[0.08] hover:text-zinc-300"
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </button>
@@ -158,9 +87,33 @@ export function ProjectList({ projects, subtitles }: Props) {
                 )}
               </div>
             </div>
-          );
-        })}
-      </div>
+
+            {/* Project name + subtitle */}
+            <Link href={href} className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-zinc-200 transition-colors group-hover:text-white">
+                {project.name}
+              </p>
+              {sub && (
+                <p className="mt-0.5 truncate text-xs text-zinc-600">{sub}</p>
+              )}
+            </Link>
+
+            {/* Footer */}
+            <div className="mt-4 flex items-center justify-between border-t border-white/[0.05] pt-3">
+              <span className="text-[11px] text-zinc-700 tabular-nums">
+                {formatDate(project.updated_at)}
+              </span>
+              <Link
+                href={href}
+                className="flex items-center gap-1 text-[11px] font-medium text-orange-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-orange-400"
+              >
+                <Icon className={`h-3 w-3 ${project.status === "generating" ? "animate-spin" : ""}`} />
+                {project.status === "complete" ? "View" : project.status === "generating" ? "Generating" : "Continue"}
+              </Link>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
