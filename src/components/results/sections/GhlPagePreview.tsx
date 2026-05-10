@@ -788,11 +788,13 @@ function LoadingSkeleton() {
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 const GHL_PAGE_WIDTH = 1200;
-const GHL_PAGE_HEIGHT = 4000; // tall enough for all landing page sections
+const GHL_PAGE_HEIGHT_FALLBACK = 4000;
 
 function ScaledPagePreview({ src }: { src: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.67); // reasonable starting value
+  const iframeRef    = useRef<HTMLIFrameElement>(null);
+  const [scale, setScale]     = useState(0.67);
+  const [iframeH, setIframeH] = useState(GHL_PAGE_HEIGHT_FALLBACK);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -810,16 +812,32 @@ function ScaledPagePreview({ src }: { src: string }) {
     return () => ro.disconnect();
   }, []);
 
+  // Reset to fallback height whenever src changes so the container doesn't
+  // stay sized for the previous page while the new one is loading.
+  useEffect(() => {
+    setIframeH(GHL_PAGE_HEIGHT_FALLBACK);
+  }, [src]);
+
+  function handleLoad() {
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) {
+      const h = doc.documentElement.scrollHeight || doc.body?.scrollHeight;
+      if (h && h > 100) setIframeH(h);
+    }
+  }
+
   return (
     <div
       ref={containerRef}
-      style={{ width: "100%", height: `${GHL_PAGE_HEIGHT * scale}px`, overflow: "hidden" }}
+      style={{ width: "100%", height: `${iframeH * scale}px`, overflow: "hidden" }}
     >
       <iframe
+        ref={iframeRef}
         src={src}
+        onLoad={handleLoad}
         style={{
           width: `${GHL_PAGE_WIDTH}px`,
-          height: `${GHL_PAGE_HEIGHT}px`,
+          height: `${iframeH}px`,
           border: "none",
           display: "block",
           transformOrigin: "top left",

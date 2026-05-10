@@ -344,6 +344,15 @@ export function renderPageToHtml(pageData: GhlPageData): string {
   const pageStyles = (pageData as unknown as Record<string, unknown>).pageStyles as string ?? "";
   const sectionsHtml = pageData.sections.map(renderSection).join("\n\n");
 
+  const fontFamilies: string[] =
+    Array.isArray(pageData.fontsForPreview) && pageData.fontsForPreview.length > 0
+      ? pageData.fontsForPreview
+      : ["Bebas Neue", "Poppins"];
+  const googleFontsUrl =
+    "https://fonts.googleapis.com/css2?" +
+    fontFamilies.map((f) => `family=${encodeURIComponent(f)}:ital,wght@0,400;0,600;0,700;0,900;1,400`).join("&") +
+    "&display=swap";
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -351,7 +360,7 @@ export function renderPageToHtml(pageData: GhlPageData): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;700;900&family=Fjalla+One&display=swap" rel="stylesheet">
+<link href="${googleFontsUrl}" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;padding:0;font-family:var(--contentfont,'Poppins',sans-serif)}
