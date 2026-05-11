@@ -161,7 +161,7 @@ export async function generateFunnelAssets(
             MODEL_PRIMARY,
           )
         : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ applicationLandingPage: import("@/types/generation").ApplicationLandingPage }>),
-      isApplication && hasStoryInputs
+      isApplication
         ? callCopyGroup(
             buildCoachStoryPrompt(context, style.promptDescription, coachStoryInputs),
             coachStoryResponseSchema,
