@@ -3361,6 +3361,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
   setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
   setVid("video-20p-7VhVtF4", videoUrl || RICK_ROLL_URL);
+  setVid("video-s26YMI7Zhs9", videoUrl || RICK_ROLL_URL);
 
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
   const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
