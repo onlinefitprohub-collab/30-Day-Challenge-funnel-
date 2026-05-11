@@ -3363,8 +3363,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     };
   }
 
-  // Hero (section 2)
-  setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
+  // Section 1 — top hero hook (two-column: image left, headline right)
+  setH("sub-heading-oAZ3MQORtdf", al.valuePropHeadline);
+
+  // Section 2 — video hero
+  setH("heading-XSqOdeY3g0-", al.valuePropSubheadline);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
   setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
   setVid("video-20p-7VhVtF4", videoUrl || RICK_ROLL_URL);
