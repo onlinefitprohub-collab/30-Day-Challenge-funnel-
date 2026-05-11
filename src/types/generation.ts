@@ -338,7 +338,7 @@ export interface GeneratedFunnelAssets {
   // Application funnel — 22-section registration page (generated in parallel with other copy)
   applicationLandingPage?: ApplicationLandingPage;
   // Application funnel — AI-generated first-person coach bio (3 paragraphs from wizard story inputs)
-  coachStory?: { part1: string; part2: string; part3: string };
+  coachStory?: { part1: string; part2: string; part3: string; bridgeHeadline: string };
   // Application funnel — AI-generated VSL script (11 sections)
   vslScript?: VslScript;
   // Coaching tools — generated for all funnel types
