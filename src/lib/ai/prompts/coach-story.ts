@@ -1,10 +1,17 @@
 /**
  * Coach Story Bio — AI-Generated First-Person Narrative
  *
- * Generates: coachStory (3 paragraphs injected into the GHL template coach bio section)
+ * Generates: coachStory (3 long-form sections injected into the GHL template coach bio section)
  *
  * Inputs come from the wizard's "Your Story" step — 4 leading questions answered
- * by the coach in their own words. The AI turns raw answers into polished copy.
+ * by the coach in their own words. The AI turns raw answers into polished, long-form copy.
+ *
+ * Part 1 (300–450 words): Before state — pain, struggle, daily-life detail
+ * bridgeHeadline: Short punchy line that agitates the pain and pivots to hope
+ * Part 2 (300–450 words): Turning point — discovery, what changed, personal result
+ * Part 3 (200–300 words): Mission — why coaching, who they help, invitation to reader
+ *
+ * Each part uses \n\n between paragraphs so the injection layer wraps them in <p> tags.
  */
 
 export interface CoachStoryInputFields {
@@ -34,5 +41,81 @@ export function buildCoachStoryPrompt(
     story.coachWhyCoach       && `WHY I DO THIS:\n${story.coachWhyCoach}`,
   ].filter(Boolean).join("\n\n");
 
-  return `${context}\n\n${styleBlock}=== YOUR TASK ===\n\nYou are a world-class direct response copywriter. You are writing the coach's personal bio story for the "About the Coach" section of a high-ticket application funnel landing page.\n\nThe coach has answered 4 questions in their own words. Your job is to transform those raw answers into 3 polished, emotionally compelling paragraphs written in first person as the coach. The copy must:\n- Feel authentic and personal — not corporate or generic\n- Draw the reader in through vulnerability and honesty before establishing authority\n- Make the ideal client feel deeply understood: "this person has been exactly where I am"\n- Build trust through specificity: real numbers, real moments, real emotions\n- End with a clear sense of the coach's mission and why this work matters to them\n\n=== THE COACH'S RAW ANSWERS ===\n\nCoach name: ${story.coachName}\nTarget audience: ${story.targetAudience}\nProgramme goal: ${story.mainGoal}${story.challengeName ? `\nProgramme name: ${story.challengeName}` : ""}\n\n${storyInputs || "(No story inputs provided — generate a compelling generic coach bio based on the programme context above.)"}\n\n=== PARAGRAPH STRUCTURE ===\n\npart1 — THE BEFORE (100–150 words):\nOpen with the coach's struggle — where they were before they figured this out. Must feel honest and relatable. The reader should recognise themselves immediately. Do NOT start with "Hi, my name is..." — that's already on the page. Open with the raw truth of the situation. E.g. "For years, I was the person who..." or "I know what it feels like to..."\n\npart2 — THE TURNING POINT (100–150 words):\nDescribe the moment of discovery — what changed, what they learned, what made everything click. This is where the reader starts to feel hope. Bridge from the struggle to the solution. Include any specific result the coach achieved for themselves.\n\npart3 — THE MISSION (80–120 words):\nWhy the coach does this work. Their purpose and drive. This paragraph should make the ideal client feel seen, chosen, and confident that this is the right person to guide them. End on a forward-looking note — what the coach believes is possible for the reader.\n\nbridgeHeadline — THE PAIN-POINT BRIDGE (max 12 words):\nA single punchy sentence placed BETWEEN part1 and part2 on the page. Its purpose: make the ideal client feel deeply seen — they should read it and nod, thinking "that's me." Write it as a direct statement of shared pain that naturally pivots toward hope. No rhetorical questions. No emojis. No filler phrases.\nGood examples: "Still searching for something that finally sticks." / "If that sounds like your story, keep reading." / "That guilt and exhaustion is real — and it has a solution." / "Sound familiar? The good news is, it doesn't have to stay this way."\n\n=== OUTPUT FORMAT ===\n\nRespond with ONLY valid JSON. No markdown, no explanation, no preamble.\n\n{\n  "coachStory": {\n    "part1": "...",\n    "part2": "...",\n    "part3": "...",\n    "bridgeHeadline": "..."\n  }\n}`;
+  return `${context}
+
+${styleBlock}=== YOUR TASK ===
+
+You are a world-class direct response copywriter. You are writing the coach's personal story for the "About the Coach" section of a high-ticket application funnel landing page.
+
+The coach has answered questions in their own words. Your job is to transform those raw answers into three long-form, emotionally compelling sections written in first person as the coach.
+
+THIS COPY MUST BE LONG AND DETAILED. Short paragraphs are NOT acceptable. Each section must tell a real, specific story that makes the ideal client feel deeply understood and builds genuine trust. Use specific details, emotions, moments, and turning points — not vague generalities.
+
+The copy must:
+- Feel authentic and deeply personal — raw honesty, not polished corporate language
+- Open with the reader recognising themselves immediately in the coach's story
+- Build from vulnerability → discovery → authority → invitation
+- Use specific numbers, timeframes, emotions, and vivid details throughout
+- Separate paragraphs with a blank line (\\n\\n between each paragraph)
+
+=== THE COACH'S RAW ANSWERS ===
+
+Coach name: ${story.coachName}
+Target audience: ${story.targetAudience}
+Programme goal: ${story.mainGoal}${story.challengeName ? `\nProgramme name: ${story.challengeName}` : ""}
+
+${storyInputs || "(No story inputs provided — generate a compelling, detailed coach bio based on the programme context above. Invent specific, plausible details that would resonate deeply with the target audience described.)"}
+
+=== SECTION STRUCTURE ===
+
+part1 — THE BEFORE STATE (300–450 words, 3–5 paragraphs):
+Tell the coach's full "before" story in detail. This is where they were BEFORE they found the solution.
+- Open with an honest, vulnerable statement about where the coach was. Do NOT start with "Hi, my name is..." — that heading is already on the page.
+- Describe their day-to-day life in specific, sensory detail: what were the mornings like, what did they feel when they looked in the mirror, how did it affect their relationships, confidence, energy?
+- Name the specific pain points, failed attempts, and emotional low points. Give them names and moments.
+- Paint the picture so clearly that the ideal client reads it and thinks "this person was me."
+- End this section still in the "before" — do NOT reveal the solution here. Leave the reader in the problem.
+Each paragraph should be 3–5 sentences. Separate paragraphs with \\n\\n.
+
+part2 — THE TURNING POINT & TRANSFORMATION (300–450 words, 3–5 paragraphs):
+This is where everything changed. Tell the story of discovery and personal transformation.
+- Open with the specific moment, conversation, realisation, or event that changed everything.
+- Describe what they discovered, learned, or did differently. Be specific about the approach or method.
+- Walk through the transformation: what changed first, then what changed next. Include real results with numbers and timeframes where possible.
+- Describe how their life changed beyond just the physical — confidence, relationships, energy, identity.
+- End with the pivot: why this experience made them want to help others do the same.
+Each paragraph should be 3–5 sentences. Separate paragraphs with \\n\\n.
+
+part3 — THE MISSION & INVITATION (200–300 words, 2–3 paragraphs):
+Why the coach does this work and why the reader should trust them.
+- Open with a clear statement of the coach's mission — who they exist to help and why.
+- Reference how many people they've helped, the kinds of transformations they've seen, and what makes their approach different from everything else out there.
+- End with a warm, direct invitation: make the ideal client feel chosen, seen, and confident that this is the right person to guide them. Look them in the eye through the page.
+Each paragraph should be 3–5 sentences. Separate paragraphs with \\n\\n.
+
+bridgeHeadline — THE PAIN-POINT AGITATOR (max 12 words):
+A single powerful sentence placed BETWEEN part1 and part2. Its purpose: name the pain so precisely that the reader stops, feels seen, and wants to keep reading. It should agitate the exact frustration described in part1 — then hint that something is about to change.
+Write as a bold statement, not a question. Examples for tone:
+- "Still trying to figure out why nothing works — even when you're doing everything right."
+- "That exhaustion and self-doubt is real. And it has a cause — and a solution."
+- "The worst part? You already know what you should be doing. So why isn't it working?"
+Max 12 words. No emojis. No filler phrases.
+
+=== CRITICAL OUTPUT RULES ===
+
+- part1 MUST be at least 300 words. If it is less, you have failed.
+- part2 MUST be at least 300 words. If it is less, you have failed.
+- part3 MUST be at least 200 words. If it is less, you have failed.
+- Use \\n\\n between every paragraph within each part.
+- Do NOT summarise or abbreviate. Write the FULL copy.
+- Respond with ONLY valid JSON. No markdown, no explanation, no preamble.
+
+{
+  "coachStory": {
+    "part1": "...",
+    "part2": "...",
+    "part3": "...",
+    "bridgeHeadline": "..."
+  }
+}`;
 }

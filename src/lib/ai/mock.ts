@@ -605,20 +605,20 @@ export function buildMockCoachStory(inputs: WizardInputs): NonNullable<Generated
 
   const part1 = inputs.coachBeforeState
     ? inputs.coachBeforeState
-    : `Hi, my name is ${firstName}.\n\nI know exactly where you are right now — because I was there too.\n\nI'd tried everything. Every plan, every approach, every shortcut. Nothing stuck. I felt frustrated, exhausted, and honestly ready to give up on the idea that things could ever change.\n\nI struggled with my ${goal.toLowerCase()} for years. The worse it got, the more I withdrew — from social events, from activities I used to love, from showing up as my best self.`;
+    : `For years, I felt like I was doing everything right — and getting nowhere.\n\nI was ${goal.toLowerCase()} was supposed to be a priority. I'd set the goals, I'd made the plans, I'd even started more times than I can count. But something always got in the way. Life got busy. I got tired. I'd tell myself I'd start again Monday, and Monday would come and go and nothing would change.\n\nI remember standing in front of the mirror one morning and just feeling completely defeated. Not just frustrated — defeated. Like this was just who I was now. Like maybe I was the kind of person this just wasn't going to work for.\n\nThe low moments started piling up. Turning down invitations because I didn't want to be seen. Avoiding photos. Buying clothes in a size I told myself was "just for now." Watching ${audience} around me seem to have it figured out and wondering what they knew that I didn't.\n\nI tried everything. Different plans, different approaches, different promises. Some things worked for a few weeks. Then they stopped. Or I did. And I'd be right back where I started, except now I had another failure to add to the list — and a little less belief that things could actually change.`;
 
   const part2 = inputs.coachTurningPoint
     ? inputs.coachTurningPoint
-    : `Then one day, I hit a wall.\n\nI realised I had to stop looking for the perfect plan and start building a system that actually worked for my life — my schedule, my challenges, my goals.\n\nThat shift changed everything. Within weeks I started seeing real progress. Within months, the transformation was undeniable.\n\nI documented every step, tested what worked, cut what didn't — and built a framework that I knew I could teach to others.`;
+    : `The shift didn't come from a new plan. It came from a completely different question.\n\nInstead of asking "what should I be doing?" I started asking "why isn't what I'm doing working?" That one reframe changed everything. I stopped following programmes built for someone else's life and started building something that actually fit mine — my schedule, my energy levels, my real-world constraints.\n\nThe results came faster than I expected. Not because I was doing more, but because I was finally doing the right things consistently. Within the first month, I saw changes I hadn't seen in years of trying. Within three months, I barely recognised the person I was becoming — not just physically, but in how I felt, how I carried myself, how I showed up every day.\n\nThe confidence that came back wasn't just about how I looked. It was about knowing I could do hard things. That I wasn't broken. That I hadn't been failing all those years because I lacked willpower — I'd just been using the wrong map.\n\nI documented everything. Every win, every adjustment, every moment where something clicked. Because I knew I wasn't the only one who'd been where I was — and I knew this worked.`;
 
-  const part3 = inputs.coachPersonalResult
-    ? inputs.coachPersonalResult
-    : `Today I've helped hundreds of ${audience} achieve the same results — without the confusion, the guesswork, or the unsustainable approaches that never last.\n\n${inputs.coachWhyCoach ?? `I created ${programme} because I believe everyone deserves a clear, proven path to get where they want to go.`}\n\nIf I could do it — starting from exactly where you are — so can you.`;
+  const part3 = inputs.coachPersonalResult ?? inputs.coachWhyCoach
+    ? `${inputs.coachPersonalResult ?? ""}\n\n${inputs.coachWhyCoach ?? ""}`.trim()
+    : `That's why I created ${programme} — and it's the only reason I do this work.\n\nI've now helped hundreds of ${audience} go through the same journey. I've seen the moment it clicks for them. The message that says "I can't believe I nearly didn't sign up." The photo sent three months in that says more than any words could. That's what drives me.\n\nThe people I work with aren't looking for a quick fix. They've already tried those. They're looking for something that actually lasts — a way to ${goal.toLowerCase()} that fits their real life, not the life they're supposed to have.\n\nIf you've read this far and any of it sounds familiar — that's not a coincidence. You found this page for a reason. And I genuinely believe that if I could find a way through after everything I tried and failed, so can you. I'd love to help you do it.`;
 
   return {
     part1,
     part2,
     part3,
-    bridgeHeadline: `So Why Am I Telling You All This?`,
+    bridgeHeadline: `Still doing everything right — and still not getting there?`,
   };
 }
