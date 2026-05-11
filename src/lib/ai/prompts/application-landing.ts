@@ -150,13 +150,13 @@ Heading for the client wins grid. E.g. "More Wins From Our Community", "What Our
 
 clientWins:
 Between 4 and 8 short client win entries. Each has:
-- name: First name + initial only (e.g. "Emma R.", "James K.") — fictional but realistic
-- result: A specific, measurable result (e.g. "Down 22kg and off medication", "Ran first 5k after years of inactivity"). 5–12 words.
+- name: First name + initial only — MUST match the gender of the target audience. If audience is female (women, mums, ladies, etc.) use female names ONLY (Emma R., Sarah K., Claire B., etc.). If male, use male names. Never use a male name for a female audience.
+- result: A specific, measurable result using the language of THIS niche (e.g. for weight loss: "Lost 2 stone and dropped 2 dress sizes", "Off blood pressure medication after 14 weeks"). 5–12 words. Never use vague language like "reached their goals."
 
 clientStories:
 Exactly 4 longer-form client case studies for the "Meet..." testimonial sections. Each has:
-- intro: A compelling single sentence intro naming the client. Uses the "Meet [Name], [a brief situation]..." pattern. Must be specific to the target audience and reflect their situation before joining. E.g. "Meet Sarah, a 38-year-old mum of 2 who had tried every diet going and was ready to give up." 10–20 words.
-- story: A 2–3 paragraph first-person client narrative (80–140 words total). Write as if the client is speaking. Cover: (1) their situation and frustration before joining; (2) what changed and a specific result they achieved; (3) their recommendation. Must reference the coach or programme by name where it fits naturally. Be specific: include numbers (lbs lost, weeks, kg, dress sizes, etc.) and emotional detail. Do NOT name the client — the name is in the intro.
+- intro: A compelling single sentence intro naming the client. Format: "Meet [Name], [a brief specific situation before joining]..." — CRITICAL: the name MUST match the gender of the target audience. If target audience is women, use female names. If men, use male names. Never write "Meet James" for a programme aimed at women. The situation described must be specific to THIS audience (their age, life stage, struggle) — NOT a copy of the targetAudience description. E.g. for busy mums: "Meet Claire, a 42-year-old mum of three who had been yo-yo dieting since her twenties and was finally done with starting over." 10–20 words.
+- story: A 2–3 paragraph first-person client narrative (100–160 words total). Write as if the client is speaking. Must feel like a REAL person, not a template. Cover: (1) their specific situation and frustration before joining — what their daily life looked like, what they'd tried before, how it made them feel; (2) what changed and a specific measurable result (numbers: lbs, kg, stone, dress sizes, weeks, energy levels); (3) a genuine recommendation that sounds personal, not like an advert. Reference the coach or programme name naturally. Do NOT include the client's name in the story (it's in the intro). Do NOT start with "I was" — vary the opening.
 
 problemBreakdown:
 Exactly 5 problems that your ideal client faces. These appear as a "5 Problems" section with red banner headers. Each must be rooted in the actual pain points, objections, and struggles from the context (biggestStruggle, targetAudience, mainGoal). Do NOT use generic fitness problems — name the SPECIFIC issues this audience faces.
