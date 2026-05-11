@@ -3174,6 +3174,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (el.extra as Record<string, unknown>).text = { value: html };
   }
 
+  function setPara(id: string, text: string): void {
+    const el = byId.get(id);
+    if (!el || !text) return;
+    const wrapped = text.startsWith("<p") ? text : `<p>${text}</p>`;
+    (el.extra as Record<string, unknown>).text = { value: wrapped };
+  }
+
   const RICK_ROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
   // Decorative arrow images flanking the hero CTA button — keep originals
@@ -3427,6 +3434,42 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   }
   if (al.textTestimonials[0]?.attribution) {
     setH("heading-BR4dOzOIMUM", al.textTestimonials[0].attribution.split(",")[0].trim());
+  }
+
+  // Client story testimonial cards (sections 6–10) — full "Meet X" intros + story paragraphs
+  const CLIENT_STORY_MAP = [
+    { introId: "heading-XpRYNHYvq8z", paraId: "paragraph-_Y-l5Y0qw9r"  },  // slot 0
+    { introId: "heading-wjLhJNffCfJ", paraId: "paragraph-TTT5HB7ObG2"  },  // slot 1
+    { introId: "heading-BR4dOzOIMUM", paraId: "paragraph-kuB6vFalrL1"  },  // slot 2
+    { introId: "heading-J9OmZLFKCjs", paraId: "paragraph-alo12AY748y"  },  // slot 3
+    { introId: "heading-apNyLjFRjAR", paraId: "paragraph-5h9jUu0lVNq"  },  // slot 4
+  ] as const;
+  for (let i = 0; i < CLIENT_STORY_MAP.length; i++) {
+    const story = al.clientStories?.[i];
+    if (!story) continue;
+    if (story.intro) setH(CLIENT_STORY_MAP[i].introId, story.intro);
+    if (story.story) setPara(CLIENT_STORY_MAP[i].paraId, story.story);
+  }
+
+  // Pain point / problem breakdown section (section 13)
+  if (al.painPointHeading) setH("heading-zB24ROPIxDH", al.painPointHeading);
+  const PROBLEM_MAP = [
+    { titleId: "heading-QX_mHLy8qEq", headId: "sub-heading-3e2thqidJa5", bodyId: "sub-heading-vkjZxqzI_YB" },
+    { titleId: "heading-bM5TzQyiz8p", headId: "sub-heading-4EddE7bDMbu", bodyId: "sub-heading-frqM65qZ53e" },
+    { titleId: "heading-3a9nBfpbpKU", headId: "sub-heading-m_ioVFgJMdo", bodyId: "sub-heading-UPjxYTeX5OC" },
+    { titleId: "heading-gTlAF3yL1mV", headId: "sub-heading-JFG7rZTRk3j", bodyId: "sub-heading-F4H6DkSjJwp" },
+  ] as const;
+  for (let i = 0; i < PROBLEM_MAP.length; i++) {
+    const prob = al.problemBreakdown?.[i];
+    if (!prob) continue;
+    const ids = PROBLEM_MAP[i];
+    if (prob.title)    setH(ids.titleId, `<strong>${prob.title}</strong>`);
+    if (prob.headline) setSubH(ids.headId, `<p>${prob.headline}</p>`);
+    if (prob.body) {
+      const bodyHtml = prob.body.split(/\n\n+/)
+        .map((p) => `<p>${p.replace(/\n/g, "<br>").trim()}</p>`).join("");
+      setSubH(ids.bodyId, bodyHtml);
+    }
   }
 
   // 5-problems divider (section 12)
