@@ -3167,6 +3167,15 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     props.placeholderBase64 = "";
   }
 
+  // Sets raw HTML directly on a sub-heading element (no heading tag wrapping)
+  function setSubH(id: string, html: string): void {
+    const el = byId.get(id);
+    if (!el || !html) return;
+    (el.extra as Record<string, unknown>).text = { value: html };
+  }
+
+  const RICK_ROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
   // Decorative arrow images flanking the hero CTA button — keep originals
   const KEEP_ORIGINAL_IMAGE_IDS = new Set([
     "image-OQBLc5fXIvH", // left arrow
@@ -3351,7 +3360,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setH("heading-XSqOdeY3g0-", al.valuePropHeadline);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
   setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
-  setVid("video-20p-7VhVtF4", videoUrl);
+  setVid("video-20p-7VhVtF4", videoUrl || RICK_ROLL_URL);
 
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
   const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
@@ -3366,10 +3375,25 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     (transformRow.styles as Record<string, unknown>).alignItems = { value: "flex-start" };
   }
 
-  // Reduce line spacing to single-line for all 3 coach bio text blocks
-  for (const shId of ["sub-heading-FvfzFHkx-9U", "sub-heading-0vtmtqgq1Lg", "sub-heading-uegTH1yDDad"]) {
-    const shEl = byId.get(shId);
-    if (shEl) (shEl.styles as Record<string, unknown>).lineHeight = { value: "1", unit: "em" };
+  // Inject coach story text + set line spacing for all 3 bio paragraphs
+  const COACH_STORY_IDS = ["sub-heading-FvfzFHkx-9U", "sub-heading-0vtmtqgq1Lg", "sub-heading-uegTH1yDDad"] as const;
+  const cs = data.coachStory;
+  const storyParts = cs ? [cs.part1, cs.part2, cs.part3] : [];
+  for (let i = 0; i < COACH_STORY_IDS.length; i++) {
+    const shEl = byId.get(COACH_STORY_IDS[i]);
+    if (!shEl) continue;
+    (shEl.styles as Record<string, unknown>).lineHeight = { value: "1.6", unit: "em" };
+    if (storyParts[i]) {
+      const html = storyParts[i]
+        .split(/\n\n+/)
+        .map((p) => `<p>${p.replace(/\n/g, "<br>").trim()}</p>`)
+        .join("");
+      setSubH(COACH_STORY_IDS[i], html);
+    }
+  }
+  // Bridge headline between part1 (before) and part2 (turning point)
+  if (cs?.bridgeHeadline) {
+    setH("heading-yuy6jYEoC8b", `<strong>${cs.bridgeHeadline}</strong>`);
   }
 
   // Add spacing below bullet list elements (sections 15, 17)

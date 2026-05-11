@@ -13,7 +13,7 @@ const STATUS_CONFIG: Record<
 > = {
   complete:   { label: "Complete",    dot: "bg-green-400",              text: "text-green-400",  icon: CheckCircle2 },
   generating: { label: "Generating…", dot: "bg-blue-400 animate-pulse", text: "text-blue-400",   icon: Loader2 },
-  draft:      { label: "Draft",       dot: "bg-zinc-500",               text: "text-zinc-500",   icon: Clock },
+  draft:      { label: "In Progress",  dot: "bg-zinc-500",               text: "text-zinc-500",   icon: Clock },
   error:      { label: "Error",       dot: "bg-red-400",                text: "text-red-400",    icon: AlertCircle },
 };
 
@@ -50,7 +50,7 @@ export function ProjectList({ projects, subtitles }: Props) {
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(menuOpen === project.id ? null : project.id)}
-                  className="flex h-6 w-6 items-center justify-center rounded-md text-zinc-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/[0.08] hover:text-zinc-300"
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-zinc-600 opacity-40 transition-all group-hover:opacity-100 hover:bg-white/[0.08] hover:text-zinc-300"
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </button>
@@ -105,10 +105,16 @@ export function ProjectList({ projects, subtitles }: Props) {
               </span>
               <Link
                 href={href}
-                className="flex items-center gap-1 text-[11px] font-medium text-orange-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-orange-400"
+                className="flex items-center gap-1 text-[11px] font-medium text-orange-500 transition-colors hover:text-orange-400"
               >
                 <Icon className={`h-3 w-3 ${project.status === "generating" ? "animate-spin" : ""}`} />
-                {project.status === "complete" ? "View" : project.status === "generating" ? "Generating" : "Continue"}
+                {project.status === "complete"
+                  ? "View Results →"
+                  : project.status === "generating"
+                    ? "Generating…"
+                    : project.status === "error"
+                      ? "Retry →"
+                      : "Resume Setup →"}
               </Link>
             </div>
           </div>

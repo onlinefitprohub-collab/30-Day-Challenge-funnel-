@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
-  { href: "/dashboard",        label: "Dashboard",      icon: LayoutDashboard },
-  { href: "/content-engine",   label: "Content Engine", icon: Sparkles },
-  { href: "/account",          label: "Settings",       icon: Settings },
+  { href: "/dashboard",        label: "My Funnels",     subtitle: "All your projects",       icon: LayoutDashboard },
+  { href: "/content-engine",   label: "Content Engine", subtitle: "Monthly social content",  icon: Sparkles },
+  { href: "/account",          label: "Settings",       subtitle: "Account & integrations",  icon: Settings },
 ];
 
 interface SidebarProps {
@@ -84,8 +84,11 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
               )}
             >
               <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-orange-400" : "text-zinc-500 group-hover:text-zinc-300")} />
-              <span>{item.label}</span>
-              {isActive && <ChevronRight className="ml-auto h-3.5 w-3.5 text-orange-400/60" />}
+              <span className="flex flex-col">
+                <span className="text-sm font-medium leading-tight">{item.label}</span>
+                <span className={cn("text-[10px] leading-tight", isActive ? "text-orange-400/50" : "text-zinc-700")}>{item.subtitle}</span>
+              </span>
+              {isActive && <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-orange-400/60" />}
             </Link>
           );
         })}

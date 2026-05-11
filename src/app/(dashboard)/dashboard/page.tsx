@@ -1,7 +1,4 @@
-import Link from "next/link";
-import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
 import { ProjectList } from "@/components/dashboard/project-list";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import type { ProjectRow } from "@/types/project";
@@ -55,23 +52,15 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-5xl space-y-6">
 
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-100">
-            {hasProjects ? `Welcome back, ${displayName}` : `Hey ${displayName} 👋`}
-          </h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            {hasProjects
-              ? `${typedProjects.length} funnel${typedProjects.length === 1 ? "" : "s"} · ${completeCount} complete`
-              : "Create your first funnel to get started."}
-          </p>
-        </div>
-        <Link href="/projects/new">
-          <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0 shadow-sm h-9 px-4 text-sm">
-            <Plus className="h-4 w-4" />
-            New funnel
-          </Button>
-        </Link>
+      <div>
+        <h1 className="text-xl font-bold text-zinc-100">
+          {hasProjects ? `Welcome back, ${displayName}` : `Hey ${displayName} 👋`}
+        </h1>
+        <p className="mt-0.5 text-sm text-zinc-500">
+          {hasProjects
+            ? `${typedProjects.length} funnel${typedProjects.length === 1 ? "" : "s"} · ${completeCount} complete`
+            : "Create your first funnel to get started."}
+        </p>
       </div>
 
       {/* Projects */}
