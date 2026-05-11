@@ -3367,7 +3367,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setH("sub-heading-oAZ3MQORtdf", al.valuePropHeadline);
 
   // Section 2 — video hero
-  setH("heading-XSqOdeY3g0-", al.valuePropSubheadline);
+  setH("heading-XSqOdeY3g0-", al.videoSectionHeading || al.valuePropSubheadline);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
   setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
   setVid("video-20p-7VhVtF4", videoUrl || RICK_ROLL_URL);
@@ -3455,7 +3455,16 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   }
 
   // Pain point / problem breakdown section (section 13)
-  if (al.painPointHeading) setH("heading-zB24ROPIxDH", al.painPointHeading);
+  if (al.painPointHeading) {
+    setH("heading-zB24ROPIxDH", al.painPointHeading);
+    // Template element is 64px — reduce so long AI-generated copy doesn't overflow the screen
+    const phEl = byId.get("heading-zB24ROPIxDH");
+    if (phEl) {
+      const phEx = phEl.extra as Record<string, unknown>;
+      if (phEx.desktopFontSize) (phEx.desktopFontSize as Record<string, unknown>).value = "36";
+      if (phEx.mobileFontSize)  (phEx.mobileFontSize  as Record<string, unknown>).value = "26";
+    }
+  }
   const PROBLEM_MAP = [
     { titleId: "heading-QX_mHLy8qEq", headId: "sub-heading-3e2thqidJa5", bodyId: "sub-heading-vkjZxqzI_YB" },
     { titleId: "heading-bM5TzQyiz8p", headId: "sub-heading-4EddE7bDMbu", bodyId: "sub-heading-frqM65qZ53e" },
