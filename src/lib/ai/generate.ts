@@ -49,7 +49,7 @@ import {
   coachingToolsResponseSchema,
 } from "./validators";
 import {
-  generateMockAssets, buildMockApplicationLandingPage,
+  generateMockAssets, buildMockApplicationLandingPage, buildMockCoachStory,
   buildMockContentCalendar, buildMockDeliveryPack,
   buildMockTestimonialHarvest, buildMockPricingGuide,
 } from "./mock";
@@ -66,7 +66,7 @@ const TOKENS = {
   offerPages:          4096,  // 5 sections + design spec + framework/voice/layout variants
   sequences:           6000,  // 7 SMS + 10 emails with subject + body (was 4500, bumped for long copy)
   adsCampaign:         3200,  // ad copy, creative prompts, campaign naming
-  applicationLanding:  4096,  // 22-section registration page content (was 3200)
+  applicationLanding:  8000,  // 29 fields + 9 arrays — needs headroom to avoid truncation (was 4096)
   coachStory:          1000,  // 3 bio paragraphs (~300–400 words)
   vslScript:           5000,  // 11-section VSL — full spoken-word script (was 4000)
   contentCalendar:     4096,  // 30 posts with hook + caption + CTA
@@ -242,7 +242,7 @@ export async function generateFunnelAssets(
     : undefined;
 
   const coachStory = isApplication
-    ? (coachStoryResult.data?.coachStory ?? undefined)
+    ? (coachStoryResult.data?.coachStory ?? buildMockCoachStory(inputs))
     : undefined;
 
   const vslScript = isApplication

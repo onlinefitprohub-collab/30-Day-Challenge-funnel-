@@ -596,3 +596,29 @@ export function buildMockPricingGuide(inputs: WizardInputs): PricingGuide {
     ],
   };
 }
+
+export function buildMockCoachStory(inputs: WizardInputs): NonNullable<GeneratedFunnelAssets["coachStory"]> {
+  const firstName = (inputs.coachName ?? "Your Coach").split(" ")[0];
+  const audience  = inputs.targetAudience ?? "people like you";
+  const goal      = inputs.mainGoal ?? "transform your life";
+  const programme = inputs.challengeName ?? inputs.challengeType ?? "this programme";
+
+  const part1 = inputs.coachBeforeState
+    ? inputs.coachBeforeState
+    : `Hi, my name is ${firstName}.\n\nI know exactly where you are right now — because I was there too.\n\nI'd tried everything. Every plan, every approach, every shortcut. Nothing stuck. I felt frustrated, exhausted, and honestly ready to give up on the idea that things could ever change.\n\nI struggled with my ${goal.toLowerCase()} for years. The worse it got, the more I withdrew — from social events, from activities I used to love, from showing up as my best self.`;
+
+  const part2 = inputs.coachTurningPoint
+    ? inputs.coachTurningPoint
+    : `Then one day, I hit a wall.\n\nI realised I had to stop looking for the perfect plan and start building a system that actually worked for my life — my schedule, my challenges, my goals.\n\nThat shift changed everything. Within weeks I started seeing real progress. Within months, the transformation was undeniable.\n\nI documented every step, tested what worked, cut what didn't — and built a framework that I knew I could teach to others.`;
+
+  const part3 = inputs.coachPersonalResult
+    ? inputs.coachPersonalResult
+    : `Today I've helped hundreds of ${audience} achieve the same results — without the confusion, the guesswork, or the unsustainable approaches that never last.\n\n${inputs.coachWhyCoach ?? `I created ${programme} because I believe everyone deserves a clear, proven path to get where they want to go.`}\n\nIf I could do it — starting from exactly where you are — so can you.`;
+
+  return {
+    part1,
+    part2,
+    part3,
+    bridgeHeadline: `So Why Am I Telling You All This?`,
+  };
+}
