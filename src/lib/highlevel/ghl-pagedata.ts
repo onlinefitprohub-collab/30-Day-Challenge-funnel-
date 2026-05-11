@@ -3418,6 +3418,17 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setH("heading-DxtKO-nccYj", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[1]?.quote ?? "")}</strong></font>`);
   setH("heading-ry34q51jror", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[2]?.quote ?? "")}</strong></font>`);
 
+  // Section 4 inline testimonial quote + attribution (replaces hardcoded "Jordan" testimonial)
+  if (al.textTestimonials[0]?.quote) {
+    setSubH("sub-heading-i8Utr-7v5AK", `<p>"${al.textTestimonials[0].quote}"</p>`);
+  }
+  if (al.textTestimonials[0]?.attribution) {
+    setSubH("sub-heading-SAFNlazCKKT", `<p>— ${al.textTestimonials[0].attribution}</p>`);
+  }
+  if (al.textTestimonials[0]?.attribution) {
+    setH("heading-BR4dOzOIMUM", al.textTestimonials[0].attribution.split(",")[0].trim());
+  }
+
   // 5-problems divider (section 12)
   setH("heading-VNPStBY-834", al.dividerHeading);
 

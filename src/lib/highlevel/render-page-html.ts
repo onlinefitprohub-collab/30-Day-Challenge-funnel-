@@ -112,9 +112,6 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
     case "c-heading":
     case "c-sub-heading": {
       const rawHtml = String((extra.text as { value?: unknown })?.value ?? "");
-      const m = rawHtml.match(/^<(h[1-6])[^>]*>([\s\S]*)<\/h[1-6]>$/i);
-      const tag = m?.[1] ?? node.tag ?? "h2";
-      const inner = m?.[2] ?? rawHtml;
       const typo = sv(extra.typography as unknown);
       const fontFamily =
         typo && !typo.includes("var(")
@@ -133,6 +130,14 @@ function renderNode(nodeId: string, nodeMap: NodeMap): string {
         "padding-bottom": sv(s.paddingBottom) ?? "0",
         "font-family": fontFamily,
       });
+      // Multi-paragraph content (injected coach story): render as div to avoid
+      // invalid <h2><p>…</p></h2> nesting that browsers silently break.
+      if (/<p[\s>]/i.test(rawHtml)) {
+        return `<div style="${style}">${rawHtml}</div>`;
+      }
+      const m = rawHtml.match(/^<(h[1-6])[^>]*>([\s\S]*)<\/h[1-6]>$/i);
+      const tag = m?.[1] ?? node.tag ?? "h2";
+      const inner = m?.[2] ?? rawHtml;
       return `<${tag} style="${style}">${inner}</${tag}>`;
     }
 
