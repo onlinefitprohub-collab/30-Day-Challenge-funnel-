@@ -62,7 +62,7 @@ const TOKENS = {
   offerPages:          4096,  // 5 sections + design spec + framework/voice/layout variants
   sequences:           6000,  // 7 SMS + 10 emails with subject + body (was 4500, bumped for long copy)
   adsCampaign:         3200,  // ad copy, creative prompts, campaign naming
-  applicationLanding:  8000,  // 29 fields + 9 arrays — needs headroom to avoid truncation (was 4096)
+  applicationLanding: 10000,  // 29 fields + 9 arrays + 6 client stories (was 8000, bumped for extra 2 stories)
   coachStory:          3500,  // 3 long-form bio sections (300–450 words each) + bridge headline (was 1000)
   vslScript:           5000,  // 11-section VSL — full spoken-word script (was 4000)
   contentCalendar:     4096,  // 30 posts with hook + caption + CTA
