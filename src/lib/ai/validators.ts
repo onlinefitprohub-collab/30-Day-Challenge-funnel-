@@ -583,7 +583,11 @@ export function safeParse<T>(
     return { data: result.data, error: null };
   }
 
-  // Log the detailed error for debugging, return a summary
+  // Log every failing field on its own line so it isn't truncated in the console
+  console.error(`[validators] ${groupName} — ${result.error.issues.length} issue(s):`);
+  result.error.issues.forEach((issue, idx) => {
+    console.error(`  [${idx + 1}] path="${issue.path.join(".")}" code=${issue.code} message="${issue.message}"`);
+  });
   const issues = result.error.issues
     .slice(0, 3)
     .map((i) => `${i.path.join(".")}: ${i.message}`)
