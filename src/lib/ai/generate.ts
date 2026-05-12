@@ -208,9 +208,10 @@ export async function generateFunnelAssets(
   console.log("[design] Claude returned:", offerPagesResult.data?.design);
   console.log("[framework] Claude selected:", offerPagesResult.data?.copywritingFramework, offerPagesResult.data?.copywriterVoice);
   if (isApplication) {
-    console.log("[application-landing] result:", appLandingResult.error ?? "ok");
-    console.log("[coach-story] result:", coachStoryResult.error ?? (coachStoryResult.data ? "ok" : "skipped"));
-    console.log("[vsl-script] result:", vslScriptResult.error ?? (vslScriptResult.data ? "ok" : "skipped"));
+    console.log("=== [application-landing] ===", appLandingResult.error ? `FAILED: ${appLandingResult.error}` : "ok — AI data will be used");
+    console.log("=== [coach-story] ===", coachStoryResult.error ? `FAILED: ${coachStoryResult.error}` : (coachStoryResult.data ? "ok" : "skipped (not application funnel)"));
+    console.log("=== [vsl-script] ===", vslScriptResult.error ? `FAILED: ${vslScriptResult.error}` : (vslScriptResult.data ? "ok" : "skipped"));
+    console.log("=== [application-landing] usedFallback:", appLandingResult.usedFallback, "| data present:", !!appLandingResult.data);
   }
 
   // Log any errors for observability
