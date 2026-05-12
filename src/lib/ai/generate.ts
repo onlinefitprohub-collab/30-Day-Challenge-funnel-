@@ -15,10 +15,7 @@
  * Group 7 — Coaching Tools: testimonialHarvestSequence + pricingGuide
  *
  * Model routing:
- *   Group 1 → claude-sonnet-4-6              (offer pages — most complex)
- *   Group 2 → claude-haiku-4-5-20251001      (sequences — mechanical/templated)
- *   Group 3 → claude-haiku-4-5-20251001      (ads campaign — structured JSON)
- *   Group 4 → claude-sonnet-4-6              (22-section registration page — complex copy)
+ *   All groups → claude-sonnet-4-6
  *
  * Retry: claude-generate handles 529 overload errors automatically (3 attempts,
  * 2-second delay). All other failures fall back to mock.
@@ -57,7 +54,6 @@ import type { WizardInputs } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
 const MODEL_PRIMARY = "claude-sonnet-4-6";
-const MODEL_FAST    = "claude-haiku-4-5-20251001";
 
 // Token budgets per group — sized to comfortably fit each group's JSON output.
 // Sequences and delivery pack produce the most text (10 full email bodies + 30 SMS);
@@ -143,14 +139,14 @@ export async function generateFunnelAssets(
         sequencesResponseSchema,
         "sequences",
         TOKENS.sequences,
-        MODEL_FAST,
+        MODEL_PRIMARY,
       ),
       callCopyGroup(
         buildAdsCampaignPrompt(context, style.promptDescription),
         adsCampaignResponseSchema,
         "ads-campaign",
         TOKENS.adsCampaign,
-        MODEL_FAST,
+        MODEL_PRIMARY,
       ),
       isApplication
         ? callCopyGroup(
@@ -185,7 +181,7 @@ export async function generateFunnelAssets(
         contentCalendarResponseSchema,
         "content-calendar",
         TOKENS.contentCalendar,
-        MODEL_FAST,
+        MODEL_PRIMARY,
       ),
       // Group 6 — Delivery Pack (all funnels)
       callCopyGroup(
@@ -193,7 +189,7 @@ export async function generateFunnelAssets(
         deliveryPackResponseSchema,
         "delivery-pack",
         TOKENS.deliveryPack,
-        MODEL_FAST,
+        MODEL_PRIMARY,
       ),
       // Group 7 — Coaching Tools: testimonial harvest + pricing guide (all funnels)
       callCopyGroup(
@@ -201,7 +197,7 @@ export async function generateFunnelAssets(
         coachingToolsResponseSchema,
         "coaching-tools",
         TOKENS.coachingTools,
-        MODEL_FAST,
+        MODEL_PRIMARY,
       ),
     ]);
 
