@@ -148,6 +148,11 @@ function ghlId(prefix: string): string {
 function sv(n: number, unit = "px"): SV { return { value: n, unit }; }
 function ss(s: string): SV { return { value: s }; }
 
+// Splits body copy into sentences separated by a blank line for GHL rendering
+function sentenceBreaks(text: string): string {
+  return text.split(/(?<=[.!?])\s+/).join("<br><br>");
+}
+
 // ── Page envelope ─────────────────────────────────────────────────────────────
 
 const STANDARD_FONTS = ["Arial","Lato","Roboto","Open Sans","Oxygen","Oswald","Montserrat","Manrope","Poppins","Bebas Neue"];
@@ -1049,7 +1054,7 @@ function buildHeroTwoColVideo(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(30), paddingBottom: sv(12) });
-  const sub = makeParagraph(b, lp.subheadline,
+  const sub = makeParagraph(b, sentenceBreaks(lp.subheadline),
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24) },
     { fontSize: sv(15) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(28) });
@@ -1075,7 +1080,7 @@ function buildHeroCentered(b: Builder, s: SchemeColors, lp: LandingPageCopy, bad
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16), textAlign: ss("center"), maxWidth: sv(800), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(30), paddingBottom: sv(12) });
-  const sub = makeParagraph(b, lp.subheadline,
+  const sub = makeParagraph(b, sentenceBreaks(lp.subheadline),
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24), textAlign: ss("center"), maxWidth: sv(600), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(15) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(32) });
@@ -1093,7 +1098,7 @@ function buildHeroTwoColImage(b: Builder, s: SchemeColors, lp: LandingPageCopy, 
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
-  const sub = makeParagraph(b, lp.subheadline,
+  const sub = makeParagraph(b, sentenceBreaks(lp.subheadline),
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(24) },
     { fontSize: sv(14) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 4), s.primary, { paddingBottom: sv(28) });
@@ -1115,7 +1120,7 @@ function buildHeroTwoColCountdown(b: Builder, s: SchemeColors, lp: LandingPageCo
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(16) },
     { fontSize: sv(28), paddingBottom: sv(12) });
-  const sub = makeParagraph(b, lp.subheadline,
+  const sub = makeParagraph(b, sentenceBreaks(lp.subheadline),
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(28) },
     { fontSize: sv(14) });
   const cta = makeButton(b, `${lp.ctaText} →`, "next-step", "",
@@ -1138,7 +1143,7 @@ function buildHeroFullWidth(b: Builder, s: SchemeColors, lp: LandingPageCopy, ba
   const h1 = makeHeading(b, lp.headlineOptions[0] ?? "Join the Free Challenge", "h1",
     { color: ss(s.textColorOnDark), fontSize: sv(56), fontWeight: ss(s.headlineFontWeight), lineHeight: ss("1.1"), paddingBottom: sv(20), textAlign: ss("center"), maxWidth: sv(900), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(32), paddingBottom: sv(14) });
-  const sub = makeParagraph(b, lp.subheadline,
+  const sub = makeParagraph(b, sentenceBreaks(lp.subheadline),
     { color: ss("#94a3b8"), fontSize: sv(18), lineHeight: ss("1.6"), paddingTop: sv(16), paddingBottom: sv(32), textAlign: ss("center"), maxWidth: sv(680), marginLeft: ss("auto"), marginRight: ss("auto") },
     { fontSize: sv(16) });
   const bullets = makeBulletList(b, lp.bulletPoints.slice(0, 5), s.primary, { paddingBottom: sv(36) });
@@ -1294,7 +1299,7 @@ function makeFaqPlain(
       color:         ss(headingColor),
     });
 
-    const a = makeParagraph(b, item.answer, {
+    const a = makeParagraph(b, sentenceBreaks(item.answer), {
       fontWeight:    ss("400"),
       fontSize:      sv(15),
       paddingTop:    sv(0),
