@@ -3540,12 +3540,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // What you get heading + 6 feature sub-sections (section 15)
   setH("heading-XpcooI_gth7", al.whatYouGetHeading);
   const WHAT_YOU_GET_MAP = [
-    { headId: "heading-KSi5Gr4J5v0",  paraId: "paragraph-lzUIWL0SbxY"  },
-    { headId: "heading-KY8qQqFsiid",  paraId: "paragraph-lFYWPVEtX935" },
-    { headId: "heading-EvE6-9xa9PID", paraId: "paragraph-XgE-kbfjrkYk" },
-    { headId: "heading-mDH6w6uji2rc", paraId: "paragraph-fQGDUE4LR-Uy" },
-    { headId: "heading-JLQkrveM1KnE", paraId: "paragraph-ALy7DPf01W0u" },
-    { headId: "heading-GatWECyOonx4", paraId: "paragraph-1kDBNGfKvBXx" },
+    { headId: "heading-KSi5Gr4J5v0",  paraId: "paragraph-lzUIWL0SbxY",  bulletId: "bulletList-ggLT1qrShFG"  },
+    { headId: "heading-KY8qQqFsiid",  paraId: "paragraph-lFYWPVEtX935", bulletId: "bulletList-AWuJ0-P2vjjd"  },
+    { headId: "heading-EvE6-9xa9PID", paraId: "paragraph-XgE-kbfjrkYk", bulletId: "bulletList-hktollYcOwpn"  },
+    { headId: "heading-mDH6w6uji2rc", paraId: "paragraph-fQGDUE4LR-Uy", bulletId: "bulletList-iPt66D6x8OfW"  },
+    { headId: "heading-JLQkrveM1KnE", paraId: "paragraph-ALy7DPf01W0u", bulletId: null },
+    { headId: "heading-GatWECyOonx4", paraId: "paragraph-1kDBNGfKvBXx", bulletId: null },
   ] as const;
   if (al.whatYouGetItems?.length) {
     for (let i = 0; i < Math.min(al.whatYouGetItems.length, WHAT_YOU_GET_MAP.length); i++) {
@@ -3555,6 +3555,14 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       const featureBody = dashIdx !== -1 ? raw.slice(dashIdx + 3).trim() : "";
       setH(WHAT_YOU_GET_MAP[i].headId, `<strong>${featureName}</strong>`);
       if (featureBody) setPara(WHAT_YOU_GET_MAP[i].paraId, featureBody);
+      // Inject AI-generated bullet points if present and this slot has a bullet list
+      const bullets = al.whatYouGetBullets?.[i];
+      const bulletId = WHAT_YOU_GET_MAP[i].bulletId;
+      if (bullets?.length && bulletId) {
+        const escB = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const ulHtml = `<ul>${bullets.map((b) => `<li>${escB(b)}</li>`).join("")}</ul>`;
+        setSubH(bulletId, ulHtml);
+      }
     }
   }
 
