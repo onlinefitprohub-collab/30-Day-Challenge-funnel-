@@ -208,6 +208,7 @@ export interface ApplicationLandingPage {
   whatYouGetHeading: string;
   whatYouGetBodyCopy: string;  // 2-3 persuasive paragraphs (newline-separated) below the checklist
   whatYouGetItems: string[];  // 6–8 items
+  whatYouGetBullets?: string[][];  // 3–4 bullets per item, same order as whatYouGetItems
   transformationGalleryHeading: string;
   clientWinsHeading: string;
   clientWins: Array<{ name: string; result: string }>;              // 4–8 items

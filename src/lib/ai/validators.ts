@@ -302,6 +302,7 @@ export const applicationLandingPageSchema = z.object({
   shouldApply:                  z.array(z.string()).optional(),
   whatYouGetBodyCopy:           z.string().optional(),
   whatYouGetItems:              z.array(z.string()).optional(),
+  whatYouGetBullets:            z.array(z.array(z.string().min(1))).optional(),
   clientWins:                   z.array(clientWinSchema).optional(),
   finalCtaText:                 z.string().optional(),
   finalCtaSubtext:              z.string().optional(),

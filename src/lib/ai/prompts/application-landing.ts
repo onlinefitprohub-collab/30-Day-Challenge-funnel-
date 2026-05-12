@@ -142,6 +142,12 @@ Between 6 and 8 items. Draw DIRECTLY from the wizard's 'inclusions' and 'program
 Example: "A fully customised nutrition plan — built around your daily routine, calorie target, and food preferences so you always know exactly what to eat"
 The feature name is short and specific. The benefit after the dash must be outcome-focused and personal — 12–20 words after the dash. Never use vague language like "helps you achieve your goals".
 
+whatYouGetBullets:
+One inner array per whatYouGetItem (same order, same count). Each inner array has exactly 3 bullets.
+Each bullet format: "[Specific deliverable or feature] ([short parenthetical explaining why it matters to the client])"
+Example: ["Custom calories & macros (So you know exactly how much food to eat and still see results)", "Weekly check-in calls (So you never feel lost or fall off track alone)", "Done-for-you meal templates (Saving you hours of planning every week)"]
+Bullets must be specific to THIS programme's features and THIS audience's struggles — not generic fitness bullets.
+
 transformationGalleryHeading:
 Heading for the before/after transformation gallery section. E.g. "The Proof Is In The Results", "These Are Real Transformations From Real People". 5–10 words.
 
@@ -217,6 +223,10 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
     "whatYouGetHeading": "...",
     "whatYouGetBodyCopy": "...",
     "whatYouGetItems": ["...", "..."],
+    "whatYouGetBullets": [
+      ["bullet 1 (reason)", "bullet 2 (reason)", "bullet 3 (reason)"],
+      ["bullet 1 (reason)", "bullet 2 (reason)", "bullet 3 (reason)"]
+    ],
     "transformationGalleryHeading": "...",
     "clientWinsHeading": "...",
     "clientWins": [
