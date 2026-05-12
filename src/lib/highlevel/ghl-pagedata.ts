@@ -3510,7 +3510,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (prob.headline) setSubH(ids.headId, `<p>${prob.headline}</p>`);
     if (prob.body) {
       const bodyHtml = prob.body.split(/\n\n+/)
-        .map((p) => `<p>${p.replace(/\n/g, "<br>").trim()}</p>`).join("");
+        .map((p) => `<p>${sentenceBreaks(p.replace(/\n/g, " ").trim())}</p>`).join("");
       setSubH(ids.bodyId, bodyHtml);
     }
   }
@@ -3558,17 +3558,15 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     }
   }
 
-  // Should/should-not apply bullets (section 16)
+  // Should/should-not apply bullets (section 16) — <p> per item gives GHL proper line spacing
+  const escBullet = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   if (al.shouldNotApply?.length) {
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = `<ul>${al.shouldNotApply.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
+    const html = al.shouldNotApply.map((b) => `<p>✗ ${escBullet(b)}</p>`).join("");
     setSubH("paragraph-ziOu3aGDIemA", html);
   }
   if (al.shouldApply?.length) {
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = `<ul>${al.shouldApply.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
+    const html = al.shouldApply.map((b) => `<p>✓ ${escBullet(b)}</p>`).join("");
     setSubH("paragraph-zGtOd4tfS9Jj", html);
   }
 
