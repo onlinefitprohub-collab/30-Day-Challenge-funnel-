@@ -3373,6 +3373,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   setVid("video-20p-7VhVtF4", videoUrl || RICK_ROLL_URL);
   setVid("video-s26YMI7Zhs9", videoUrl || RICK_ROLL_URL);
 
+  // Section 4 — inline testimonial intro heading
+  if (al.testimonialIntroHeading) {
+    setH("heading-eu5M2j4fixD", al.testimonialIntroHeading);
+  }
+
   // Coach bio (section 5) — heading uses coach name; testimonials intro kept as-is
   const coachFirstName = data.coachName?.split(" ")[0] ?? "Your Coach";
   setH("heading-3u8EPoD9Qou", `<strong>Who Is ${data.coachName ?? "Your Coach"}, And Why Should I Listen To Them?</strong>`);
@@ -3416,8 +3421,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
-  // Will This Work For You (section 6)
+  // Will This Work For You (section 6) — qualification heading + testimonial intro
   setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
+  if (al.testimonialIntroHeading) {
+    setH("heading-tL1rmmDY1it", al.testimonialIntroHeading);
+  }
 
   // Individual testimonial quote headings (sections 7–9) — first sentence only, white font
   const firstSentence = (q: string): string => {
@@ -3439,13 +3447,19 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     setH("heading-BR4dOzOIMUM", al.textTestimonials[0].attribution.split(",")[0].trim());
   }
 
-  // Client story testimonial cards (sections 6–10) — full "Meet X" intros + story paragraphs
+  // Section 10 — mid-page CTA heading (white text)
+  if (al.midCtaHeading) {
+    setH("heading-RIn1NtrlXS8", `<font color="#ffffff"><strong>${al.midCtaHeading}</strong></font>`);
+  }
+
+  // Client story testimonial cards (sections 6–11) — full "Meet X" intros + story paragraphs
   const CLIENT_STORY_MAP = [
     { introId: "heading-XpRYNHYvq8z", paraId: "paragraph-_Y-l5Y0qw9r"  },  // slot 0
     { introId: "heading-wjLhJNffCfJ", paraId: "paragraph-TTT5HB7ObG2"  },  // slot 1
     { introId: "heading-BR4dOzOIMUM", paraId: "paragraph-kuB6vFalrL1"  },  // slot 2
     { introId: "heading-J9OmZLFKCjs", paraId: "paragraph-alo12AY748y"  },  // slot 3
     { introId: "heading-apNyLjFRjAR", paraId: "paragraph-5h9jUu0lVNq"  },  // slot 4
+    { introId: "heading-TQmPc9fazcv", paraId: "paragraph-2YZN-gztJPR"  },  // slot 5
   ] as const;
   for (let i = 0; i < CLIENT_STORY_MAP.length; i++) {
     const story = al.clientStories?.[i];
@@ -3470,6 +3484,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     { titleId: "heading-bM5TzQyiz8p", headId: "sub-heading-4EddE7bDMbu", bodyId: "sub-heading-frqM65qZ53e" },
     { titleId: "heading-3a9nBfpbpKU", headId: "sub-heading-m_ioVFgJMdo", bodyId: "sub-heading-UPjxYTeX5OC" },
     { titleId: "heading-gTlAF3yL1mV", headId: "sub-heading-JFG7rZTRk3j", bodyId: "sub-heading-F4H6DkSjJwp" },
+    { titleId: "heading-9e-PLhPNKzp",  headId: "sub-heading-zf9lbN9K2Pd", bodyId: "sub-heading-FooRjOVQlKF" },
   ] as const;
   for (let i = 0; i < PROBLEM_MAP.length; i++) {
     const prob = al.problemBreakdown?.[i];
@@ -3487,11 +3502,65 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // 5-problems divider (section 12)
   setH("heading-VNPStBY-834", al.dividerHeading);
 
-  // Client wins (section 14)
+  // Client wins heading + 6 individual win slots (section 14)
   setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
+  const CLIENT_WIN_IDS = [
+    "sub-heading-VI_Do66fOlS",
+    "sub-heading-FOwxRSdEMBl",
+    "sub-heading-n7KbE1zWHaX",
+    "sub-heading-V858x-tAG7x",
+    "sub-heading-JiDOauwuCtf",
+    "sub-heading-uzQd_Qicj-j",
+  ] as const;
+  if (al.clientWins?.length) {
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    for (let i = 0; i < Math.min(al.clientWins.length, CLIENT_WIN_IDS.length); i++) {
+      const win = al.clientWins[i];
+      setSubH(CLIENT_WIN_IDS[i], `<h2>"${esc(win.result)}" — ${esc(win.name)}</h2>`);
+    }
+  }
 
-  // What you get (section 15)
+  // What you get heading + 6 feature sub-sections (section 15)
   setH("heading-XpcooI_gth7", al.whatYouGetHeading);
+  const WHAT_YOU_GET_MAP = [
+    { headId: "heading-KSi5Gr4J5v0",  paraId: "paragraph-lzUIWL0SbxY"  },
+    { headId: "heading-KY8qQqFsiid",  paraId: "paragraph-lFYWPVEtX935" },
+    { headId: "heading-EvE6-9xa9PID", paraId: "paragraph-XgE-kbfjrkYk" },
+    { headId: "heading-mDH6w6uji2rc", paraId: "paragraph-fQGDUE4LR-Uy" },
+    { headId: "heading-JLQkrveM1KnE", paraId: "paragraph-ALy7DPf01W0u" },
+    { headId: "heading-GatWECyOonx4", paraId: "paragraph-1kDBNGfKvBXx" },
+  ] as const;
+  if (al.whatYouGetItems?.length) {
+    for (let i = 0; i < Math.min(al.whatYouGetItems.length, WHAT_YOU_GET_MAP.length); i++) {
+      const raw = al.whatYouGetItems[i];
+      const dashIdx = raw.indexOf(" — ");
+      const featureName = dashIdx !== -1 ? raw.slice(0, dashIdx).trim() : raw;
+      const featureBody = dashIdx !== -1 ? raw.slice(dashIdx + 3).trim() : "";
+      setH(WHAT_YOU_GET_MAP[i].headId, `<strong>${featureName}</strong>`);
+      if (featureBody) setPara(WHAT_YOU_GET_MAP[i].paraId, featureBody);
+    }
+  }
+
+  // Should/should-not apply bullets (section 16)
+  if (al.shouldNotApply?.length) {
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<ul>${al.shouldNotApply.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
+    setSubH("paragraph-ziOu3aGDIemA", html);
+  }
+  if (al.shouldApply?.length) {
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<ul>${al.shouldApply.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
+    setSubH("paragraph-zGtOd4tfS9Jj", html);
+  }
+
+  // Pricing/final CTA reassurance copy (section 16)
+  if (al.finalCtaSubtext) setPara("paragraph-82HqbJaKXtVN", al.finalCtaSubtext);
+
+  // What you get body copy — recap paragraph (section 17)
+  if (al.whatYouGetBodyCopy) setPara("paragraph-YV_AiHC7iM_Y", al.whatYouGetBodyCopy);
 
   // More transformations (section 18)
   setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);
