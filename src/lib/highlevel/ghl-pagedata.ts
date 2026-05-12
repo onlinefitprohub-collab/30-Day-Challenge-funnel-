@@ -3182,7 +3182,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   function setPara(id: string, text: string): void {
     const el = byId.get(id);
     if (!el || !text) return;
-    const wrapped = text.startsWith("<p") ? text : `<p>${text}</p>`;
+    const wrapped = text.startsWith("<p") ? text : `<p>${sentenceBreaks(text)}</p>`;
     (el.extra as Record<string, unknown>).text = { value: wrapped };
   }
 
@@ -3407,7 +3407,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (storyParts[i]) {
       const html = storyParts[i]
         .split(/\n\n+/)
-        .map((p) => `<p>${p.replace(/\n/g, "<br>").trim()}</p>`)
+        .map((p) => `<p>${sentenceBreaks(p.replace(/\n/g, " ").trim())}</p>`)
         .join("");
       setSubH(COACH_STORY_IDS[i], html);
     }
@@ -3469,7 +3469,18 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   for (let i = 0; i < CLIENT_STORY_MAP.length; i++) {
     const story = al.clientStories?.[i];
     if (!story) continue;
-    if (story.intro) setH(CLIENT_STORY_MAP[i].introId, story.intro);
+    if (story.intro) {
+      setH(CLIENT_STORY_MAP[i].introId, story.intro);
+      // Reduce heading font size for long intros so they don't overflow
+      if (story.intro.length > 60) {
+        const hEl = byId.get(CLIENT_STORY_MAP[i].introId);
+        if (hEl) {
+          const ex = hEl.extra as Record<string, unknown>;
+          if (ex.desktopFontSize) (ex.desktopFontSize as Record<string, unknown>).value = "22";
+          if (ex.mobileFontSize)  (ex.mobileFontSize  as Record<string, unknown>).value = "18";
+        }
+      }
+    }
     if (story.story) setPara(CLIENT_STORY_MAP[i].paraId, story.story);
   }
 
