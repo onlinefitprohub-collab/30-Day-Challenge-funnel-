@@ -16,7 +16,7 @@ const STEPS_COPY = [
   "Finalising your funnel…",
 ];
 
-const MAX_POLLS = 40; // 40 × 3s = ~2 minutes
+const MAX_POLLS = 80; // 80 × 3s = ~4 minutes
 
 interface GeneratingViewProps {
   projectId: string;
@@ -166,7 +166,7 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
       </div>
 
       <p className="mt-8 text-xs text-gray-400">
-        This takes about 30 seconds. Don&apos;t close this tab.
+        This takes 1–3 minutes. Don&apos;t close this tab.
       </p>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">
