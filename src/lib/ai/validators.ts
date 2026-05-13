@@ -267,6 +267,7 @@ const problemBreakdownItemSchema = z.object({
 });
 
 const clientStorySchema = z.object({
+  storyHeadline: z.string().min(1),
   intro: z.string().min(1),
   story: z.string().min(1),
 });
@@ -303,6 +304,7 @@ export const applicationLandingPageSchema = z.object({
   whatYouGetBodyCopy:           z.string().optional(),
   whatYouGetItems:              z.array(z.string()).optional(),
   whatYouGetBullets:            z.array(z.array(z.string().min(1))).optional(),
+  guaranteeBullets:             z.array(z.string().min(1)).optional(),
   clientWins:                   z.array(clientWinSchema).optional(),
   finalCtaText:                 z.string().optional(),
   finalCtaSubtext:              z.string().optional(),
