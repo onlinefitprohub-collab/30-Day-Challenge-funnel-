@@ -54,6 +54,7 @@ Example structure: "Get Back In Shape As A Busy Dad, Even If You've 'Tried Every
 DO NOT use generic phrases like "transform your body" or "reach your goals" — name the specific result (e.g. "lose 2 stone", "build visible muscle", "run your first 5k"), the specific audience identity, and their specific objections from the context.
 CRITICAL: DO NOT include client names, testimonials, or client results in this headline. It must be purely about the programme offer — no "Emma T. lost..." or similar. The headline sells the programme, not a client story.
 This headline MUST reflect the chosen copywriter style — match the rhythm, tone, and word choice to the style description provided.
+LENGTH: Maximum 15 words. One single punchy sentence — no full stop at the end. Do NOT write multiple sentences.
 
 valuePropSubheadline:
 1–2 sentences beneath the headline that expand on the specific transformation the prospect can expect. Must name the programme and include a concrete outcome (timeframe, measurement, or vivid result).
