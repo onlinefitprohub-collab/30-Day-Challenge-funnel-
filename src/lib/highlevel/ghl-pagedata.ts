@@ -3479,7 +3479,14 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
         }
       }
     }
-    if (story.story) setPara(map.paraId, story.story);
+    if (story.story) {
+      // Story is injected as a SINGLE paragraph — no sentence breaks, no line splits
+      const storyEl = byId.get(map.paraId);
+      if (storyEl) {
+        const clean = story.story.replace(/\n+/g, " ").trim();
+        (storyEl.extra as Record<string, unknown>).text = { value: `<p>${clean}</p>` };
+      }
+    }
   }
 
   // Pain point / problem breakdown section (section 13)
@@ -3505,8 +3512,8 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     }
   }
 
-  // 5-problems divider (section 12)
-  setH("heading-VNPStBY-834", al.dividerHeading);
+  // NOTE: heading-VNPStBY-834 ("5 PROBLEMS MAKING IT FEEL IMPOSSIBLE...") keeps its template
+  // styling — we never overwrite it. Both dramatic headings in this section are preserved.
 
   // Client wins heading + 6 individual win slots (section 14)
   setH("heading-bhxtdJhlqxm", al.clientWinsHeading);
