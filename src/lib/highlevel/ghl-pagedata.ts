@@ -3594,15 +3594,28 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       `<p>Copyright © 2026 - Your Company - All Rights Reserved</p>`;
   }
 
-  // All CTA buttons — set text and reduce font size to 28px
+  // All CTA buttons — set text and increase size for visibility
   for (const id of APP_LANDING_BUTTON_IDS) {
     setBtn(id, al.heroCtaText);
     const btnEl = byId.get(id);
     if (!btnEl) continue;
     const ex = btnEl.extra as Record<string, unknown>;
-    if (ex.desktopFontSize) (ex.desktopFontSize as Record<string, unknown>).value = "28";
-    if (ex.mobileFontSize)  (ex.mobileFontSize  as Record<string, unknown>).value = "22";
-    (btnEl.styles as Record<string, unknown>).fontSize = { value: "28", unit: "px" };
+    if (ex.desktopFontSize) (ex.desktopFontSize as Record<string, unknown>).value = "32";
+    if (ex.mobileFontSize)  (ex.mobileFontSize  as Record<string, unknown>).value = "24";
+    const bs = btnEl.styles as Record<string, unknown>;
+    bs.paddingTop    = { value: "22", unit: "px" };
+    bs.paddingBottom = { value: "22", unit: "px" };
+    bs.paddingLeft   = { value: "48", unit: "px" };
+    bs.paddingRight  = { value: "48", unit: "px" };
+  }
+
+  // Divider heading section — add vertical breathing room so it stands out
+  const dividerSection = page.sections.find((s: Record<string, unknown>) => s.id === "section-s7DdxkIpg2");
+  if (dividerSection) {
+    const ds = (dividerSection as Record<string, unknown>).styles as Record<string, unknown> ?? {};
+    ds.paddingTop    = { value: "72", unit: "px" };
+    ds.paddingBottom = { value: "72", unit: "px" };
+    (dividerSection as Record<string, unknown>).styles = ds;
   }
 
   // Remove empty trailing section (section-yKSj_u9QJlY)

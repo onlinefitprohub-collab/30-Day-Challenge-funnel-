@@ -68,7 +68,7 @@ ${storyInputs || "(No story inputs provided — generate a compelling, detailed 
 
 === SECTION STRUCTURE ===
 
-part1 — THE BEFORE STATE (300–450 words, 3–5 paragraphs):
+part1 — THE BEFORE STATE (120–160 words, 2 paragraphs):
 Tell the coach's full "before" story in detail. This is where they were BEFORE they found the solution.
 - Open with an honest, vulnerable statement about where the coach was. Do NOT start with "Hi, my name is..." — that heading is already on the page.
 - Describe their day-to-day life in specific, sensory detail: what were the mornings like, what did they feel when they looked in the mirror, how did it affect their relationships, confidence, energy?
@@ -103,7 +103,7 @@ Max 12 words. No emojis. No filler phrases.
 
 === CRITICAL OUTPUT RULES ===
 
-- part1 MUST be at least 300 words. If it is less, you have failed.
+- part1 MUST be 120–160 words (2 concise paragraphs). It sits in a narrow right column next to a photo — keep it short and punchy. If it exceeds 160 words, you have failed.
 - part2 MUST be at least 300 words. If it is less, you have failed.
 - part3 MUST be at least 200 words. If it is less, you have failed.
 - Use \\n\\n between every paragraph within each part.
