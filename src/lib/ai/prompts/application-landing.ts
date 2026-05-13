@@ -48,15 +48,16 @@ Generate content for every field in the JSON schema below. Every piece of copy m
 === FIELD-BY-FIELD INSTRUCTIONS ===
 
 valuePropHeadline:
-A bold, benefit-led headline for a 2-column image+text section. Pull from mainGoal, targetAudience, and the biggest objection in the context. Must be 100% specific to this audience and programme — never generic.
-STRICT WORD LIMIT: 10 words maximum. ONE phrase. No em-dashes. No "even if" clauses. No multiple sentences. Just a sharp, direct benefit statement.
-Good examples (10 words or fewer):
-- "Lose The Fat For Good Without Giving Up Food"
-- "Build The Body You Want In 90 Days Or Less"
-- "Reset Your Metabolism And Drop 2 Stone In 90 Days"
-DO NOT use generic phrases like "transform your body" or "reach your goals".
-CRITICAL: DO NOT include client names, testimonials, or client results.
-This headline MUST reflect the chosen copywriter style in rhythm and word choice.
+COUNT THE WORDS IN YOUR OUTPUT BEFORE WRITING IT. MAXIMUM 7 WORDS. No exceptions.
+A short, punchy benefit phrase. Specific to this programme and audience.
+VALID EXAMPLES (all 7 words or fewer):
+- "Lose 2 Stone Without Giving Up Food" (7 words)
+- "Drop 3 Dress Sizes In 90 Days" (7 words)
+- "Finally Lose The Weight For Good" (6 words)
+- "Reset Your Metabolism In 90 Days" (6 words)
+INVALID — these are too long: "The Elite Transformation Programme Is A 90-Day..." / "Get Back In Shape Even If You've Tried Everything And..."
+DO NOT use generic phrases like "transform your body". DO NOT include client names or testimonial results.
+Reflect the chosen copywriter style.
 
 valuePropSubheadline:
 1–2 sentences beneath the headline that expand on the transformation. Must name the programme. Use the most compelling result from mainGoal in the context — do NOT invent small generic numbers (e.g. "8-12 lbs" is too low and too vague). Instead use the specific outcome this programme promises (e.g. "2 stone", "3 dress sizes", "90 days", whatever the context states). If no specific metric is in the context, use vivid life-change language instead of a number.
@@ -166,9 +167,9 @@ Between 4 and 8 short client win entries. Each has:
 
 clientStories:
 Exactly 6 longer-form client case studies for the "Meet..." testimonial sections. Each has:
-- storyHeadline: A punchy 6–10 word section banner that captures THIS person's specific transformation or before-state. It appears as a full-width heading ABOVE the story — it must directly reflect the story below it. Write as a bold statement or result. Examples: "How Emma Finally Broke Free From The Diet Trap", "Lost 2 Stone Without A Single Day Of Restriction", "The Woman Who Rebuilt Her Metabolism At 48", "Done With Starting Over — This Time It Stuck". Do NOT write generic questions like "Want to lose weight?" — must be specific to this person's story. 6–10 words.
+- storyHeadline: A 5–8 word result-based banner heading that DIRECTLY QUOTES the measurable result from the story. It MUST include numbers (lbs, stone, dress sizes, weeks, etc.) from the story. NEVER write a desire question like "Want to feel more attractive?" or "Ready to change your body?". Write a result statement. VALID EXAMPLES: "Lost 14lbs And Dropped 2 Dress Sizes", "11lbs Gone In 30 Days Eating More Food", "From Exhausted To Energised — 3 Stone Down", "2 Stone Lost Without A Single Restriction". Write it to match THIS story's specific result — not a generic version. 5–8 words.
 - intro: A compelling single sentence intro naming the client. Format: "Meet [Name], [a brief specific situation before joining]..." — CRITICAL: the name MUST match the gender of the target audience. If target audience is women, use female names. If men, use male names. Never write "Meet James" for a programme aimed at women. The situation described must be specific to THIS audience (their age, life stage, struggle) — NOT a copy of the targetAudience description. E.g. for busy mums: "Meet Claire, a 42-year-old mum of three who had been yo-yo dieting since her twenties and was finally done with starting over." 10–20 words.
-- story: A 2–3 paragraph first-person client narrative (100–160 words total). Write as if the client is speaking. Must feel like a REAL person, not a template. Cover: (1) their specific situation and frustration before joining — what their daily life looked like, what they'd tried before, how it made them feel; (2) what changed and a specific measurable result (numbers: lbs, kg, stone, dress sizes, weeks, energy levels); (3) a genuine recommendation that sounds personal, not like an advert. Reference the coach or programme name naturally. Do NOT include the client's name in the story (it's in the intro). Do NOT start with "I was" — vary the opening.
+- story: ONE single paragraph only — no line breaks, no \n\n, no multiple paragraphs. 60–90 words. First-person client voice. Cover: their situation before joining, the specific result they got (with numbers), and a genuine recommendation. Reference the coach or programme name. Do NOT include the client's name. Do NOT use paragraph breaks. This must be a single flowing paragraph.
 
 problemBreakdown:
 Exactly 5 problems that your ideal client faces. These appear as a "5 Problems" section with red banner headers. Each must be rooted in the actual pain points, objections, and struggles from the context (biggestStruggle, targetAudience, mainGoal). Do NOT use generic fitness problems — name the SPECIFIC issues this audience faces.
@@ -182,6 +183,7 @@ The final page CTA button text. More urgent/decisive than the mid-page CTA. E.g.
 
 finalCtaSubtext:
 Final reassurance line below the last CTA. Remove any remaining objection. E.g. "No payment today. A member of our team will review your application and reach out within 24 hours." 15–25 words.
+CRITICAL: DO NOT mention cohorts, start dates, application deadlines, or cohort launch dates. This is an always-open application funnel — focus on what happens immediately after applying (e.g. team review, strategy call, no payment required).
 
 guaranteeBullets:
 10–12 short, specific "You'll..." result statements for the "I Personally Guarantee" section. These replace generic template bullets and must be 100% specific to this programme and audience — not generic fitness copy.

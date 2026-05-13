@@ -218,29 +218,6 @@ export function StepOfferBasics({
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="cohortStartDate">
-                Next cohort / start date <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Input
-                id="cohortStartDate"
-                placeholder="e.g. 5 May 2025"
-                {...register("cohortStartDate")}
-              />
-              <p className="text-xs text-gray-400">Creates real, honest urgency — not artificial scarcity.</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="applicationDeadline">
-                Application deadline <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Input
-                id="applicationDeadline"
-                placeholder="e.g. 30 April — 3 days before cohort starts"
-                {...register("applicationDeadline")}
-              />
-            </div>
-          </div>
         </>
       )}
 

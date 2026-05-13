@@ -63,12 +63,12 @@ export function buildCoachContext(inputs: WizardInputs): string {
 
   if (bonuses) lines.push(`Bonuses: ${bonuses}`);
 
-  if (isApplication && (investmentRange || roiAnchor || cohortStartDate || applicationDeadline)) {
+  if (isApplication && (investmentRange || roiAnchor)) {
     lines.push(``, `=== INVESTMENT & URGENCY ===`);
     if (investmentRange)      lines.push(`Exact investment: ${investmentRange}`);
     if (roiAnchor)            lines.push(`ROI frame: ${roiAnchor}`);
-    if (cohortStartDate)      lines.push(`Next cohort start: ${cohortStartDate}`);
-    if (applicationDeadline)  lines.push(`Application deadline: ${applicationDeadline}`);
+    // cohortStartDate and applicationDeadline are intentionally excluded for application funnels
+    // — application funnels are always-open, not cohort-based
   }
 
   lines.push(
