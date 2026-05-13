@@ -3485,16 +3485,8 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   }
 
   // Pain point / problem breakdown section (section 13)
-  if (al.painPointHeading) {
-    setH("heading-zB24ROPIxDH", al.painPointHeading);
-    // Template element is 64px — reduce so long AI-generated copy doesn't overflow the screen
-    const phEl = byId.get("heading-zB24ROPIxDH");
-    if (phEl) {
-      const phEx = phEl.extra as Record<string, unknown>;
-      if (phEx.desktopFontSize) (phEx.desktopFontSize as Record<string, unknown>).value = "36";
-      if (phEx.mobileFontSize)  (phEx.mobileFontSize  as Record<string, unknown>).value = "26";
-    }
-  }
+  // NOTE: heading-zB24ROPIxDH ("5 PROBLEMS MAKING IT FEEL IMPOSSIBLE...") keeps its template
+  // styling at all times — we never overwrite it so the dramatic red/white design is preserved.
   const PROBLEM_MAP = [
     { titleId: "heading-QX_mHLy8qEq", headId: "sub-heading-3e2thqidJa5", bodyId: "sub-heading-vkjZxqzI_YB" },
     { titleId: "heading-bM5TzQyiz8p", headId: "sub-heading-4EddE7bDMbu", bodyId: "sub-heading-frqM65qZ53e" },
@@ -3570,11 +3562,11 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   const escBullet = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   if (al.shouldNotApply?.length) {
-    const html = al.shouldNotApply.map((b) => `<p>✗ ${escBullet(b)}</p>`).join("");
+    const html = al.shouldNotApply.map((b) => `<p>✗ ${escBullet(b)}</p>`).join("<br>");
     setSubH("paragraph-ziOu3aGDIemA", html);
   }
   if (al.shouldApply?.length) {
-    const html = al.shouldApply.map((b) => `<p>✓ ${escBullet(b)}</p>`).join("");
+    const html = al.shouldApply.map((b) => `<p>✓ ${escBullet(b)}</p>`).join("<br>");
     setSubH("paragraph-zGtOd4tfS9Jj", html);
   }
 
