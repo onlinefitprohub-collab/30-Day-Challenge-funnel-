@@ -21,6 +21,9 @@ Write ALL copy in exactly this style. Apply the rhythm, sentence structure, tone
 
 ${styleDescription}
 
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire script. Every hook, problem statement, story section, offer reveal, and closing CTA must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write a generic VSL script and then adjust for style. BUILD every section from the style's structure, vocabulary, sentence rhythm, and signature moves. If the section instructions below conflict with the style's structural framework, the STYLE WINS.
+
 `
     : "";
 

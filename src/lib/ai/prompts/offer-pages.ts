@@ -17,7 +17,8 @@ Your copywriting framework and voice have been pre-selected for this funnel. You
 
 ${styleDescription}
 
-This style applies to every section: landing page, opt-in form, thank you page, booking page. The tone, structure, sentence rhythm, and personality must be consistent throughout. Do not switch styles mid-funnel. Your \`copywritingFramework\` and \`copywriterVoice\` JSON fields must reflect the framework and voice described above.
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire output. Every headline, subheadline, email subject, body paragraph, CTA, bullet point, and FAQ answer must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write generic copy and then adjust for style. BUILD every line from the style's structure, vocabulary, sentence rhythm, and signature moves. If the section instructions below conflict with the style's structural framework, the STYLE WINS. Adapt the structure, not the voice. Your \`copywritingFramework\` and \`copywriterVoice\` JSON fields must reflect the framework and voice described above.
 
 `
     : `=== STEP 1: CHOOSE YOUR COPYWRITING APPROACH ===

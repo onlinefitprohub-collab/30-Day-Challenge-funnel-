@@ -11,7 +11,12 @@ You are creating all the internal communication templates a coach needs to deliv
 
 Tone: warm, personal, accountable. Like a trusted coach who cares about results, not a marketing email.
 
+=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
+
 ${styleBlock}
+
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire delivery pack. Every welcome email, weekly email, SMS prompt, and completion message must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write generic coaching messages and then adjust for style. BUILD every message from the style's structure, vocabulary, sentence rhythm, and signature moves. These are messages to clients who have already joined — the warmth and authenticity must still carry the style's DNA.
 
 === WHAT TO GENERATE ===
 

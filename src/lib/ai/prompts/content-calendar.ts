@@ -11,7 +11,12 @@ You are creating a 30-day social media content plan for the coach above. This ca
 
 The content must be native to short-form video (Reels/TikTok) and static social (Instagram/Facebook). Every post must feel like content, not advertising.
 
+=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
+
 ${styleBlock}
+
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire calendar. Every post hook, caption, CTA line, and content theme must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write generic social posts and then adjust for style. BUILD every hook and caption from the style's structure, vocabulary, sentence rhythm, and signature moves. If the content format rules below conflict with the style's structural framework, the STYLE WINS.
 
 === CONTENT STRATEGY PRINCIPLES ===
 
