@@ -9,7 +9,12 @@ ${buildCopyStandardsBlock()}
 
 Generate two coaching business tools for the coach above: a testimonial harvest sequence and a pricing guide. These are internal tools — not public-facing marketing. Be practical and direct.
 
+=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
+
 ${styleBlock}
+
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire output. Every testimonial request email, follow-up SMS, pricing confidence script, and objection handler must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write generic coaching business copy and then adjust for style. BUILD every message from the style's structure, vocabulary, sentence rhythm, and signature moves.
 
 === TOOL 1: TESTIMONIAL HARVEST SEQUENCE ===
 

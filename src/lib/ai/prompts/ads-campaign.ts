@@ -11,9 +11,12 @@ import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-qua
 export function buildAdsCampaignPrompt(context: string, style: string): string {
   return `${context}
 
-=== COPYWRITING STYLE ===
+=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
 
 ${style}
+
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire output. Every ad hook, primary text, headline, description, and creative direction note must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write generic ad copy and then adjust for style. BUILD every line from the style's structure, vocabulary, sentence rhythm, and signature moves. If the ad format rules below conflict with the style's structural framework, the STYLE WINS. Adapt the structure, not the voice.
 
 ${buildAudienceAnalysisBlock()}
 

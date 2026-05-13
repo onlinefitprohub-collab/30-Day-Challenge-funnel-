@@ -21,7 +21,8 @@ Your copywriting framework and voice have been pre-selected for this funnel. You
 
 ${styleDescription}
 
-Maintain this tone, structure, sentence rhythm, and personality throughout every field. Do not deviate.
+=== STYLE ENFORCEMENT — APPLIES TO EVERY LINE ===
+The copywriter style above is not a tone suggestion — it is the creative brief for this entire output. Every headline, subheadline, body paragraph, CTA, bullet point, testimonial, and FAQ answer must be unmistakably written in this copywriter's voice. A reader who knows this copywriter's published work should be able to identify the style from a single sentence. Do NOT write generic copy and then adjust for style. BUILD every line from the style's structure, vocabulary, sentence rhythm, and signature moves. If the field instructions below conflict with the style's structural framework, the STYLE WINS. Adapt the structure, not the voice.
 
 `
     : "";
@@ -50,18 +51,27 @@ Generate content for every field in the JSON schema below. Every piece of copy m
 valuePropHeadline:
 COUNT THE WORDS IN YOUR OUTPUT BEFORE WRITING IT. MAXIMUM 7 WORDS. No exceptions.
 A short, punchy benefit phrase. Specific to this programme and audience.
+WEIGHT LOSS NUMBERS: For 84–90 day programmes, the weight loss figure must be 20–30 lbs or 2–3 stone minimum. Do NOT write a figure below 20 lbs. Use stone for UK coaches (e.g. "2 Stone"), lbs for US coaches (e.g. "25lbs").
 VALID EXAMPLES (all 7 words or fewer):
 - "Lose 2 Stone Without Giving Up Food" (7 words)
 - "Drop 3 Dress Sizes In 90 Days" (7 words)
 - "Finally Lose The Weight For Good" (6 words)
 - "Reset Your Metabolism In 90 Days" (6 words)
-INVALID — these are too long: "The Elite Transformation Programme Is A 90-Day..." / "Get Back In Shape Even If You've Tried Everything And..."
+INVALID — wrong number: "Lose 8–12lbs in 90 Days" (too small — 20+ lbs minimum)
+INVALID — too long: "The Elite Transformation Programme Is A 90-Day..." / "Get Back In Shape Even If You've Tried Everything And..."
 DO NOT use generic phrases like "transform your body". DO NOT include client names or testimonial results.
 Reflect the chosen copywriter style.
 
 valuePropSubheadline:
-1–2 sentences beneath the headline that expand on the transformation. Must name the programme. Use the most compelling result from mainGoal in the context — do NOT invent small generic numbers (e.g. "8-12 lbs" is too low and too vague). Instead use the specific outcome this programme promises (e.g. "2 stone", "3 dress sizes", "90 days", whatever the context states). If no specific metric is in the context, use vivid life-change language instead of a number.
-CRITICAL: Reflect the chosen copywriter style. 25–40 words.
+A single sentence beneath the headline. MAXIMUM 18 WORDS — count before writing. Sells the transformation emotionally. NEVER describes the programme or its features.
+CRITICAL: This line MUST reflect the copywriter style — the sentence structure, hook type, and vocabulary must differ clearly between styles. Examples by style:
+- Russell Brunson → curiosity gap: "Discover the one system that finally made the weight stay off — for good"
+- Dan Kennedy → blunt promise: "Real results. No guesswork. No excuses. Just the plan that works."
+- Alex Hormozi → bold result lead: "Lose 25lbs in 90 days — or we work with you until you do"
+- David Ogilvy → specific and credible: "The same method that helped 500 people lose 2 stone without starving"
+- Gary Halbert → urgent and personal: "This is the last weight loss programme you will ever need"
+Do NOT copy these examples — write one that is specific to this coach's niche and audience.
+Do NOT invent small generic numbers (e.g. "8–12 lbs" is too low). Use the programme's actual promised outcome.
 
 videoSectionHeading:
 A compelling h1 placed above the coach's intro video. Use the programme name and speak to the audience's identity — what are they trying to become? Format the heading as two stacked lines like a proper video overlay: first line is a short context label (e.g. "BECOMING A STRONGER, HEALTHIER [AUDIENCE IDENTITY]"), second line is a bold curiosity question or promise (e.g. "WHAT IS [PROGRAMME NAME]?"). Both lines should be specific to the niche — never generic. 8–14 words total.
@@ -167,7 +177,7 @@ Between 4 and 8 short client win entries. Each has:
 
 clientStories:
 Exactly 6 longer-form client case studies for the "Meet..." testimonial sections. Each has:
-- storyHeadline: A 5–8 word result-based banner heading that DIRECTLY QUOTES the measurable result from the story. It MUST include numbers (lbs, stone, dress sizes, weeks, etc.) from the story. NEVER write a desire question like "Want to feel more attractive?" or "Ready to change your body?". Write a result statement. VALID EXAMPLES: "Lost 14lbs And Dropped 2 Dress Sizes", "11lbs Gone In 30 Days Eating More Food", "From Exhausted To Energised — 3 Stone Down", "2 Stone Lost Without A Single Restriction". Write it to match THIS story's specific result — not a generic version. 5–8 words.
+- storyHeadline: A 5–8 word PAIN-POINT IDENTIFICATION headline in ALL CAPS. Name the specific struggle or obstacle the client faced BEFORE joining this programme. Write it as a declarative statement — NEVER a question. The headline must relate specifically to the story content — read the story field before writing this. INVALID EXAMPLES: ❌ "WANT TO FEEL MORE ATTRACTIVE TO YOUR PARTNER?" ❌ "READY TO TRANSFORM YOUR BODY?" ❌ "TIRED OF FEELING STUCK?" (question). VALID EXAMPLES: ✅ "SIX YEARS OF STARTING OVER AND NOTHING STICKING" ✅ "EXHAUSTED OVERWEIGHT AND OUT OF OPTIONS" ✅ "EVERY DIET FAILED HER UNTIL THIS" ✅ "THIRTY YEARS OF YOYO DIETING ENDS HERE". 5–8 words, ALL CAPS, declarative statement only.
 - intro: A compelling single sentence intro naming the client. Format: "Meet [Name], [a brief specific situation before joining]..." — CRITICAL: the name MUST match the gender of the target audience. If target audience is women, use female names. If men, use male names. Never write "Meet James" for a programme aimed at women. The situation described must be specific to THIS audience (their age, life stage, struggle) — NOT a copy of the targetAudience description. E.g. for busy mums: "Meet Claire, a 42-year-old mum of three who had been yo-yo dieting since her twenties and was finally done with starting over." 10–20 words.
 - story: ONE single paragraph only — no line breaks, no \n\n, no multiple paragraphs. 60–90 words. First-person client voice. Cover: their situation before joining, the specific result they got (with numbers), and a genuine recommendation. Reference the coach or programme name. Do NOT include the client's name. Do NOT use paragraph breaks. This must be a single flowing paragraph.
 

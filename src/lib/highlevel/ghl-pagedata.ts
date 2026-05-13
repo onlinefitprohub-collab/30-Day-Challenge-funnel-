@@ -3550,8 +3550,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
       const dashIdx = raw.indexOf(" — ");
       const featureName = dashIdx !== -1 ? raw.slice(0, dashIdx).trim() : raw;
       const featureBody = dashIdx !== -1 ? raw.slice(dashIdx + 3).trim() : "";
+      const capitalisedBody = featureBody ? featureBody.charAt(0).toUpperCase() + featureBody.slice(1) : "";
       setH(WHAT_YOU_GET_MAP[i].headId, `<strong>${featureName}</strong>`);
-      if (featureBody) setPara(WHAT_YOU_GET_MAP[i].paraId, featureBody);
+      if (capitalisedBody) setPara(WHAT_YOU_GET_MAP[i].paraId, capitalisedBody);
       // Inject AI-generated bullet points if present and this slot has a bullet list
       const bullets = al.whatYouGetBullets?.[i];
       const bulletId = WHAT_YOU_GET_MAP[i].bulletId;
