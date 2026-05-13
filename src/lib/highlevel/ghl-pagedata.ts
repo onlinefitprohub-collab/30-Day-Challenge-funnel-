@@ -3426,20 +3426,10 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     if (blEl) (blEl.styles as Record<string, unknown>).paddingBottom = { value: "24", unit: "px" };
   }
 
-  // Will This Work For You (section 6) — qualification heading + testimonial intro
-  setH("heading-egvCRAPVyZT", al.qualificationSectionHeading);
+  // Testimonial intro heading (sections 4 and 6)
   if (al.testimonialIntroHeading) {
     setH("heading-tL1rmmDY1it", al.testimonialIntroHeading);
   }
-
-  // Individual testimonial quote headings (sections 7–9) — first sentence only, white font
-  const firstSentence = (q: string): string => {
-    const m = q.match(/^[^.!?]*[.!?]/);
-    return (m ? m[0] : q).trim();
-  };
-  setH("heading-gGTM7pLAWp1", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[0]?.quote ?? "")}</strong></font>`);
-  setH("heading-DxtKO-nccYj", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[1]?.quote ?? "")}</strong></font>`);
-  setH("heading-ry34q51jror", `<font color="#ffffff"><strong>${firstSentence(al.textTestimonials[2]?.quote ?? "")}</strong></font>`);
 
   // Section 4 inline testimonial quote + attribution (replaces hardcoded "Jordan" testimonial)
   if (al.textTestimonials[0]?.quote) {
@@ -3457,23 +3447,31 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
     setH("heading-RIn1NtrlXS8", `<font color="#ffffff"><strong>${al.midCtaHeading}</strong></font>`);
   }
 
-  // Client story testimonial cards (sections 6–11) — full "Meet X" intros + story paragraphs
+  // Client story testimonial cards (sections 7–12)
+  // headlineId = full-width section banner above the story (derives from storyHeadline)
+  // introId    = "Meet [Name]..." sub-heading inside the story column
+  // null headlineId on slot 4 because that section uses midCtaHeading instead
   const CLIENT_STORY_MAP = [
-    { introId: "heading-XpRYNHYvq8z", paraId: "paragraph-_Y-l5Y0qw9r"  },  // slot 0
-    { introId: "heading-wjLhJNffCfJ", paraId: "paragraph-TTT5HB7ObG2"  },  // slot 1
-    { introId: "heading-BR4dOzOIMUM", paraId: "paragraph-kuB6vFalrL1"  },  // slot 2
-    { introId: "heading-J9OmZLFKCjs", paraId: "paragraph-alo12AY748y"  },  // slot 3
-    { introId: "heading-apNyLjFRjAR", paraId: "paragraph-5h9jUu0lVNq"  },  // slot 4
-    { introId: "heading-TQmPc9fazcv", paraId: "paragraph-2YZN-gztJPR"  },  // slot 5
+    { headlineId: "heading-egvCRAPVyZT",  introId: "heading-XpRYNHYvq8z", paraId: "paragraph-_Y-l5Y0qw9r"  },  // slot 0
+    { headlineId: "heading-gGTM7pLAWp1",  introId: "heading-wjLhJNffCfJ", paraId: "paragraph-TTT5HB7ObG2"  },  // slot 1
+    { headlineId: "heading-DxtKO-nccYj",  introId: "heading-BR4dOzOIMUM", paraId: "paragraph-kuB6vFalrL1"  },  // slot 2
+    { headlineId: "heading-ry34q51jror",  introId: "heading-J9OmZLFKCjs", paraId: "paragraph-alo12AY748y"  },  // slot 3
+    { headlineId: null,                   introId: "heading-apNyLjFRjAR", paraId: "paragraph-5h9jUu0lVNq"  },  // slot 4 (midCtaHeading section)
+    { headlineId: "heading-viOg4MlCPp6",  introId: "heading-TQmPc9fazcv", paraId: "paragraph-2YZN-gztJPR"  },  // slot 5
   ] as const;
   for (let i = 0; i < CLIENT_STORY_MAP.length; i++) {
     const story = al.clientStories?.[i];
     if (!story) continue;
+    const map = CLIENT_STORY_MAP[i];
+    // Inject story-specific section banner headline
+    if (story.storyHeadline && map.headlineId) {
+      setH(map.headlineId, `<strong>${story.storyHeadline}</strong>`);
+    }
     if (story.intro) {
-      setH(CLIENT_STORY_MAP[i].introId, story.intro);
+      setH(map.introId, story.intro);
       // Reduce heading font size for long intros so they don't overflow
       if (story.intro.length > 60) {
-        const hEl = byId.get(CLIENT_STORY_MAP[i].introId);
+        const hEl = byId.get(map.introId);
         if (hEl) {
           const ex = hEl.extra as Record<string, unknown>;
           if (ex.desktopFontSize) (ex.desktopFontSize as Record<string, unknown>).value = "22";
@@ -3481,7 +3479,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
         }
       }
     }
-    if (story.story) setPara(CLIENT_STORY_MAP[i].paraId, story.story);
+    if (story.story) setPara(map.paraId, story.story);
   }
 
   // Pain point / problem breakdown section (section 13)
@@ -3575,6 +3573,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 
   // What you get body copy — recap paragraph (section 17)
   if (al.whatYouGetBodyCopy) setPara("paragraph-YV_AiHC7iM_Y", al.whatYouGetBodyCopy);
+
+  // "I Personally Guarantee" icon bullet list (section 16) — replace generic template bullets
+  if (al.guaranteeBullets?.length) {
+    const escB = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const ulHtml = `<ul>${al.guaranteeBullets.map((b) => `<li>${escB(b)}</li>`).join("")}</ul>`;
+    setSubH("bulletList-nfCSb8tH0TnX", ulHtml);
+  }
 
   // More transformations (section 18)
   setH("heading-jl22ZpQrbIgR", al.transformationGalleryHeading);

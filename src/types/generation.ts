@@ -209,10 +209,11 @@ export interface ApplicationLandingPage {
   whatYouGetBodyCopy: string;  // 2-3 persuasive paragraphs (newline-separated) below the checklist
   whatYouGetItems: string[];  // 6–8 items
   whatYouGetBullets?: string[][];  // 3–4 bullets per item, same order as whatYouGetItems
+  guaranteeBullets?: string[];    // 10-12 programme-specific "You'll..." result statements
   transformationGalleryHeading: string;
   clientWinsHeading: string;
   clientWins: Array<{ name: string; result: string }>;              // 4–8 items
-  clientStories: Array<{ intro: string; story: string }>;           // exactly 4
+  clientStories: Array<{ storyHeadline: string; intro: string; story: string }>;  // exactly 6
   problemBreakdown?: Array<{ title: string; headline: string; body: string }>; // 5 items
   finalCtaText: string;
   finalCtaSubtext: string;

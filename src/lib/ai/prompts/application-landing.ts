@@ -48,17 +48,19 @@ Generate content for every field in the JSON schema below. Every piece of copy m
 === FIELD-BY-FIELD INSTRUCTIONS ===
 
 valuePropHeadline:
-A bold, benefit-rich headline in a 2-column image+text layout. Must use the EXACT audience and programme from the context — never write a generic fitness headline. Pull directly from mainGoal, targetAudience, and the biggest objection in the context.
-Format: "[Achieve specific goal] with [Programme Name], even if you [Most common objection #1] and [Most common objection #2]"
-Example structure: "Get Back In Shape As A Busy Dad, Even If You've 'Tried Everything' And Think You Don't Have The Time"
-DO NOT use generic phrases like "transform your body" or "reach your goals" — name the specific result (e.g. "lose 2 stone", "build visible muscle", "run your first 5k"), the specific audience identity, and their specific objections from the context.
-CRITICAL: DO NOT include client names, testimonials, or client results in this headline. It must be purely about the programme offer — no "Emma T. lost..." or similar. The headline sells the programme, not a client story.
-This headline MUST reflect the chosen copywriter style — match the rhythm, tone, and word choice to the style description provided.
-LENGTH: Maximum 15 words. One single punchy sentence — no full stop at the end. Do NOT write multiple sentences.
+A bold, benefit-led headline for a 2-column image+text section. Pull from mainGoal, targetAudience, and the biggest objection in the context. Must be 100% specific to this audience and programme — never generic.
+STRICT WORD LIMIT: 10 words maximum. ONE phrase. No em-dashes. No "even if" clauses. No multiple sentences. Just a sharp, direct benefit statement.
+Good examples (10 words or fewer):
+- "Lose The Fat For Good Without Giving Up Food"
+- "Build The Body You Want In 90 Days Or Less"
+- "Reset Your Metabolism And Drop 2 Stone In 90 Days"
+DO NOT use generic phrases like "transform your body" or "reach your goals".
+CRITICAL: DO NOT include client names, testimonials, or client results.
+This headline MUST reflect the chosen copywriter style in rhythm and word choice.
 
 valuePropSubheadline:
-1–2 sentences beneath the headline that expand on the specific transformation the prospect can expect. Must name the programme and include a concrete outcome (timeframe, measurement, or vivid result).
-CRITICAL: This field MUST reflect the chosen copywriter style in rhythm, word choice, and personality. If the style is punchy and direct (Dan Kennedy, Alex Hormozi), write short declarative sentences with no fluff. If the style is conversational and warm (Frank Kern, Ryan Deiss), use friendly personal language. If story-driven or NLP-based, hint at the journey or the identity shift. 30–45 words.
+1–2 sentences beneath the headline that expand on the transformation. Must name the programme. Use the most compelling result from mainGoal in the context — do NOT invent small generic numbers (e.g. "8-12 lbs" is too low and too vague). Instead use the specific outcome this programme promises (e.g. "2 stone", "3 dress sizes", "90 days", whatever the context states). If no specific metric is in the context, use vivid life-change language instead of a number.
+CRITICAL: Reflect the chosen copywriter style. 25–40 words.
 
 videoSectionHeading:
 A compelling h1 placed above the coach's intro video. Use the programme name and speak to the audience's identity — what are they trying to become? Format the heading as two stacked lines like a proper video overlay: first line is a short context label (e.g. "BECOMING A STRONGER, HEALTHIER [AUDIENCE IDENTITY]"), second line is a bold curiosity question or promise (e.g. "WHAT IS [PROGRAMME NAME]?"). Both lines should be specific to the niche — never generic. 8–14 words total.
@@ -164,6 +166,7 @@ Between 4 and 8 short client win entries. Each has:
 
 clientStories:
 Exactly 6 longer-form client case studies for the "Meet..." testimonial sections. Each has:
+- storyHeadline: A punchy 6–10 word section banner that captures THIS person's specific transformation or before-state. It appears as a full-width heading ABOVE the story — it must directly reflect the story below it. Write as a bold statement or result. Examples: "How Emma Finally Broke Free From The Diet Trap", "Lost 2 Stone Without A Single Day Of Restriction", "The Woman Who Rebuilt Her Metabolism At 48", "Done With Starting Over — This Time It Stuck". Do NOT write generic questions like "Want to lose weight?" — must be specific to this person's story. 6–10 words.
 - intro: A compelling single sentence intro naming the client. Format: "Meet [Name], [a brief specific situation before joining]..." — CRITICAL: the name MUST match the gender of the target audience. If target audience is women, use female names. If men, use male names. Never write "Meet James" for a programme aimed at women. The situation described must be specific to THIS audience (their age, life stage, struggle) — NOT a copy of the targetAudience description. E.g. for busy mums: "Meet Claire, a 42-year-old mum of three who had been yo-yo dieting since her twenties and was finally done with starting over." 10–20 words.
 - story: A 2–3 paragraph first-person client narrative (100–160 words total). Write as if the client is speaking. Must feel like a REAL person, not a template. Cover: (1) their specific situation and frustration before joining — what their daily life looked like, what they'd tried before, how it made them feel; (2) what changed and a specific measurable result (numbers: lbs, kg, stone, dress sizes, weeks, energy levels); (3) a genuine recommendation that sounds personal, not like an advert. Reference the coach or programme name naturally. Do NOT include the client's name in the story (it's in the intro). Do NOT start with "I was" — vary the opening.
 
@@ -179,6 +182,17 @@ The final page CTA button text. More urgent/decisive than the mid-page CTA. E.g.
 
 finalCtaSubtext:
 Final reassurance line below the last CTA. Remove any remaining objection. E.g. "No payment today. A member of our team will review your application and reach out within 24 hours." 15–25 words.
+
+guaranteeBullets:
+10–12 short, specific "You'll..." result statements for the "I Personally Guarantee" section. These replace generic template bullets and must be 100% specific to this programme and audience — not generic fitness copy.
+Each bullet: 4–8 words, starts with "You'll" or a variation. Must reference REAL outcomes this programme delivers.
+Good examples for a metabolism/weight loss programme:
+- "You'll understand how your metabolism actually works"
+- "You'll eat more food and weigh less"
+- "You'll stop blaming yourself for failing diets"
+- "You'll feel energised by 9am without caffeine"
+- "You'll know exactly what to eat and when"
+No generic bullets like "You'll be happier" or "You'll be stronger". Every bullet must be niche-specific.
 
 === OUTPUT FORMAT ===
 
@@ -236,12 +250,12 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
       { "name": "...", "result": "..." }
     ],
     "clientStories": [
-      { "intro": "Meet [Name], ...", "story": "..." },
-      { "intro": "Meet [Name], ...", "story": "..." },
-      { "intro": "Meet [Name], ...", "story": "..." },
-      { "intro": "Meet [Name], ...", "story": "..." },
-      { "intro": "Meet [Name], ...", "story": "..." },
-      { "intro": "Meet [Name], ...", "story": "..." }
+      { "storyHeadline": "...", "intro": "Meet [Name], ...", "story": "..." },
+      { "storyHeadline": "...", "intro": "Meet [Name], ...", "story": "..." },
+      { "storyHeadline": "...", "intro": "Meet [Name], ...", "story": "..." },
+      { "storyHeadline": "...", "intro": "Meet [Name], ...", "story": "..." },
+      { "storyHeadline": "...", "intro": "Meet [Name], ...", "story": "..." },
+      { "storyHeadline": "...", "intro": "Meet [Name], ...", "story": "..." }
     ],
     "problemBreakdown": [
       { "title": "PROBLEM #1 — ...", "headline": "...", "body": "..." },
@@ -251,7 +265,8 @@ Respond with ONLY valid JSON. No markdown, no explanation, no preamble. The JSON
       { "title": "PROBLEM #5 — ...", "headline": "...", "body": "..." }
     ],
     "finalCtaText": "...",
-    "finalCtaSubtext": "..."
+    "finalCtaSubtext": "...",
+    "guaranteeBullets": ["You'll ...", "You'll ...", "You'll ..."]
   }
 }`;
 }
