@@ -7,13 +7,21 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
 const STEPS_COPY = [
-  "Analysing your offer and audience…",
-  "Writing landing page copy…",
-  "Building your email sequence…",
-  "Crafting SMS follow-ups…",
-  "Writing ad hooks and creative prompts…",
-  "Setting up campaign naming and UTMs…",
-  "Finalising your funnel…",
+  { emoji: "🔍", text: "Analysing your audience and offer positioning…" },
+  { emoji: "✍️", text: "Writing your landing page headlines and subheadlines…" },
+  { emoji: "🧠", text: "Building your coach story and bio copy…" },
+  { emoji: "🎬", text: "Scripting your VSL hook and opening…" },
+  { emoji: "📖", text: "Writing the full video sales letter script…" },
+  { emoji: "💌", text: "Crafting your email welcome sequence…" },
+  { emoji: "📱", text: "Building your SMS follow-up sequence…" },
+  { emoji: "🎯", text: "Creating Facebook ad hooks and primary texts…" },
+  { emoji: "🖼️", text: "Writing creative briefs and video prompts…" },
+  { emoji: "📅", text: "Building your 30-day content calendar…" },
+  { emoji: "📦", text: "Writing your programme delivery pack…" },
+  { emoji: "🛠️", text: "Creating coaching tools and check-in templates…" },
+  { emoji: "💰", text: "Writing your pricing strategy and confidence scripts…" },
+  { emoji: "📊", text: "Setting up campaign naming and UTM parameters…" },
+  { emoji: "✨", text: "Packaging everything and running final checks…" },
 ];
 
 const MAX_POLLS = 80; // 80 × 3s = ~4 minutes
@@ -28,14 +36,24 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
   const [stepIndex, setStepIndex] = useState(0);
   const [status, setStatus] = useState<"generating" | "complete" | "error" | "timeout">("generating");
   const [pollCount, setPollCount] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Cycle through copy steps for UX
   useEffect(() => {
     if (status !== "generating") return;
     const interval = setInterval(() => {
-      setStepIndex((i) => Math.min(i + 1, STEPS_COPY.length - 1));
-    }, 3500);
+      setStepIndex((i: number) => Math.min(i + 1, STEPS_COPY.length - 1));
+    }, 8000);
     return () => clearInterval(interval);
+  }, [status]);
+
+  // Elapsed time counter
+  useEffect(() => {
+    if (status !== "generating") return;
+    const timer = setInterval(() => {
+      setElapsedSeconds((s: number) => s + 1);
+    }, 1000);
+    return () => clearInterval(timer);
   }, [status]);
 
   // Poll project status every 3 seconds
@@ -146,33 +164,32 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
       <h2 className="text-2xl font-bold text-gray-900">Building your funnel</h2>
       <p className="mt-1 max-w-xs text-gray-500">{projectName}</p>
 
-      {/* Animated step copy */}
-      <div className="mt-8 h-6">
-        <p className="text-sm text-gray-500 animate-fade-in" key={stepIndex}>
-          {STEPS_COPY[stepIndex]}
+      {/* Step display */}
+      <div className="mt-8 flex items-center gap-2 h-7">
+        <span className="text-xl" key={`emoji-${stepIndex}`}>{STEPS_COPY[stepIndex].emoji}</span>
+        <p className="text-sm text-gray-600 font-medium" key={`text-${stepIndex}`}>
+          {STEPS_COPY[stepIndex].text}
         </p>
       </div>
 
-      {/* Progress dots */}
-      <div className="mt-6 flex gap-1.5">
-        {STEPS_COPY.map((_, i) => (
-          <div
-            key={i}
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              i <= stepIndex ? "w-4 bg-brand-500" : "w-1.5 bg-gray-200"
-            }`}
-          />
-        ))}
+      {/* Progress bar */}
+      <div className="mt-5 w-72 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-1000 ease-out"
+          style={{ width: `${Math.round(((stepIndex + 1) / STEPS_COPY.length) * 100)}%` }}
+        />
+      </div>
+
+      {/* Step count + elapsed */}
+      <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
+        <span>{stepIndex + 1} of {STEPS_COPY.length} steps</span>
+        <span>·</span>
+        <span>{Math.floor(elapsedSeconds / 60)}:{String(elapsedSeconds % 60).padStart(2, "0")} elapsed</span>
       </div>
 
       <p className="mt-8 text-xs text-gray-400">
         This takes 1–3 minutes. Don&apos;t close this tab.
       </p>
-
-      <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        <span>Working…</span>
-      </div>
     </div>
   );
 }
