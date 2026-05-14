@@ -211,10 +211,10 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     adCopy: {
       hooks: [
         isFree
-          ? `I'm running a free ${challengeLabel} for ${audienceShort} — here's what's included`
-          : `${challengeTitle} for ${audienceShort} — ${price} and it starts soon`,
-        `Still dealing with ${firstStruggle}? Here's what's actually worked for people in the same spot`,
-        `${outcomeCap} — in ${duration} days. Here's how ${coachName} is making that happen`,
+          ? `I'm handing ${audienceShort} the exact system my paying clients use — and this round is completely free`
+          : `Here's something the health industry doesn't want you to sit with for too long.`,
+        `My client messaged me at 7am on day 3. Said she'd been trying for two years. Here's what changed.`,
+        `${outcomeCap} in ${duration} days — and none of my clients gave up the things they love to get there.`,
       ],
       primaryTexts: [
         // V1: context + inclusions + CTA

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Video, FileDown } from "lucide-react";
+import { Copy, Check, Video, FileDown, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { VslScript } from "@/types/generation";
 
@@ -91,6 +91,43 @@ function CopyableScript({ text }: { text: string }) {
       >
         {copied ? <><Check className="h-3 w-3 text-green-500" /> Copied</> : <><Copy className="h-3 w-3" /> Copy</>}
       </button>
+    </div>
+  );
+}
+
+function VslSectionCard({ sectionKey, meta, text, defaultOpen }: {
+  sectionKey: keyof VslScript;
+  meta: VslSectionMeta;
+  text: string;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between border-b border-gray-100 px-5 py-3 text-left hover:bg-gray-50 transition-colors"
+        style={{ borderBottom: open ? undefined : "none" }}
+      >
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-gray-900">{meta.label}</span>
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+              {meta.timing}
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-gray-400">{meta.tip}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          <span className="text-xs text-gray-400">{text?.split(/\s+/).length ?? 0} words</span>
+          {open ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
+        </div>
+      </button>
+      {open && (
+        <div className="p-4">
+          <CopyableScript text={text} />
+        </div>
+      )}
     </div>
   );
 }
@@ -231,33 +268,16 @@ ${sectionsHtml}
         </ul>
       </div>
 
-      {/* Script sections */}
-      {VSL_KEYS.map((key) => {
-        const meta = VSL_SECTION_META[key];
-        const text = data[key];
-
-        return (
-          <div key={key} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">{meta.label}</span>
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-                    {meta.timing}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-gray-400">{meta.tip}</p>
-              </div>
-              <span className="text-xs text-gray-400 shrink-0 ml-2">
-                {text?.split(/\s+/).length ?? 0} words
-              </span>
-            </div>
-            <div className="p-4">
-              <CopyableScript text={text} />
-            </div>
-          </div>
-        );
-      })}
+      {/* Script sections — Hook open by default, rest collapsed */}
+      {VSL_KEYS.map((key, i) => (
+        <VslSectionCard
+          key={key}
+          sectionKey={key}
+          meta={VSL_SECTION_META[key]}
+          text={data[key]}
+          defaultOpen={i === 0}
+        />
+      ))}
     </div>
   );
 }
