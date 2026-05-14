@@ -59,6 +59,13 @@ COMPLIANCE CHECK: Before outputting any hook or ad body, ask: "Would this ad add
 HOOKS (first 1–2 lines of the primary text — the scroll-stopper):
 - The hook decides whether anyone reads the rest. Write 3 genuinely different hooks.
 - Hook angles to try: name the specific person ("If you're a [specific audience description]..."), call out a specific situation they recognise, open with a contrarian or surprising statement, use a specific number or timeframe
+- STYLE-FIRST HOOK STRUCTURE: The hook's opening move must be unmistakably the selected copywriter's — not generic copy with adjusted tone. Different styles open differently. Write from the structural DNA:
+  • Brunson — open with a curiosity-gap or micro-story tease: "The call from my client at 11pm that changed everything I thought about fat loss for women over 40..."
+  • Kennedy — blunt, no softening, straight to the point: "Here's the brutal truth about why most women in their 40s never get the body they're training for."
+  • Hormozi — lead with data or a bold number: "I coached 237 women aged 30–50 through a 90-day challenge. Here's what actually made the difference."
+  • Ogilvy — lead with the single most impressive verified fact: "In a recent cohort, 14 of 17 women hit their goal weight within 90 days using this exact system."
+  • Halbert — urgent personal confession: "I almost gave up on my coaching business because I couldn't get my female clients to stay consistent past week 3. Then I found the missing piece."
+  For any other style: identify its signature opening move from the style description above and use it as the structural blueprint for the first sentence.
 - Do NOT start any hook with "Are you tired of...", "Have you ever...", or "Imagine if..."
 - Do NOT use "you" language that implies a personal attribute (weight, health, finances)
 - Hooks should be 10–20 words. Tight and specific.
@@ -111,11 +118,23 @@ UGC-STYLE PROMPTS (2 concepts):
 
 ─── CAMPAIGN NAMING RULES ───
 
-- All naming conventions must follow platform standards (Meta Ads Manager hierarchy: Campaign > Ad Set > Ad)
-- UTM values: lowercase, underscored, no spaces, no special characters
-- Give a filled-in example for each naming convention — not just the template
-- Use the coach's actual business name, challenge type, and traffic sources from the context
-- Be opinionated — give them one specific structure they can implement today, not options
+Use plain English names with title case — NO underscores, NO brackets, NO snake_case in campaign, ad set, or ad names.
+
+CAMPAIGN LEVEL — format: "Offer Name | Month Year"
+- Fill in the coach's actual offer/challenge name and the current month + year
+- e.g. "High-Ticket Coaching Challenge | May 2026"
+
+AD SET LEVEL — format: "Interest | Gender | Age | Location"
+- Use real targeting values from the coach context, not template placeholders
+- e.g. "Weight Loss | Female | 30-50 | UK"
+- Give ONE filled-in example — the coach can duplicate and change the interest
+
+AD LEVEL — a plain-English description of the specific creative
+- Describe what's in the ad: medium + concept
+- e.g. "Talking Head - Hook 1", "Lifestyle Image - Morning Routine", "UGC Testimonial - Client Name", "Text Graphic - 5 Mistakes"
+- Keep it descriptive enough that anyone on the team knows exactly what this ad shows
+
+UTM values (separate from display names): still lowercase, underscored, no spaces, no special characters. Give a filled-in example for each field — not just a template.
 
 ─── OUTPUT FORMAT ───
 

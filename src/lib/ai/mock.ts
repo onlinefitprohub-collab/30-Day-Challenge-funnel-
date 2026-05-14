@@ -260,9 +260,9 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
     },
 
     campaignNaming: {
-      campaignName: `${businessName.toLowerCase().replace(/\s+/g, "_")}_${resolvedType.toLowerCase().replace(/\s+/g, "_")}_${new Date().getFullYear()}`,
-      adSetNamingConvention: `[platform]_[audience_type]_[age_range]_[placement] — e.g. fb_cold_interest_3045_feed`,
-      adNamingConvention: `[creative_type]_[hook_variant]_[date] — e.g. video_hook1_${String(new Date().getMonth() + 1).padStart(2, "0")}${String(new Date().getFullYear()).slice(2)}`,
+      campaignName: `${inputs.challengeName ?? resolvedType ?? businessName} | ${new Date().toLocaleString("en-GB", { month: "long", year: "numeric" })}`,
+      adSetNamingConvention: `Weight Loss | Female | 30-50 | UK`,
+      adNamingConvention: `Talking Head - Hook 1`,
       utmSource: (platforms.split(",")[0]?.trim().toLowerCase().replace(/\s+/g, "_")) ?? "facebook",
       utmMedium: trafficSources.some((s) => ["facebook", "instagram", "google"].includes(s.toLowerCase()))
         ? "paid_social"
@@ -503,7 +503,13 @@ export function buildMockContentCalendar(inputs: WizardInputs): ContentCalendar 
       day:     i + 1,
       theme:   themes[i],
       format:  formats[i],
-      hook:    `Day ${i + 1}: ${i < 7 ? `Here's why ${audience} are struggling to ${goal}...` : i < 14 ? `The #1 mistake people make when trying to ${goal}` : i < 21 ? `What happened when my client decided to finally ${goal}` : `${i < 28 ? "This is your sign to stop waiting" : "Doors close soon — here's everything you need to know"}`}`,
+      hook:    i < 7
+        ? [`The reason you're not seeing results yet has nothing to do with willpower.`, `I used to think consistency was the problem. It wasn't.`, `What nobody tells you about getting started with ${goal}.`, `My client sent me a message at 7am. I wasn't expecting this.`, `Stop blaming yourself. Here's what's actually getting in the way.`, `The one shift that changed everything for women who want to ${goal}.`, `Why most people quit before the results show up — and what to do instead.`][i]
+        : i < 14
+        ? [`The #1 reason smart people fail to ${goal} — and it's not what you think.`, `I was wrong about this for years. Here's what actually works.`, `If you've tried everything and it still hasn't clicked, read this.`, `The mistake 9 out of 10 women make in week 2.`, `What I wish someone had told me before I started.`, `Three things that kill momentum — and how to protect yours.`, `Your environment is either working for you or against you. Which is it?`][i - 7]
+        : i < 21
+        ? [`She messaged me to say she nearly quit. Here's what happened next.`, `What my client discovered when she finally stopped starting over.`, `Real talk: the days it feels hard are the days that count most.`, `She lost 14 lbs. But that wasn't what she was most proud of.`, `The moment everything changed — and why it wasn't what she expected.`, `Two weeks left. Here's how to finish strong when you're tired.`, `This is what progress looks like when it's not on the scale.`][i - 14]
+        : [`${challengeName ?? "The challenge"} opens soon. Here's everything you need to know.`, `Last time, spots filled in 48 hours. This is your heads up.`, `Still on the fence? Here's the honest answer.`, `What life looks like on the other side — from someone who's been there.`, `Every reason NOT to join — and why none of them held up.`, `One decision. One month. Here's what's possible.`, `Doors close tonight. Don't let this be the decision you regret.`, `This is it. Your sign to stop waiting and start.`, `The next cohort starts soon. Will you be in it?`][Math.min(i - 21, 8)],
       caption: `[Day ${i + 1} — ${themes[i]}]\n\nThis is placeholder content for your 30-day calendar. Your full AI-generated calendar will include a unique, audience-specific caption for every single day — written in your voice by ${coachName ?? "your coach persona"}.\n\nEach post will speak directly to ${audience} and move them closer to joining.\n\n${i >= 21 ? `👉 ${challengeName ?? "The challenge"} is open now.` : "Save this for later! 🔖"}`,
       cta:     i >= 21 ? `Link in bio → join ${challengeName ?? "the challenge"} now` : `Drop a 🔥 if this resonates`,
     })),
