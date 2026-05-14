@@ -370,12 +370,23 @@
       </div>
       <div class="paste-result" id="validate-schema-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;"></div>
 
+      <!-- ── CAPTURE SECTION (URL → schema inspector) ──  -->
+      <div class="section" id="capture-section">
+        <div class="section-title">Capture any GHL page schema</div>
+        <div class="capture-url-row">
+          <input class="capture-input" id="capture-url" type="url"
+                 placeholder="https://your-domain.com/funnel-page" />
+          <button class="btn-capture" id="capture-btn">Capture</button>
+        </div>
+        <div class="capture-result" id="capture-result"></div>
+      </div>
+
     </div>
   </div>
 
   <!-- ── AI CONTENT SECTION (project library) ── -->
   <div class="section" id="ai-section">
-    <div class="section-title">AI pages — inject into builder (no API key)</div>
+    <div class="section-title">Your funnel pages</div>
 
     <!-- Empty state (no project saved) -->
     <div id="empty-state" class="empty-state" style="display:none;">
@@ -455,17 +466,6 @@
       <div class="note" id="note"></div>
 
     </div>
-  </div>
-
-  <!-- ── CAPTURE SECTION (URL → schema inspector) ── -->
-  <div class="section" id="capture-section">
-    <div class="section-title">Capture any GHL page schema</div>
-    <div class="capture-url-row">
-      <input class="capture-input" id="capture-url" type="url"
-             placeholder="https://your-domain.com/funnel-page" />
-      <button class="btn-capture" id="capture-btn">Capture</button>
-    </div>
-    <div class="capture-result" id="capture-result"></div>
   </div>
 
   <script src="popup.js"></script>

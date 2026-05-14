@@ -45,6 +45,25 @@ Generate:
 - objectionHandlers: 3–5 common pricing objections with direct scripted responses (50–80 words each)
 - nextSteps: 3–5 concrete actions the coach should take this week to increase the perceived value of their offer
 
+─── PRICING REALISM CHECK ───
+
+Before writing the rationale, assess whether the input price is realistic for this type of programme:
+
+TYPICAL MARKET RATES (UK/US fitness coaching):
+- Free challenge (lead gen): £0 — no rationale needed
+- Paid 7–14 day challenge: £27–£197
+- 30-day structured challenge: £97–£497
+- 60–90 day online group programme: £497–£1,997
+- 90-day high-touch 1:1 programme (daily access, calls, personalised plans): £1,997–£4,997
+- Premium 1:1 transformation programme (6 months+): £3,000–£10,000+
+
+If the coach's input price is ABOVE the typical range for their programme type (e.g. £4,997 for a standard 30-day group challenge), your rationale MUST:
+1. Acknowledge that the price is at the premium end of the market
+2. Explain exactly what JUSTIFIES that premium — specific high-touch deliverables, limited spots, 1:1 access, daily calls, etc.
+3. If the programme deliverables don't clearly support the premium price, include ONE sentence suggesting an entry-level price (e.g. "A lower-priced entry offer at £997–£1,497 could serve as a gateway to this premium tier")
+
+Do NOT blindly justify any price entered. Be commercially honest.
+
 === OUTPUT FORMAT ===
 
 Respond with ONLY valid JSON. No markdown. Conform exactly to:

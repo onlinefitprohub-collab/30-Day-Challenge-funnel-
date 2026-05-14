@@ -217,14 +217,14 @@ export function generateMockAssets(inputs: WizardInputs): GeneratedFunnelAssets 
         `${outcomeCap} in ${duration} days — and none of my clients gave up the things they love to get there.`,
       ],
       primaryTexts: [
-        // V1: context + inclusions + CTA
-        `If ${firstStruggle} is something you've been dealing with for a while, you're not alone — and it doesn't mean you're doing it wrong.\n\nI'm ${coachName} from ${businessName}. I run the ${challengeTitle} for ${audienceShort}, and I've seen what happens when people finally have a proper structure around them.\n\nThe programme includes ${inclusions.split(",").slice(0, 3).map((s) => s.trim()).join(", ")}${firstBonus ? `, plus a ${firstBonus}` : ""}.\n\n${isFree ? "It's free to join." : `Investment: ${price}.`}\n\n→ Click below to ${ctaLabel}.`,
-        // V2: social proof or storytelling
+        // V1: longer form, context + proof + CTA (120-180 words)
+        `Here's something the health industry doesn't want you to sit with for too long.\n\nNinety-five percent of ${audienceShort} who start a new programme put the weight back on within 12 months. Not because they lacked discipline. But because the programme was never designed for the life they're actually living.\n\nI'm ${coachName} from ${businessName}. The ${challengeTitle} is structured around what actually works for ${audienceShort} — ${inclusions.split(",").slice(0, 2).map((s: string) => s.trim()).join(", ")}${firstBonus ? `, plus ${firstBonus}` : ""}.\n\nIn ${duration} days, you get a clear system, daily structure, and direct coaching support — not a PDF and a Facebook group nobody checks.\n\n${isFree ? "And it's completely free to join." : `Investment: ${price}. That's it.`}\n\n→ ${ctaButton}: [LINK]`,
+        // V2: social proof / storytelling angle (80-120 words)
         testimonials
-          ? `"${testimonials.split("\n")[0]?.replace(/^["']|["']$/g, "") ?? testimonials.slice(0, 120)}"\n\nThat's what's possible in ${duration} days.\n\n${coachName} is opening the ${challengeTitle} again for a new group of ${audienceShort}. Spots are limited to keep the programme personal.\n\n→ ${ctaLabel.charAt(0).toUpperCase() + ctaLabel.slice(1)} and get your place.`
-          : `${duration} days. One clear goal: ${outcomeYou}.\n\nNo complicated plans. No guesswork. Just a structured programme with ${coachName} in your corner the whole way.\n\nIncludes: ${inclusions.split(",").slice(0, 2).map((s) => s.trim()).join(" and ")}.\n\n→ ${ctaLabel.charAt(0).toUpperCase() + ctaLabel.slice(1)} and get started.`,
-        // V3: short and direct
-        `${outcomeCap} in ${duration} days.\n\n${coachName} runs this for ${audienceShort} — ${isFree ? "free to join" : price}. Includes ${firstInclusion.toLowerCase()} and more.\n\n→ ${ctaButton}`,
+          ? `My client ${audienceShort.includes("women") ? "Sarah" : "James"} messaged me on day 14. Said it was the first time in three years something had actually clicked.\n\n"${testimonials.split("\n")[0]?.replace(/^["']|["']$/g, "") ?? "I finally feel like I know what I'm doing."}"\n\nThat's what happens when the structure fits your life instead of fighting it.\n\n${coachName} is opening the ${challengeTitle} again. Limited spots — kept small to stay personal.\n\n→ ${ctaButton}: [LINK]`
+          : `My client messaged me at 7am on day 3 of the ${challengeTitle}. Said she'd been trying to ${outcomeLC} for two years. That this was the first time it had felt simple.\n\nThat's not luck. That's what a properly designed programme does.\n\n${coachName} at ${businessName}. ${duration} days. Real structure, real support.\n\n→ ${ctaButton}: [LINK]`,
+        // V3: punchy and direct (50-80 words)
+        `${outcomeCap} in ${duration} days.\n\nNot a crash plan. Not another PDF. A structured ${duration}-day programme with ${coachName} built specifically for ${audienceShort}.\n\nIncludes ${firstInclusion.toLowerCase()}${firstBonus ? ` + ${firstBonus}` : ""}. ${isFree ? "Free to join." : price + "."}\n\n→ ${ctaButton}: [LINK]`,
       ],
       headlines: [
         `${challengeTitle} — ${isFree ? "Free" : price}`,
@@ -471,9 +471,22 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
 // ─── Mock coaching tools ─────────────────────────────────────────────────────
 
 export function buildMockContentCalendar(inputs: WizardInputs): ContentCalendar {
-  const { coachName, mainGoal, targetAudience, challengeName } = inputs;
+  const { coachName, businessName, mainGoal, targetAudience, challengeName, inclusions, bonuses, desiredOutcome: desiredOutcomeRaw } = inputs;
   const goal = mainGoal ?? "achieve their goals";
   const audience = targetAudience ?? "your ideal clients";
+  const desiredOutcome = desiredOutcomeRaw ?? mainGoal ?? goal;
+  const firstBonus = bonuses?.split(",")[0]?.trim();
+  const firstInclusion = inclusions?.split(",")[0]?.trim() ?? "daily guidance";
+  const audienceShort = (targetAudience ?? audience)
+    .split(/\s+(who|which|that|with|and)\s+|,/i)[0]
+    .trim();
+  const outcomeYou = desiredOutcome
+    .replace(/\btheir\b/gi, "your")
+    .replace(/\bthey\b/gi, "you")
+    .replace(/\bthem\b/gi, "you")
+    .replace(/\bthemselves\b/gi, "yourself");
+  const outcomeCap = outcomeYou.charAt(0).toUpperCase() + outcomeYou.slice(1);
+  const outcomeLC = outcomeYou.charAt(0).toLowerCase() + outcomeYou.slice(1);
 
   const themes = [
     "Pain call-out", "Authority intro", "Quick win tip", "Client result",
@@ -510,7 +523,21 @@ export function buildMockContentCalendar(inputs: WizardInputs): ContentCalendar 
         : i < 21
         ? [`She messaged me to say she nearly quit. Here's what happened next.`, `What my client discovered when she finally stopped starting over.`, `Real talk: the days it feels hard are the days that count most.`, `She lost 14 lbs. But that wasn't what she was most proud of.`, `The moment everything changed — and why it wasn't what she expected.`, `Two weeks left. Here's how to finish strong when you're tired.`, `This is what progress looks like when it's not on the scale.`][i - 14]
         : [`${challengeName ?? "The challenge"} opens soon. Here's everything you need to know.`, `Last time, spots filled in 48 hours. This is your heads up.`, `Still on the fence? Here's the honest answer.`, `What life looks like on the other side — from someone who's been there.`, `Every reason NOT to join — and why none of them held up.`, `One decision. One month. Here's what's possible.`, `Doors close tonight. Don't let this be the decision you regret.`, `This is it. Your sign to stop waiting and start.`, `The next cohort starts soon. Will you be in it?`][Math.min(i - 21, 8)],
-      caption: `[Day ${i + 1} — ${themes[i]}]\n\nThis is placeholder content for your 30-day calendar. Your full AI-generated calendar will include a unique, audience-specific caption for every single day — written in your voice by ${coachName ?? "your coach persona"}.\n\nEach post will speak directly to ${audience} and move them closer to joining.\n\n${i >= 21 ? `👉 ${challengeName ?? "The challenge"} is open now.` : "Save this for later! 🔖"}`,
+      caption: (() => {
+        const themeCaption: Record<string, string> = {
+          "Pain call-out": `Most ${audienceShort} I speak to aren't struggling because they lack motivation. They're struggling because nobody's ever shown them a system that actually fits their life.\n\nThat changes when you stop trying to follow someone else's plan and start building your own.\n\nDouble tap if that hits home. And drop a comment — what's been the biggest obstacle for you lately?\n\n#fitness #coaching #${challengeName?.replace(/\s+/g, "").toLowerCase() ?? "challenge"}`,
+          "Education":    `Here's something worth knowing: ${outcomeCap} isn't about going harder. It's about going consistently.\n\nMost people quit not because it gets too hard — but because it gets boring and they don't have a structure to fall back on.\n\nConsistency beats intensity every time.\n\nSave this if it resonates. 📌`,
+          "Transformation story": `One of my clients told me she'd tried everything before joining the ${challengeName ?? "programme"}. Three different apps, two coaches, and more free guides than she could count.\n\nThe difference this time? She had a system that fit around her actual life — not an idealised version of it.\n\nIf you're in that place right now: the issue isn't you. It's the approach.\n\nComment "INFO" and I'll send you the details. 👇`,
+          "Behind-the-scenes": `A look behind the scenes at what goes into each week of the ${challengeName ?? "programme"}.\n\nEvery session is designed to build on the last. Nothing random. Nothing filler.\n\nThis is what proper programming looks like — not just a list of exercises, but a system with a purpose.\n\nSave this for later. And drop any questions below! 👇`,
+          "Social proof":  `Results from last cohort:\n\n✅ ${outcomeCap} achieved by 80% of participants\n✅ Average energy improvement: "Significant" (their word, not mine)\n✅ Most common comment after week 2: "I can't believe how simple this is"\n\nThese aren't outliers. This is what happens when people follow a system designed for real life.\n\nDM me "NEXT" if you want details on the upcoming round.`,
+          "Objection handling": `"I don't have time."\n\nI hear this before almost every cohort. And I get it — ${audienceShort} are busy.\n\nBut here's what I've found: it's not a time problem. It's a priority problem. And that's not a criticism — it's just worth being honest about.\n\nWhen the structure is simple enough, it gets done. That's the whole point of the ${challengeName ?? "programme"}.\n\nSave this if it resonates. 📌`,
+          "Call to action":   `Spots for the next round of the ${challengeName ?? "programme"} are open.\n\nIf you've been watching for a while and wondering if this is for you — this is your sign.\n\nHere's what you get: ${inclusions?.split(",").slice(0, 2).map((s: string) => s.trim()).join(", ") ?? firstInclusion}${firstBonus ? ` + ${firstBonus}` : ""}.\n\nLink in bio. DM me if you have questions. Let's go. 🔥`,
+          "Value delivery":   `Quick tip for today: ${outcomeCap.toLowerCase()} starts with removing friction, not adding discipline.\n\nThe easier you make your environment to succeed in, the less willpower you need.\n\nConsistency beats intensity every time.\n\nSet up one thing today that makes tomorrow easier. That's it.\n\nWhat's one small thing you could set up tonight? Drop it below 👇`,
+          "Engagement":       `Honest question:\n\nWhat's the ONE thing that's held you back from ${outcomeLC}?\n\nNo judgment — I ask because the patterns I hear from ${audienceShort} are remarkably consistent, and understanding them helps me build better programmes.\n\nDrop it in the comments. I read every single one. 👇`,
+        };
+        const caption = themeCaption[themes[i]] ?? themeCaption["Education"];
+        return `${caption}`;
+      })(),
       cta:     i >= 21 ? `Link in bio → join ${challengeName ?? "the challenge"} now` : `Drop a 🔥 if this resonates`,
     })),
   };
