@@ -126,22 +126,22 @@ export function VslScriptSection({ data }: { data: VslScript }) {
 <title>VSL Script</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:32px 40px}
-  .brand{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:20px}
-  .brand-rocket{font-size:16px}
-  .page-title{font-size:22px;font-weight:800;color:#111;margin-bottom:4px}
-  .meta{font-size:12px;color:#6b7280;margin-bottom:12px}
+  body{font-family:Arial,sans-serif;font-size:14px;color:#111;background:#fff;padding:32px 40px}
+  .brand{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:#7c3aed;margin-bottom:20px}
+  .brand-rocket{font-size:17px}
+  .page-title{font-size:24px;font-weight:800;color:#111;margin-bottom:4px}
+  .meta{font-size:13px;color:#6b7280;margin-bottom:12px}
   .checklist{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:20px}
-  .checklist p{font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px}
-  .checklist li{font-size:11px;color:#92400e;margin-bottom:4px;list-style:none;padding-left:14px;position:relative}
+  .checklist p{font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px}
+  .checklist li{font-size:13px;color:#92400e;margin-bottom:4px;list-style:none;padding-left:14px;position:relative}
   .checklist li::before{content:'✓';position:absolute;left:0;color:#d97706}
   .section{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden;page-break-inside:avoid}
   .section-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#f9fafb;border-bottom:1px solid #f3f4f6}
-  .section-title{font-size:12px;font-weight:700;color:#111;margin-right:8px}
-  .timing{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:600}
-  .word-count{font-size:10px;color:#9ca3af}
-  .tip{font-size:10px;color:#9ca3af;font-style:italic;padding:4px 14px 0}
-  .script{padding:10px 14px;font-size:11px;line-height:1.8;color:#1f2937;font-family:'Courier New',monospace;white-space:pre-wrap;background:#f9fafb}
+  .section-title{font-size:13px;font-weight:700;color:#111;margin-right:8px}
+  .timing{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600}
+  .word-count{font-size:11px;color:#9ca3af}
+  .tip{font-size:11px;color:#9ca3af;font-style:italic;padding:4px 14px 0}
+  .script{padding:10px 14px;font-size:13px;line-height:1.8;color:#1f2937;font-family:Arial,sans-serif;white-space:pre-wrap;background:#f9fafb}
   @media print{body{padding:24px 32px}@page{margin:0;size:A4}}
 </style>
 </head><body>
