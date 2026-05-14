@@ -75,6 +75,9 @@ export async function POST(request: Request) {
 
     const outputRowId = (outputData as { id?: string } | null)?.id;
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
+    const copywriterStyle = typeof existingOutputs.copywriterStyle === "string"
+      ? existingOutputs.copywriterStyle
+      : undefined;
 
     let discoveryCallScript: DiscoveryCallScript;
 
@@ -87,7 +90,7 @@ export async function POST(request: Request) {
         validatedInputs.targetAudience ?? "people",
       );
     } else {
-      const { system, user: userPrompt } = buildDiscoveryCallPrompt(context);
+      const { system, user: userPrompt } = buildDiscoveryCallPrompt(context, copywriterStyle);
       const fullPrompt = `${system}\n\n${userPrompt}`;
 
       const result = await callClaudeGroup<{ discoveryCallScript: DiscoveryCallScript }>(

@@ -10,8 +10,13 @@
 
 export function buildDiscoveryCallPrompt(
   context: string,
+  style?: string,
 ): { system: string; user: string } {
-  const system = `You are an expert high-ticket sales coach and copywriter who trains fitness and health coaches to enrol clients on discovery calls. You write word-for-word call scripts that feel natural, empathetic, and consultative — not pushy or scripted-sounding. Every script you write is deeply personalised to the coach's specific offer, audience, niche pain points, and transformation.
+  const styleBlock = style
+    ? `\n\n=== COPYWRITER STYLE — APPLIES TO ALL WRITTEN COPY IN THIS OUTPUT ===\n\nAll scripts, emails, CTAs, and written phrases in this output must be unmistakably written in the following copywriter's voice. The vocabulary, sentence rhythm, and structural moves should be recognisable:\n\n${style}\n\nDo NOT write generic consultant copy and then adjust tone. BUILD each phrase from the style's voice.\n`
+    : "";
+
+  const system = `You are an expert high-ticket sales coach and copywriter who trains fitness and health coaches to enrol clients on discovery calls. You write word-for-word call scripts that feel natural, empathetic, and consultative — not pushy or scripted-sounding. Every script you write is deeply personalised to the coach's specific offer, audience, niche pain points, and transformation.${styleBlock}
 
 CRITICAL OUTPUT RULE: Return ONLY a single valid JSON object wrapped in:
 { "discoveryCallScript": { ... } }
