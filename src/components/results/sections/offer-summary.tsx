@@ -5,13 +5,15 @@ import { PenLine } from "lucide-react";
 interface OfferSummarySectionProps {
   data: OfferSummary;
   copywriterStyle?: string;
+  funnelType?: "challenge" | "application";
 }
 
-export function OfferSummarySection({ data, copywriterStyle }: OfferSummarySectionProps) {
+export function OfferSummarySection({ data, copywriterStyle, funnelType }: OfferSummarySectionProps) {
+  const isApplication = funnelType === "application";
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        Your challenge concept and positioning at a glance.
+        Your {isApplication ? "programme" : "challenge"} concept and positioning at a glance.
       </p>
       {copywriterStyle && (
         <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-800">
@@ -25,7 +27,7 @@ export function OfferSummarySection({ data, copywriterStyle }: OfferSummarySecti
         </div>
       )}
       <ResultSection defaultCollapsed
-        title="Challenge Concept"
+        title={isApplication ? "Programme Concept" : "Challenge Concept"}
         content={data.challengeConcept}
       />
       <ResultSection defaultCollapsed

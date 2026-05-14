@@ -336,15 +336,15 @@ export function DiscoveryCallSection({ data, projectId, onRegenerate }: Discover
 <title>Discovery Call Script</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:32px 40px}
+  body{font-family:Arial,sans-serif;font-size:14px;color:#111;background:#fff;padding:32px 40px}
   /* branding header */
-  .brand{position:fixed;top:20px;right:32px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7c3aed}
-  .brand-rocket{font-size:16px;line-height:1}
+  .brand{position:fixed;top:20px;right:32px;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:#7c3aed}
+  .brand-rocket{font-size:17px;line-height:1}
   /* page title block */
-  .page-title{margin-bottom:6px;font-size:22px;font-weight:800;color:#111}
-  .overview{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:12px;line-height:1.6;color:#4c1d95}
+  .page-title{margin-bottom:6px;font-size:24px;font-weight:800;color:#111}
+  .overview{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.6;color:#4c1d95}
   /* section labels */
-  .section-label{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+  .section-label{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
   .sl-emerald{background:#ecfdf5;color:#065f46}
   .sl-blue{background:#eff6ff;color:#1e40af}
   .sl-red{background:#fef2f2;color:#991b1b}
@@ -352,27 +352,27 @@ export function DiscoveryCallSection({ data, projectId, onRegenerate }: Discover
   .sl-gray{background:#f3f4f6;color:#374151}
   /* prep checklist */
   .prep-list{list-style:none;margin-bottom:20px}
-  .prep-list li{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
-  .prep-num{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .prep-list li{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+  .prep-num{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#d1fae5;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
   /* phase cards */
   .phase{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden;page-break-inside:avoid}
   .phase-header{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:#f9fafb;border-bottom:1px solid #f3f4f6}
-  .phase-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
-  .phase-title{font-size:12px;font-weight:700;color:#111;margin-bottom:3px}
-  .phase-badge{display:inline-block;padding:1px 8px;border-radius:20px;border:1px solid;font-size:10px;font-weight:600}
-  .label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin:8px 14px 4px}
-  .script-box{margin:0 14px 4px;background:#f9fafb;border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.7;color:#1f2937;font-family:'Courier New',monospace;white-space:pre-wrap}
-  .notes-box{margin:0 14px 10px;background:#faf5ff;border:1px solid #ede9fe;border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.7;color:#4c1d95}
+  .phase-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#e5e7eb;color:#6b7280;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .phase-title{font-size:13px;font-weight:700;color:#111;margin-bottom:3px}
+  .phase-badge{display:inline-block;padding:1px 8px;border-radius:20px;border:1px solid;font-size:11px;font-weight:600}
+  .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin:8px 14px 4px}
+  .script-box{margin:0 14px 4px;background:#f9fafb;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.7;color:#1f2937;font-family:Arial,sans-serif;white-space:pre-wrap}
+  .notes-box{margin:0 14px 10px;background:#faf5ff;border:1px solid #ede9fe;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.7;color:#4c1d95}
   /* objections */
   .objection{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;overflow:hidden;page-break-inside:avoid}
-  .obj-q{padding:10px 14px;font-size:12px;font-weight:700;color:#111;background:#fff5f5;border-bottom:1px solid #fecaca}
+  .obj-q{padding:10px 14px;font-size:13px;font-weight:700;color:#111;background:#fff5f5;border-bottom:1px solid #fecaca}
   /* email */
   .email-box{border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:20px}
-  .email-subj{padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:12px}
-  .email-subj span{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;display:block;margin-bottom:3px}
-  .email-body{padding:10px 14px;font-size:11px;line-height:1.7;color:#374151}
+  .email-subj{padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:13px}
+  .email-subj span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;display:block;margin-bottom:3px}
+  .email-body{padding:10px 14px;font-size:13px;line-height:1.7;color:#374151}
   /* closing */
-  .closing-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:11px;line-height:1.7;color:#374151;white-space:pre-wrap}
+  .closing-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.7;color:#374151;white-space:pre-wrap}
   @media print{
     body{padding:24px 32px}
     .brand{position:fixed;top:16px;right:24px}

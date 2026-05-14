@@ -261,7 +261,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
-    offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} />,
+    offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} funnelType={funnelType} />,
     landingPage: isApplication
       ? (
           <div className="space-y-4">
