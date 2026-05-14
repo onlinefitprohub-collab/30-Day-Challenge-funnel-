@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Globe, Check, ExternalLink, Loader2, X, Download, RefreshCw, Shuffle } from "lucide-react";
+import { useState } from "react";
+import { Check, ExternalLink, Loader2, X, Download, Shuffle, FileText, FormInput, ThumbsUp, Calendar, LayoutList } from "lucide-react";
 import type { GeneratedFunnelAssets } from "@/types/generation";
-import { GhlPagePreview } from "./GhlPagePreview";
 import { toast } from "@/hooks/use-toast";
 
 interface SchemeColors {
@@ -25,7 +24,6 @@ function getScheme(key?: string): SchemeColors {
   return COLOUR_SCHEMES[key ?? "navy-orange"] ?? COLOUR_SCHEMES["navy-orange"];
 }
 
-// All 20 template variants with display names and a short description
 const ALL_TEMPLATES: Array<{ id: string; label: string; desc: string }> = [
   { id: "standard",             label: "Standard",            desc: "Classic hero with bullets & FAQ" },
   { id: "stats-hero",           label: "Stats Hero",          desc: "Dark hero with 3 stat numbers" },
@@ -58,128 +56,69 @@ interface Props {
 }
 
 const CHALLENGE_PAGES = [
-  { id: "landing",      label: "Landing Page" },
-  { id: "optin",        label: "Opt-in Form" },
-  { id: "thankyou",     label: "Thank You" },
-  { id: "booking",      label: "Booking Page" },
+  { id: "landing",     label: "Landing Page",      desc: "Main challenge sign-up page",     icon: LayoutList },
+  { id: "optin",       label: "Opt-in Form",        desc: "Lead capture & registration",     icon: FormInput  },
+  { id: "thankyou",    label: "Thank You",           desc: "Post-registration confirmation",  icon: ThumbsUp   },
+  { id: "booking",     label: "Booking Page",        desc: "Call / session scheduler",        icon: Calendar   },
 ] as const;
 
 const APPLICATION_PAGES = [
-  { id: "salesletter",  label: "Registration Page" },
-  { id: "optin",        label: "Application Form" },
-  { id: "thankyou",     label: "App Received" },
-  { id: "booking",      label: "Strategy Call" },
+  { id: "salesletter", label: "Registration Page",  desc: "Main application sales page",     icon: LayoutList },
+  { id: "optin",       label: "Application Form",   desc: "Prospect application form",       icon: FormInput  },
+  { id: "thankyou",    label: "App Received",        desc: "Confirmation & next steps",       icon: ThumbsUp   },
+  { id: "booking",     label: "Strategy Call",       desc: "Call booking page",               icon: Calendar   },
 ] as const;
 
-type ChallengePage = (typeof CHALLENGE_PAGES)[number]["id"];
-type ApplicationPage = (typeof APPLICATION_PAGES)[number]["id"];
-type PageId = ChallengePage | ApplicationPage;
+type PageId = string;
+type CloneStatus = "idle" | "loading" | "saved" | "no-ext" | "error";
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  Browser chrome wrapper                                                     */
-/* ─────────────────────────────────────────────────────────────────────────── */
-function BrowserFrame({ url, children }: { url: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-gray-200 shadow-xl overflow-hidden bg-white">
-      <div className="flex items-center gap-3 border-b border-gray-200 bg-[#f0f0f0] px-4 py-2.5">
-        <div className="flex gap-1.5 shrink-0">
-          <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-          <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
-          <div className="h-3 w-3 rounded-full bg-[#28c840]" />
-        </div>
-        <div className="flex flex-1 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1">
-          <Globe className="h-3 w-3 text-gray-400 shrink-0" />
-          <span className="text-xs text-gray-500 truncate">{url}</span>
-        </div>
-      </div>
-      <div className="overflow-hidden text-left bg-white">{children}</div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  MAIN EXPORT                                                                */
-/* ─────────────────────────────────────────────────────────────────────────── */
 export function FunnelPreviewSection({ data, projectId, funnelType = "challenge", copywriterStyle }: Props) {
   const copywriterName = copywriterStyle ? copywriterStyle.split(" — ")[0] : null;
   const isApplication = funnelType === "application";
   const PAGES = isApplication ? APPLICATION_PAGES : CHALLENGE_PAGES;
-  const [activePage, setActivePage] = useState<PageId>(isApplication ? "salesletter" : "landing");
 
-  // Template selector — null means "use persisted/random (server decides)"
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
     data.templateVariant ?? null,
   );
-  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
-
-  // Clone-to-GHL one-click state
-  const [cloneStatus, setCloneStatus] = useState<"idle" | "loading" | "saved" | "no-ext" | "error">("idle");
-  const [cloneMsg, setCloneMsg]       = useState("");
-
-  // Refresh: incrementing refreshKey remounts GhlPagePreview → triggers a fresh fetch
-  const [refreshKey, setRefreshKey] = useState(0);
-  // Template label: set by GhlPagePreview after a successful landing-page fetch
   const [templateLabel, setTemplateLabel] = useState<string>(
     data.templateVariant ? (ALL_TEMPLATES.find(t => t.id === data.templateVariant)?.label ?? data.templateVariant) : "",
   );
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+
+  const [cloneStatus, setCloneStatus] = useState<Record<PageId, CloneStatus>>({});
+  const [cloneMsg, setCloneMsg]       = useState<Record<PageId, string>>({});
+  const [downloading, setDownloading] = useState<Record<PageId, boolean>>({});
 
   const scheme = getScheme(data.colourScheme);
-  const activeMeta = PAGES.find((p) => p.id === activePage)!;
 
-  const pageUrls: Record<PageId, string> = {
-    landing:      "yourfunnel.com/challenge",
-    salesletter:  "yourfunnel.com/apply",
-    optin:        "yourfunnel.com/optin",
-    thankyou:     "yourfunnel.com/thank-you",
-    booking:      "yourfunnel.com/book",
-  };
-
-  const handleLandingLoad = useCallback(
-    ({ templateLabel: label, templateVariant: tv }: { templateLabel?: string; templateVariant?: string }) => {
-      setTemplateLabel(label ?? tv ?? "");
-    },
-    [],
-  );
-
-  function handleRefresh() {
-    setTemplateLabel("");
-    setRefreshKey((k) => k + 1);
-  }
-
-  function handleRandomTemplate() {
-    // Pick a random template from all 20
-    const random = ALL_TEMPLATES[Math.floor(Math.random() * ALL_TEMPLATES.length)];
-    setSelectedTemplate(random.id);
-    setTemplateLabel(random.label);
-    setRefreshKey((k) => k + 1);
-    setCloneStatus("idle");
-  }
-
-  function handleSelectTemplate(id: string) {
-    setSelectedTemplate(id);
-    const meta = ALL_TEMPLATES.find(t => t.id === id);
-    setTemplateLabel(meta?.label ?? id);
-    setRefreshKey((k) => k + 1);
-    setCloneStatus("idle");
-    setShowTemplateSelector(false);
-  }
-
-  // Build query string for API calls — include templateVariant when on landing page
   function buildQs(page: PageId) {
     const qs = new URLSearchParams({ page, ...(projectId ? { projectId } : {}) });
     if (page === "landing" && selectedTemplate) qs.set("templateVariant", selectedTemplate);
     return qs.toString();
   }
 
-  async function handleDownloadJson() {
+  function handleRandomTemplate() {
+    const random = ALL_TEMPLATES[Math.floor(Math.random() * ALL_TEMPLATES.length)];
+    setSelectedTemplate(random.id);
+    setTemplateLabel(random.label);
+  }
+
+  function handleSelectTemplate(id: string) {
+    setSelectedTemplate(id);
+    const meta = ALL_TEMPLATES.find(t => t.id === id);
+    setTemplateLabel(meta?.label ?? id);
+    setShowTemplateSelector(false);
+  }
+
+  async function handleDownload(page: PageId) {
+    setDownloading(prev => ({ ...prev, [page]: true }));
     try {
-      let res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
-      // If sales letter isn't indexed yet (DB write just completed), wait briefly and retry once
+      let res = await fetch(`/api/highlevel/page-data?${buildQs(page)}`);
       if (!res.ok && res.status === 404) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         if (body.error?.includes("not generated yet")) {
           await new Promise(r => setTimeout(r, 2500));
-          res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+          res = await fetch(`/api/highlevel/page-data?${buildQs(page)}`);
         }
       }
       if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -189,43 +128,40 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
       a.href     = url;
-      a.download = `ghl-page-${activePage}.json`;
+      a.download = `ghl-page-${page}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      toast({
-        title: "Download failed",
-        description: err instanceof Error ? err.message : "Unknown error",
-        variant: "destructive",
-      });
+      toast({ title: "Download failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+    } finally {
+      setDownloading(prev => ({ ...prev, [page]: false }));
     }
   }
 
-  async function handleClone() {
-    if (cloneStatus === "loading") return;
-    setCloneStatus("loading");
-    setCloneMsg("");
+  async function handleClone(page: PageId) {
+    if (cloneStatus[page] === "loading") return;
+    setCloneStatus(prev => ({ ...prev, [page]: "loading" }));
+    setCloneMsg(prev => ({ ...prev, [page]: "" }));
 
     try {
-      let res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
-      // If sales letter isn't indexed yet, wait briefly and retry once
+      let res = await fetch(`/api/highlevel/page-data?${buildQs(page)}`);
       if (!res.ok && res.status === 404) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         if (body.error?.includes("not generated yet")) {
           await new Promise(r => setTimeout(r, 2500));
-          res = await fetch(`/api/highlevel/page-data?${buildQs(activePage)}`);
+          res = await fetch(`/api/highlevel/page-data?${buildQs(page)}`);
         }
       }
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Server error ${res.status}`);
       }
-      const json = await res.json() as { pageData: unknown; colourScheme?: string };
+      const json = await res.json() as { pageData: unknown };
       if (!json.pageData) throw new Error("No page data returned from server");
 
       const requestId = Math.random().toString(36).slice(2);
 
-      const ackPromise = new Promise<boolean>((resolve) => {
+      const acked = await new Promise<boolean>((resolve) => {
         const timer = setTimeout(() => {
           window.removeEventListener("message", handler);
           resolve(false);
@@ -246,27 +182,27 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
         payload: {
           requestId,
           projectId: projectId ?? "",
-          page: activePage,
+          page,
           pageData: json.pageData,
           challengeConcept: data.offerSummary?.challengeConcept ?? "Challenge Funnel",
           appUrl: window.location.origin,
         },
       }, "*");
 
-      const acked = await ackPromise;
-      setCloneStatus(acked ? "saved" : "no-ext");
+      setCloneStatus(prev => ({ ...prev, [page]: acked ? "saved" : "no-ext" }));
     } catch (err) {
-      setCloneStatus("error");
-      setCloneMsg(err instanceof Error ? err.message : "Something went wrong. Try again.");
+      setCloneStatus(prev => ({ ...prev, [page]: "error" }));
+      setCloneMsg(prev => ({ ...prev, [page]: err instanceof Error ? err.message : "Something went wrong." }));
     }
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+
+      {/* Header */}
       <div>
-        <h2 className="text-base font-bold text-gray-900">Funnel Page Previews</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          Switch pages to review the full funnel flow. Each tab renders the exact GHL element tree that will be injected.
+          Clone each page directly to GHL, or download the raw JSON for manual import.
         </p>
         {copywriterName && (
           <p className="text-xs text-orange-600 font-medium mt-1">
@@ -275,68 +211,9 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
         )}
       </div>
 
-      {/* Page selector + Clone button */}
-      <div className="flex flex-wrap items-center gap-2">
-        {PAGES.map((page) => (
-          <button
-            key={page.id}
-            onClick={() => { setActivePage(page.id); setCloneStatus("idle"); setCloneMsg(""); }}
-            className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-all border ${
-              activePage === page.id
-                ? "text-white border-transparent shadow-sm"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-            }`}
-            style={activePage === page.id ? { backgroundColor: scheme.dark } : {}}
-          >
-            <span
-              className="h-2 w-2 rounded-full shrink-0"
-              style={{ backgroundColor: activePage === page.id ? "#fff" : scheme.primary }}
-            />
-            {page.label}
-          </button>
-        ))}
-
-        <div className="ml-auto flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleRefresh}
-              className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-              title="Reload this page preview"
-            >
-              <RefreshCw className="h-3 w-3" />
-              Refresh
-            </button>
-            <button
-              onClick={handleDownloadJson}
-              className="flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-              title="Download this page's GHL JSON"
-            >
-              <Download className="h-3 w-3" />
-              Download JSON
-            </button>
-            <button
-              onClick={handleClone}
-              disabled={cloneStatus === "loading"}
-              className="flex items-center gap-1.5 rounded-full border border-[#1a56db] px-3 py-1.5 text-xs font-semibold text-[#1a56db] hover:bg-[#1a56db] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Clone to GHL"
-            >
-              {cloneStatus === "loading" ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <ExternalLink className="h-3 w-3" />
-              )}
-              {cloneStatus === "loading" ? "Saving…" : "Clone to GHL"}
-            </button>
-          </div>
-          <p className="text-[10px] text-gray-400 text-right max-w-[280px] leading-snug">
-            Clone to GHL queues this page for the orange CF button. Download JSON gives you the raw GHL element tree.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Template selector (challenge landing page only) ──────────────── */}
-      {activePage === "landing" && !isApplication && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+      {/* Template style selector — challenge landing page only */}
+      {!isApplication && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-gray-700">Template Style</span>
@@ -353,20 +230,18 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
               <button
                 onClick={handleRandomTemplate}
                 className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors"
-                title="Pick a random template from all 20"
               >
                 <Shuffle className="h-3 w-3" />
                 Random
               </button>
               <button
-                onClick={() => setShowTemplateSelector((v) => !v)}
+                onClick={() => setShowTemplateSelector(v => !v)}
                 className="rounded-full border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors"
               >
                 {showTemplateSelector ? "Hide" : "Browse all 21 →"}
               </button>
             </div>
           </div>
-
           {showTemplateSelector && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
               {ALL_TEMPLATES.map((tmpl) => {
@@ -376,18 +251,12 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
                     key={tmpl.id}
                     onClick={() => handleSelectTemplate(tmpl.id)}
                     className={`rounded-lg border px-2.5 py-2 text-left transition-all ${
-                      isActive
-                        ? "border-transparent text-white shadow-sm"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm"
+                      isActive ? "border-transparent text-white shadow-sm" : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm"
                     }`}
                     style={isActive ? { backgroundColor: scheme.dark } : {}}
                   >
-                    <div className={`text-[11px] font-semibold leading-tight ${isActive ? "text-white" : "text-gray-800"}`}>
-                      {tmpl.label}
-                    </div>
-                    <div className={`text-[10px] mt-0.5 leading-snug ${isActive ? "text-white/70" : "text-gray-400"}`}>
-                      {tmpl.desc}
-                    </div>
+                    <div className={`text-[11px] font-semibold leading-tight ${isActive ? "text-white" : "text-gray-800"}`}>{tmpl.label}</div>
+                    <div className={`text-[10px] mt-0.5 leading-snug ${isActive ? "text-white/70" : "text-gray-400"}`}>{tmpl.desc}</div>
                   </button>
                 );
               })}
@@ -396,65 +265,95 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
         </div>
       )}
 
-      {/* Clone-to-GHL status strip */}
-      {cloneStatus === "saved" && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-          <div className="flex items-start gap-2.5">
-            <Check className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-green-800 leading-relaxed">
-              <strong>{activeMeta.label}</strong> saved to extension.{" "}
-              Open the GHL page builder and click <strong>Paste into Page Builder</strong>.
+      {/* Page clone cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {PAGES.map((page) => {
+          const status  = cloneStatus[page.id] ?? "idle";
+          const msg     = cloneMsg[page.id] ?? "";
+          const loading = status === "loading";
+          const saved   = status === "saved";
+          const noExt   = status === "no-ext";
+          const isError = status === "error";
+          const Icon    = page.icon;
+
+          return (
+            <div
+              key={page.id}
+              className="rounded-xl border border-gray-200 bg-white p-4 flex flex-col gap-3"
+            >
+              {/* Page info */}
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                  style={{ backgroundColor: `${scheme.primary}15` }}
+                >
+                  <Icon className="h-4.5 w-4.5" style={{ color: scheme.primary }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{page.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{page.desc}</p>
+                </div>
+              </div>
+
+              {/* Status feedback */}
+              {saved && (
+                <div className="flex items-start justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+                  <div className="flex items-start gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-green-600 shrink-0 mt-0.5" />
+                    <span>Saved to extension. Open the GHL builder and click <strong>Paste into Page Builder</strong>.</span>
+                  </div>
+                  <button onClick={() => setCloneStatus(p => ({ ...p, [page.id]: "idle" }))} className="text-green-500 hover:text-green-700 shrink-0">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              {noExt && (
+                <div className="flex items-start justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  <span><strong>Extension not detected.</strong> Install it, reload this page, then try again.</span>
+                  <button onClick={() => setCloneStatus(p => ({ ...p, [page.id]: "idle" }))} className="text-amber-500 hover:text-amber-700 shrink-0">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              {isError && (
+                <div className="flex items-start justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+                  <span><strong>Error:</strong> {msg || "Something went wrong."}</span>
+                  <button onClick={() => setCloneStatus(p => ({ ...p, [page.id]: "idle" }))} className="text-red-400 hover:text-red-600 shrink-0">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  onClick={() => handleDownload(page.id)}
+                  disabled={downloading[page.id]}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  {downloading[page.id] ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                  JSON
+                </button>
+                <button
+                  onClick={() => handleClone(page.id)}
+                  disabled={loading}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 transition-colors"
+                  style={{ backgroundColor: saved ? "#16a34a" : scheme.dark }}
+                >
+                  {loading ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>
+                  ) : saved ? (
+                    <><Check className="h-3 w-3" /> Cloned</>
+                  ) : (
+                    <><ExternalLink className="h-3 w-3" /> Clone to GHL</>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-          <button
-            onClick={() => setCloneStatus("idle")}
-            className="text-green-500 hover:text-green-700 shrink-0 mt-0.5"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      {cloneStatus === "no-ext" && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <div className="text-xs text-amber-800 leading-relaxed">
-            <strong>Extension not detected.</strong> Make sure the Chrome extension is installed and this page is reloaded after installation,
-            then click <strong>Clone to GHL</strong> again.{" "}
-            <a href="/account?tab=highlevel" className="underline font-semibold">Download the extension →</a>
-          </div>
-          <button
-            onClick={() => setCloneStatus("idle")}
-            className="text-amber-500 hover:text-amber-700 shrink-0 mt-0.5"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
-
-      {cloneStatus === "error" && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <div className="text-xs text-red-800 leading-relaxed">
-            <strong>Error:</strong> {cloneMsg || "Something went wrong. Try again."}
-          </div>
-          <button
-            onClick={() => setCloneStatus("idle")}
-            className="text-red-400 hover:text-red-600 shrink-0 mt-0.5"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* Browser preview — key includes refreshKey + selectedTemplate so each change remounts */}
-      <BrowserFrame url={pageUrls[activeMeta.id]}>
-        <GhlPagePreview
-          key={`${activePage}-${refreshKey}-${selectedTemplate ?? "auto"}`}
-          projectId={projectId ?? ""}
-          page={activePage}
-          templateVariant={activePage === "landing" && selectedTemplate ? selectedTemplate : undefined}
-          onLoad={activePage === "landing" ? handleLandingLoad : undefined}
-        />
-      </BrowserFrame>
     </div>
   );
 }

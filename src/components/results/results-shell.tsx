@@ -55,17 +55,14 @@ type NavTab = {
   group: string;
   groupLabel?: string;     // defined only on the first tab of each group
   highlight?: boolean;
+  hidden?: boolean;        // excluded from sidebar nav (still accessible programmatically)
 };
 
 const CHALLENGE_TABS: NavTab[] = [
-  { id: "highlevel",     label: "Clone to GHL",     icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
-  { id: "ghlInspector",  label: "GHL Inspector",    icon: Microscope,                     group: "export" },
-  { id: "funnelPreview", label: "Funnel Preview",   icon: LayoutTemplate,                 group: "export" },
-  { id: "offerSummary",  label: "Offer Summary",    icon: Target,                         group: "overview",   groupLabel: "Overview" },
-  { id: "landingPage",   label: "Landing Page",     icon: FileText,                       group: "pages",      groupLabel: "Pages" },
-  { id: "optInForm",     label: "Opt-in Form",      icon: FormInput,                      group: "pages" },
-  { id: "thankYouPage",  label: "Thank You",        icon: ThumbsUp,                       group: "pages" },
-  { id: "bookingPage",   label: "Booking Page",     icon: Calendar,                       group: "pages" },
+  { id: "highlevel",     label: "Clone to GHL",      icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
+  { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
+  { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
+  { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
   { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "sequences",  groupLabel: "Sequences" },
   { id: "smsSequence",   label: "SMS Sequence",     icon: MessageSquare,                  group: "sequences" },
   { id: "nurtureSequence",label:"52-Wk Nurture",    icon: CalendarDays,                   group: "sequences" },
@@ -85,14 +82,10 @@ const CHALLENGE_TABS: NavTab[] = [
 ];
 
 const APPLICATION_TABS: NavTab[] = [
-  { id: "highlevel",     label: "Clone to GHL",     icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
-  { id: "ghlInspector",  label: "GHL Inspector",    icon: Microscope,                     group: "export" },
-  { id: "funnelPreview", label: "Page Preview",     icon: LayoutTemplate,                 group: "export" },
-  { id: "offerSummary",  label: "Offer Summary",    icon: Target,                         group: "overview",   groupLabel: "Overview" },
-  { id: "landingPage",   label: "Registration Page",icon: FileText,                       group: "pages",      groupLabel: "Pages" },
-  { id: "optInForm",     label: "Application Form", icon: FormInput,                      group: "pages" },
-  { id: "thankYouPage",  label: "App Received",     icon: ThumbsUp,                       group: "pages" },
-  { id: "bookingPage",   label: "Strategy Call",    icon: Calendar,                       group: "pages" },
+  { id: "highlevel",     label: "Clone to GHL",      icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
+  { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
+  { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
+  { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
   { id: "vslScript",     label: "VSL Script",       icon: Video,                          group: "content",    groupLabel: "Content" },
   { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "content" },
   { id: "smsSequence",   label: "SMS Follow-Up",    icon: MessageSquare,                  group: "content" },
@@ -367,9 +360,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       : <LaunchRoadmapPlaceholder projectId={project.id} onGenerated={handleLaunchRoadmapGenerated} />,
   };
 
-  // Build grouped nav structure from tabs
+  // Build grouped nav structure from tabs (skip hidden tabs)
   const grouped: Array<{ label: string; items: NavTab[] }> = [];
   for (const tab of tabs) {
+    if (tab.hidden) continue;
     if (tab.groupLabel !== undefined) {
       grouped.push({ label: tab.groupLabel, items: [tab] });
     } else {

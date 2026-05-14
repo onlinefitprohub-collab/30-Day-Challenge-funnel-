@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Phone, Loader2, ClipboardCheck } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, Phone, Loader2, FileDown } from "lucide-react";
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { DiscoveryCallScript, DiscoveryCallPhase } from "@/types/discovery-call";
@@ -295,6 +295,127 @@ export function DiscoveryCallSection({ data, projectId, onRegenerate }: Discover
     setTimeout(() => setCopiedClosing(false), 2000);
   }
 
+  function handleDownloadPdf() {
+    const phaseColours: Record<string, string> = {
+      "Opening & Rapport":      "#1d4ed8",
+      "Setting the Call Frame": "#4338ca",
+      "Pain Discovery":         "#b91c1c",
+      "Reflection & Mirroring": "#b45309",
+      "Future Pacing":          "#047857",
+      "Offer Presentation":     "#6d28d9",
+      "Price Reveal":           "#c2410c",
+      "Close & Enrol":          "#15803d",
+    };
+
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const phaseHtml = phases.map((phase, i) => `
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">${i + 1}</span>
+          <div>
+            <div class="phase-title">${esc(phase.title)}</div>
+            <span class="phase-badge" style="color:${phaseColours[phase.title] ?? "#374151"};border-color:${phaseColours[phase.title] ?? "#d1d5db"}20;background:${phaseColours[phase.title] ?? "#d1d5db"}12">${esc(phase.duration)}</span>
+          </div>
+        </div>
+        <div class="label">Script</div>
+        <div class="script-box">${esc(phase.script).replace(/\n/g, "<br/>")}</div>
+        <div class="label" style="margin-top:10px">Coaching Notes</div>
+        <div class="notes-box">${esc(phase.coachingNotes).replace(/\n/g, "<br/>")}</div>
+      </div>`).join("");
+
+    const objHtml = data.objectionScripts.map((o) => `
+      <div class="objection">
+        <div class="obj-q">${esc(o.objection)}</div>
+        <div class="label">Response</div>
+        <div class="notes-box">${esc(o.response).replace(/\n/g, "<br/>")}</div>
+      </div>`).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Discovery Call Script</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:32px 40px}
+  /* branding header */
+  .brand{position:fixed;top:20px;right:32px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7c3aed}
+  .brand-rocket{font-size:16px;line-height:1}
+  /* page title block */
+  .page-title{margin-bottom:6px;font-size:22px;font-weight:800;color:#111}
+  .overview{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:12px;line-height:1.6;color:#4c1d95}
+  /* section labels */
+  .section-label{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+  .sl-emerald{background:#ecfdf5;color:#065f46}
+  .sl-blue{background:#eff6ff;color:#1e40af}
+  .sl-red{background:#fef2f2;color:#991b1b}
+  .sl-amber{background:#fffbeb;color:#92400e}
+  .sl-gray{background:#f3f4f6;color:#374151}
+  /* prep checklist */
+  .prep-list{list-style:none;margin-bottom:20px}
+  .prep-list li{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+  .prep-num{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  /* phase cards */
+  .phase{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden;page-break-inside:avoid}
+  .phase-header{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:#f9fafb;border-bottom:1px solid #f3f4f6}
+  .phase-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .phase-title{font-size:12px;font-weight:700;color:#111;margin-bottom:3px}
+  .phase-badge{display:inline-block;padding:1px 8px;border-radius:20px;border:1px solid;font-size:10px;font-weight:600}
+  .label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin:8px 14px 4px}
+  .script-box{margin:0 14px 4px;background:#f9fafb;border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.7;color:#1f2937;font-family:'Courier New',monospace;white-space:pre-wrap}
+  .notes-box{margin:0 14px 10px;background:#faf5ff;border:1px solid #ede9fe;border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.7;color:#4c1d95}
+  /* objections */
+  .objection{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;overflow:hidden;page-break-inside:avoid}
+  .obj-q{padding:10px 14px;font-size:12px;font-weight:700;color:#111;background:#fff5f5;border-bottom:1px solid #fecaca}
+  /* email */
+  .email-box{border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:20px}
+  .email-subj{padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:12px}
+  .email-subj span{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;display:block;margin-bottom:3px}
+  .email-body{padding:10px 14px;font-size:11px;line-height:1.7;color:#374151}
+  /* closing */
+  .closing-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:11px;line-height:1.7;color:#374151;white-space:pre-wrap}
+  @media print{
+    body{padding:24px 32px}
+    .brand{position:fixed;top:16px;right:24px}
+    @page{margin:0;size:A4}
+  }
+</style>
+</head><body>
+<div class="brand"><span class="brand-rocket">🚀</span> FitPro Launch</div>
+<div class="page-title">Discovery Call Script</div>
+<div class="overview">${esc(data.callOverview)}</div>
+
+<span class="section-label sl-emerald">Pre-Call Prep</span>
+<ol class="prep-list">
+${data.prepChecklist.map((item, i) => `<li><span class="prep-num">${i + 1}</span><span>${esc(item)}</span></li>`).join("")}
+</ol>
+
+<span class="section-label sl-blue">Call Phases</span>
+${phaseHtml}
+
+<span class="section-label sl-red">Objection Scripts</span>
+${objHtml}
+
+<span class="section-label sl-amber">Post-Call Follow-Up Email</span>
+<div class="email-box">
+  <div class="email-subj"><span>Subject line</span>${esc(data.postCallEmail.subject)}</div>
+  <div class="email-body">${esc(data.postCallEmail.body).replace(/\n/g, "<br/>")}</div>
+</div>
+
+<span class="section-label sl-gray">Closing Script (If Not Enrolling Today)</span>
+<div class="closing-box">${esc(data.callClosingScript).replace(/\n/g, "<br/>")}</div>
+
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    } else {
+      toast({ title: "Pop-up blocked", description: "Please allow pop-ups for this site to download the PDF.", variant: "destructive" });
+    }
+  }
+
   function toggleObjection(idx: number) {
     setOpenObjections((prev) => {
       const next = new Set(prev);
@@ -337,6 +458,12 @@ export function DiscoveryCallSection({ data, projectId, onRegenerate }: Discover
               ? <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
               : <><Copy className="h-3.5 w-3.5" /> Copy full script</>
             }
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+          >
+            <FileDown className="h-3.5 w-3.5" /> Download PDF
           </button>
         </div>
       </div>

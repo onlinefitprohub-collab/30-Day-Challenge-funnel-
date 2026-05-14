@@ -3345,7 +3345,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
 .aso-track{display:flex;gap:24px;width:max-content;animation:aso-scroll 18s linear infinite}
 .aso-track:hover{animation-play-state:paused}
 @keyframes aso-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.aso-logo{flex-shrink:0;width:120px;height:48px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#aaa;letter-spacing:0.06em;text-transform:uppercase}
+.aso-logo{flex-shrink:0;width:80px;height:80px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#aaa;letter-spacing:0.06em;text-transform:uppercase;text-align:center;padding:4px}
 </style>
 <div class="aso-wrap">
   <div class="aso-label">As Seen On</div>
@@ -3450,13 +3450,13 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Client story testimonial cards (sections 7–12)
   // headlineId = full-width section banner above the story (derives from storyHeadline)
   // introId    = "Meet [Name]..." sub-heading inside the story column
-  // null headlineId on slot 4 because that section uses midCtaHeading instead
+  // slot 4 shares heading-RIn1NtrlXS8 with midCtaHeading — story injection overwrites it
   const CLIENT_STORY_MAP = [
     { headlineId: "heading-egvCRAPVyZT",  introId: "heading-XpRYNHYvq8z", paraId: "paragraph-_Y-l5Y0qw9r"  },  // slot 0
     { headlineId: "heading-gGTM7pLAWp1",  introId: "heading-wjLhJNffCfJ", paraId: "paragraph-TTT5HB7ObG2"  },  // slot 1
     { headlineId: "heading-DxtKO-nccYj",  introId: "heading-BR4dOzOIMUM", paraId: "paragraph-kuB6vFalrL1"  },  // slot 2
     { headlineId: "heading-ry34q51jror",  introId: "heading-J9OmZLFKCjs", paraId: "paragraph-alo12AY748y"  },  // slot 3
-    { headlineId: null,                   introId: "heading-apNyLjFRjAR", paraId: "paragraph-5h9jUu0lVNq"  },  // slot 4 (midCtaHeading section)
+    { headlineId: "heading-RIn1NtrlXS8",  introId: "heading-apNyLjFRjAR", paraId: "paragraph-5h9jUu0lVNq"  },  // slot 4
     { headlineId: "heading-viOg4MlCPp6",  introId: "heading-TQmPc9fazcv", paraId: "paragraph-2YZN-gztJPR"  },  // slot 5
   ] as const;
   for (let i = 0; i < CLIENT_STORY_MAP.length; i++) {
@@ -3641,7 +3641,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   .faq-acc{width:100%;max-width:800px;margin:0 auto;font-family:inherit}
   .faq-acc input[type=checkbox]{display:none}
   .faq-item{border-bottom:1px solid rgba(0,0,0,0.12)}
-  .faq-label{display:flex;justify-content:space-between;align-items:center;padding:20px 4px;cursor:pointer;font-size:18px;font-weight:600;color:#111;line-height:1.4;gap:16px}
+  .faq-label{display:flex;justify-content:space-between;align-items:center;padding:20px 4px;cursor:pointer;font-size:18px;font-weight:600;font-family:var(--fjalla-one,'Fjalla One',sans-serif);color:#111;line-height:1.4;gap:16px}
   .faq-label::after{content:'+';font-size:28px;font-weight:300;flex-shrink:0;transition:transform 0.2s}
   input:checked+.faq-label::after{content:'\\2212'}
   .faq-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease,padding 0.35s ease;font-size:16px;line-height:1.7;color:rgba(0,0,0,0.65);padding:0 4px}

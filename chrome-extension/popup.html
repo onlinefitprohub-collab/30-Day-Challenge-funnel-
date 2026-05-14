@@ -262,11 +262,6 @@
   <div class="section" id="copy-paste-section">
     <div class="section-title">Clone any GHL page</div>
 
-    <!-- Copy All Debug: collects all debug info in one click -->
-    <div class="debug-btn-row" style="margin-bottom:6px;">
-      <button class="btn-clear" id="copy-all-debug-btn" style="font-size:10px;color:#fff;background:#374151;border-color:#374151;flex:1;">Copy All Debug</button>
-    </div>
-
     <!-- What's currently copied -->
     <div class="copied-card none" id="copied-card">
       <strong>Nothing copied yet</strong>
@@ -294,71 +289,88 @@
     <!-- Paste result message -->
     <div class="paste-result" id="paste-result"></div>
 
-    <!-- Debug: full state dump -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="debug-inject-btn" style="font-size:10px;">Debug Info</button>
-      <button class="btn-copy-debug" id="debug-inject-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="debug-inject-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Roundtrip test: read existing Firebase data, write it back unchanged, probe structure -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="roundtrip-btn" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">Roundtrip Test (diagnostic)</button>
-      <button class="btn-copy-debug" id="roundtrip-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="roundtrip-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Schema Diff: compare GHL native Firebase schema vs our inject output (no write) -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="schema-diff-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Schema Diff (native vs inject)</button>
-      <button class="btn-copy-debug" id="schema-diff-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="schema-diff-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- GHL API Log: shows captured GHL API calls including 500 response bodies -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="api-log-btn" style="font-size:10px;color:#b45309;border-color:#fde68a;">Show GHL API Log</button>
-      <button class="btn-copy-debug" id="api-log-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="api-log-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Clone Baseline Capture: reads full Firebase data of current cloned page & stores for deep-diff in GHL Inspector -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="capture-clone-baseline-btn" style="font-size:10px;color:#059669;border-color:#a7f3d0;">Capture Clone Baseline (for deep diff)</button>
-      <button class="btn-copy-debug" id="capture-clone-baseline-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="capture-clone-baseline-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-
-    <!-- Native Firebase Payload: shows the raw Firebase Storage data GHL reads for this page -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="native-firebase-btn" style="font-size:10px;color:#9333ea;border-color:#e9d5ff;">Native Firebase Payload</button>
-      <button class="btn-copy-debug" id="native-firebase-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="native-firebase-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
-    <div class="debug-btn-row" style="margin-top:4px;">
-      <button class="btn-clear" id="native-firebase-download" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">⬇ Download Full JSON</button>
+    <!-- Dev Tools toggle -->
+    <div style="text-align:center;margin-top:8px;">
+      <button id="dev-tools-toggle" style="background:none;border:none;font-size:10px;color:#6b7280;cursor:pointer;padding:4px 8px;border-radius:4px;">
+        ⚙ Dev Tools
+      </button>
     </div>
 
-    <!-- Page Load Errors: shows JS errors captured by bridge.js error trap after inject -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="page-load-errors-btn" style="font-size:10px;color:#dc2626;border-color:#fecaca;">Page Load Errors</button>
-      <button class="btn-copy-debug" id="page-load-errors-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="page-load-errors-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+    <!-- Hidden developer tools panel -->
+    <div id="dev-tools-panel" style="display:none;margin-top:6px;border-top:1px solid #374151;padding-top:8px;">
 
-    <!-- Page Metadata: shows GHL backend page meta captured by bridge.js v2.12.0 -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="page-meta-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Show Page Metadata</button>
-      <button class="btn-copy-debug" id="page-meta-copy">Copy</button>
-    </div>
-    <div class="paste-result" id="page-meta-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+      <!-- Copy All Debug -->
+      <div class="debug-btn-row" style="margin-bottom:6px;">
+        <button class="btn-clear" id="copy-all-debug-btn" style="font-size:10px;color:#fff;background:#374151;border-color:#374151;flex:1;">Copy All Debug</button>
+      </div>
 
-    <!-- Schema Validator: checks AI sections against native GHL required fields -->
-    <div class="debug-btn-row">
-      <button class="btn-clear" id="validate-schema-btn" style="font-size:10px;color:#166534;border-color:#bbf7d0;">Validate AI Schema</button>
-      <button class="btn-copy-debug" id="validate-schema-copy">Copy</button>
+      <!-- Debug: full state dump -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="debug-inject-btn" style="font-size:10px;">Debug Info</button>
+        <button class="btn-copy-debug" id="debug-inject-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="debug-inject-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- Roundtrip test -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="roundtrip-btn" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">Roundtrip Test (diagnostic)</button>
+        <button class="btn-copy-debug" id="roundtrip-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="roundtrip-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- Schema Diff -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="schema-diff-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Schema Diff (native vs inject)</button>
+        <button class="btn-copy-debug" id="schema-diff-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="schema-diff-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- GHL API Log -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="api-log-btn" style="font-size:10px;color:#b45309;border-color:#fde68a;">Show GHL API Log</button>
+        <button class="btn-copy-debug" id="api-log-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="api-log-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- Clone Baseline Capture -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="capture-clone-baseline-btn" style="font-size:10px;color:#059669;border-color:#a7f3d0;">Capture Clone Baseline (for deep diff)</button>
+        <button class="btn-copy-debug" id="capture-clone-baseline-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="capture-clone-baseline-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- Native Firebase Payload -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="native-firebase-btn" style="font-size:10px;color:#9333ea;border-color:#e9d5ff;">Native Firebase Payload</button>
+        <button class="btn-copy-debug" id="native-firebase-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="native-firebase-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+      <div class="debug-btn-row" style="margin-top:4px;">
+        <button class="btn-clear" id="native-firebase-download" style="font-size:10px;color:#7c3aed;border-color:#ddd6fe;">⬇ Download Full JSON</button>
+      </div>
+
+      <!-- Page Load Errors -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="page-load-errors-btn" style="font-size:10px;color:#dc2626;border-color:#fecaca;">Page Load Errors</button>
+        <button class="btn-copy-debug" id="page-load-errors-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="page-load-errors-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- Page Metadata -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="page-meta-btn" style="font-size:10px;color:#0369a1;border-color:#bae6fd;">Show Page Metadata</button>
+        <button class="btn-copy-debug" id="page-meta-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="page-meta-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;"></div>
+
+      <!-- Schema Validator -->
+      <div class="debug-btn-row">
+        <button class="btn-clear" id="validate-schema-btn" style="font-size:10px;color:#166534;border-color:#bbf7d0;">Validate AI Schema</button>
+        <button class="btn-copy-debug" id="validate-schema-copy">Copy</button>
+      </div>
+      <div class="paste-result" id="validate-schema-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;"></div>
+
     </div>
-    <div class="paste-result" id="validate-schema-result" style="font-size:10px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;"></div>
   </div>
 
   <!-- ── AI CONTENT SECTION (project library) ── -->
