@@ -174,20 +174,20 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
           resolve(true);
         }
         window.addEventListener("message", handler);
+        // Send INSIDE the constructor so the listener is already active before we yield
+        window.postMessage({
+          source: "cf-app",
+          type: "CF_SAVE_PAGE",
+          payload: {
+            requestId,
+            projectId: projectId ?? "",
+            page,
+            pageData: json.pageData,
+            challengeConcept: data.offerSummary?.challengeConcept ?? "Challenge Funnel",
+            appUrl: window.location.origin,
+          },
+        }, "*");
       });
-
-      window.postMessage({
-        source: "cf-app",
-        type: "CF_SAVE_PAGE",
-        payload: {
-          requestId,
-          projectId: projectId ?? "",
-          page,
-          pageData: json.pageData,
-          challengeConcept: data.offerSummary?.challengeConcept ?? "Challenge Funnel",
-          appUrl: window.location.origin,
-        },
-      }, "*");
 
       setCloneStatus(prev => ({ ...prev, [page]: acked ? "saved" : "no-ext" }));
     } catch (err) {

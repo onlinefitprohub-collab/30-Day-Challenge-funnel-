@@ -289,12 +289,6 @@
     <!-- Paste result message -->
     <div class="paste-result" id="paste-result"></div>
 
-    <!-- Dev Tools toggle -->
-    <div style="text-align:center;margin-top:8px;">
-      <button id="dev-tools-toggle" style="background:none;border:none;font-size:10px;color:#6b7280;cursor:pointer;padding:4px 8px;border-radius:4px;">
-        ⚙ Dev Tools
-      </button>
-    </div>
 
     <!-- Hidden developer tools panel -->
     <div id="dev-tools-panel" style="display:none;margin-top:6px;border-top:1px solid #374151;padding-top:8px;">
@@ -380,90 +374,6 @@
         </div>
         <div class="capture-result" id="capture-result"></div>
       </div>
-
-    </div>
-  </div>
-
-  <!-- ── AI CONTENT SECTION (project library) ── -->
-  <div class="section" id="ai-section">
-    <div class="section-title">Your funnel pages</div>
-
-    <!-- Empty state (no project saved) -->
-    <div id="empty-state" class="empty-state" style="display:none;">
-      <span class="emoji">📂</span>
-      <strong>No project saved yet</strong>
-      Open your FitPro Launch results page, then click this extension icon — your funnel will be saved automatically.
-    </div>
-
-    <!-- Saving in progress -->
-    <div id="saving-state" class="saving-banner" style="display:none;">
-      <span class="spinner"></span>
-      Loading your funnel from the app…
-    </div>
-
-    <!-- Save error -->
-    <div id="save-error-state" class="save-error" style="display:none;">
-      <strong>⚠ Could not load funnel</strong>
-      Make sure you are logged into the FitPro Launch app and on the results page, then reopen this extension.
-    </div>
-
-    <!-- Library (project saved) -->
-    <div id="library-state" style="display:none;">
-
-      <!-- Saved confirmation (shown briefly after auto-save) -->
-      <div class="saved-banner" id="saved-banner">
-        <strong>✓ Funnel loaded</strong><br/>
-        Pick a page below and click <strong>Load</strong>, then open that page in the GHL builder.
-      </div>
-
-      <!-- Currently loaded page badge -->
-      <div class="loaded-badge" id="loaded-badge">
-        <span>🟩</span>
-        <span><strong id="loaded-page-name">Landing Page</strong> is ready — go to GHL builder and click "Paste into GHL Builder" or the orange CF button</span>
-      </div>
-
-      <!-- Project name + change link -->
-      <div class="project-header show" id="project-header">
-        <div class="project-name" id="project-name">FitPro Launch</div>
-        <button class="change-btn" id="change-btn">Clear / Change</button>
-      </div>
-
-      <div class="page-grid">
-        <div class="page-card" id="card-landing">
-          <div class="page-icon">🏠</div>
-          <div class="page-info">
-            <div class="page-name">Landing Page</div>
-            <div class="page-desc">Main sign-up / sales page</div>
-          </div>
-          <button class="load-btn" data-page="landing" id="btn-landing">Load</button>
-        </div>
-        <div class="page-card" id="card-optin">
-          <div class="page-icon">📋</div>
-          <div class="page-info">
-            <div class="page-name">Opt-In Page</div>
-            <div class="page-desc">Email capture form</div>
-          </div>
-          <button class="load-btn" data-page="optin" id="btn-optin">Load</button>
-        </div>
-        <div class="page-card" id="card-thankyou">
-          <div class="page-icon">🎉</div>
-          <div class="page-info">
-            <div class="page-name">Thank You Page</div>
-            <div class="page-desc">Post-registration confirmation</div>
-          </div>
-          <button class="load-btn" data-page="thankyou" id="btn-thankyou">Load</button>
-        </div>
-        <div class="page-card" id="card-booking">
-          <div class="page-icon">📅</div>
-          <div class="page-info">
-            <div class="page-name">Booking Page</div>
-            <div class="page-desc">Discovery call scheduler</div>
-          </div>
-          <button class="load-btn" data-page="booking" id="btn-booking">Load</button>
-        </div>
-      </div>
-
-      <div class="note" id="note"></div>
 
     </div>
   </div>
