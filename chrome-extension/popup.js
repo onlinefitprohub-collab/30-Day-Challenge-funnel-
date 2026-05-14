@@ -100,6 +100,15 @@ function initCopyPaste() {
   document.getElementById("copy-btn").addEventListener("click", doCopy);
   document.getElementById("paste-btn").addEventListener("click", doPaste);
   document.getElementById("clear-btn").addEventListener("click", doClear);
+
+  /* Dev Tools toggle */
+  document.getElementById("dev-tools-toggle").addEventListener("click", () => {
+    const panel  = document.getElementById("dev-tools-panel");
+    const toggle = document.getElementById("dev-tools-toggle");
+    const open   = panel.style.display === "none";
+    panel.style.display  = open ? "block" : "none";
+    toggle.textContent   = open ? "⚙ Dev Tools ▲" : "⚙ Dev Tools";
+  });
   document.getElementById("debug-inject-btn").addEventListener("click", showInjectDebug);
   document.getElementById("roundtrip-btn").addEventListener("click", doRoundtripTest);
   document.getElementById("schema-diff-btn").addEventListener("click", doSchemaDiff);
