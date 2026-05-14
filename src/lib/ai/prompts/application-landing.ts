@@ -74,7 +74,7 @@ Do NOT copy these examples — write one that is specific to this coach's niche 
 Do NOT invent small generic numbers (e.g. "8–12 lbs" is too low). Use the programme's actual promised outcome.
 
 videoSectionHeading:
-A compelling h1 placed above the coach's intro video. Use the programme name and speak to the audience's identity — what are they trying to become? Format the heading as two stacked lines like a proper video overlay: first line is a short context label (e.g. "BECOMING A STRONGER, HEALTHIER [AUDIENCE IDENTITY]"), second line is a bold curiosity question or promise (e.g. "WHAT IS [PROGRAMME NAME]?"). Both lines should be specific to the niche — never generic. 8–14 words total.
+A single compelling headline placed above the coach's intro video. Reference the coach's name or programme name and the audience's transformation identity. One line only — no line breaks, no two-part format, no slash separators. Example: "Watch How Sarah Helps Busy Mums Finally Lose the Weight for Good" or "Before You Apply — Watch This Short Message from [Coach Name]". 8–14 words, sentence case.
 
 videoSectionSubheading:
 A supporting line below the video heading explaining why they should watch now. Must reference the transformation or outcome specific to this programme. 12–20 words. Example: "Watch this short video to see exactly how [Programme Name] has helped [audience type] achieve [specific result]."

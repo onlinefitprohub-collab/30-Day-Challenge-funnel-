@@ -2503,7 +2503,6 @@ export function buildApplicationFormPageData(data: GeneratedFunnelAssets): GhlPa
   const targetSummary    = (os?.targetAudienceSummary ?? "").split(/[.!]/)[0].trim().toLowerCase();
   const headline         = lp?.headlineOptions?.[0] ?? `Transform with ${challengeConcept}`;
   const subheadline      = lp?.subheadline ?? (os?.corePromise ?? "");
-  const corePromiseShort = (os?.corePromise ?? "real results").split(/\s+/).slice(0, 6).join(" ");
   const hasVideo         = Boolean(data.coachVideoUrl);
 
   // ─── Section 1: Header ──────────────────────────────────────────────────────
@@ -2516,9 +2515,7 @@ export function buildApplicationFormPageData(data: GeneratedFunnelAssets): GhlPa
 
   // ─── Section 2: Value Proposition (2-col: image left, text right) ───────────
   {
-    const valPropText = targetSummary
-      ? `Join ${challengeConcept}, even if ${targetSummary}`
-      : headline;
+    const valPropText = headline;
     const img     = makeImage(b, { url: data.coachPhotoUrl ?? "", width: 100 });
     const heading = makeHeading(b, valPropText, "h2", {
       color:      ss("#ffffff"),
@@ -2535,7 +2532,7 @@ export function buildApplicationFormPageData(data: GeneratedFunnelAssets): GhlPa
   // ─── Section 3: Congratulations banner ──────────────────────────────────────
   {
     const congratsHeading = makeHeading(b,
-      `Congratulations! You've taken the first step towards ${corePromiseShort}`, "h2",
+      `Congratulations — You've Just Taken the First Step Towards Changing Everything. Complete Your Application Below.`, "h2",
       {
         color:           ss("#ffffff"),
         fontSize:        sv(28),
@@ -3371,8 +3368,9 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   // Section 1 — top hero hook (two-column: image left, headline right)
   setH("sub-heading-oAZ3MQORtdf", al.valuePropHeadline);
 
-  // Section 2 — video hero
-  setH("heading-XSqOdeY3g0-", al.videoSectionHeading || al.valuePropSubheadline);
+  // Section 2 — video hero (take first line only — AI may generate multi-line)
+  const videoHeading = (al.videoSectionHeading || al.valuePropSubheadline).split(/\n/)[0].trim();
+  setH("heading-XSqOdeY3g0-", videoHeading);
   setH("heading-l0iAybOMkzS", al.valuePropSubheadline);
   setH("sub-heading-upEtNflpotY", al.heroCtaSubtext);
   setVid("video-20p-7VhVtF4", videoUrl || RICK_ROLL_URL);
