@@ -24,19 +24,19 @@ export function OfferSummarySection({ data, copywriterStyle }: OfferSummarySecti
           </span>
         </div>
       )}
-      <ResultSection
+      <ResultSection defaultCollapsed
         title="Challenge Concept"
         content={data.challengeConcept}
       />
-      <ResultSection
+      <ResultSection defaultCollapsed
         title="Target Audience Summary"
         content={data.targetAudienceSummary}
       />
-      <ResultSection
+      <ResultSection defaultCollapsed
         title="Offer Positioning"
         content={data.offerPositioning}
       />
-      <ResultSection
+      <ResultSection defaultCollapsed
         title="Core Promise"
         content={data.corePromise}
       >

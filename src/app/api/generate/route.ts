@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateFunnelAssets } from "@/lib/ai/generate";
-import { generateAdImages } from "@/lib/ai/image-generation";
 import { generateMockAssets } from "@/lib/ai/mock";
 import { pickLandingVariant, pickTemplateVariant } from "@/lib/highlevel/ghl-pagedata";
 import { wizardInputsSchema } from "@/types/wizard";
@@ -60,17 +59,6 @@ export async function POST(request: Request) {
       ? generateMockAssets(validatedInputs)
       : await generateFunnelAssets(validatedInputs);
 
-    // Generate real ad images via Imagen 3 (Gemini API) — non-blocking
-    let generatedAdImages: typeof assets.generatedAdImages = [];
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        generatedAdImages = await generateAdImages(validatedInputs, projectId);
-        console.log(`[generate] Generated ${generatedAdImages.length} ad images via Imagen 3`);
-      } catch (imgErr) {
-        console.warn("[generate] Imagen 3 image generation failed (non-fatal):", imgErr);
-      }
-    }
-
     // Pick layout variants once per run and persist so all subsequent
     // inject/preview calls always use the same template.
     const landingVariant = pickLandingVariant();
@@ -84,7 +72,7 @@ export async function POST(request: Request) {
       generation_run_id: runId,
       outputs: {
         ...assets,
-        generatedAdImages,
+        generatedAdImages: [],
         funnelType:   validatedInputs.funnelType ?? "challenge",
         colourScheme: validatedInputs.colourScheme ?? "navy-orange",
         landingVariant,

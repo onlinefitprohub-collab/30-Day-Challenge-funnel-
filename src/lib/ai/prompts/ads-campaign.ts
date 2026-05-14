@@ -26,17 +26,33 @@ ${buildCopyStandardsBlock()}
 
 Write Facebook/Instagram ad copy, creative direction, and campaign naming for this specific challenge and coach. These ads are targeting cold audiences who don't know the coach yet — make the copy earn their attention without overselling.
 
-─── FACEBOOK AD POLICY COMPLIANCE (MANDATORY) ───
+─── FACEBOOK AD POLICY COMPLIANCE (MANDATORY — EVERY LINE) ───
 
-All copy must pass Facebook ad policy review. Violations get ads rejected or accounts flagged:
-- NEVER imply personal attributes: no "if you're overweight", "for people who struggle financially", "if you have [health condition]" — this is discriminatory targeting
-- NEVER make guaranteed outcome claims: no "lose 10kg in 30 days guaranteed", no specific income promises
-- NEVER use before/after body transformation framing — Facebook restricts fitness before/after imagery
-- NEVER make medical claims: "cures", "treats", "eliminates pain", "reverses [condition]" are prohibited
-- DO use aspirational lifestyle language instead of problem-shaming
-- DO frame results as possible, not guaranteed: "members often find...", "many coaches see..." not "you will..."
-- DO use first-person coach voice — less likely to trigger personal attribute violations than "you" framing
-- Testimonials must imply they are individual results, not typical outcomes
+All copy must be written to pass Facebook automated ad review AND human review. Non-compliant copy will get ads rejected or accounts restricted. Apply these rules to EVERY hook, primary text, headline, and description:
+
+PERSONAL ATTRIBUTE RULE (most common rejection cause):
+- NEVER address the reader as someone who HAS a problem, condition, or struggle
+- BANNED patterns: "Are you struggling with...", "If you can't lose weight...", "For women who feel tired...", "Still dealing with [problem]", "Fed up with [situation]" — these imply personal attributes
+- SAFE patterns: describe what the programme delivers in first-person coach voice, describe the transformation someone experiences, describe a scenario without assuming the reader is in it
+- WRONG: "Struggling to lose weight after 40?" → RIGHT: "Here's what's working for women in their 40s who want to rebuild their energy and confidence"
+- WRONG: "Still dealing with fad diets that never stick?" → RIGHT: "After coaching 200+ women I stopped recommending diets. Here's what I do instead."
+
+OUTCOME CLAIMS:
+- NEVER guarantee specific results: no "lose X lbs in Y days guaranteed", no "earn £X per month"
+- Frame outcomes as what members typically experience or what the programme is designed to deliver
+- SAFE: "members often lose 1–2 stone in 90 days", "designed to help you [outcome]", "many women find..."
+
+MEDICAL/HEALTH CLAIMS:
+- No claims that the programme cures, treats, reverses, or eliminates any medical condition
+- No clinical language about health conditions
+- Focus on lifestyle, energy, confidence, habits — not medical outcomes
+
+BODY IMAGE:
+- No before/after body transformation framing in copy or creative direction
+- No body-shaming language even in aspirational form
+- Focus on how people FEEL and LIVE, not how they LOOK or how much they weigh
+
+COMPLIANCE CHECK: Before outputting any hook or ad body, ask: "Would this ad address a Facebook user as someone who HAS a specific personal problem?" If yes, rewrite it.
 
 ─── AD COPY RULES ───
 
