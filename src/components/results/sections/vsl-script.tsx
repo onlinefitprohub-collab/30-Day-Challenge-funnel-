@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Video } from "lucide-react";
+import { Copy, Check, Video, FileDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { VslScript } from "@/types/generation";
 
@@ -98,6 +98,78 @@ function CopyableScript({ text }: { text: string }) {
 export function VslScriptSection({ data }: { data: VslScript }) {
   const [copiedAll, setCopiedAll] = useState(false);
 
+  function handleDownloadPdf() {
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const sectionsHtml = VSL_KEYS.map((key) => {
+      const meta  = VSL_SECTION_META[key];
+      const words = data[key]?.split(/\s+/).length ?? 0;
+      return `
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <span class="section-title">${esc(meta.label)}</span>
+            <span class="timing">${esc(meta.timing)}</span>
+          </div>
+          <span class="word-count">${words} words</span>
+        </div>
+        <div class="tip">${esc(meta.tip)}</div>
+        <div class="script">${esc(data[key] ?? "").replace(/\n/g, "<br/>")}</div>
+      </div>`;
+    }).join("");
+
+    const totalWords    = VSL_KEYS.reduce((s, k) => s + (data[k]?.split(/\s+/).length ?? 0), 0);
+    const estimatedMins = Math.round(totalWords / 130);
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>VSL Script</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:32px 40px}
+  .brand{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:20px}
+  .brand-rocket{font-size:16px}
+  .page-title{font-size:22px;font-weight:800;color:#111;margin-bottom:4px}
+  .meta{font-size:12px;color:#6b7280;margin-bottom:12px}
+  .checklist{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:20px}
+  .checklist p{font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px}
+  .checklist li{font-size:11px;color:#92400e;margin-bottom:4px;list-style:none;padding-left:14px;position:relative}
+  .checklist li::before{content:'✓';position:absolute;left:0;color:#d97706}
+  .section{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden;page-break-inside:avoid}
+  .section-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#f9fafb;border-bottom:1px solid #f3f4f6}
+  .section-title{font-size:12px;font-weight:700;color:#111;margin-right:8px}
+  .timing{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:600}
+  .word-count{font-size:10px;color:#9ca3af}
+  .tip{font-size:10px;color:#9ca3af;font-style:italic;padding:4px 14px 0}
+  .script{padding:10px 14px;font-size:11px;line-height:1.8;color:#1f2937;font-family:'Courier New',monospace;white-space:pre-wrap;background:#f9fafb}
+  @media print{body{padding:24px 32px}@page{margin:0;size:A4}}
+</style>
+</head><body>
+<div class="brand"><span class="brand-rocket">🚀</span> FitPro Launch</div>
+<div class="page-title">VSL Script</div>
+<div class="meta">~${totalWords.toLocaleString()} words · ~${estimatedMins} min video</div>
+<div class="checklist">
+  <p>Before you record</p>
+  <ul>
+    <li>Replace any example client names/results with your real ones (marked in the Social Proof section)</li>
+    <li>Fill in your actual cohort start date and investment figure where noted</li>
+    <li>Read through once before recording — adapt any phrase to sound like you</li>
+    <li>Target 130–150 words per minute for a natural speaking pace</li>
+  </ul>
+</div>
+${sectionsHtml}
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    } else {
+      toast({ title: "Pop-up blocked", description: "Allow pop-ups for this site to download the PDF.", variant: "destructive" });
+    }
+  }
+
   async function handleCopyAll() {
     const fullScript = VSL_KEYS.map((key) => {
       const meta = VSL_SECTION_META[key];
@@ -129,15 +201,23 @@ export function VslScriptSection({ data }: { data: VslScript }) {
             Word-for-word script — record directly or use as a framework. Replace any example client names/results with your real ones.
           </p>
         </div>
-        <button
-          onClick={handleCopyAll}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          {copiedAll
-            ? <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
-            : <><Copy className="h-3.5 w-3.5" /> Copy full script</>
-          }
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={handleCopyAll}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            {copiedAll
+              ? <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+              : <><Copy className="h-3.5 w-3.5" /> Copy full script</>
+            }
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+          >
+            <FileDown className="h-3.5 w-3.5" /> Download PDF
+          </button>
+        </div>
       </div>
 
       {/* Recording checklist */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -9,10 +9,12 @@ interface ResultSectionProps {
   title: string;
   content: string;
   children?: React.ReactNode;
+  defaultCollapsed?: boolean;
 }
 
-export function ResultSection({ title, content, children }: ResultSectionProps) {
-  const [copied, setCopied] = useState(false);
+export function ResultSection({ title, content, children, defaultCollapsed = false }: ResultSectionProps) {
+  const [copied, setCopied]     = useState(false);
+  const [open, setOpen]         = useState(!defaultCollapsed);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(content);
@@ -22,9 +24,18 @@ export function ResultSection({ title, content, children }: ResultSectionProps) 
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: open ? "1px solid #f3f4f6" : "none" }}>
+        <button
+          onClick={() => setOpen(v => !v)}
+          className="flex flex-1 items-center gap-2 text-left min-w-0"
+        >
+          {open
+            ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+            : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          }
+          <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+        </button>
         <Button variant="ghost" size="sm" onClick={handleCopy}>
           {copied ? (
             <Check className="h-4 w-4 text-green-500" />
@@ -33,9 +44,11 @@ export function ResultSection({ title, content, children }: ResultSectionProps) 
           )}
         </Button>
       </div>
-      <div className="p-5">
-        {children ?? <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{content}</p>}
-      </div>
+      {open && (
+        <div className="p-5">
+          {children ?? <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{content}</p>}
+        </div>
+      )}
     </div>
   );
 }
