@@ -1,30 +1,39 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, Puzzle, Download } from "lucide-react";
+import { User, Puzzle, Download } from "lucide-react";
 import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-card";
+import { SubscriptionCard } from "@/components/account/subscription-card";
+import { getUserSubscriptionStatus } from "@/lib/subscription";
 
 export const metadata = {
   title: "Account Settings | FitPro Launch",
 };
 
-export default async function AccountPage() {
+interface PageProps {
+  searchParams: Promise<{ upgraded?: string }>;
+}
+
+export default async function AccountPage({ searchParams }: PageProps) {
+  const { upgraded } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const displayName =
     user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Coach";
 
-  type HLSettings = { hl_api_key: string | null; hl_location_id: string | null } | null;
+  type HLSettings = {
+    hl_api_key: string | null;
+    hl_location_id: string | null;
+    subscription_period_end?: string | null;
+  } | null;
+
   let hlSettings: HLSettings = null;
   let hlTableReady = true;
 
   if (user) {
     const { data, error } = await supabase
       .from("user_settings")
-      .select("hl_api_key, hl_location_id")
+      .select("hl_api_key, hl_location_id, subscription_period_end")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -42,6 +51,16 @@ export default async function AccountPage() {
   const maskedKey = hlSettings?.hl_api_key
     ? `••••••••${hlSettings.hl_api_key.slice(-4)}`
     : null;
+
+  const subscriptionStatus = user
+    ? await getUserSubscriptionStatus(supabase, user.id)
+    : "free";
+
+  const periodEnd = hlSettings?.subscription_period_end ?? null;
+
+  const { count: projectCount } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true });
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -73,32 +92,12 @@ export default async function AccountPage() {
       </Card>
 
       {/* Subscription */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-gray-500" />
-            <CardTitle className="text-base">Subscription</CardTitle>
-          </div>
-          <CardDescription>Your current plan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Free Plan</p>
-              <p className="text-sm text-gray-500">Generate up to 3 funnel projects</p>
-            </div>
-            <Badge variant="success">Active</Badge>
-          </div>
-          <div className="mt-4 rounded-lg bg-brand-50 p-4">
-            <p className="text-sm font-medium text-brand-900">
-              Pro plan coming soon
-            </p>
-            <p className="mt-1 text-sm text-brand-700">
-              Unlimited projects, priority generation, and team access will be available in the next release.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <SubscriptionCard
+        status={subscriptionStatus}
+        periodEnd={periodEnd}
+        projectCount={projectCount ?? 0}
+        upgraded={upgraded === "1"}
+      />
 
       {/* Chrome Extension */}
       <Card>

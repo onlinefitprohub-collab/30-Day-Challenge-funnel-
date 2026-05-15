@@ -99,6 +99,10 @@ export interface Database {
           user_id: string;
           hl_api_key: string | null;
           hl_location_id: string | null;
+          stripe_customer_id: string | null;
+          subscription_status: string;
+          subscription_tier: string;
+          subscription_period_end: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -106,13 +110,42 @@ export interface Database {
           user_id: string;
           hl_api_key?: string | null;
           hl_location_id?: string | null;
+          stripe_customer_id?: string | null;
+          subscription_status?: string;
+          subscription_tier?: string;
+          subscription_period_end?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           hl_api_key?: string | null;
           hl_location_id?: string | null;
+          stripe_customer_id?: string | null;
+          subscription_status?: string;
+          subscription_tier?: string;
+          subscription_period_end?: string | null;
           updated_at?: string;
+        };
+      };
+      monthly_content_plans: {
+        Row: {
+          id: string;
+          user_id: string;
+          project_id: string | null;
+          month: string;
+          plan: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          project_id?: string | null;
+          month: string;
+          plan: Json;
+          created_at?: string;
+        };
+        Update: {
+          plan?: Json;
         };
       };
     };
