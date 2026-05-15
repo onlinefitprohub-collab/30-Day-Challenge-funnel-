@@ -8,7 +8,7 @@ import {
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
-  CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download,
+  CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -48,6 +48,7 @@ import { LaunchRoadmapSection, LaunchRoadmapPlaceholder } from "./sections/launc
 import { ApplicationLandingPageSection } from "./sections/application-landing-page";
 import { PerformanceTrackerSection } from "./sections/performance-tracker";
 import { ExportSection } from "./sections/export-section";
+import { StartHereSection } from "./sections/start-here";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -62,7 +63,8 @@ type NavTab = {
 };
 
 const CHALLENGE_TABS: NavTab[] = [
-  { id: "highlevel",     label: "Clone to GHL",      icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
+  { id: "startHere",     label: "Start Here",         icon: Rocket,        highlight: true, group: "start",      groupLabel: "Launch" },
+  { id: "highlevel",     label: "Clone to GHL",       icon: Layers,                         group: "export",     groupLabel: "Export" },
   { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
   { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
   { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
@@ -87,7 +89,8 @@ const CHALLENGE_TABS: NavTab[] = [
 ];
 
 const APPLICATION_TABS: NavTab[] = [
-  { id: "highlevel",     label: "Clone to GHL",      icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
+  { id: "startHere",     label: "Start Here",         icon: Rocket,        highlight: true, group: "start",      groupLabel: "Launch" },
+  { id: "highlevel",     label: "Clone to GHL",       icon: Layers,                         group: "export",     groupLabel: "Export" },
   { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
   { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
   { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
@@ -163,7 +166,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const isApplication = funnelType === "application";
   const tabs = isApplication ? APPLICATION_TABS : CHALLENGE_TABS;
 
-  const [activeTab, setActiveTab]     = useState<TabId>("highlevel");
+  const [activeTab, setActiveTab]     = useState<TabId>("startHere");
   const [copiedAll, setCopiedAll]     = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenSection, setRegenSection] = useState<SectionGroup | null>(null);
@@ -267,6 +270,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   }
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
+    startHere:       <StartHereSection       funnelType={funnelType} onNavigate={setActiveTab} />,
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
