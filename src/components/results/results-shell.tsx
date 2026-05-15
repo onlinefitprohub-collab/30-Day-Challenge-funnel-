@@ -45,6 +45,8 @@ import { DiscoveryCallSection, DiscoveryCallPlaceholder } from "./sections/disco
 import { DmScriptSection, DmScriptPlaceholder } from "./sections/dm-script";
 import { UpsellSection, UpsellPlaceholder } from "./sections/upsell-sequence";
 import { LaunchRoadmapSection, LaunchRoadmapPlaceholder } from "./sections/launch-roadmap";
+import { ApplicationLandingPageSection } from "./sections/application-landing-page";
+import { PerformanceTrackerSection } from "./sections/performance-tracker";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -62,6 +64,7 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "highlevel",     label: "Clone to GHL",      icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
   { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
   { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
+  { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
   { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
   { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "sequences",  groupLabel: "Sequences" },
   { id: "smsSequence",   label: "SMS Sequence",     icon: MessageSquare,                  group: "sequences" },
@@ -85,7 +88,9 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "highlevel",     label: "Clone to GHL",      icon: Layers,        highlight: true, group: "export",     groupLabel: "Export" },
   { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
   { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
+  { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
   { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
+  { id: "appLanding",    label: "Reg. Page Copy",    icon: FileText,                       group: "overview" },
   { id: "vslScript",     label: "VSL Script",       icon: Video,                          group: "content",    groupLabel: "Content" },
   { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "content" },
   { id: "smsSequence",   label: "SMS Follow-Up",    icon: MessageSquare,                  group: "content" },
@@ -358,6 +363,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
     launchRoadmap: liveLaunchRoadmap
       ? <LaunchRoadmapSection data={liveLaunchRoadmap} projectId={project.id} onRegenerate={handleLaunchRoadmapGenerated} />
       : <LaunchRoadmapPlaceholder projectId={project.id} onGenerated={handleLaunchRoadmapGenerated} />,
+    performance: <PerformanceTrackerSection projectId={project.id} />,
+    ...(isApplication && assets.applicationLandingPage && {
+      appLanding: <ApplicationLandingPageSection data={assets.applicationLandingPage} />,
+    }),
   };
 
   // Build grouped nav structure from tabs (skip hidden tabs)
