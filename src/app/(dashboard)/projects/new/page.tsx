@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WizardShell } from "@/components/wizard/wizard-shell";
+import { UpgradeGate } from "@/components/dashboard/upgrade-gate";
+import { getUserSubscriptionStatus, isPro } from "@/lib/subscription";
+import { FREE_PROJECT_LIMIT } from "@/lib/stripe";
 import type { ProjectRow, ProjectInputRow } from "@/types/project";
 import type { WizardInputs } from "@/types/wizard";
 
@@ -14,17 +17,27 @@ interface PageProps {
 
 export default async function NewProjectPage({ searchParams }: PageProps) {
   const { projectId } = await searchParams;
-
-  // No projectId — fresh wizard
-  if (!projectId) {
-    return <WizardShell />;
-  }
-
-  // Load existing project for returning users
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  // ── Fresh wizard — check subscription gate ────────────────────────────────
+  if (!projectId) {
+    const status = await getUserSubscriptionStatus(supabase, user.id);
+    if (!isPro(status)) {
+      const { count } = await supabase
+        .from("projects")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      if ((count ?? 0) >= FREE_PROJECT_LIMIT) {
+        return <UpgradeGate />;
+      }
+    }
+    return <WizardShell />;
+  }
+
+  // ── Returning to an existing project ─────────────────────────────────────
 
   const { data: projectData } = await supabase
     .from("projects")
@@ -34,17 +47,11 @@ export default async function NewProjectPage({ searchParams }: PageProps) {
     .single();
 
   const project = projectData as ProjectRow | null;
-
-  // Project not found or doesn't belong to user
   if (!project) redirect("/dashboard");
 
-  // Already complete — send to results
   if (project.status === "complete") redirect(`/projects/${projectId}/results`);
-
-  // Still generating from a previous attempt — show generating page
   if (project.status === "generating") redirect(`/projects/${projectId}/generating`);
 
-  // Load saved inputs
   const { data: inputData } = await supabase
     .from("project_inputs")
     .select("inputs")
