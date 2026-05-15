@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, CalendarDays, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { Copy, Check, CalendarDays, ChevronDown, ChevronRight, Loader2, CheckCircle2 } from "lucide-react";
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { NurtureSequence, NurtureEmail } from "@/types/generation";
@@ -41,20 +41,30 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
   }
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100">
         <CalendarDays className="h-7 w-7 text-violet-600" />
       </div>
       <h3 className="mb-2 text-lg font-semibold text-gray-900">Generate Your 52-Week Nurture Sequence</h3>
-      <p className="mb-2 max-w-sm text-sm text-gray-500">
-        Create a full year of weekly emails tailored to your challenge type and audience — organised by quarter, ready to load straight into your email platform.
+      <p className="mb-5 max-w-sm text-sm text-gray-500">
+        A full year of weekly emails tailored to your challenge type and audience — ready to load straight into GHL or any email platform.
       </p>
-      <ul className="mb-6 text-xs text-gray-400 space-y-1">
-        <li>Q1 (Weeks 1–13): Foundation &amp; habits</li>
-        <li>Q2 (Weeks 14–26): Momentum &amp; results</li>
-        <li>Q3 (Weeks 27–39): Deep transformation</li>
-        <li>Q4 (Weeks 40–52): Legacy &amp; next chapter</li>
+      <ul className="mb-6 w-full max-w-xs space-y-2 text-left">
+        {[
+          "52 unique weekly emails — one per week for a full year",
+          "Organised by quarter with themed arcs (Foundation → Legacy)",
+          "Each email has a subject line + full body copy",
+          "Ready to paste into GHL, ActiveCampaign, or any platform",
+        ].map((item) => (
+          <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+            {item}
+          </li>
+        ))}
       </ul>
+      <span className="mb-4 inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 border border-violet-200">
+        ⏱ Takes ~30 seconds
+      </span>
       <button
         onClick={handleGenerate}
         disabled={loading}
@@ -63,7 +73,7 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Generating 52 emails… (takes ~30s)
+            Generating 52 emails…
           </>
         ) : (
           <>
