@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WizardShell } from "@/components/wizard/wizard-shell";
-import { UpgradeGate } from "@/components/dashboard/upgrade-gate";
-import { getUserSubscriptionStatus, isPro } from "@/lib/subscription";
-import { FREE_PROJECT_LIMIT } from "@/lib/stripe";
+import { PaywallGate } from "@/components/dashboard/paywall-gate";
+import { getUserSubscriptionStatus, hasAccess } from "@/lib/subscription";
 import type { ProjectRow, ProjectInputRow } from "@/types/project";
 import type { WizardInputs } from "@/types/wizard";
 
@@ -22,18 +21,10 @@ export default async function NewProjectPage({ searchParams }: PageProps) {
 
   if (!user) redirect("/login");
 
-  // ── Fresh wizard — check subscription gate ────────────────────────────────
+  // ── Fresh wizard — require active subscription ───────────────────────────
   if (!projectId) {
     const status = await getUserSubscriptionStatus(supabase, user.id);
-    if (!isPro(status)) {
-      const { count } = await supabase
-        .from("projects")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
-      if ((count ?? 0) >= FREE_PROJECT_LIMIT) {
-        return <UpgradeGate />;
-      }
-    }
+    if (!hasAccess(status)) return <PaywallGate />;
     return <WizardShell />;
   }
 

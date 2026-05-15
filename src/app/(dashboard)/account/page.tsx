@@ -54,13 +54,9 @@ export default async function AccountPage({ searchParams }: PageProps) {
 
   const subscriptionStatus = user
     ? await getUserSubscriptionStatus(supabase, user.id)
-    : "free";
+    : "none";
 
   const periodEnd = hlSettings?.subscription_period_end ?? null;
-
-  const { count: projectCount } = await supabase
-    .from("projects")
-    .select("id", { count: "exact", head: true });
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -95,7 +91,6 @@ export default async function AccountPage({ searchParams }: PageProps) {
       <SubscriptionCard
         status={subscriptionStatus}
         periodEnd={periodEnd}
-        projectCount={projectCount ?? 0}
         upgraded={upgraded === "1"}
       />
 

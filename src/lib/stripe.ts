@@ -9,5 +9,4 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   typescript: true,
 });
 
-export const FREE_PROJECT_LIMIT = 3;
 export const PRO_PRICE_ID = process.env.STRIPE_PRO_PRICE_ID ?? "";

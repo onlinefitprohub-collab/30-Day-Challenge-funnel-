@@ -21,7 +21,7 @@ async function getUserIdFromCustomer(customerId: string): Promise<string | null>
 
 async function setSubscriptionStatus(
   userId: string,
-  status: "free" | "pro",
+  status: "active" | "none",
   periodEnd?: string | null,
 ) {
   const supabase = createServiceClient();
@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
         {
           user_id: userId,
           stripe_customer_id: session.customer as string,
-          subscription_status: "pro",
-          subscription_tier: "pro",
+          subscription_status: "active",
+          subscription_tier: "active",
           subscription_period_end: getPeriodEnd(sub),
         },
         { onConflict: "user_id" }
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       if (!userId) break;
 
       const isActive = sub.status === "active" || sub.status === "trialing";
-      await setSubscriptionStatus(userId, isActive ? "pro" : "free", getPeriodEnd(sub));
+      await setSubscriptionStatus(userId, isActive ? "active" : "none", getPeriodEnd(sub));
       break;
     }
 
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       const sub = event.data.object as Stripe.Subscription;
       const userId = await getUserIdFromCustomer(sub.customer as string);
       if (!userId) break;
-      await setSubscriptionStatus(userId, "free", null);
+      await setSubscriptionStatus(userId, "none", null);
       break;
     }
 
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
       if (!invoice.customer) break;
       const userId = await getUserIdFromCustomer(invoice.customer as string);
       if (!userId) break;
-      await setSubscriptionStatus(userId, "free");
+      await setSubscriptionStatus(userId, "none");
       break;
     }
   }
