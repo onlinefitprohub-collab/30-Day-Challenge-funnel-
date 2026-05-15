@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { ProjectList } from "@/components/dashboard/project-list";
+import { ProjectControls } from "@/components/dashboard/project-controls";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import type { ProjectRow } from "@/types/project";
 
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
             Your funnels
           </p>
-          <ProjectList projects={typedProjects} subtitles={subtitleMap} />
+          <ProjectControls projects={typedProjects} subtitles={subtitleMap} />
         </div>
       )}
     </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, Clock, AlertCircle, Loader2, MoreHorizontal, ExternalLink, RefreshCw, Zap, Target } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, Loader2, MoreHorizontal, ExternalLink, RefreshCw, Zap, Target, Pencil, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { CloneButton } from "./clone-button";
 import type { ProjectRow } from "@/types/project";
@@ -29,8 +30,66 @@ interface Props {
   subtitles: Record<string, string>;
 }
 
-export function ProjectList({ projects, subtitles }: Props) {
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+export function ProjectList({ projects: initialProjects, subtitles }: Props) {
+  const router = useRouter();
+  const [projects, setProjects] = useState(initialProjects);
+  const [menuOpen, setMenuOpen]     = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting]     = useState<string | null>(null);
+  const [renaming, setRenaming]     = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameSaving, setRenameSaving] = useState(false);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setProjects(initialProjects);
+  }, [initialProjects]);
+
+  useEffect(() => {
+    if (renaming) renameInputRef.current?.focus();
+  }, [renaming]);
+
+  function startRename(projectId: string, currentName: string) {
+    setMenuOpen(null);
+    setRenameValue(currentName);
+    setRenaming(projectId);
+  }
+
+  async function saveRename(projectId: string) {
+    const trimmed = renameValue.trim();
+    if (!trimmed) { setRenaming(null); return; }
+    setRenameSaving(true);
+    const res = await fetch(`/api/projects/${projectId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    setRenameSaving(false);
+    if (res.ok) {
+      setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, name: trimmed } : p));
+    }
+    setRenaming(null);
+  }
+
+  async function deleteProject(projectId: string) {
+    setDeleting(projectId);
+    const res = await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
+    if (res.ok) {
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      router.refresh();
+    }
+    setDeleting(null);
+    setConfirmDelete(null);
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.07] bg-[#18181b] py-16 text-center">
+        <p className="text-zinc-400 text-sm">No projects yet</p>
+        <p className="mt-1 text-zinc-600 text-xs">Create your first funnel to get started</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -44,6 +103,8 @@ export function ProjectList({ projects, subtitles }: Props) {
         const typeTag = funnelTypeLabel(project.name);
         const isComplete   = project.status === "complete";
         const isGenerating = project.status === "generating";
+        const isRenaming   = renaming === project.id;
+        const isConfirmingDelete = confirmDelete === project.id;
 
         return (
           <div
@@ -72,16 +133,19 @@ export function ProjectList({ projects, subtitles }: Props) {
 
                 <div className="relative">
                   <button
-                    onClick={() => setMenuOpen(menuOpen === project.id ? null : project.id)}
+                    onClick={() => {
+                      setConfirmDelete(null);
+                      setMenuOpen(menuOpen === project.id ? null : project.id);
+                    }}
                     className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/[0.08] hover:text-zinc-300"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
 
-                  {menuOpen === project.id && (
+                  {menuOpen === project.id && !isConfirmingDelete && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                      <div className="absolute right-0 top-9 z-20 w-40 rounded-xl border border-white/[0.08] bg-[#18181b] py-1 shadow-xl">
+                      <div className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-white/[0.08] bg-[#18181b] py-1 shadow-xl">
                         <Link
                           href={href}
                           onClick={() => setMenuOpen(null)}
@@ -90,6 +154,13 @@ export function ProjectList({ projects, subtitles }: Props) {
                           <ExternalLink className="h-3.5 w-3.5" />
                           {isComplete ? "View results" : "Open"}
                         </Link>
+                        <button
+                          onClick={() => startRename(project.id, project.name)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200 transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Rename
+                        </button>
                         {isComplete && (
                           <div className="px-3 py-2">
                             <CloneButton projectId={project.id} />
@@ -105,18 +176,71 @@ export function ProjectList({ projects, subtitles }: Props) {
                             Retry
                           </Link>
                         )}
+                        <div className="my-1 border-t border-white/[0.06]" />
+                        <button
+                          onClick={() => { setConfirmDelete(project.id); setMenuOpen(null); }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </button>
                       </div>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Project name + subtitle + type tag */}
-              <Link href={href} className="min-w-0 flex-1 block">
-                <p className="font-bold text-zinc-100 text-sm leading-snug group-hover:text-white transition-colors line-clamp-2">
-                  {project.name}
-                </p>
-                {sub && (
+              {/* Inline delete confirm */}
+              {isConfirmingDelete && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setConfirmDelete(null)} />
+                  <div className="relative z-20 mb-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3">
+                    <p className="text-xs font-semibold text-red-300 mb-2">Delete this project?</p>
+                    <p className="text-[11px] text-red-400/70 mb-3">This cannot be undone.</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => deleteProject(project.id)}
+                        disabled={deleting === project.id}
+                        className="flex-1 rounded-lg bg-red-500 px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                      >
+                        {deleting === project.id ? "Deleting…" : "Yes, delete"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="flex-1 rounded-lg border border-white/[0.08] px-2 py-1.5 text-[11px] text-zinc-400 hover:bg-white/[0.05] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Project name (inline rename or static) + subtitle + type tag */}
+              <div className="min-w-0 flex-1">
+                {isRenaming ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      ref={renameInputRef}
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveRename(project.id);
+                        if (e.key === "Escape") setRenaming(null);
+                      }}
+                      onBlur={() => saveRename(project.id)}
+                      disabled={renameSaving}
+                      className="flex-1 min-w-0 rounded-lg border border-white/[0.12] bg-white/[0.06] px-2 py-1 text-sm font-bold text-zinc-100 outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 disabled:opacity-50"
+                    />
+                  </div>
+                ) : (
+                  <Link href={href} className="block">
+                    <p className="font-bold text-zinc-100 text-sm leading-snug group-hover:text-white transition-colors line-clamp-2">
+                      {project.name}
+                    </p>
+                  </Link>
+                )}
+                {sub && !isRenaming && (
                   <p className="mt-1 text-xs text-zinc-500 line-clamp-1">{sub}</p>
                 )}
                 {typeTag && (
@@ -128,7 +252,7 @@ export function ProjectList({ projects, subtitles }: Props) {
                     {typeTag.label}
                   </span>
                 )}
-              </Link>
+              </div>
 
               {/* Footer */}
               <div className="mt-4 flex items-center justify-between border-t border-white/[0.05] pt-3">
