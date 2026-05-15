@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { User, Puzzle, Download } from "lucide-react";
 import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-card";
 import { SubscriptionCard } from "@/components/account/subscription-card";
+import { NotionSettingsCard } from "@/components/account/notion-settings-card";
 import { getUserSubscriptionStatus } from "@/lib/subscription";
 
 export const metadata = {
@@ -25,6 +26,8 @@ export default async function AccountPage({ searchParams }: PageProps) {
     hl_api_key: string | null;
     hl_location_id: string | null;
     subscription_period_end?: string | null;
+    notion_api_key?: string | null;
+    notion_page_id?: string | null;
   } | null;
 
   let hlSettings: HLSettings = null;
@@ -33,7 +36,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
   if (user) {
     const { data, error } = await supabase
       .from("user_settings")
-      .select("hl_api_key, hl_location_id, subscription_period_end")
+      .select("hl_api_key, hl_location_id, subscription_period_end, notion_api_key, notion_page_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -129,6 +132,12 @@ export default async function AccountPage({ searchParams }: PageProps) {
         maskedKey={maskedKey}
         locationId={hlSettings?.hl_location_id ?? null}
         tableReady={hlTableReady}
+      />
+
+      {/* Notion Export */}
+      <NotionSettingsCard
+        notionApiKey={hlSettings?.notion_api_key ?? null}
+        notionPageId={hlSettings?.notion_page_id ?? null}
       />
     </div>
   );

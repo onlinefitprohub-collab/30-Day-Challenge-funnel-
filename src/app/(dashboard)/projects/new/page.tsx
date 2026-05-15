@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { WizardShell } from "@/components/wizard/wizard-shell";
+import { NewProjectFlow } from "@/components/wizard/new-project-flow";
 import { PaywallGate } from "@/components/dashboard/paywall-gate";
 import { getUserSubscriptionStatus, hasAccess } from "@/lib/subscription";
 import type { ProjectRow, ProjectInputRow } from "@/types/project";
@@ -25,7 +25,7 @@ export default async function NewProjectPage({ searchParams }: PageProps) {
   if (!projectId) {
     const status = await getUserSubscriptionStatus(supabase, user.id);
     if (!hasAccess(status)) return <PaywallGate />;
-    return <WizardShell />;
+    return <NewProjectFlow />;
   }
 
   // ── Returning to an existing project ─────────────────────────────────────
@@ -54,7 +54,7 @@ export default async function NewProjectPage({ searchParams }: PageProps) {
     : undefined;
 
   return (
-    <WizardShell
+    <NewProjectFlow
       initialProjectId={projectId}
       initialData={savedInputs ?? { duration: 30, trafficSources: [], hasBeforeAfter: false }}
     />

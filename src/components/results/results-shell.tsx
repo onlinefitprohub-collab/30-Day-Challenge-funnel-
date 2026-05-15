@@ -8,7 +8,7 @@ import {
   ThumbsUp, Calendar, MessageSquare, Mail, Megaphone,
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
-  CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp,
+  CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -47,6 +47,7 @@ import { UpsellSection, UpsellPlaceholder } from "./sections/upsell-sequence";
 import { LaunchRoadmapSection, LaunchRoadmapPlaceholder } from "./sections/launch-roadmap";
 import { ApplicationLandingPageSection } from "./sections/application-landing-page";
 import { PerformanceTrackerSection } from "./sections/performance-tracker";
+import { ExportSection } from "./sections/export-section";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
   { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
   { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
+  { id: "exportCopy",    label: "Export Copy",       icon: Download,                       group: "export" },
   { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
   { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "sequences",  groupLabel: "Sequences" },
   { id: "smsSequence",   label: "SMS Sequence",     icon: MessageSquare,                  group: "sequences" },
@@ -89,6 +91,7 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
   { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
   { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
+  { id: "exportCopy",    label: "Export Copy",       icon: Download,                       group: "export" },
   { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
   { id: "appLanding",    label: "Reg. Page Copy",    icon: FileText,                       group: "overview" },
   { id: "vslScript",     label: "VSL Script",       icon: Video,                          group: "content",    groupLabel: "Content" },
@@ -114,6 +117,7 @@ interface ResultsShellProps {
   outputs: Record<string, unknown>;
   isMock: boolean;
   hlConnected: boolean;
+  notionConnected: boolean;
 }
 
 type SectionGroup = "offer-pages" | "sequences" | "ads";
@@ -152,7 +156,7 @@ async function triggerLongFormGeneration(projectId: string): Promise<LongFormSal
   }
 }
 
-export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsShellProps) {
+export function ResultsShell({ project, outputs, isMock, hlConnected, notionConnected }: ResultsShellProps) {
   const router = useRouter();
 
   const funnelType = (outputs.funnelType as "challenge" | "application" | undefined) ?? "challenge";
@@ -364,6 +368,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected }: ResultsS
       ? <LaunchRoadmapSection data={liveLaunchRoadmap} projectId={project.id} onRegenerate={handleLaunchRoadmapGenerated} />
       : <LaunchRoadmapPlaceholder projectId={project.id} onGenerated={handleLaunchRoadmapGenerated} />,
     performance: <PerformanceTrackerSection projectId={project.id} />,
+    exportCopy:  <ExportSection data={assets} projectId={project.id} projectName={project.name} notionConnected={notionConnected} />,
     ...(isApplication && assets.applicationLandingPage && {
       appLanding: <ApplicationLandingPageSection data={assets.applicationLandingPage} />,
     }),

@@ -47,16 +47,21 @@ export default async function ResultsPage({
 
   const isMock = Boolean((output.outputs as Record<string, unknown>)._isMock);
 
-  let hlConnected = false;
+  let hlConnected     = false;
+  let notionConnected = false;
   if (user) {
     const { data: settingsData, error: settingsError } = await supabase
       .from("user_settings")
-      .select("hl_api_key, hl_location_id")
+      .select("hl_api_key, hl_location_id, notion_api_key, notion_page_id")
       .eq("user_id", user.id)
       .maybeSingle();
     if (!settingsError) {
-      const s = settingsData as { hl_api_key?: string | null; hl_location_id?: string | null } | null;
-      hlConnected = Boolean(s?.hl_api_key && s?.hl_location_id);
+      const s = settingsData as {
+        hl_api_key?: string | null; hl_location_id?: string | null;
+        notion_api_key?: string | null; notion_page_id?: string | null;
+      } | null;
+      hlConnected     = Boolean(s?.hl_api_key && s?.hl_location_id);
+      notionConnected = Boolean(s?.notion_api_key && s?.notion_page_id);
     }
   }
 
@@ -66,6 +71,7 @@ export default async function ResultsPage({
       outputs={output.outputs}
       isMock={isMock}
       hlConnected={hlConnected}
+      notionConnected={notionConnected}
     />
   );
 }
