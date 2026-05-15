@@ -103,6 +103,8 @@ export interface Database {
           subscription_status: string;
           subscription_tier: string;
           subscription_period_end: string | null;
+          notion_api_key: string | null;
+          notion_page_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -114,6 +116,8 @@ export interface Database {
           subscription_status?: string;
           subscription_tier?: string;
           subscription_period_end?: string | null;
+          notion_api_key?: string | null;
+          notion_page_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -124,6 +128,8 @@ export interface Database {
           subscription_status?: string;
           subscription_tier?: string;
           subscription_period_end?: string | null;
+          notion_api_key?: string | null;
+          notion_page_id?: string | null;
           updated_at?: string;
         };
       };
