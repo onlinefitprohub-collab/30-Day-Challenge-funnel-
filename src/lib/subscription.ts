@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type SubscriptionStatus = "free" | "pro" | "annual";
+// "active"  = paid Stripe subscriber
+// "manual"  = admin-granted access (no Stripe required)
+// "none"    = no access — must subscribe
+export type SubscriptionStatus = "active" | "manual" | "none";
 
 export async function getUserSubscriptionStatus(
   supabase: SupabaseClient,
@@ -10,13 +13,13 @@ export async function getUserSubscriptionStatus(
     .from("user_settings")
     .select("subscription_status")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   const status = (data as { subscription_status?: string } | null)?.subscription_status;
-  if (status === "pro" || status === "annual") return status;
-  return "free";
+  if (status === "active" || status === "manual") return status;
+  return "none";
 }
 
-export function isPro(status: SubscriptionStatus): boolean {
-  return status === "pro" || status === "annual";
+export function hasAccess(status: SubscriptionStatus): boolean {
+  return status === "active" || status === "manual";
 }

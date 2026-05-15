@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { Users, FolderKanban, CheckCircle2, AlertCircle, Clock, Pen } from "lucide-react";
+import { AccessManager } from "@/components/admin/access-manager";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
 export const dynamic = "force-dynamic";
@@ -75,14 +76,27 @@ export default async function AdminPage() {
     { data: inputs },
     { data: outputs },
     { data: { users: authUsers } },
+    { data: userSettings },
   ] = await Promise.all([
     service.from("projects").select("*").order("created_at", { ascending: false }),
     service.from("project_inputs").select("project_id, inputs"),
     service.from("project_outputs").select("project_id, outputs"),
     service.auth.admin.listUsers({ perPage: 1000 }),
+    service.from("user_settings").select("user_id, subscription_status"),
   ]);
 
   const allProjects = (projects ?? []) as ProjectRow[];
+  const settingsMap = Object.fromEntries(
+    ((userSettings ?? []) as { user_id: string; subscription_status: string }[])
+      .map((s) => [s.user_id, s.subscription_status])
+  );
+
+  // Build user access list for AccessManager
+  const userAccessList = (authUsers ?? []).map((u) => ({
+    userId: u.id,
+    email: u.email ?? "—",
+    status: settingsMap[u.id] ?? "none",
+  }));
   const inputMap    = Object.fromEntries((inputs ?? [] as InputRow[]).map((r: InputRow) => [r.project_id, r.inputs]));
   const outputMap   = Object.fromEntries((outputs ?? [] as OutputRow[]).map((r: OutputRow) => [r.project_id, r.outputs]));
   const userMap     = Object.fromEntries((authUsers ?? []).map((u) => [u.id, u.email ?? "—"]));
@@ -178,6 +192,17 @@ export default async function AdminPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Access Management */}
+      <div>
+        <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-400">
+          Access management
+        </h2>
+        <p className="mb-3 text-sm text-gray-500">
+          Grant or revoke manual access to any account. Users with admin access can use all features without a Stripe subscription.
+        </p>
+        <AccessManager users={userAccessList} />
       </div>
 
     </div>
