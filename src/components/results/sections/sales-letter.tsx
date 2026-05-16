@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Loader2, FileText } from "lucide-react";
+import { Copy, Check, Loader2, FileText, CheckCircle2 } from "lucide-react";
 import { ResultSection } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { LongFormSalesAssets } from "@/types/longform";
@@ -65,7 +65,7 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
   const isGenerating = loading || generating;
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100">
         {isGenerating ? (
           <Loader2 className="h-7 w-7 text-violet-600 animate-spin" />
@@ -76,19 +76,39 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
         {isGenerating ? "Generating your long-form assets…" : "Generate Sales Letter + ManyChat Flow"}
       </h3>
-      <p className="mb-6 max-w-sm text-sm text-gray-500">
-        {isGenerating
-          ? "This usually takes 1–2 minutes — your sales letter and ManyChat DM flow are being written."
-          : "Create a long-form direct-response sales letter (3,000–5,000 words) and a complete ManyChat DM flow for organic lead nurture — both tailored to your challenge and audience."}
-      </p>
-      {!isGenerating && (
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60 transition-colors"
-        >
-          <FileText className="h-4 w-4" /> Generate Sales Letter + ManyChat
-        </button>
+      {isGenerating ? (
+        <p className="mb-6 max-w-sm text-sm text-gray-500">
+          This usually takes 1–2 minutes — your sales letter and ManyChat DM flow are being written.
+        </p>
+      ) : (
+        <>
+          <p className="mb-5 max-w-sm text-sm text-gray-500">
+            A long-form direct-response sales letter and a ManyChat DM flow — both tailored to your challenge and audience.
+          </p>
+          <ul className="mb-6 w-full max-w-xs space-y-2 text-left">
+            {[
+              "3,000–5,000 word direct-response sales letter",
+              "Hook → problem → mechanism → proof → offer → guarantee → close",
+              "ManyChat DM flow for organic Instagram lead nurture",
+              "Written in your selected copywriter's style",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <span className="mb-4 inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 border border-violet-200">
+            ⏱ Takes 1–2 minutes
+          </span>
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60 transition-colors"
+          >
+            <FileText className="h-4 w-4" /> Generate Sales Letter + ManyChat
+          </button>
+        </>
       )}
     </div>
   );

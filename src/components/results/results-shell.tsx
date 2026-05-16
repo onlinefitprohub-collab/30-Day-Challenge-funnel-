@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
   CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
+  ChevronDown, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -144,6 +145,9 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
   "ads":         "Ads & Campaign",
 };
 
+const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
+const DEFAULT_COLLAPSED = new Set(["Overview", "Sequences", "Content", "Ads", "Long-Form", "Coaching"]);
+
 async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
   try {
     const res = await fetch("/api/generate-longform", {
@@ -167,6 +171,14 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const tabs = isApplication ? APPLICATION_TABS : CHALLENGE_TABS;
 
   const [activeTab, setActiveTab]     = useState<TabId>("startHere");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return DEFAULT_COLLAPSED;
+    try {
+      const stored = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      if (stored) return new Set(JSON.parse(stored) as string[]);
+    } catch {}
+    return DEFAULT_COLLAPSED;
+  });
   const [copiedAll, setCopiedAll]     = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenSection, setRegenSection] = useState<SectionGroup | null>(null);
@@ -180,7 +192,30 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const [liveUpsellSequence, setLiveUpsellSequence]   = useState<UpsellSequence | undefined>(outputs.upsellSequence as UpsellSequence | undefined);
   const [liveLaunchRoadmap, setLiveLaunchRoadmap]     = useState<LaunchRoadmap | undefined>(outputs.launchRoadmap as LaunchRoadmap | undefined);
 
-  useEffect(() => { void triggerLongFormGeneration; }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  function toggleGroup(label: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label); else next.add(label);
+      try { window.localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
+
+  function handleNavigate(tabId: TabId) {
+    const tab = tabs.find(t => t.id === tabId);
+    if (tab) {
+      const group = grouped.find(g => g.items.some(i => i.id === tabId));
+      if (group && collapsedGroups.has(group.label)) {
+        setCollapsedGroups((prev) => {
+          const next = new Set(prev);
+          next.delete(group.label);
+          try { window.localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify([...next])); } catch {}
+          return next;
+        });
+      }
+    }
+    setActiveTab(tabId);
+  }
 
   function handleWorkoutGenerated(plan: WorkoutPlan) {
     setLiveWorkoutPlan(plan);
@@ -270,7 +305,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   }
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
-    startHere:       <StartHereSection       funnelType={funnelType} onNavigate={setActiveTab} />,
+    startHere:       <StartHereSection       funnelType={funnelType} onNavigate={handleNavigate} />,
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
@@ -453,37 +488,54 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
 
         {/* Sidebar */}
         <nav className="w-56 shrink-0 rounded-2xl border border-white/[0.07] bg-[#0d0d10] py-4 overflow-hidden sticky top-4">
-          {grouped.map(({ label, items }) => (
-            <div key={label} className="mb-5 last:mb-0">
-              <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-                {label}
-              </p>
-              <div className="space-y-0.5 px-2">
-                {items.map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  const isHL = !!tab.highlight;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${
-                        isActive && isHL
-                          ? "bg-orange-500 text-white shadow-sm"
-                          : isActive
-                          ? "bg-white/[0.08] text-zinc-100"
-                          : isHL
-                          ? "text-orange-400 hover:bg-orange-500/10"
-                          : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-300"
-                      }`}
-                    >
-                      <tab.icon className="h-4 w-4 shrink-0 opacity-80" />
-                      <span>{tab.label}</span>
-                    </button>
-                  );
-                })}
+          {grouped.map(({ label, items }) => {
+            const isCollapsed = collapsedGroups.has(label);
+            const hasActive = items.some(t => t.id === activeTab);
+            return (
+              <div key={label} className="mb-4 last:mb-0">
+                <button
+                  onClick={() => toggleGroup(label)}
+                  className="flex w-full items-center justify-between px-4 pb-1.5 text-left"
+                >
+                  <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                    hasActive && isCollapsed ? "text-zinc-400" : "text-zinc-600"
+                  }`}>
+                    {label}
+                  </span>
+                  {isCollapsed
+                    ? <ChevronRight className="h-3 w-3 text-zinc-600" />
+                    : <ChevronDown  className="h-3 w-3 text-zinc-600" />
+                  }
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-0.5 px-2">
+                    {items.map((tab) => {
+                      const isActive = activeTab === tab.id;
+                      const isHL = !!tab.highlight;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${
+                            isActive && isHL
+                              ? "bg-orange-500 text-white shadow-sm"
+                              : isActive
+                              ? "bg-white/[0.08] text-zinc-100"
+                              : isHL
+                              ? "text-orange-400 hover:bg-orange-500/10"
+                              : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-300"
+                          }`}
+                        >
+                          <tab.icon className="h-4 w-4 shrink-0 opacity-80" />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* Content area */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, MessageCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { InstagramDmScript, DmConversationScript } from "@/types/dm-script";
@@ -163,7 +163,7 @@ export function DmScriptPlaceholder({ projectId, onGenerated }: DmScriptPlacehol
   }
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
         {loading ? (
           <Loader2 className="h-7 w-7 text-emerald-600 animate-spin" />
@@ -174,18 +174,38 @@ export function DmScriptPlaceholder({ projectId, onGenerated }: DmScriptPlacehol
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
         {loading ? "Generating your DM scripts…" : "Generate Instagram DM Scripts"}
       </h3>
-      <p className="mb-6 max-w-sm text-sm text-gray-500">
-        {loading
-          ? "This usually takes about 60 seconds — your personalised conversation scripts are being written."
-          : "Create word-for-word Instagram DM scripts for cold outreach, warm leads, comment-to-DM, and inbound enquiries — all personalised to your niche and offer."}
-      </p>
-      {!loading && (
-        <button
-          onClick={handleGenerate}
-          className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
-        >
-          <MessageCircle className="h-4 w-4" /> Generate DM Scripts
-        </button>
+      {loading ? (
+        <p className="mb-6 max-w-sm text-sm text-gray-500">
+          This usually takes about 60 seconds — your personalised conversation scripts are being written.
+        </p>
+      ) : (
+        <>
+          <p className="mb-5 max-w-sm text-sm text-gray-500">
+            Word-for-word Instagram conversation scripts for every lead type — personalised to your niche and offer.
+          </p>
+          <ul className="mb-6 w-full max-w-xs space-y-2 text-left">
+            {[
+              "4 complete conversation paths (cold, warm, comment-to-DM, inbound)",
+              "Word-for-word scripts — not just templates",
+              "Opener → follow-ups → booking bridge for each path",
+              "Coaching notes + DM tips included",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <span className="mb-4 inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 border border-emerald-200">
+            ⏱ Takes ~60 seconds
+          </span>
+          <button
+            onClick={handleGenerate}
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+          >
+            <MessageCircle className="h-4 w-4" /> Generate DM Scripts
+          </button>
+        </>
       )}
     </div>
   );
