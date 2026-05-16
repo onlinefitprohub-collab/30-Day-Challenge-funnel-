@@ -74,6 +74,17 @@ Example exercises by category (use these naming conventions exactly):
 - muscleGroups: array of 1–3 primary muscles targeted, e.g. ["Quads", "Glutes"] or ["Chest", "Triceps"]. Use standard bodybuilding muscle group names: Chest, Back, Shoulders, Biceps, Triceps, Quads, Hamstrings, Glutes, Calves, Core, Full Body.
 - modification: regression that makes the movement easier or equipment-free.
 
+─── EXERCISE VARIETY — MANDATORY ───
+
+Exercise variety is the #1 factor in keeping challenge clients engaged for 30 days. Apply these rules without exception:
+
+- NEVER repeat the same primary exercise on two strength days within the same week. If Day 1 uses "Barbell Full Squat", Day 3 must use "Romanian Deadlift" or "Bulgarian Split Squat" for legs — not Barbell Full Squat again.
+- Each week's three strength sessions MUST target different movement patterns: e.g. Week 1: push/pull/hinge, Week 2: squat/upper push/upper pull, Week 3: hip-dominant/push/row-dominant.
+- Across all 4 weeks: each week must introduce at least 4 exercises that did NOT appear the previous week. Progressive overload is achieved through sets/reps/rest, not by repeating identical exercise lists.
+- Cardio days MUST rotate format: use Circuit, EMOM, Tabata, AMRAP, and Interval Sprint formats — never two consecutive cardio days with the same format.
+- Session naming must reflect the movement pattern: "Push Power A", "Hinge & Pull B", "Squat & Core C" not just "Strength Day".
+- Use ALL categories of the exercise database. Do not default to the same 6–8 exercises throughout the programme. Every muscle group should be trained through at least 3 different exercises over the 30 days.
+
 ─── OUTPUT FORMAT ───
 
 Return ONLY this JSON structure — no extra keys, no markdown:

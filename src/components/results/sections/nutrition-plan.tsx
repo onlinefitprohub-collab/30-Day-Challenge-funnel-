@@ -1,7 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Loader2, Salad, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Copy, Check, ChevronDown, ChevronRight, Loader2, Salad, CheckCircle2, Info } from "lucide-react";
+
+const NUTRITION_MESSAGES = [
+  "Calculating calorie targets for your audience...",
+  "Building Fat Loss meal templates...",
+  "Designing Maintenance day menus...",
+  "Creating Performance fuel plans...",
+  "Writing training day vs rest day meals...",
+  "Selecting whole foods for your shopping list...",
+  "Writing meal prep guide and batch-cook tips...",
+  "Finalising your complete nutrition plan...",
+];
 import { toast } from "@/hooks/use-toast";
 import type { NutritionPlan, NutritionTier, NutritionDayPlan } from "@/types/generation";
 
@@ -14,6 +25,13 @@ interface NutritionPlanPlaceholderProps {
 
 export function NutritionPlanPlaceholder({ projectId, onGenerated }: NutritionPlanPlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [msgIdx, setMsgIdx]   = useState(0);
+
+  useEffect(() => {
+    if (!loading) { setMsgIdx(0); return; }
+    const id = setInterval(() => setMsgIdx((i) => (i + 1) % NUTRITION_MESSAGES.length), 3500);
+    return () => clearInterval(id);
+  }, [loading]);
 
   async function handleGenerate() {
     if (loading) return;
@@ -39,51 +57,66 @@ export function NutritionPlanPlaceholder({ projectId, onGenerated }: NutritionPl
     }
   }
 
-  return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-12 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-        {loading ? (
-          <Loader2 className="h-7 w-7 text-green-600 animate-spin" />
-        ) : (
-          <Salad className="h-7 w-7 text-green-600" />
-        )}
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-green-200 bg-gradient-to-b from-green-50 to-white px-8 py-20 text-center">
+        <div className="relative mb-6">
+          <div className="absolute -inset-4 rounded-full bg-green-200 animate-ping opacity-20" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-green-600 shadow-lg shadow-green-200">
+            <Salad className="h-8 w-8 text-white" />
+          </div>
+        </div>
+        <h3 className="mb-3 text-xl font-bold text-gray-900">Building your nutrition plan…</h3>
+        <p className="mb-8 h-5 text-sm font-medium text-green-600">{NUTRITION_MESSAGES[msgIdx]}</p>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Usually takes about 60 seconds
+        </div>
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-gray-900">
-        {loading ? "Generating nutrition plan…" : "Generate Client Nutrition Plan"}
-      </h3>
-      {loading ? (
-        <p className="mb-6 max-w-sm text-sm text-gray-500">
-          This usually takes about 60 seconds — your complete meal plan is being built.
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+        <p className="text-xs text-blue-700">
+          <span className="font-semibold">This is a coach template, not a personalised plan.</span>{" "}
+          It uses your challenge goal, challenge type, and target audience to calibrate calorie targets and meal themes.
+          Your clients choose their tier (Fat Loss, Maintenance, or Performance) based on their individual goal.
         </p>
-      ) : (
-        <>
-          <p className="mb-5 max-w-sm text-sm text-gray-500">
-            A complete 30-day meal plan your challenge clients can hand to participants — with 3 calorie tiers, training vs rest day templates, and a shopping list.
-          </p>
-          <ul className="mb-6 w-full max-w-xs space-y-2 text-left">
-            {[
-              "3 calorie tiers: Fat Loss, Maintenance & Performance",
-              "Training day & rest day meal templates for each tier",
-              "Full meal breakdowns with macros per food item",
-              "20-item pantry shopping list + weekly meal prep guide",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <span className="mb-4 inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 border border-green-200">
-            ⏱ Takes ~60 seconds
-          </span>
-          <button
-            onClick={handleGenerate}
-            className="flex items-center gap-2 rounded-xl bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
-          >
-            <Salad className="h-4 w-4" /> Generate Nutrition Plan
-          </button>
-        </>
-      )}
+      </div>
+      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-12 text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+          <Salad className="h-7 w-7 text-green-600" />
+        </div>
+        <h3 className="mb-2 text-lg font-semibold text-gray-900">Generate Client Nutrition Plan</h3>
+        <p className="mb-5 max-w-sm text-sm text-gray-500">
+          World-cuisine inspired meal templates your challenge participants will actually look forward to eating — not another chicken-and-rice plan.
+        </p>
+        <ul className="mb-6 w-full max-w-xs space-y-2 text-left">
+          {[
+            "3 calorie tiers: Fat Loss, Maintenance & Performance",
+            "Training day & rest day menus — completely different per tier",
+            "Full macro breakdowns per food item with preparation inspiration",
+            "Pantry shopping list + 5-step Sunday meal prep guide",
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <span className="mb-4 inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 border border-green-200">
+          ⏱ Takes ~60 seconds
+        </span>
+        <button
+          onClick={handleGenerate}
+          className="flex items-center gap-2 rounded-xl bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+        >
+          <Salad className="h-4 w-4" /> Generate Nutrition Plan
+        </button>
+      </div>
     </div>
   );
 }
@@ -319,6 +352,15 @@ export function NutritionPlanSection({ data, projectId, onRegenerate }: Nutritio
 
   return (
     <div className="space-y-5">
+      {/* Coach context note */}
+      <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+        <p className="text-xs text-blue-700">
+          <span className="font-semibold">Coach template — calibrated to your challenge goal and target audience.</span>{" "}
+          Share the full plan with participants and ask them to choose their tier. Fat Loss = calorie deficit; Maintenance = body recomposition; Performance = muscle-building surplus.
+        </p>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

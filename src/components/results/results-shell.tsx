@@ -78,10 +78,10 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "adCopy",        label: "Ad Copy",          icon: Megaphone,                      group: "ads",        groupLabel: "Ads" },
   { id: "creativePrompts",label:"Creatives",         icon: ImageIcon,                      group: "ads" },
   { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
-  { id: "salesLetter",   label: "Sales Letter",     icon: FileText,                       group: "longform",   groupLabel: "Long-Form" },
-  { id: "workoutPlan",   label: "Workout Plan",     icon: Dumbbell,                       group: "longform" },
-  { id: "nutritionPlan", label: "Nutrition Plan",   icon: Salad,                          group: "longform" },
-  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
+  { id: "salesLetter",   label: "Sales Letter",     icon: FileText,                       group: "longform",   groupLabel: "Sales Assets" },
+  { id: "workoutPlan",   label: "Workout Plan",     icon: Dumbbell,                       group: "coaching",   groupLabel: "Coaching" },
+  { id: "nutritionPlan", label: "Nutrition Plan",   icon: Salad,                          group: "coaching" },
+  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching" },
   { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
   { id: "contentCalendar",label:"Content Engine",   icon: CalendarRange,                  group: "coaching" },
   { id: "deliveryPack",  label: "Delivery Pack",    icon: Package,                        group: "coaching" },
@@ -149,7 +149,7 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
 
 const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
 const RESULTS_SEEN_KEY    = "fitpro_results_seen";
-const DEFAULT_COLLAPSED = new Set(["Overview", "Sequences", "Content", "Ads", "Long-Form", "Coaching"]);
+const DEFAULT_COLLAPSED = new Set(["Overview", "Sequences", "Content", "Ads", "Sales Assets", "Coaching"]);
 
 async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
   try {

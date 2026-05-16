@@ -1,7 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Dumbbell, Loader2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Copy, Check, ChevronDown, ChevronRight, Dumbbell, Loader2, ExternalLink, CheckCircle2 } from "lucide-react";
+
+const WORKOUT_MESSAGES = [
+  "Selecting exercises from Bodybuilding.com...",
+  "Building Week 1 Foundation sessions...",
+  "Designing progressive overload structure...",
+  "Mapping training and recovery days...",
+  "Writing Week 3 Intensity Surge sessions...",
+  "Planning your Week 4 Final Challenge...",
+  "Adding coaching notes and modifications...",
+  "Finalising your 30-day programme...",
+];
 import { toast } from "@/hooks/use-toast";
 import type { WorkoutPlan, WorkoutDay } from "@/types/generation";
 
@@ -14,6 +25,13 @@ interface WorkoutPlanPlaceholderProps {
 
 export function WorkoutPlanPlaceholder({ projectId, onGenerated }: WorkoutPlanPlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [msgIdx, setMsgIdx]   = useState(0);
+
+  useEffect(() => {
+    if (!loading) { setMsgIdx(0); return; }
+    const id = setInterval(() => setMsgIdx((i) => (i + 1) % WORKOUT_MESSAGES.length), 3500);
+    return () => clearInterval(id);
+  }, [loading]);
 
   async function handleGenerate() {
     if (loading) return;
@@ -39,25 +57,55 @@ export function WorkoutPlanPlaceholder({ projectId, onGenerated }: WorkoutPlanPl
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white px-8 py-20 text-center">
+        <div className="relative mb-6">
+          <div className="absolute -inset-4 rounded-full bg-indigo-200 animate-ping opacity-20" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-200">
+            <Dumbbell className="h-8 w-8 text-white" />
+          </div>
+        </div>
+        <h3 className="mb-3 text-xl font-bold text-gray-900">Building your 30-day programme…</h3>
+        <p className="mb-8 h-5 text-sm font-medium text-indigo-500">{WORKOUT_MESSAGES[msgIdx]}</p>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Usually takes about 60 seconds
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100">
         <Dumbbell className="h-7 w-7 text-indigo-600" />
       </div>
       <h3 className="mb-2 text-lg font-semibold text-gray-900">Generate Your 30-Day Workout Plan</h3>
-      <p className="mb-6 max-w-sm text-sm text-gray-500">
-        Create a personalised, progressive programme tailored to your challenge type and target audience. Includes 4 weeks of daily sessions with exercises, sets, reps, and coaching notes.
+      <p className="mb-5 max-w-sm text-sm text-gray-500">
+        A progressive 4-week programme tailored to your challenge type and target audience — with exercises sourced from Bodybuilding.com, muscle group tags, and coaching modifications.
       </p>
+      <ul className="mb-6 w-full max-w-xs space-y-2 text-left">
+        {[
+          "28 daily sessions across 4 progressive weeks",
+          "Exercises with BB.com links, sets, reps & rest",
+          "Muscle group tags + beginner modifications",
+          "Week 4 capstone Final Challenge sessions",
+        ].map((item) => (
+          <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
+            {item}
+          </li>
+        ))}
+      </ul>
+      <span className="mb-4 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 border border-indigo-200">
+        ⏱ Takes ~60 seconds
+      </span>
       <button
         onClick={handleGenerate}
-        disabled={loading}
-        className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+        className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
       >
-        {loading ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
-        ) : (
-          <><Dumbbell className="h-4 w-4" /> Generate Workout Plan</>
-        )}
+        <Dumbbell className="h-4 w-4" /> Generate Workout Plan
       </button>
     </div>
   );
