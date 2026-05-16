@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Dumbbell, Loader2, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, Dumbbell, Loader2, CheckCircle2 } from "lucide-react";
 
 const WORKOUT_MESSAGES = [
   "Selecting exercises from Bodybuilding.com...",
@@ -174,20 +174,7 @@ function DayCard({ day }: { day: WorkoutDay }) {
                   <tbody className="divide-y divide-gray-100">
                     {day.exercises.map((ex, i) => (
                       <tr key={i}>
-                        <td className="py-1.5 pr-4 font-medium text-gray-900">
-                          <div className="flex items-center gap-1.5">
-                            <span>{ex.name}</span>
-                            <a
-                              href={`https://www.bodybuilding.com/exercises/search?query=${encodeURIComponent(ex.name)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-indigo-400 hover:text-indigo-600 transition-colors"
-                              title="View on Bodybuilding.com"
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </div>
-                        </td>
+                        <td className="py-1.5 pr-4 font-medium text-gray-900">{ex.name}</td>
                         <td className="py-1.5 pr-4">
                           <div className="flex flex-wrap gap-1">
                             {(ex.muscleGroups ?? []).map((m) => (

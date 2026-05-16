@@ -107,7 +107,8 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "adCopy",        label: "Ad Copy",          icon: Megaphone,                      group: "ads",        groupLabel: "Ads" },
   { id: "creativePrompts",label:"Creatives",         icon: ImageIcon,                      group: "ads" },
   { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
-  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
+  { id: "nutritionPlan", label: "Nutrition Plan",   icon: Salad,                          group: "coaching",   groupLabel: "Coaching" },
+  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching" },
   { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
   { id: "contentCalendar",label:"Content Engine",   icon: CalendarRange,                  group: "coaching" },
   { id: "testimonialHarvest",label:"Testimonials",  icon: Star,                           group: "coaching" },
@@ -384,13 +385,13 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     nurtureSequence: liveNurtureSequence
       ? <NurtureSection data={liveNurtureSequence} projectId={project.id} onRegenerate={handleNurtureGenerated} />
       : <NurturePlaceholder projectId={project.id} onGenerated={handleNurtureGenerated} />,
+    nutritionPlan: liveNutritionPlan
+      ? <NutritionPlanSection data={liveNutritionPlan} projectId={project.id} onRegenerate={handleNutritionGenerated} />
+      : <NutritionPlanPlaceholder projectId={project.id} onGenerated={handleNutritionGenerated} />,
     ...((!isApplication) && {
       workoutPlan: liveWorkoutPlan
         ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
         : <WorkoutPlanPlaceholder projectId={project.id} onGenerated={handleWorkoutGenerated} />,
-      nutritionPlan: liveNutritionPlan
-        ? <NutritionPlanSection data={liveNutritionPlan} projectId={project.id} onRegenerate={handleNutritionGenerated} />
-        : <NutritionPlanPlaceholder projectId={project.id} onGenerated={handleNutritionGenerated} />,
       salesLetter: liveLongFormAssets
         ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,

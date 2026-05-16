@@ -50,17 +50,17 @@ Name sessions specifically — not generic. Examples:
 - "Upper Body Power A", "Lower Body Strength B", "Full Body HIIT Circuit", "Core & Mobility Flow", "Active Recovery Walk + Stretch", "Rest Day"
 - Capstone days: "30-Day Final Challenge — Part 1", "30-Day Final Challenge — Part 2"
 
-─── EXERCISE SELECTION — BODYBUILDING.COM DATABASE ───
+─── EXERCISE SELECTION ───
 
-All exercises MUST be taken from Bodybuilding.com's verified exercise database. Use the exact exercise names as they appear on Bodybuilding.com. This ensures coaches and clients can look up form demonstrations easily.
+Use real, well-known exercises with clear, standard names that coaches and clients can easily search on any fitness platform or YouTube. The goal is that any exercise name you write should be instantly searchable and findable by a beginner.
 
-Example exercises by category (use these naming conventions exactly):
-- Chest: "Barbell Bench Press - Medium Grip", "Incline Dumbbell Press", "Cable Crossover", "Push-Up", "Dumbbell Flye"
-- Back: "Barbell Deadlift", "Wide-Grip Lat Pulldown", "Bent Over Barbell Row", "Seated Cable Row", "Pull-Up", "Single-Arm Dumbbell Row"
-- Legs: "Barbell Full Squat", "Leg Press", "Romanian Deadlift", "Walking Lunge", "Leg Curl", "Bulgarian Split Squat", "Goblet Squat"
-- Shoulders: "Dumbbell Shoulder Press", "Lateral Raise", "Face Pull", "Arnold Dumbbell Press", "Upright Barbell Row"
-- Arms: "Barbell Curl", "Hammer Curl", "Triceps Pushdown", "Skull Crusher", "Dips - Triceps Version"
-- Core: "Plank", "Hanging Leg Raise", "Cable Crunch", "Russian Twist", "Ab Roller", "Reverse Crunch"
+Example exercises by category (use these naming conventions):
+- Chest: "Barbell Bench Press", "Incline Dumbbell Press", "Cable Crossover", "Push-Up", "Dumbbell Flye"
+- Back: "Barbell Deadlift", "Lat Pulldown", "Bent-Over Barbell Row", "Seated Cable Row", "Pull-Up", "Single-Arm Dumbbell Row"
+- Legs: "Back Squat", "Leg Press", "Romanian Deadlift", "Walking Lunge", "Leg Curl", "Bulgarian Split Squat", "Goblet Squat"
+- Shoulders: "Dumbbell Shoulder Press", "Lateral Raise", "Face Pull", "Arnold Press", "Upright Row"
+- Arms: "Barbell Curl", "Hammer Curl", "Triceps Pushdown", "Skull Crusher", "Triceps Dip"
+- Core: "Plank", "Hanging Leg Raise", "Cable Crunch", "Russian Twist", "Ab Wheel Rollout", "Reverse Crunch"
 - Cardio/HIIT: "Burpee", "Jump Squat", "Mountain Climber", "Box Jump", "Jumping Jack", "High Knees", "Kettlebell Swing"
 
 ─── EXERCISE RULES ───
@@ -108,7 +108,7 @@ Return ONLY this JSON structure — no extra keys, no markdown:
           "warmUp": "string",
           "exercises": [
             {
-              "name": "string — exact Bodybuilding.com exercise name",
+              "name": "string — standard exercise name, clear enough to search on any fitness platform",
               "sets": 3,
               "reps": "10-12",
               "rest": "60 sec",
