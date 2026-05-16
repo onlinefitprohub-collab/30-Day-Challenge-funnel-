@@ -50,6 +50,19 @@ Name sessions specifically — not generic. Examples:
 - "Upper Body Power A", "Lower Body Strength B", "Full Body HIIT Circuit", "Core & Mobility Flow", "Active Recovery Walk + Stretch", "Rest Day"
 - Capstone days: "30-Day Final Challenge — Part 1", "30-Day Final Challenge — Part 2"
 
+─── EXERCISE SELECTION — BODYBUILDING.COM DATABASE ───
+
+All exercises MUST be taken from Bodybuilding.com's verified exercise database. Use the exact exercise names as they appear on Bodybuilding.com. This ensures coaches and clients can look up form demonstrations easily.
+
+Example exercises by category (use these naming conventions exactly):
+- Chest: "Barbell Bench Press - Medium Grip", "Incline Dumbbell Press", "Cable Crossover", "Push-Up", "Dumbbell Flye"
+- Back: "Barbell Deadlift", "Wide-Grip Lat Pulldown", "Bent Over Barbell Row", "Seated Cable Row", "Pull-Up", "Single-Arm Dumbbell Row"
+- Legs: "Barbell Full Squat", "Leg Press", "Romanian Deadlift", "Walking Lunge", "Leg Curl", "Bulgarian Split Squat", "Goblet Squat"
+- Shoulders: "Dumbbell Shoulder Press", "Lateral Raise", "Face Pull", "Arnold Dumbbell Press", "Upright Barbell Row"
+- Arms: "Barbell Curl", "Hammer Curl", "Triceps Pushdown", "Skull Crusher", "Dips - Triceps Version"
+- Core: "Plank", "Hanging Leg Raise", "Cable Crunch", "Russian Twist", "Ab Roller", "Reverse Crunch"
+- Cardio/HIIT: "Burpee", "Jump Squat", "Mountain Climber", "Box Jump", "Jumping Jack", "High Knees", "Kettlebell Swing"
+
 ─── EXERCISE RULES ───
 
 - warmUp: 2–3 sentences describing a specific warm-up sequence (not generic "stretch for 5 mins").
@@ -58,6 +71,7 @@ Name sessions specifically — not generic. Examples:
 - Rest and active-recovery days: exercises array can be empty [], warmUp and coolDown should still describe light movement.
 - reps: use specific formats — "10-12", "8 reps each side", "30 seconds", "AMRAP", "to failure".
 - rest: use "30 sec", "45 sec", "60 sec", "90 sec", "2 min".
+- muscleGroups: array of 1–3 primary muscles targeted, e.g. ["Quads", "Glutes"] or ["Chest", "Triceps"]. Use standard bodybuilding muscle group names: Chest, Back, Shoulders, Biceps, Triceps, Quads, Hamstrings, Glutes, Calves, Core, Full Body.
 - modification: regression that makes the movement easier or equipment-free.
 
 ─── OUTPUT FORMAT ───
@@ -83,10 +97,11 @@ Return ONLY this JSON structure — no extra keys, no markdown:
           "warmUp": "string",
           "exercises": [
             {
-              "name": "string",
+              "name": "string — exact Bodybuilding.com exercise name",
               "sets": 3,
               "reps": "10-12",
               "rest": "60 sec",
+              "muscleGroups": ["Quads", "Glutes"],
               "modification": "string"
             }
           ],

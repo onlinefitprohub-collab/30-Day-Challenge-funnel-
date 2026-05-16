@@ -9,12 +9,12 @@ import {
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
   CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
-  ChevronDown, ChevronRight, X,
+  ChevronDown, ChevronRight, X, Salad,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide, NutritionPlan } from "@/types/generation";
 import type { DiscoveryCallScript } from "@/types/discovery-call";
 import type { InstagramDmScript } from "@/types/dm-script";
 import type { UpsellSequence } from "@/types/upsell-sequence";
@@ -34,6 +34,7 @@ import { HighLevelSection }       from "./sections/highlevel";
 import { FunnelPreviewSection }   from "./sections/funnel-preview";
 import { GhlInspectorSection }    from "./sections/ghl-inspector";
 import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-plan";
+import { NutritionPlanSection, NutritionPlanPlaceholder } from "./sections/nutrition-plan";
 import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
 import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
@@ -79,6 +80,7 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
   { id: "salesLetter",   label: "Sales Letter",     icon: FileText,                       group: "longform",   groupLabel: "Long-Form" },
   { id: "workoutPlan",   label: "Workout Plan",     icon: Dumbbell,                       group: "longform" },
+  { id: "nutritionPlan", label: "Nutrition Plan",   icon: Salad,                          group: "longform" },
   { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
   { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
   { id: "contentCalendar",label:"Content Engine",   icon: CalendarRange,                  group: "coaching" },
@@ -187,6 +189,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const [liveOutputs, setLiveOutputs]   = useState<Record<string, unknown>>(outputs);
 
   const [liveWorkoutPlan, setLiveWorkoutPlan]         = useState<WorkoutPlan | undefined>(outputs.workoutPlan as WorkoutPlan | undefined);
+  const [liveNutritionPlan, setLiveNutritionPlan]     = useState<NutritionPlan | undefined>(outputs.nutritionPlan as NutritionPlan | undefined);
   const [liveLongFormAssets, setLiveLongFormAssets]   = useState<LongFormSalesAssets | undefined>(outputs.longFormAssets as LongFormSalesAssets | undefined);
   const [liveNurtureSequence, setLiveNurtureSequence] = useState<NurtureSequence | undefined>(outputs.nurtureSequence as NurtureSequence | undefined);
   const [liveDiscoveryCallScript, setLiveDiscoveryCallScript] = useState<DiscoveryCallScript | undefined>(outputs.discoveryCallScript as DiscoveryCallScript | undefined);
@@ -231,6 +234,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   function handleWorkoutGenerated(plan: WorkoutPlan) {
     setLiveWorkoutPlan(plan);
     setLiveOutputs((p: Record<string, unknown>) => ({ ...p, workoutPlan: plan }));
+  }
+  function handleNutritionGenerated(plan: NutritionPlan) {
+    setLiveNutritionPlan(plan);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, nutritionPlan: plan }));
   }
   function handleLongFormGenerated(assets: LongFormSalesAssets) {
     setLiveLongFormAssets(assets);
@@ -381,6 +388,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
       workoutPlan: liveWorkoutPlan
         ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
         : <WorkoutPlanPlaceholder projectId={project.id} onGenerated={handleWorkoutGenerated} />,
+      nutritionPlan: liveNutritionPlan
+        ? <NutritionPlanSection data={liveNutritionPlan} projectId={project.id} onRegenerate={handleNutritionGenerated} />
+        : <NutritionPlanPlaceholder projectId={project.id} onGenerated={handleNutritionGenerated} />,
       salesLetter: liveLongFormAssets
         ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,

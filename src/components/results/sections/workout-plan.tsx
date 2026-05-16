@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Dumbbell, Loader2 } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, Dumbbell, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { WorkoutPlan, WorkoutDay } from "@/types/generation";
 
@@ -116,6 +116,7 @@ function DayCard({ day }: { day: WorkoutDay }) {
                   <thead>
                     <tr className="text-left text-xs text-gray-400">
                       <th className="pb-2 pr-4 font-medium">Exercise</th>
+                      <th className="pb-2 pr-4 font-medium">Muscles</th>
                       <th className="pb-2 pr-4 font-medium">Sets</th>
                       <th className="pb-2 pr-4 font-medium">Reps</th>
                       <th className="pb-2 pr-4 font-medium">Rest</th>
@@ -125,7 +126,29 @@ function DayCard({ day }: { day: WorkoutDay }) {
                   <tbody className="divide-y divide-gray-100">
                     {day.exercises.map((ex, i) => (
                       <tr key={i}>
-                        <td className="py-1.5 pr-4 font-medium text-gray-900">{ex.name}</td>
+                        <td className="py-1.5 pr-4 font-medium text-gray-900">
+                          <div className="flex items-center gap-1.5">
+                            <span>{ex.name}</span>
+                            <a
+                              href={`https://www.bodybuilding.com/exercises/search?query=${encodeURIComponent(ex.name)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-400 hover:text-indigo-600 transition-colors"
+                              title="View on Bodybuilding.com"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </td>
+                        <td className="py-1.5 pr-4">
+                          <div className="flex flex-wrap gap-1">
+                            {(ex.muscleGroups ?? []).map((m) => (
+                              <span key={m} className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
                         <td className="py-1.5 pr-4 text-gray-600">{ex.sets}</td>
                         <td className="py-1.5 pr-4 text-gray-600">{ex.reps}</td>
                         <td className="py-1.5 pr-4 text-gray-600">{ex.rest}</td>
