@@ -15,6 +15,15 @@ type NotionBlock =
 function textBlock(content: string): NotionBlock {
   return { object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: content.slice(0, 2000) } }] } };
 }
+
+function textBlocks(content: string): NotionBlock[] {
+  if (content.length <= 2000) return [textBlock(content)];
+  const chunks: NotionBlock[] = [];
+  for (let i = 0; i < content.length; i += 2000) {
+    chunks.push(textBlock(content.slice(i, i + 2000)));
+  }
+  return chunks;
+}
 function h2Block(content: string): NotionBlock {
   return { object: "block", type: "heading_2", heading_2: { rich_text: [{ type: "text", text: { content } }] } };
 }
@@ -33,7 +42,7 @@ function markdownToBlocks(md: string): NotionBlock[] {
     } else if (line.trim()) {
       // Strip markdown bold/italic/list markers for cleaner Notion output
       const clean = line.replace(/^\*\*(.+?)\*\*$/, "$1").replace(/^- /, "• ").replace(/^> /, "");
-      blocks.push(textBlock(clean));
+      blocks.push(...textBlocks(clean));
     }
   }
   return blocks;

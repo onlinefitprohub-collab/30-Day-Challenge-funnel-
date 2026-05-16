@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,7 +9,7 @@ import {
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
   CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -146,6 +146,7 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
 };
 
 const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
+const RESULTS_SEEN_KEY    = "fitpro_results_seen";
 const DEFAULT_COLLAPSED = new Set(["Overview", "Sequences", "Content", "Ads", "Long-Form", "Coaching"]);
 
 async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
@@ -179,6 +180,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     } catch {}
     return DEFAULT_COLLAPSED;
   });
+  const [showNewBanner, setShowNewBanner] = useState(false);
   const [copiedAll, setCopiedAll]     = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenSection, setRegenSection] = useState<SectionGroup | null>(null);
@@ -191,6 +193,15 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const [liveDmScript, setLiveDmScript]               = useState<InstagramDmScript | undefined>(outputs.instagramDmScript as InstagramDmScript | undefined);
   const [liveUpsellSequence, setLiveUpsellSequence]   = useState<UpsellSequence | undefined>(outputs.upsellSequence as UpsellSequence | undefined);
   const [liveLaunchRoadmap, setLiveLaunchRoadmap]     = useState<LaunchRoadmap | undefined>(outputs.launchRoadmap as LaunchRoadmap | undefined);
+
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(RESULTS_SEEN_KEY)) {
+        setShowNewBanner(true);
+        window.localStorage.setItem(RESULTS_SEEN_KEY, "1");
+      }
+    } catch {}
+  }, []);
 
   function toggleGroup(label: string) {
     setCollapsedGroups((prev) => {
@@ -482,6 +493,31 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
           </Button>
         </div>
       </div>
+
+      {/* ── First-time banner ──────────────────────────────────────────── */}
+      {showNewBanner && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Rocket className="h-4 w-4 shrink-0 text-orange-400" />
+            <p className="text-sm text-orange-200">
+              <span className="font-semibold">New here?</span> Start with the{" "}
+              <button
+                onClick={() => { handleNavigate("startHere"); setShowNewBanner(false); }}
+                className="underline underline-offset-2 hover:text-white transition-colors"
+              >
+                Start Here
+              </button>{" "}
+              tab — it walks you through launching your funnel step by step.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowNewBanner(false)}
+            className="shrink-0 rounded-lg p-1 text-orange-400 hover:bg-orange-500/20 hover:text-orange-200 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── Body: sidebar + content ─────────────────────────────────────── */}
       <div className="flex gap-5 items-start">
