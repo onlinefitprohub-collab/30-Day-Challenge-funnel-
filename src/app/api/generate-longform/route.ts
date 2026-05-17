@@ -91,9 +91,11 @@ export async function POST(request: Request) {
       : style.promptDescription;
 
     let longFormAssets: LongFormSalesAssets;
+    let isMock = false;
 
     if (!hasClaude()) {
       longFormAssets = buildMockLongFormAssets(validatedInputs.challengeName ?? "30-Day Challenge");
+      isMock = true;
     } else {
       // Build full prompt strings (system + user combined)
       const { system: slSystem, user: slUser } = buildSalesLetterPrompt(context, styleDescription);
@@ -124,9 +126,11 @@ export async function POST(request: Request) {
 
       if (salesLetterResult.error) {
         console.warn("[generate-longform] sales letter fallback to mock:", salesLetterResult.error);
+        isMock = true;
       }
       if (manyChatResult.error) {
         console.warn("[generate-longform] manychat fallback to mock:", manyChatResult.error);
+        isMock = true;
       }
 
       longFormAssets = { salesLetter, manyChatFlow };
@@ -153,7 +157,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, longFormAssets });
+    return NextResponse.json({ success: true, longFormAssets, isMock });
 
   } catch (error) {
     console.error("[generate-longform] error:", error);

@@ -72,12 +72,19 @@ export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderP
         body:    JSON.stringify({ projectId }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        const err = await res.json().catch(() => ({})) as { error?: string; retryAfter?: number };
+        const msg = res.status === 429
+          ? `Please wait ${err.retryAfter ?? 30}s before generating again.`
+          : (err.error ?? `HTTP ${res.status}`);
+        throw new Error(msg);
       }
-      const { upsellSequence } = await res.json() as { upsellSequence: UpsellSequence };
-      onGenerated(upsellSequence);
-      toast({ title: "Upsell sequence generated!", description: "Your post-challenge email sequence is ready." });
+      const json = await res.json() as { upsellSequence: UpsellSequence; isMock?: boolean };
+      onGenerated(json.upsellSequence);
+      if (json.isMock) {
+        toast({ title: "Demo sequence shown", description: "AI generation unavailable — displaying a template sequence. Configure your API key for personalised output.", variant: "destructive" });
+      } else {
+        toast({ title: "Upsell sequence generated!", description: "Your post-challenge email sequence is ready." });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Generation failed", description: msg, variant: "destructive" });

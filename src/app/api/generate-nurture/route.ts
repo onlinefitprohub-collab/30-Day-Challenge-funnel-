@@ -84,12 +84,14 @@ export async function POST(request: Request) {
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
 
     let nurtureSequence: NurtureSequence;
+    let isMock = false;
 
     if (!hasClaude()) {
       nurtureSequence = buildMockNurtureSequence(
         validatedInputs.challengeName ?? "30-Day Challenge",
         validatedInputs.challengeType ?? "fitness",
       );
+      isMock = true;
     } else {
       // Fire Q1 + Q2 in parallel, then Q3 + Q4 in parallel
       const [q1Result, q2Result] = await Promise.all([
@@ -131,6 +133,7 @@ export async function POST(request: Request) {
       if (q2Result.error) console.warn("[generate-nurture] Q2 fallback to mock:", q2Result.error);
       if (q3Result.error) console.warn("[generate-nurture] Q3 fallback to mock:", q3Result.error);
       if (q4Result.error) console.warn("[generate-nurture] Q4 fallback to mock:", q4Result.error);
+      if (q1Result.error || q2Result.error || q3Result.error || q4Result.error) isMock = true;
 
       const challengeName = validatedInputs.challengeName ?? "30-Day Challenge";
       const challengeType = validatedInputs.challengeType ?? "fitness";
@@ -179,7 +182,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, nurtureSequence });
+    return NextResponse.json({ success: true, nurtureSequence, isMock });
 
   } catch (error) {
     console.error("[generate-nurture] error:", error);

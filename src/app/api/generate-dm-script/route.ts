@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
 
     let instagramDmScript: InstagramDmScript;
+    let isMock = false;
 
     if (!hasClaude()) {
       instagramDmScript = buildMockDmScript(
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
         validatedInputs.targetAudience ?? "people",
         validatedInputs.mainGoal ?? "reach their goals",
       );
+      isMock = true;
     } else {
       const { system, user: userPrompt } = buildDmScriptPrompt(context);
       const result = await callClaudeGroup<{ instagramDmScript: InstagramDmScript }>(
@@ -69,6 +71,7 @@ export async function POST(request: Request) {
           validatedInputs.targetAudience ?? "people",
           validatedInputs.mainGoal ?? "reach their goals",
         );
+        isMock = true;
       } else {
         instagramDmScript = result.data.instagramDmScript;
       }
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, instagramDmScript });
+    return NextResponse.json({ success: true, instagramDmScript, isMock });
   } catch (error) {
     console.error("[generate-dm-script] error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Generation failed" }, { status: 500 });

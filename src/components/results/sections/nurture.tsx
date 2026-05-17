@@ -26,12 +26,19 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
         body:    JSON.stringify({ projectId }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        const err = await res.json().catch(() => ({})) as { error?: string; retryAfter?: number };
+        const msg = res.status === 429
+          ? `Please wait ${err.retryAfter ?? 30}s before generating again.`
+          : (err.error ?? `HTTP ${res.status}`);
+        throw new Error(msg);
       }
-      const { nurtureSequence } = await res.json() as { nurtureSequence: NurtureSequence };
-      onGenerated(nurtureSequence);
-      toast({ title: "52-week nurture generated!", description: "A full year of emails is ready." });
+      const json = await res.json() as { nurtureSequence: NurtureSequence; isMock?: boolean };
+      onGenerated(json.nurtureSequence);
+      if (json.isMock) {
+        toast({ title: "Demo sequence shown", description: "AI generation unavailable — displaying template emails. Configure your API key for a personalised 52-week sequence.", variant: "destructive" });
+      } else {
+        toast({ title: "52-week nurture generated!", description: "A full year of emails is ready." });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Generation failed", description: msg, variant: "destructive" });

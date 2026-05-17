@@ -148,12 +148,19 @@ export function DmScriptPlaceholder({ projectId, onGenerated }: DmScriptPlacehol
         body:    JSON.stringify({ projectId }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        const err = await res.json().catch(() => ({})) as { error?: string; retryAfter?: number };
+        const msg = res.status === 429
+          ? `Please wait ${err.retryAfter ?? 30}s before generating again.`
+          : (err.error ?? `HTTP ${res.status}`);
+        throw new Error(msg);
       }
-      const { instagramDmScript } = await res.json() as { instagramDmScript: InstagramDmScript };
-      onGenerated(instagramDmScript);
-      toast({ title: "DM scripts generated!", description: "Your Instagram conversation scripts are ready." });
+      const json = await res.json() as { instagramDmScript: InstagramDmScript; isMock?: boolean };
+      onGenerated(json.instagramDmScript);
+      if (json.isMock) {
+        toast({ title: "Demo scripts shown", description: "AI generation unavailable — displaying template scripts. Configure your API key for personalised output.", variant: "destructive" });
+      } else {
+        toast({ title: "DM scripts generated!", description: "Your Instagram conversation scripts are ready." });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Generation failed", description: msg, variant: "destructive" });

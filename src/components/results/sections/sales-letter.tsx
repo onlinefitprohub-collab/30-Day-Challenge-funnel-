@@ -48,12 +48,19 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
         body:    JSON.stringify({ projectId }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        const err = await res.json().catch(() => ({})) as { error?: string; retryAfter?: number };
+        const msg = res.status === 429
+          ? `Please wait ${err.retryAfter ?? 30}s before generating again.`
+          : (err.error ?? `HTTP ${res.status}`);
+        throw new Error(msg);
       }
-      const { longFormAssets } = await res.json() as { longFormAssets: LongFormSalesAssets };
-      onGenerated(longFormAssets);
-      toast({ title: "Sales letter + ManyChat flow generated!", description: "Your long-form assets are ready." });
+      const json = await res.json() as { longFormAssets: LongFormSalesAssets; isMock?: boolean };
+      onGenerated(json.longFormAssets);
+      if (json.isMock) {
+        toast({ title: "Demo assets shown", description: "AI generation unavailable — displaying template assets. Configure your API key for personalised output.", variant: "destructive" });
+      } else {
+        toast({ title: "Sales letter + ManyChat flow generated!", description: "Your long-form assets are ready." });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Generation failed", description: msg, variant: "destructive" });

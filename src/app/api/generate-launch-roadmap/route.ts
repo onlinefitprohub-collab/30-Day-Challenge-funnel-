@@ -44,9 +44,11 @@ export async function POST(request: Request) {
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
 
     let launchRoadmap: LaunchRoadmap;
+    let isMock = false;
 
     if (!hasClaude()) {
       launchRoadmap = buildMockLaunchRoadmap(validatedInputs.challengeName ?? "30-Day Challenge");
+      isMock = true;
     } else {
       const { system, user: userPrompt } = buildLaunchRoadmapPrompt(context);
       const result = await callClaudeGroup<{ launchRoadmap: LaunchRoadmap }>(
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
       if (result.error || !result.data) {
         console.warn("[generate-launch-roadmap] fallback:", result.error);
         launchRoadmap = buildMockLaunchRoadmap(validatedInputs.challengeName ?? "30-Day Challenge");
+        isMock = true;
       } else {
         launchRoadmap = result.data.launchRoadmap;
       }
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, launchRoadmap });
+    return NextResponse.json({ success: true, launchRoadmap, isMock });
   } catch (error) {
     console.error("[generate-launch-roadmap] error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Generation failed" }, { status: 500 });

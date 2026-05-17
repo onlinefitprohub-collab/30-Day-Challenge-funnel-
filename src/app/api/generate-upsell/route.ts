@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
 
     let upsellSequence: UpsellSequence;
+    let isMock = false;
 
     if (!hasClaude()) {
       upsellSequence = buildMockUpsellSequence(
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
         validatedInputs.mainGoal ?? "reach their goals",
         validatedInputs.price ?? "£997",
       );
+      isMock = true;
     } else {
       const { system, user: userPrompt } = buildUpsellSequencePrompt(context);
       const result = await callClaudeGroup<{ upsellSequence: UpsellSequence }>(
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
           validatedInputs.mainGoal ?? "reach their goals",
           validatedInputs.price ?? "£997",
         );
+        isMock = true;
       } else {
         upsellSequence = result.data.upsellSequence;
       }
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, upsellSequence });
+    return NextResponse.json({ success: true, upsellSequence, isMock });
   } catch (error) {
     console.error("[generate-upsell] error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Generation failed" }, { status: 500 });

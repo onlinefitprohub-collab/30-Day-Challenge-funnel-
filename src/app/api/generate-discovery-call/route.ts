@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       : undefined;
 
     let discoveryCallScript: DiscoveryCallScript;
+    let isMock = false;
 
     if (!hasClaude()) {
       discoveryCallScript = buildMockDiscoveryCallScript(
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
         validatedInputs.price ?? "£997",
         validatedInputs.targetAudience ?? "people",
       );
+      isMock = true;
     } else {
       const { system, user: userPrompt } = buildDiscoveryCallPrompt(context, copywriterStyle);
       const fullPrompt = `${system}\n\n${userPrompt}`;
@@ -114,6 +116,7 @@ export async function POST(request: Request) {
           validatedInputs.price ?? "£997",
           validatedInputs.targetAudience ?? "people",
         );
+        isMock = true;
       } else {
         discoveryCallScript = result.data.discoveryCallScript;
       }
@@ -140,7 +143,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, discoveryCallScript });
+    return NextResponse.json({ success: true, discoveryCallScript, isMock });
 
   } catch (error) {
     console.error("[generate-discovery-call] error:", error);
