@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { hasClaude } from "@/lib/ai/claude-client";
 import { callClaudeGroup } from "@/lib/ai/claude-generate";
 import { buildCoachContext } from "@/lib/ai/context";
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rateLimitError = checkRateLimit(user.id, "generate-monthly-content", 1, 60_000);
+    if (rateLimitError) return rateLimitError;
 
     const body = await request.json() as { month?: string; projectId?: string };
     if (!body.projectId) return NextResponse.json({ error: "projectId is required" }, { status: 400 });

@@ -8,8 +8,12 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Password recovery sessions must go to /update-password regardless of next param
+      if (data.session?.user.recovery_sent_at) {
+        return NextResponse.redirect(`${origin}/update-password`);
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

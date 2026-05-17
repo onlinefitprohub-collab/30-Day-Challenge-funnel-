@@ -15,15 +15,23 @@ export default function LoginPage() {
         </p>
       </div>
       <LoginForm />
-      <p className="mt-6 text-center text-sm text-gray-500">
-        Don&apos;t have an account?{" "}
+      <div className="mt-6 flex flex-col items-center gap-2 text-sm text-gray-500">
         <Link
-          href="/signup"
-          className="font-semibold text-brand-600 hover:text-brand-700"
+          href="/reset-password"
+          className="font-medium text-gray-400 hover:text-brand-600 transition-colors"
         >
-          Sign up free
+          Forgot your password?
         </Link>
-      </p>
+        <span>
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-semibold text-brand-600 hover:text-brand-700"
+          >
+            Sign up free
+          </Link>
+        </span>
+      </div>
     </div>
   );
 }

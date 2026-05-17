@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const authPaths = ["/login", "/signup"];
+  const authPaths = ["/login", "/signup", "/reset-password", "/update-password"];
   const isAuthPage = authPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );

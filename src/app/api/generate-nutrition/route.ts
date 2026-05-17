@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { hasClaude } from "@/lib/ai/claude-client";
 import { callClaudeGroup } from "@/lib/ai/claude-generate";
 import { buildCoachContext } from "@/lib/ai/context";
@@ -23,6 +24,9 @@ export async function POST(request: Request) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rateLimitError = checkRateLimit(user.id, "generate-nutrition", 1, 60_000);
+    if (rateLimitError) return rateLimitError;
 
     const body = await request.json() as { projectId?: string };
     const { projectId } = body;
@@ -60,9 +64,11 @@ export async function POST(request: Request) {
     const prompt = `${system}\n\n${userPrompt}`;
 
     let nutritionPlan: NutritionPlan;
+    let isMock = false;
 
     if (!hasClaude()) {
       nutritionPlan = buildMockNutritionPlan(validatedInputs.challengeName ?? "30-Day Challenge");
+      isMock = true;
     } else {
       const result = await callClaudeGroup<NutritionPlan>(
         prompt,
@@ -75,6 +81,7 @@ export async function POST(request: Request) {
       if (!result.data) {
         console.error("[generate-nutrition] Claude call failed:", result.error);
         nutritionPlan = buildMockNutritionPlan(validatedInputs.challengeName ?? "30-Day Challenge");
+        isMock = true;
       } else {
         nutritionPlan = result.data;
       }
@@ -112,7 +119,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, nutritionPlan });
+    return NextResponse.json({ success: true, nutritionPlan, isMock });
 
   } catch (error) {
     console.error("[generate-nutrition] error:", error);

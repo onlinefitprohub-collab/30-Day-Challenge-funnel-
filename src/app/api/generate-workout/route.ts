@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { hasClaude } from "@/lib/ai/claude-client";
 import { callClaudeGroup } from "@/lib/ai/claude-generate";
 import { buildCoachContext } from "@/lib/ai/context";
@@ -23,16 +24,14 @@ export async function POST(request: Request) {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rateLimitError = checkRateLimit(user.id, "generate-workout", 1, 60_000);
+    if (rateLimitError) return rateLimitError;
 
     const body = await request.json() as { projectId?: string };
     const { projectId } = body;
-
-    if (!projectId) {
-      return NextResponse.json({ error: "projectId is required" }, { status: 400 });
-    }
+    if (!projectId) return NextResponse.json({ error: "projectId is required" }, { status: 400 });
 
     // Verify project belongs to this user
     const { data: projectData } = await supabase
@@ -68,10 +67,11 @@ export async function POST(request: Request) {
     const prompt = `${system}\n\n${userPrompt}`;
 
     let workoutPlan: WorkoutPlan;
+    let isMock = false;
 
     if (!hasClaude()) {
-      // Mock workout plan when no API key is configured
       workoutPlan = buildMockWorkoutPlan(validatedInputs.challengeName ?? "30-Day Challenge");
+      isMock = true;
     } else {
       const result = await callClaudeGroup<WorkoutPlan>(
         prompt,
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       if (!result.data) {
         console.error("[generate-workout] Claude call failed:", result.error);
         workoutPlan = buildMockWorkoutPlan(validatedInputs.challengeName ?? "30-Day Challenge");
+        isMock = true;
       } else {
         workoutPlan = result.data;
       }
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
       if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true, workoutPlan });
+    return NextResponse.json({ success: true, workoutPlan, isMock });
 
   } catch (error) {
     console.error("[generate-workout] error:", error);

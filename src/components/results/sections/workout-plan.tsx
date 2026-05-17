@@ -43,12 +43,19 @@ export function WorkoutPlanPlaceholder({ projectId, onGenerated }: WorkoutPlanPl
         body:    JSON.stringify({ projectId }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        const err = await res.json().catch(() => ({})) as { error?: string; retryAfter?: number };
+        const msg = res.status === 429
+          ? `Please wait ${err.retryAfter ?? 30}s before generating again.`
+          : (err.error ?? `HTTP ${res.status}`);
+        throw new Error(msg);
       }
-      const { workoutPlan } = await res.json() as { workoutPlan: WorkoutPlan };
-      onGenerated(workoutPlan);
-      toast({ title: "Workout plan generated!", description: "Your 30-day programme is ready." });
+      const json = await res.json() as { workoutPlan: WorkoutPlan; isMock?: boolean };
+      onGenerated(json.workoutPlan);
+      if (json.isMock) {
+        toast({ title: "Demo plan shown", description: "AI generation unavailable — displaying a template plan. Configure your API key to generate a personalised programme.", variant: "destructive" });
+      } else {
+        toast({ title: "Workout plan generated!", description: "Your 30-day programme is ready." });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
