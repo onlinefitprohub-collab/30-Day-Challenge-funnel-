@@ -139,7 +139,7 @@ Example: "You're a busy dad who's tried the gym alone but keeps falling off — 
 textTestimonials:
 Exactly 3 text-based client testimonials. Each has:
 - quote: 25–50 words written as if from a real client. Specific result mentioned. First person.
-- attribution: "First Name, Title/Location" — e.g. "Sarah T., Busy Mum of 3" or "Mark R., 52, Business Owner"
+- attribution: "First Name Initial., Age/Role" — CRITICAL: the name MUST match the gender of the target audience. If audience is female (women, mums, ladies, etc.), use FEMALE names ONLY (Sarah T., Emma R., Claire B., Lisa M., etc.). If audience is male (men, dads, guys, etc.), use MALE names ONLY (James R., Mark B., Tom H., etc.). NEVER use a male name for a female audience or vice versa. E.g. for female audience: "Sarah T., 44, Busy Mum of Three". For male audience: "Mark R., 52, Business Owner".
 - result: A short bold result badge (4–8 words). E.g. "Lost 18kg in 12 weeks", "Went from burnout to thriving"
 
 whatYouGetHeading:

@@ -12,8 +12,28 @@ type NotionBlock =
   | { object: "block"; type: "paragraph"; paragraph: { rich_text: [{ type: "text"; text: { content: string } }] } }
   | { object: "block"; type: "divider"; divider: Record<string, never> };
 
-function textBlock(content: string): NotionBlock {
-  return { object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: content.slice(0, 2000) } }] } };
+const NOTION_CHAR_LIMIT = 2000;
+
+function textBlocks(content: string): NotionBlock[] {
+  if (content.length <= NOTION_CHAR_LIMIT) {
+    return [{ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content } }] } }];
+  }
+  // Split on sentence boundaries where possible, falling back to hard split
+  const chunks: string[] = [];
+  let remaining = content;
+  while (remaining.length > NOTION_CHAR_LIMIT) {
+    let splitAt = NOTION_CHAR_LIMIT;
+    // Try to split at a sentence boundary within the last 200 chars of the limit
+    const searchWindow = remaining.slice(NOTION_CHAR_LIMIT - 200, NOTION_CHAR_LIMIT);
+    const sentenceEnd = searchWindow.lastIndexOf(". ");
+    if (sentenceEnd !== -1) {
+      splitAt = NOTION_CHAR_LIMIT - 200 + sentenceEnd + 2;
+    }
+    chunks.push(remaining.slice(0, splitAt).trimEnd());
+    remaining = remaining.slice(splitAt).trimStart();
+  }
+  if (remaining) chunks.push(remaining);
+  return chunks.map((c) => ({ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: c } }] } }));
 }
 function h2Block(content: string): NotionBlock {
   return { object: "block", type: "heading_2", heading_2: { rich_text: [{ type: "text", text: { content } }] } };
@@ -33,7 +53,7 @@ function markdownToBlocks(md: string): NotionBlock[] {
     } else if (line.trim()) {
       // Strip markdown bold/italic/list markers for cleaner Notion output
       const clean = line.replace(/^\*\*(.+?)\*\*$/, "$1").replace(/^- /, "• ").replace(/^> /, "");
-      blocks.push(textBlock(clean));
+      blocks.push(...textBlocks(clean));
     }
   }
   return blocks;

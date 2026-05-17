@@ -292,6 +292,7 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
   const audienceShort = targetAudience.split(/,| and /i)[0].trim();
   const outcomeLC = desiredOutcome.charAt(0).toLowerCase() + desiredOutcome.slice(1);
   const firstInclusion = inclusions.split(",")[0]?.trim() ?? "personalised coaching";
+  const isFemaleAudience = /\b(women|woman|mums?|moms?|ladies|female|girls?|she|her)\b/i.test(targetAudience);
 
   return {
     valuePropHeadline: `Join ${programmeName} and finally ${outcomeLC}, even if you've tried everything before`,
@@ -371,7 +372,7 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
       "You're ready to stop going it alone and get the expert guidance you deserve",
     ],
 
-    textTestimonials: [
+    textTestimonials: isFemaleAudience ? [
       {
         quote: `"I honestly didn't think it was possible at my age and with my schedule. But ${coachName} made everything so clear and manageable. I'm stronger, healthier, and more confident than I've been in years."`,
         attribution: "Sarah T., 44, Busy Mum of Three",
@@ -379,13 +380,29 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
       },
       {
         quote: `"The accountability and structure were exactly what I needed. I'd been spinning my wheels for two years. Within weeks of joining I had more clarity and momentum than I'd had in ages."`,
-        attribution: "Mark R., 52, Business Owner",
+        attribution: "Claire B., 38, Nurse",
         result: "Down 3 dress sizes and off blood pressure medication",
       },
       {
         quote: `"What I appreciated most was that ${coachName} genuinely listened and adapted everything to my situation. It never felt generic — it felt personal. Best investment I've made in myself."`,
-        attribution: "Lisa M., 38, Nurse",
+        attribution: "Emma R., 52, Business Owner",
         result: "Ran her first 10k and now coaches her colleagues",
+      },
+    ] : [
+      {
+        quote: `"I honestly didn't think it was possible at my age and with my schedule. But ${coachName} made everything so clear and manageable. I'm stronger, fitter, and more confident than I've been in years."`,
+        attribution: "James R., 44, Dad of Two",
+        result: "Lost 18kg and transformed his energy levels",
+      },
+      {
+        quote: `"The accountability and structure were exactly what I needed. I'd been spinning my wheels for two years. Within weeks of joining I had more clarity and momentum than I'd had in ages."`,
+        attribution: "Mark B., 52, Business Owner",
+        result: "Down 4 trouser sizes and off blood pressure medication",
+      },
+      {
+        quote: `"What I appreciated most was that ${coachName} genuinely listened and adapted everything to my situation. It never felt generic — it felt personal. Best investment I've made in myself."`,
+        attribution: "Tom R., 38, Gym-Goer",
+        result: "Ran his first 10k and now coaches his mates",
       },
     ],
 
@@ -405,33 +422,54 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
 
     clientWinsHeading: "More Wins From Our Community",
 
-    clientWins: [
+    clientWins: isFemaleAudience ? [
       { name: "Emma R.", result: "Down 22kg and off medication after 16 weeks" },
-      { name: "James K.", result: "First 5k run completed — said he'd never run before" },
       { name: "Claire S.", result: "Reversed pre-diabetes diagnosis through lifestyle change" },
-      { name: "Tom H.", result: "Lost 15kg and gained confidence he hadn't felt in 10 years" },
       { name: "Ava M.", result: "Went from burnout to thriving in 12 weeks" },
+      { name: "Rachel K.", result: "Lost 2 stone after years of plateau — in just 10 weeks" },
+      { name: "Sophie T.", result: "Completed her first half marathon at 47" },
+      { name: "Diane W.", result: "Down 3 dress sizes and off anxiety medication" },
+    ] : [
+      { name: "James K.", result: "First 5k run completed — said he'd never run before" },
+      { name: "Tom H.", result: "Lost 15kg and gained confidence he hadn't felt in 10 years" },
       { name: "Dan P.", result: "Dropped 4 trouser sizes and beat his insomnia" },
+      { name: "Chris M.", result: "Reversed pre-diabetes diagnosis through lifestyle change" },
+      { name: "Ben W.", result: "Went from burnout to performing at his peak in 12 weeks" },
+      { name: "Ryan S.", result: "Down 22kg and running his first marathon at 48" },
     ],
 
     painPointHeading: `Are You ${audienceShort.charAt(0).toUpperCase() + audienceShort.slice(1)} Who's Sick And Tired Of Trying Everything And Still Not ${desiredOutcome}?`,
 
     clientStories: [
       {
-        intro: `Meet James, a ${audienceShort} who had tried everything and was ready to give up.`,
+        storyHeadline: "TWO YEARS OF TRYING EVERYTHING AND NOTHING STICKING",
+        intro: `Meet ${isFemaleAudience ? "Anna" : "James"}, a ${audienceShort} who had tried everything and was ready to give up.`,
         story: `"I'd been spinning my wheels for two years. I tried every programme out there — nothing seemed to work for someone in my situation.\n\nWhen I joined ${programmeName} everything clicked. Within 8 weeks I had more progress than I'd made in the previous two years combined. ${coachName} built everything around my life, not some generic template.\n\nIf you're on the fence, don't be. This changed everything for me."`,
       },
       {
+        storyHeadline: "YEARS OF STRUGGLE AND STILL NO CLOSER TO THE GOAL",
         intro: `Meet Sarah, a 42-year-old who'd struggled with ${biggestStruggle} for years before finding ${programmeName}.`,
         story: `"I honestly didn't think change was possible at my stage of life. I'd accepted that this was just how things were going to be.\n\nBut ${coachName} showed me exactly what I'd been missing — and the results followed almost immediately. Down 3 dress sizes, more energy than I've had in a decade.\n\nThe support and accountability made the difference. I never felt alone in the process."`,
       },
       {
-        intro: `Meet Mark, a busy professional who finally found a system that fit around his life.`,
+        storyHeadline: "IMPOSSIBLE SCHEDULE, ZERO RESULTS, NO TIME TO SPARE",
+        intro: `Meet ${isFemaleAudience ? "Kate" : "Mark"}, a busy professional who finally found a system that fit around ${isFemaleAudience ? "her" : "his"} life.`,
         story: `"My schedule is insane — I travel constantly and thought there was no way I could commit to anything structured.\n\n${coachName} designed everything around my reality. Not what a programme expects of me, but what I could actually do. And the results were remarkable.\n\nI'm in the best shape of my adult life. Best decision I've made for myself in years."`,
       },
       {
+        storyHeadline: "FRUSTRATED, EMBARRASSED, AND OUT OF OPTIONS",
         intro: `Meet Lisa, who went from frustrated and stuck to thriving in just 12 weeks.`,
         story: `"I'd tried every shortcut going. Nothing was working. I was frustrated, embarrassed, and genuinely starting to wonder if I was just one of those people who couldn't change.\n\n${programmeName} showed me I was wrong. Within weeks I started seeing and feeling the difference. By week 12 I barely recognised myself.\n\nIf you're where I was — please just take the leap. You won't regret it."`,
+      },
+      {
+        storyHeadline: "HIT A WALL AND COULDN'T BREAK THROUGH FOR MONTHS",
+        intro: `Meet Rachel, who had made progress before but hit a plateau she couldn't escape.`,
+        story: `"I'd done really well on my own for the first few months. Then everything stopped. I was doing the same things, eating the same way, and the scale just wouldn't move.\n\n${programmeName} diagnosed exactly why I'd plateaued and gave me a completely different approach. Within three weeks I was moving again. The knowledge alone was worth every penny."\n\nSix months later, Rachel is down 2.5 stone and coaching others in her own community.`,
+      },
+      {
+        storyHeadline: "YEARS AWAY FROM FITNESS AND TOO SCARED TO START AGAIN",
+        intro: `Meet Tom, who hadn't trained properly in years and thought his window had closed.`,
+        story: `"Life happened. Kids, work, stress — and somewhere in there I lost myself completely. I was embarrassed to even start because I thought I'd left it too late.\n\n${coachName} made it completely safe to start from zero. No judgment, just a clear plan that worked for where I actually was — not where I used to be.\n\nI'm fitter at 48 than I was at 30. I didn't think that was possible."`,
       },
     ],
 

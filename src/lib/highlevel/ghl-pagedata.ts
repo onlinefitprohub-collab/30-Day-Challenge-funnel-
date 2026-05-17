@@ -3613,12 +3613,12 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   }
 
   // Divider heading section — add vertical breathing room so it stands out
-  const dividerSection = page.sections.find((s: Record<string, unknown>) => s.id === "section-s7DdxkIpg2");
+  const dividerSection = page.sections.find((s) => ((s as unknown as Record<string, unknown>).id as string) === "section-s7DdxkIpg2");
   if (dividerSection) {
-    const ds = (dividerSection as Record<string, unknown>).styles as Record<string, unknown> ?? {};
+    const ds = (dividerSection as unknown as Record<string, unknown>).styles as Record<string, unknown> ?? {};
     ds.paddingTop    = { value: "72", unit: "px" };
     ds.paddingBottom = { value: "72", unit: "px" };
-    (dividerSection as Record<string, unknown>).styles = ds;
+    (dividerSection as unknown as Record<string, unknown>).styles = ds;
   }
 
   // Remove empty trailing section (section-yKSj_u9QJlY)

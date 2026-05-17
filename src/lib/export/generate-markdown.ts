@@ -126,7 +126,7 @@ export function generateMarkdown(assets: GeneratedFunnelAssets, projectName: str
       ["reEngagement", "Re-Engagement"],
     ] as const;
     smsKeys.forEach(([key, label]) => {
-      const s = (sms as Record<string, string>)[key];
+      const s = (sms as unknown as Record<string, string>)[key];
       if (s) {
         lines.push(h3(`SMS: ${label}`));
         lines.push(p(s));
@@ -179,7 +179,7 @@ export function generateMarkdown(assets: GeneratedFunnelAssets, projectName: str
       ["closingScarcity", "Closing / Scarcity"],
     ] as const;
     sections.forEach(([key, label]) => {
-      const val = (vsl as Record<string, string>)[key];
+      const val = (vsl as unknown as Record<string, string>)[key];
       if (val) { lines.push(h3(label)); lines.push(p(val)); }
     });
     lines.push(hr());
