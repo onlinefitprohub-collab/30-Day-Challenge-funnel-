@@ -31,9 +31,14 @@ export function CloneButton({ projectId }: CloneButtonProps) {
         throw new Error(err.error ?? `HTTP ${res.status}`);
       }
 
-      const { newProjectId } = await res.json() as { newProjectId: string };
-      toast({ title: "Project cloned!", description: "Opening wizard with your saved inputs." });
-      router.push(`/projects/new?projectId=${newProjectId}`);
+      const { newProjectId, hasOutputs } = await res.json() as { newProjectId: string; hasOutputs: boolean };
+      if (hasOutputs) {
+        toast({ title: "Project cloned!", description: "Opening your duplicate funnel." });
+        router.push(`/projects/${newProjectId}`);
+      } else {
+        toast({ title: "Project cloned!", description: "Opening wizard with your saved inputs." });
+        router.push(`/projects/new?projectId=${newProjectId}`);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
       toast({ title: "Could not clone project", description: msg, variant: "destructive" });

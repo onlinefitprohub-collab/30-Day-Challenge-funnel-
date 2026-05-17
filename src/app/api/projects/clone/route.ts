@@ -5,9 +5,9 @@ import type { ProjectInputRow, ProjectRow } from "@/types/project";
 /**
  * POST /api/projects/clone
  *
- * Clones an existing project: creates a new draft project row and copies
- * all wizard inputs to it. Returns the new project ID so the client can
- * redirect into the pre-filled wizard.
+ * Deep-clones a project: copies the project row, wizard inputs, and generated
+ * outputs (if they exist). Returns hasOutputs so the client can redirect to
+ * the results page (complete clone) or the wizard (inputs-only clone).
  *
  * Body: { projectId: string }
  */
@@ -32,28 +32,43 @@ export async function POST(request: Request) {
       .select("id, user_id, name")
       .eq("id", projectId)
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     const project = sourceProject as Pick<ProjectRow, "id" | "user_id" | "name"> | null;
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Load saved wizard inputs
-    const { data: inputData } = await supabase
-      .from("project_inputs")
-      .select("inputs")
-      .eq("project_id", projectId)
-      .single();
+    // Load wizard inputs + latest outputs in parallel
+    const [inputResult, outputResult] = await Promise.all([
+      supabase
+        .from("project_inputs")
+        .select("inputs")
+        .eq("project_id", projectId)
+        .maybeSingle(),
+      supabase
+        .from("project_outputs")
+        .select("outputs")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-    const stored = inputData as Pick<ProjectInputRow, "inputs"> | null;
+    const stored   = inputResult.data  as Pick<ProjectInputRow, "inputs"> | null;
+    const outputs  = outputResult.data as { outputs: Record<string, unknown> } | null;
+    const hasOutputs = !!outputs?.outputs;
 
-    // Create new draft project
+    // Create new project — "complete" if we have outputs to copy, else "draft"
     const { data: newProject, error: insertError } = await supabase
       .from("projects")
-      .insert({ user_id: user.id, name: `Copy of ${project.name}`, status: "draft" })
+      .insert({
+        user_id: user.id,
+        name:    `Copy of ${project.name}`,
+        status:  hasOutputs ? "complete" : "draft",
+      })
       .select()
-      .single();
+      .maybeSingle();
 
     if (insertError || !newProject) {
       throw new Error(insertError?.message ?? "Failed to create project");
@@ -61,14 +76,28 @@ export async function POST(request: Request) {
 
     const newProjectId = (newProject as ProjectRow).id;
 
-    // Copy inputs if they exist
-    if (stored?.inputs) {
-      await supabase
-        .from("project_inputs")
-        .insert({ project_id: newProjectId, inputs: stored.inputs });
-    }
+    // Copy inputs and outputs in parallel (if they exist)
+    await Promise.all([
+      stored?.inputs
+        ? supabase.from("project_inputs").insert({ project_id: newProjectId, inputs: stored.inputs })
+        : Promise.resolve(),
+      hasOutputs
+        ? supabase
+            .from("generation_runs")
+            .insert({ project_id: newProjectId, status: "complete" })
+            .select()
+            .maybeSingle()
+            .then(({ data: run }) =>
+              supabase.from("project_outputs").insert({
+                project_id:         newProjectId,
+                generation_run_id:  (run as { id?: string } | null)?.id,
+                outputs:            outputs!.outputs,
+              })
+            )
+        : Promise.resolve(),
+    ]);
 
-    return NextResponse.json({ ok: true, newProjectId });
+    return NextResponse.json({ ok: true, newProjectId, hasOutputs });
 
   } catch (error) {
     console.error("[clone] error:", error);
