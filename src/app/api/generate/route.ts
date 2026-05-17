@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       .select("id, user_id, status")
       .eq("id", projectId)
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     const project = projectData as Pick<ProjectRow, "id" | "user_id" | "status"> | null;
     if (!project) {
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       .from("generation_runs")
       .insert({ project_id: projectId, status: "running" })
       .select()
-      .single();
+      .maybeSingle();
 
     if (runError || !runData) throw new Error("Failed to create generation run");
     runId = (runData as GenerationRunRow).id;

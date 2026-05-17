@@ -29,7 +29,7 @@ export async function POST(
       .select("id, user_id, status")
       .eq("id", projectId)
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     const project = projectData as Pick<ProjectRow, "id" | "user_id" | "status"> | null;
     if (!project) {
@@ -41,7 +41,7 @@ export async function POST(
       .from("project_inputs")
       .select("inputs")
       .eq("project_id", projectId)
-      .single();
+      .maybeSingle();
 
     const stored = inputData as Pick<ProjectInputRow, "inputs"> | null;
     if (!stored?.inputs) {

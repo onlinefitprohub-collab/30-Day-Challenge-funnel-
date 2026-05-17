@@ -25,12 +25,12 @@ export async function POST(request: Request) {
 
     const { data: projectData } = await supabase
       .from("projects").select("id, user_id, status")
-      .eq("id", body.projectId).eq("user_id", user.id).single();
+      .eq("id", body.projectId).eq("user_id", user.id).maybeSingle();
     if (!projectData) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
     const { data: inputData } = await supabase
       .from("project_inputs").select("inputs")
-      .eq("project_id", body.projectId).single();
+      .eq("project_id", body.projectId).maybeSingle();
     const stored = inputData as Pick<ProjectInputRow, "inputs"> | null;
     if (!stored?.inputs) return NextResponse.json({ error: "No saved inputs found." }, { status: 400 });
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     const { data: outputData } = await supabase
       .from("project_outputs").select("id, outputs")
-      .eq("project_id", body.projectId).order("created_at", { ascending: false }).limit(1).single();
+      .eq("project_id", body.projectId).order("created_at", { ascending: false }).limit(1).maybeSingle();
     const outputRowId = (outputData as { id?: string } | null)?.id;
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
 
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       const { error } = await supabase.from("project_outputs").update({ outputs: mergedOutputs }).eq("id", outputRowId);
       if (error) throw new Error(error.message);
     } else {
-      const { data: runData } = await supabase.from("generation_runs").insert({ project_id: body.projectId, status: "complete" }).select().single();
+      const { data: runData } = await supabase.from("generation_runs").insert({ project_id: body.projectId, status: "complete" }).select().maybeSingle();
       const { error } = await supabase.from("project_outputs").insert({ project_id: body.projectId, generation_run_id: (runData as { id?: string } | null)?.id, outputs: mergedOutputs });
       if (error) throw new Error(error.message);
     }

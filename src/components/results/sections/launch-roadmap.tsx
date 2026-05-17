@@ -217,6 +217,7 @@ interface LaunchRoadmapSectionProps {
 
 export function LaunchRoadmapSection({ data, projectId, onRegenerate }: LaunchRoadmapSectionProps) {
   const [regenerating, setRegenerating] = useState(false);
+  const [confirming, setConfirming]     = useState(false);
   const [copiedAll, setCopiedAll]       = useState(false);
 
   async function handleRegenerate() {
@@ -286,14 +287,23 @@ export function LaunchRoadmapSection({ data, projectId, onRegenerate }: LaunchRo
           A 6-phase launch roadmap tying every FitPro Launch asset to a specific week and task — from technical setup to post-challenge upsell.
         </p>
         <div className="flex shrink-0 gap-2">
+          {confirming && !regenerating ? (
+            <span className="flex items-center gap-2 text-xs">
+              <span className="text-gray-500">Replace existing content?</span>
+              <button onClick={() => { setConfirming(false); void handleRegenerate(); }} className="font-semibold text-red-600 hover:text-red-800">Yes</button>
+              <span className="text-gray-300">·</span>
+              <button onClick={() => setConfirming(false)} className="text-gray-400 hover:text-gray-600">No</button>
+            </span>
+          ) : (
           <button
-            onClick={handleRegenerate}
+            onClick={() => setConfirming(true)}
             disabled={regenerating}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
             {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             {regenerating ? "Regenerating…" : "Regenerate"}
           </button>
+          )}
           <button
             onClick={handleCopyAll}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"

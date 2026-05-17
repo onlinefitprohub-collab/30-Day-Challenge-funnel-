@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       .select("id, user_id, status")
       .eq("id", projectId)
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     const project = projectData as Pick<ProjectRow, "id" | "user_id" | "status"> | null;
     if (!project) {
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       .from("project_inputs")
       .select("inputs")
       .eq("project_id", projectId)
-      .single();
+      .maybeSingle();
 
     const stored = inputData as Pick<ProjectInputRow, "inputs"> | null;
     if (!stored?.inputs) {
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     const outputRowId = (outputData as { id?: string } | null)?.id;
     const existingOutputs = (outputData?.outputs as Record<string, unknown>) ?? {};
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
         .from("generation_runs")
         .insert({ project_id: projectId, status: "complete" })
         .select()
-        .single();
+        .maybeSingle();
       const runId = (runData as { id?: string } | null)?.id;
       const { error } = await supabase
         .from("project_outputs")
