@@ -140,10 +140,10 @@ function buildMockWorkoutPlan(challengeName: string): WorkoutPlan {
     durationMins: dayNumber % 7 === 0 ? 0 : dayNumber % 6 === 0 ? 20 : 45,
     warmUp: "5 minutes of light movement: arm circles, hip rotations, and slow marching in place to raise heart rate.",
     exercises: dayNumber % 7 === 0 || dayNumber % 6 === 0 ? [] : [
-      { name: "Squat", sets: 3, reps: "10-12", rest: "60 sec", modification: "Chair-assisted squat" },
-      { name: "Push-up", sets: 3, reps: "8-10", rest: "60 sec", modification: "Knee push-up" },
-      { name: "Romanian Deadlift", sets: 3, reps: "10-12", rest: "60 sec", modification: "Bodyweight hip hinge" },
-      { name: "Plank", sets: 3, reps: "30 seconds", rest: "45 sec", modification: "Knee plank" },
+      { name: "Squat", sets: 3, reps: "10-12", rest: "60 sec", muscleGroups: ["Quads", "Glutes"], modification: "Chair-assisted squat" },
+      { name: "Push-up", sets: 3, reps: "8-10", rest: "60 sec", muscleGroups: ["Chest", "Triceps"], modification: "Knee push-up" },
+      { name: "Romanian Deadlift", sets: 3, reps: "10-12", rest: "60 sec", muscleGroups: ["Hamstrings", "Glutes"], modification: "Bodyweight hip hinge" },
+      { name: "Plank", sets: 3, reps: "30 seconds", rest: "45 sec", muscleGroups: ["Core"], modification: "Knee plank" },
     ],
     coolDown: "5 minutes of static stretching: hamstring stretch, hip flexor stretch, chest opener, and deep breathing.",
   });

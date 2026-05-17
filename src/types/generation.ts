@@ -151,7 +151,7 @@ export interface WorkoutExercise {
   sets: number;
   reps: string;           // "10-12" | "30 seconds" | "to failure"
   rest: string;           // "60 sec" | "90 sec"
-  muscleGroups: string[]; // e.g. ["Quads", "Glutes"]
+  muscleGroups?: string[]; // e.g. ["Quads", "Glutes"]
   modification?: string;
 }
 
@@ -189,35 +189,35 @@ export interface ApplicationLandingPage {
   valuePropHeadline: string;
   valuePropSubheadline: string;
   videoSectionHeading: string;
-  videoSectionSubheading: string;
+  videoSectionSubheading?: string;
   heroCtaText: string;
   heroCtaSubtext: string;
-  testimonialIntroHeading: string;
-  testimonialVideoQuote: string;
-  credentialItems: Array<{ label: string; description: string }>;   // exactly 4
-  benefitBlocks: Array<{ heading: string; body: string }>;          // exactly 5
-  midCtaHeading: string;
-  midCtaText: string;
+  testimonialIntroHeading?: string;
+  testimonialVideoQuote?: string;
+  credentialItems?: Array<{ label: string; description: string }>;
+  benefitBlocks?: Array<{ heading: string; body: string }>;
+  midCtaHeading?: string;
+  midCtaText?: string;
   painPointHeading?: string;
   dividerHeading: string;
-  faqItems: Array<{ question: string; answer: string }>;            // 4–8 items
-  galleryHeading: string;
+  faqItems: Array<{ question: string; answer: string }>;
+  galleryHeading?: string;
   qualificationSectionHeading: string;
-  shouldNotApply: string[];   // 4–8 disqualifiers
-  shouldApply: string[];      // 4–8 qualifiers
-  textTestimonials: Array<{ quote: string; attribution: string; result: string }>; // 3
+  shouldNotApply?: string[];
+  shouldApply?: string[];
+  textTestimonials: Array<{ quote: string; attribution: string; result: string }>;
   whatYouGetHeading: string;
-  whatYouGetBodyCopy: string;  // 2-3 persuasive paragraphs (newline-separated) below the checklist
-  whatYouGetItems: string[];  // 6–8 items
-  whatYouGetBullets?: string[][];  // 3–4 bullets per item, same order as whatYouGetItems
-  guaranteeBullets?: string[];    // 10-12 programme-specific "You'll..." result statements
+  whatYouGetBodyCopy?: string;
+  whatYouGetItems?: string[];
+  whatYouGetBullets?: string[][];
+  guaranteeBullets?: string[];
   transformationGalleryHeading: string;
   clientWinsHeading: string;
-  clientWins: Array<{ name: string; result: string }>;              // 4–8 items
-  clientStories: Array<{ storyHeadline: string; intro: string; story: string }>;  // exactly 6
-  problemBreakdown?: Array<{ title: string; headline: string; body: string }>; // 5 items
-  finalCtaText: string;
-  finalCtaSubtext: string;
+  clientWins?: Array<{ name: string; result: string }>;
+  clientStories: Array<{ storyHeadline: string; intro: string; story: string }>;
+  problemBreakdown?: Array<{ title: string; headline: string; body: string }>;
+  finalCtaText?: string;
+  finalCtaSubtext?: string;
 }
 
 // ─── VSL Script ─────────────────────────────────────────────────────────────

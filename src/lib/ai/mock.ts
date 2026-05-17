@@ -418,20 +418,34 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
 
     clientStories: [
       {
+        storyHeadline: "TWO YEARS OF TRYING EVERYTHING AND NOTHING STICKING",
         intro: `Meet James, a ${audienceShort} who had tried everything and was ready to give up.`,
         story: `"I'd been spinning my wheels for two years. I tried every programme out there — nothing seemed to work for someone in my situation.\n\nWhen I joined ${programmeName} everything clicked. Within 8 weeks I had more progress than I'd made in the previous two years combined. ${coachName} built everything around my life, not some generic template.\n\nIf you're on the fence, don't be. This changed everything for me."`,
       },
       {
+        storyHeadline: "CONVINCED CHANGE WAS IMPOSSIBLE AT HER AGE",
         intro: `Meet Sarah, a 42-year-old who'd struggled with ${biggestStruggle} for years before finding ${programmeName}.`,
         story: `"I honestly didn't think change was possible at my stage of life. I'd accepted that this was just how things were going to be.\n\nBut ${coachName} showed me exactly what I'd been missing — and the results followed almost immediately. Down 3 dress sizes, more energy than I've had in a decade.\n\nThe support and accountability made the difference. I never felt alone in the process."`,
       },
       {
+        storyHeadline: "TOO BUSY TO COMMIT — OR SO HE THOUGHT",
         intro: `Meet Mark, a busy professional who finally found a system that fit around his life.`,
         story: `"My schedule is insane — I travel constantly and thought there was no way I could commit to anything structured.\n\n${coachName} designed everything around my reality. Not what a programme expects of me, but what I could actually do. And the results were remarkable.\n\nI'm in the best shape of my adult life. Best decision I've made for myself in years."`,
       },
       {
+        storyHeadline: "STUCK IN A CYCLE OF STARTING OVER AND GIVING UP",
         intro: `Meet Lisa, who went from frustrated and stuck to thriving in just 12 weeks.`,
         story: `"I'd tried every shortcut going. Nothing was working. I was frustrated, embarrassed, and genuinely starting to wonder if I was just one of those people who couldn't change.\n\n${programmeName} showed me I was wrong. Within weeks I started seeing and feeling the difference. By week 12 I barely recognised myself.\n\nIf you're where I was — please just take the leap. You won't regret it."`,
+      },
+      {
+        storyHeadline: "PLATEAUED FOR MONTHS WITH NO IDEA WHY",
+        intro: `Meet Rachel, who had been putting in the work but stopped seeing results months before joining ${programmeName}.`,
+        story: `"I was already going to the gym four times a week. Eating well. Doing everything right — or so I thought.\n\nBut the scales weren't moving and I was genuinely losing motivation. ${coachName} pinpointed exactly what was missing in my approach within the first week.\n\nThree months later I'd broken through the plateau and hit a new personal best. Sometimes you just need the right eyes on your plan."`,
+      },
+      {
+        storyHeadline: "STARTING FROM SCRATCH AFTER YEARS AWAY FROM EXERCISE",
+        intro: `Meet Tom, who hadn't exercised consistently in five years before ${programmeName} gave him a reason to start again.`,
+        story: `"Life got in the way — work, family, everything piled up and fitness was the first thing that went. By the time I was ready to try again I didn't even know where to start.\n\n${programmeName} made the start easy. No judgement, no assumption that I'd just pick up where I left off. Just a clear plan built for where I actually was.\n\nTen weeks in, I'm fitter than I was in my thirties. Genuinely couldn't recommend this more."`,
       },
     ],
 

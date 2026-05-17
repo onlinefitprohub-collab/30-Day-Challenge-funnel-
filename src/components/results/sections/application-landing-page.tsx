@@ -24,7 +24,8 @@ function CopyBtn({ value, label }: { value: string; label?: string }) {
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value }: { label: string; value: string | undefined }) {
+  if (!value) return null;
   return (
     <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -76,7 +77,7 @@ export function ApplicationLandingPageSection({ data: al }: Props) {
 
       {/* Credentials */}
       <Section title="Credentials Strip" defaultOpen={false}>
-        {al.credentialItems.map((c, i) => (
+        {(al.credentialItems ?? []).map((c, i) => (
           <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
             <p className="text-xs font-semibold text-gray-700">{c.label}</p>
             <p className="mt-0.5 text-sm text-gray-600">{c.description}</p>
@@ -86,7 +87,7 @@ export function ApplicationLandingPageSection({ data: al }: Props) {
 
       {/* Benefit blocks */}
       <Section title="Benefit Blocks" defaultOpen={false}>
-        {al.benefitBlocks.map((b, i) => (
+        {(al.benefitBlocks ?? []).map((b, i) => (
           <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
             <p className="text-xs font-semibold text-gray-700 mb-1">{b.heading}</p>
             <p className="text-sm text-gray-600 leading-relaxed">{b.body}</p>
@@ -108,7 +109,7 @@ export function ApplicationLandingPageSection({ data: al }: Props) {
         <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">Checklist Items</p>
           <ul className="space-y-1">
-            {al.whatYouGetItems.map((item, i) => (
+            {(al.whatYouGetItems ?? []).map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-0.5 text-emerald-500">✓</span>
                 {item}
@@ -139,7 +140,7 @@ export function ApplicationLandingPageSection({ data: al }: Props) {
           <div className="rounded-lg border border-green-100 bg-green-50 p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-green-600 mb-2">Should Apply</p>
             <ul className="space-y-1">
-              {al.shouldApply.map((q, i) => (
+              {(al.shouldApply ?? []).map((q, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-green-800">
                   <span className="mt-0.5">✓</span>{q}
                 </li>
@@ -149,7 +150,7 @@ export function ApplicationLandingPageSection({ data: al }: Props) {
           <div className="rounded-lg border border-red-100 bg-red-50 p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-red-500 mb-2">Not a Fit</p>
             <ul className="space-y-1">
-              {al.shouldNotApply.map((q, i) => (
+              {(al.shouldNotApply ?? []).map((q, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-red-800">
                   <span className="mt-0.5">✗</span>{q}
                 </li>
@@ -182,7 +183,7 @@ export function ApplicationLandingPageSection({ data: al }: Props) {
         <Field label="Transformation Gallery Heading" value={al.transformationGalleryHeading} />
         <Field label="Client Wins Heading" value={al.clientWinsHeading} />
         <div className="grid gap-2 sm:grid-cols-2">
-          {al.clientWins.map((w, i) => (
+          {(al.clientWins ?? []).map((w, i) => (
             <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5">
               <p className="text-xs font-semibold text-gray-700">{w.name}</p>
               <p className="text-sm text-emerald-700 font-medium mt-0.5">{w.result}</p>

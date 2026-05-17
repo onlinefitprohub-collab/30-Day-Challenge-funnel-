@@ -372,7 +372,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Programme Pillars</p>
-                    <p className="text-gray-800">{assets.applicationLandingPage.benefitBlocks.length} benefit blocks</p>
+                    <p className="text-gray-800">{(assets.applicationLandingPage.benefitBlocks ?? []).length} benefit blocks</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">FAQ Items</p>
@@ -380,11 +380,11 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Qualifications</p>
-                    <p className="text-gray-800">{assets.applicationLandingPage.shouldApply.length} qualifiers · {assets.applicationLandingPage.shouldNotApply.length} disqualifiers</p>
+                    <p className="text-gray-800">{(assets.applicationLandingPage.shouldApply ?? []).length} qualifiers · {(assets.applicationLandingPage.shouldNotApply ?? []).length} disqualifiers</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Client Wins</p>
-                    <p className="text-gray-800">{assets.applicationLandingPage.clientWins.length} results showcased</p>
+                    <p className="text-gray-800">{(assets.applicationLandingPage.clientWins ?? []).length} results showcased</p>
                   </div>
                 </div>
               </div>
