@@ -37,7 +37,7 @@ export async function POST() {
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:5000";
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,

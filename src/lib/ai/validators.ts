@@ -166,6 +166,7 @@ export const workoutExerciseSchema = z.object({
   sets:         z.number().int().min(0),
   reps:         z.string().min(1),
   rest:         z.string().min(1),
+  muscleGroups: z.array(z.string()).default([]),
   modification: z.string().optional(),
 });
 
@@ -555,6 +556,58 @@ export const monthlyContentPlanSchema = z.object({
 
 export const monthlyContentPlanResponseSchema = z.object({
   monthlyContentPlan: monthlyContentPlanSchema,
+});
+
+// ─── Nutrition Plan schemas ──────────────────────────────────────────────────
+
+const nutritionFoodSchema = z.object({
+  item:      z.string().min(1),
+  amount:    z.string().min(1),
+  cals:      z.number().int().min(0),
+  proteinG:  z.number().min(0),
+  carbsG:    z.number().min(0),
+  fatsG:     z.number().min(0),
+});
+
+const nutritionMealSchema = z.object({
+  name:           z.string().min(1),
+  time:           z.string().min(1),
+  foods:          z.array(nutritionFoodSchema).min(1),
+  totalCals:      z.number().min(0),
+  totalProteinG:  z.number().min(0),
+});
+
+const nutritionDayPlanSchema = z.object({
+  label:          z.string().min(1),
+  totalCals:      z.number().min(0),
+  totalProteinG:  z.number().min(0),
+  totalCarbsG:    z.number().min(0),
+  totalFatsG:     z.number().min(0),
+  meals:          z.array(nutritionMealSchema).min(3),
+  hydration:      z.string().min(1),
+  preWorkout:     z.string().min(1),
+  postWorkout:    z.string().min(1),
+});
+
+const nutritionTierSchema = z.object({
+  name:        z.string().min(1),
+  targetCals:  z.number().min(500),
+  rationale:   z.string().min(1),
+  macros:      z.object({ proteinPct: z.number(), carbsPct: z.number(), fatsPct: z.number() }),
+  trainingDay: nutritionDayPlanSchema,
+  restDay:     nutritionDayPlanSchema,
+});
+
+export const nutritionPlanSchema = z.object({
+  planName:        z.string().min(1),
+  approach:        z.string().min(1),
+  principles:      z.array(z.string()).min(3).max(7),
+  tiers:           z.array(nutritionTierSchema).min(3).max(3),
+  shoppingList:    z.array(z.string()).min(10),
+  mealPrepGuide:   z.array(z.string()).min(3),
+  supplementNotes: z.string().min(1),
+  coachingNotes:   z.string().min(1),
+  generatedAt:     z.string(),
 });
 
 // ─── Safe parse helpers ──────────────────────────────────────────────────────

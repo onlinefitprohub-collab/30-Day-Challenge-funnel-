@@ -35,6 +35,7 @@ function textBlocks(content: string): NotionBlock[] {
   if (remaining) chunks.push(remaining);
   return chunks.map((c) => ({ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: c } }] } }));
 }
+
 function h2Block(content: string): NotionBlock {
   return { object: "block", type: "heading_2", heading_2: { rich_text: [{ type: "text", text: { content } }] } };
 }

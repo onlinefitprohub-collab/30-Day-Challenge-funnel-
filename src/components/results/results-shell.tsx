@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,12 +9,12 @@ import {
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
   CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, X, Salad, Puzzle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide, NutritionPlan } from "@/types/generation";
 import type { DiscoveryCallScript } from "@/types/discovery-call";
 import type { InstagramDmScript } from "@/types/dm-script";
 import type { UpsellSequence } from "@/types/upsell-sequence";
@@ -34,6 +34,7 @@ import { HighLevelSection }       from "./sections/highlevel";
 import { FunnelPreviewSection }   from "./sections/funnel-preview";
 import { GhlInspectorSection }    from "./sections/ghl-inspector";
 import { WorkoutPlanSection, WorkoutPlanPlaceholder } from "./sections/workout-plan";
+import { NutritionPlanSection, NutritionPlanPlaceholder } from "./sections/nutrition-plan";
 import { SalesLetterSection, LongFormPlaceholder }    from "./sections/sales-letter";
 import { ManyChatFlowSection }    from "./sections/manychat-flow";
 import { NurtureSection, NurturePlaceholder }         from "./sections/nurture";
@@ -50,6 +51,7 @@ import { ApplicationLandingPageSection } from "./sections/application-landing-pa
 import { PerformanceTrackerSection } from "./sections/performance-tracker";
 import { ExportSection } from "./sections/export-section";
 import { StartHereSection } from "./sections/start-here";
+import { ExtensionDownloadSection } from "./sections/extension-download";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -64,54 +66,72 @@ type NavTab = {
 };
 
 const CHALLENGE_TABS: NavTab[] = [
-  { id: "startHere",     label: "Start Here",         icon: Rocket,        highlight: true, group: "start",      groupLabel: "Launch" },
-  { id: "highlevel",     label: "Clone to GHL",       icon: Layers,                         group: "export",     groupLabel: "Export" },
-  { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
-  { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
-  { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
-  { id: "exportCopy",    label: "Export Copy",       icon: Download,                       group: "export" },
-  { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
-  { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "sequences",  groupLabel: "Sequences" },
-  { id: "smsSequence",   label: "SMS Sequence",     icon: MessageSquare,                  group: "sequences" },
-  { id: "nurtureSequence",label:"52-Wk Nurture",    icon: CalendarDays,                   group: "sequences" },
-  { id: "adCopy",        label: "Ad Copy",          icon: Megaphone,                      group: "ads",        groupLabel: "Ads" },
-  { id: "creativePrompts",label:"Creatives",         icon: ImageIcon,                      group: "ads" },
-  { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
-  { id: "salesLetter",   label: "Sales Letter",     icon: FileText,                       group: "longform",   groupLabel: "Long-Form" },
-  { id: "workoutPlan",   label: "Workout Plan",     icon: Dumbbell,                       group: "longform" },
-  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
-  { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
-  { id: "contentCalendar",label:"Content Engine",   icon: CalendarRange,                  group: "coaching" },
-  { id: "deliveryPack",  label: "Delivery Pack",    icon: Package,                        group: "coaching" },
-  { id: "testimonialHarvest",label:"Testimonials",  icon: Star,                           group: "coaching" },
-  { id: "dmScript",      label: "DM Scripts",       icon: MessageCircle,                  group: "coaching" },
-  { id: "upsellSequence",label: "Upsell Sequence",  icon: TrendingUp,                     group: "coaching" },
-  { id: "launchRoadmap", label: "Launch Roadmap",   icon: Map,                            group: "coaching" },
+  // ── Launch ──────────────────────────────────────────────────────────────────
+  { id: "startHere",          label: "Start Here",        icon: Rocket,         highlight: true, group: "start",     groupLabel: "Launch" },
+  // ── Your Pages ──────────────────────────────────────────────────────────────
+  { id: "highlevel",          label: "Clone to GHL",      icon: Layers,                          group: "pages",     groupLabel: "Your Pages" },
+  { id: "ghlInspector",       label: "GHL Inspector",     icon: Microscope,     hidden: true,    group: "pages" },
+  { id: "funnelPreview",      label: "Funnel Pages",      icon: LayoutTemplate,                  group: "pages" },
+  { id: "extensionDownload",  label: "GHL Extension",     icon: Puzzle,                          group: "pages" },
+  { id: "offerSummary",       label: "Offer Summary",     icon: Target,                          group: "pages" },
+  { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "pages" },
+  { id: "exportCopy",         label: "Export Copy",       icon: Download,                        group: "pages" },
+  // ── Getting Clients ─────────────────────────────────────────────────────────
+  { id: "emailSequence",      label: "Email Sequence",    icon: Mail,                            group: "clients",   groupLabel: "Getting Clients" },
+  { id: "smsSequence",        label: "SMS Sequence",      icon: MessageSquare,                   group: "clients" },
+  { id: "dmScript",           label: "DM Scripts",        icon: MessageCircle,                   group: "clients" },
+  { id: "discoveryCall",      label: "Sales Script",      icon: Phone,                           group: "clients" },
+  { id: "salesLetter",        label: "Sales Letter",      icon: FileText,                        group: "clients" },
+  { id: "pricingGuide",       label: "Pricing Guide",     icon: BadgeDollarSign,                 group: "clients" },
+  // ── Nurturing Leads ─────────────────────────────────────────────────────────
+  { id: "contentCalendar",    label: "Content Engine",    icon: CalendarRange,                   group: "nurture",   groupLabel: "Nurturing Leads" },
+  { id: "nurtureSequence",    label: "52-Wk Nurture",     icon: CalendarDays,                    group: "nurture" },
+  // ── Coaching Clients ────────────────────────────────────────────────────────
+  { id: "launchRoadmap",      label: "Launch Roadmap",    icon: Map,                             group: "coaching",  groupLabel: "Coaching Clients" },
+  { id: "workoutPlan",        label: "Workout Plan",      icon: Dumbbell,                        group: "coaching" },
+  { id: "nutritionPlan",      label: "Nutrition Plan",    icon: Salad,                           group: "coaching" },
+  { id: "deliveryPack",       label: "Delivery Pack",     icon: Package,                         group: "coaching" },
+  // ── Getting Referrals ───────────────────────────────────────────────────────
+  { id: "testimonialHarvest", label: "Testimonials",      icon: Star,                            group: "referrals", groupLabel: "Getting Referrals" },
+  { id: "upsellSequence",     label: "Upsell Sequence",   icon: TrendingUp,                      group: "referrals" },
+  // ── AD Engine ───────────────────────────────────────────────────────────────
+  { id: "adCopy",             label: "Ad Copy",           icon: Megaphone,                       group: "ads",       groupLabel: "AD Engine" },
+  { id: "creativePrompts",    label: "Ad Creatives",      icon: ImageIcon,                       group: "ads" },
+  { id: "campaignNaming",     label: "Campaign Naming",   icon: BarChart3,                       group: "ads" },
 ];
 
 const APPLICATION_TABS: NavTab[] = [
-  { id: "startHere",     label: "Start Here",         icon: Rocket,        highlight: true, group: "start",      groupLabel: "Launch" },
-  { id: "highlevel",     label: "Clone to GHL",       icon: Layers,                         group: "export",     groupLabel: "Export" },
-  { id: "ghlInspector",  label: "GHL Inspector",     icon: Microscope,    hidden: true,    group: "export" },
-  { id: "funnelPreview", label: "Your Funnel Pages", icon: LayoutTemplate,                 group: "export" },
-  { id: "performance",   label: "Performance",       icon: TrendingUp,                     group: "export" },
-  { id: "exportCopy",    label: "Export Copy",       icon: Download,                       group: "export" },
-  { id: "offerSummary",  label: "Offer Summary",     icon: Target,                         group: "overview",   groupLabel: "Overview" },
-  { id: "appLanding",    label: "Reg. Page Copy",    icon: FileText,                       group: "overview" },
-  { id: "vslScript",     label: "VSL Script",       icon: Video,                          group: "content",    groupLabel: "Content" },
-  { id: "emailSequence", label: "Email Sequence",   icon: Mail,                           group: "content" },
-  { id: "smsSequence",   label: "SMS Follow-Up",    icon: MessageSquare,                  group: "content" },
-  { id: "nurtureSequence",label:"52-Wk Nurture",    icon: CalendarDays,                   group: "content" },
-  { id: "adCopy",        label: "Ad Copy",          icon: Megaphone,                      group: "ads",        groupLabel: "Ads" },
-  { id: "creativePrompts",label:"Creatives",         icon: ImageIcon,                      group: "ads" },
-  { id: "campaignNaming",label: "Campaign",         icon: BarChart3,                      group: "ads" },
-  { id: "pricingGuide",  label: "Pricing Guide",    icon: BadgeDollarSign,                group: "coaching",   groupLabel: "Coaching" },
-  { id: "discoveryCall", label: "Discovery Call",   icon: Phone,                          group: "coaching" },
-  { id: "contentCalendar",label:"Content Engine",   icon: CalendarRange,                  group: "coaching" },
-  { id: "testimonialHarvest",label:"Testimonials",  icon: Star,                           group: "coaching" },
-  { id: "dmScript",      label: "DM Scripts",       icon: MessageCircle,                  group: "coaching" },
-  { id: "upsellSequence",label: "Upsell Sequence",  icon: TrendingUp,                     group: "coaching" },
-  { id: "launchRoadmap", label: "Launch Roadmap",   icon: Map,                            group: "coaching" },
+  // ── Launch ──────────────────────────────────────────────────────────────────
+  { id: "startHere",          label: "Start Here",        icon: Rocket,         highlight: true, group: "start",     groupLabel: "Launch" },
+  // ── Your Pages ──────────────────────────────────────────────────────────────
+  { id: "highlevel",          label: "Clone to GHL",      icon: Layers,                          group: "pages",     groupLabel: "Your Pages" },
+  { id: "ghlInspector",       label: "GHL Inspector",     icon: Microscope,     hidden: true,    group: "pages" },
+  { id: "funnelPreview",      label: "Funnel Pages",      icon: LayoutTemplate,                  group: "pages" },
+  { id: "extensionDownload",  label: "GHL Extension",     icon: Puzzle,                          group: "pages" },
+  { id: "offerSummary",       label: "Offer Summary",     icon: Target,                          group: "pages" },
+  { id: "appLanding",         label: "Reg. Page Copy",    icon: FileText,                        group: "pages" },
+  { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "pages" },
+  { id: "exportCopy",         label: "Export Copy",       icon: Download,                        group: "pages" },
+  // ── Getting Clients ─────────────────────────────────────────────────────────
+  { id: "emailSequence",      label: "Email Sequence",    icon: Mail,                            group: "clients",   groupLabel: "Getting Clients" },
+  { id: "smsSequence",        label: "SMS Follow-Up",     icon: MessageSquare,                   group: "clients" },
+  { id: "dmScript",           label: "DM Scripts",        icon: MessageCircle,                   group: "clients" },
+  { id: "vslScript",          label: "VSL Script",        icon: Video,                           group: "clients" },
+  { id: "discoveryCall",      label: "Sales Script",      icon: Phone,                           group: "clients" },
+  { id: "pricingGuide",       label: "Pricing Guide",     icon: BadgeDollarSign,                 group: "clients" },
+  // ── Nurturing Leads ─────────────────────────────────────────────────────────
+  { id: "contentCalendar",    label: "Content Engine",    icon: CalendarRange,                   group: "nurture",   groupLabel: "Nurturing Leads" },
+  { id: "nurtureSequence",    label: "52-Wk Nurture",     icon: CalendarDays,                    group: "nurture" },
+  // ── Coaching Clients ────────────────────────────────────────────────────────
+  { id: "launchRoadmap",      label: "Launch Roadmap",    icon: Map,                             group: "coaching",  groupLabel: "Coaching Clients" },
+  { id: "nutritionPlan",      label: "Nutrition Plan",    icon: Salad,                           group: "coaching" },
+  // ── Getting Referrals ───────────────────────────────────────────────────────
+  { id: "testimonialHarvest", label: "Testimonials",      icon: Star,                            group: "referrals", groupLabel: "Getting Referrals" },
+  { id: "upsellSequence",     label: "Upsell Sequence",   icon: TrendingUp,                      group: "referrals" },
+  // ── AD Engine ───────────────────────────────────────────────────────────────
+  { id: "adCopy",             label: "Ad Copy",           icon: Megaphone,                       group: "ads",       groupLabel: "AD Engine" },
+  { id: "creativePrompts",    label: "Ad Creatives",      icon: ImageIcon,                       group: "ads" },
+  { id: "campaignNaming",     label: "Campaign Naming",   icon: BarChart3,                       group: "ads" },
 ];
 
 type TabId = string;
@@ -146,7 +166,8 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
 };
 
 const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
-const DEFAULT_COLLAPSED = new Set(["Overview", "Sequences", "Content", "Ads", "Long-Form", "Coaching"]);
+const RESULTS_SEEN_KEY    = "fitpro_results_seen";
+const DEFAULT_COLLAPSED = new Set(["Getting Clients", "Nurturing Leads", "Coaching Clients", "Getting Referrals", "AD Engine"]);
 
 async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
   try {
@@ -179,18 +200,29 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     } catch {}
     return DEFAULT_COLLAPSED;
   });
+  const [showNewBanner, setShowNewBanner] = useState(false);
   const [copiedAll, setCopiedAll]     = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenSection, setRegenSection] = useState<SectionGroup | null>(null);
   const [liveOutputs, setLiveOutputs]   = useState<Record<string, unknown>>(outputs);
 
   const [liveWorkoutPlan, setLiveWorkoutPlan]         = useState<WorkoutPlan | undefined>(outputs.workoutPlan as WorkoutPlan | undefined);
+  const [liveNutritionPlan, setLiveNutritionPlan]     = useState<NutritionPlan | undefined>(outputs.nutritionPlan as NutritionPlan | undefined);
   const [liveLongFormAssets, setLiveLongFormAssets]   = useState<LongFormSalesAssets | undefined>(outputs.longFormAssets as LongFormSalesAssets | undefined);
   const [liveNurtureSequence, setLiveNurtureSequence] = useState<NurtureSequence | undefined>(outputs.nurtureSequence as NurtureSequence | undefined);
   const [liveDiscoveryCallScript, setLiveDiscoveryCallScript] = useState<DiscoveryCallScript | undefined>(outputs.discoveryCallScript as DiscoveryCallScript | undefined);
   const [liveDmScript, setLiveDmScript]               = useState<InstagramDmScript | undefined>(outputs.instagramDmScript as InstagramDmScript | undefined);
   const [liveUpsellSequence, setLiveUpsellSequence]   = useState<UpsellSequence | undefined>(outputs.upsellSequence as UpsellSequence | undefined);
   const [liveLaunchRoadmap, setLiveLaunchRoadmap]     = useState<LaunchRoadmap | undefined>(outputs.launchRoadmap as LaunchRoadmap | undefined);
+
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(RESULTS_SEEN_KEY)) {
+        setShowNewBanner(true);
+        window.localStorage.setItem(RESULTS_SEEN_KEY, "1");
+      }
+    } catch {}
+  }, []);
 
   function toggleGroup(label: string) {
     setCollapsedGroups((prev) => {
@@ -220,6 +252,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   function handleWorkoutGenerated(plan: WorkoutPlan) {
     setLiveWorkoutPlan(plan);
     setLiveOutputs((p: Record<string, unknown>) => ({ ...p, workoutPlan: plan }));
+  }
+  function handleNutritionGenerated(plan: NutritionPlan) {
+    setLiveNutritionPlan(plan);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, nutritionPlan: plan }));
   }
   function handleLongFormGenerated(assets: LongFormSalesAssets) {
     setLiveLongFormAssets(assets);
@@ -308,7 +344,8 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     startHere:       <StartHereSection       funnelType={funnelType} onNavigate={handleNavigate} />,
     highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
-    ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
+    ghlInspector:       <GhlInspectorSection    projectId={project.id} />,
+    extensionDownload:  <ExtensionDownloadSection />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} funnelType={funnelType} />,
     landingPage: isApplication
       ? (
@@ -366,6 +403,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     nurtureSequence: liveNurtureSequence
       ? <NurtureSection data={liveNurtureSequence} projectId={project.id} onRegenerate={handleNurtureGenerated} />
       : <NurturePlaceholder projectId={project.id} onGenerated={handleNurtureGenerated} />,
+    nutritionPlan: liveNutritionPlan
+      ? <NutritionPlanSection data={liveNutritionPlan} projectId={project.id} onRegenerate={handleNutritionGenerated} />
+      : <NutritionPlanPlaceholder projectId={project.id} onGenerated={handleNutritionGenerated} />,
     ...((!isApplication) && {
       workoutPlan: liveWorkoutPlan
         ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
@@ -482,6 +522,31 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
           </Button>
         </div>
       </div>
+
+      {/* ── First-time banner ──────────────────────────────────────────── */}
+      {showNewBanner && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Rocket className="h-4 w-4 shrink-0 text-orange-400" />
+            <p className="text-sm text-orange-200">
+              <span className="font-semibold">New here?</span> Start with the{" "}
+              <button
+                onClick={() => { handleNavigate("startHere"); setShowNewBanner(false); }}
+                className="underline underline-offset-2 hover:text-white transition-colors"
+              >
+                Start Here
+              </button>{" "}
+              tab — it walks you through launching your funnel step by step.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowNewBanner(false)}
+            className="shrink-0 rounded-lg p-1 text-orange-400 hover:bg-orange-500/20 hover:text-orange-200 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── Body: sidebar + content ─────────────────────────────────────── */}
       <div className="flex gap-5 items-start">

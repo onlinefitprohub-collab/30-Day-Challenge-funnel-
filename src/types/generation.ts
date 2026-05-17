@@ -149,8 +149,9 @@ export interface QualificationSection {
 export interface WorkoutExercise {
   name: string;
   sets: number;
-  reps: string;         // "10-12" | "30 seconds" | "to failure"
-  rest: string;         // "60 sec" | "90 sec"
+  reps: string;           // "10-12" | "30 seconds" | "to failure"
+  rest: string;           // "60 sec" | "90 sec"
+  muscleGroups?: string[]; // e.g. ["Quads", "Glutes"]
   modification?: string;
 }
 
@@ -303,6 +304,58 @@ export interface PricingGuide {
   nextSteps: string[];
 }
 
+// ─── Nutrition Plan types ────────────────────────────────────────────────────
+
+export interface NutritionFood {
+  item: string;       // "Rolled oats"
+  amount: string;     // "80g / ¾ cup"
+  cals: number;
+  proteinG: number;
+  carbsG: number;
+  fatsG: number;
+}
+
+export interface NutritionMeal {
+  name: string;       // "Breakfast"
+  time: string;       // "7:00 AM"
+  foods: NutritionFood[];
+  totalCals: number;
+  totalProteinG: number;
+}
+
+export interface NutritionDayPlan {
+  label: string;      // "Training Day" | "Rest Day"
+  totalCals: number;
+  totalProteinG: number;
+  totalCarbsG: number;
+  totalFatsG: number;
+  meals: NutritionMeal[];
+  hydration: string;
+  preWorkout: string;
+  postWorkout: string;
+}
+
+export interface NutritionTier {
+  name: string;       // "Fat Loss" | "Maintenance" | "Performance"
+  targetCals: number;
+  rationale: string;
+  macros: { proteinPct: number; carbsPct: number; fatsPct: number };
+  trainingDay: NutritionDayPlan;
+  restDay: NutritionDayPlan;
+}
+
+export interface NutritionPlan {
+  planName: string;
+  approach: string;        // "High-protein flexible dieting"
+  principles: string[];    // 5 core rules
+  tiers: NutritionTier[]; // 3 tiers: Fat Loss / Maintenance / Performance
+  shoppingList: string[]; // 20 pantry staples
+  mealPrepGuide: string[];// 5 weekly prep tips
+  supplementNotes: string;
+  coachingNotes: string;
+  generatedAt: string;
+}
+
 // ─── GeneratedFunnelAssets ───────────────────────────────────────────────────
 
 export interface GeneratedFunnelAssets {
@@ -335,6 +388,7 @@ export interface GeneratedFunnelAssets {
   funnelType?: "challenge" | "application";
   // On-demand extras (separate generation flows)
   workoutPlan?: WorkoutPlan;
+  nutritionPlan?: NutritionPlan;
   longFormAssets?: import("./longform").LongFormSalesAssets;
   nurtureSequence?: NurtureSequence;
   // Application funnel — 22-section registration page (generated in parallel with other copy)

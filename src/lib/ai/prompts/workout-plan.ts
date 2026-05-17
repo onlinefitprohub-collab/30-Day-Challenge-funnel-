@@ -50,6 +50,19 @@ Name sessions specifically — not generic. Examples:
 - "Upper Body Power A", "Lower Body Strength B", "Full Body HIIT Circuit", "Core & Mobility Flow", "Active Recovery Walk + Stretch", "Rest Day"
 - Capstone days: "30-Day Final Challenge — Part 1", "30-Day Final Challenge — Part 2"
 
+─── EXERCISE SELECTION ───
+
+Use real, well-known exercises with clear, standard names that coaches and clients can easily search on any fitness platform or YouTube. The goal is that any exercise name you write should be instantly searchable and findable by a beginner.
+
+Example exercises by category (use these naming conventions):
+- Chest: "Barbell Bench Press", "Incline Dumbbell Press", "Cable Crossover", "Push-Up", "Dumbbell Flye"
+- Back: "Barbell Deadlift", "Lat Pulldown", "Bent-Over Barbell Row", "Seated Cable Row", "Pull-Up", "Single-Arm Dumbbell Row"
+- Legs: "Back Squat", "Leg Press", "Romanian Deadlift", "Walking Lunge", "Leg Curl", "Bulgarian Split Squat", "Goblet Squat"
+- Shoulders: "Dumbbell Shoulder Press", "Lateral Raise", "Face Pull", "Arnold Press", "Upright Row"
+- Arms: "Barbell Curl", "Hammer Curl", "Triceps Pushdown", "Skull Crusher", "Triceps Dip"
+- Core: "Plank", "Hanging Leg Raise", "Cable Crunch", "Russian Twist", "Ab Wheel Rollout", "Reverse Crunch"
+- Cardio/HIIT: "Burpee", "Jump Squat", "Mountain Climber", "Box Jump", "Jumping Jack", "High Knees", "Kettlebell Swing"
+
 ─── EXERCISE RULES ───
 
 - warmUp: 2–3 sentences describing a specific warm-up sequence (not generic "stretch for 5 mins").
@@ -58,7 +71,19 @@ Name sessions specifically — not generic. Examples:
 - Rest and active-recovery days: exercises array can be empty [], warmUp and coolDown should still describe light movement.
 - reps: use specific formats — "10-12", "8 reps each side", "30 seconds", "AMRAP", "to failure".
 - rest: use "30 sec", "45 sec", "60 sec", "90 sec", "2 min".
+- muscleGroups: array of 1–3 primary muscles targeted, e.g. ["Quads", "Glutes"] or ["Chest", "Triceps"]. Use standard bodybuilding muscle group names: Chest, Back, Shoulders, Biceps, Triceps, Quads, Hamstrings, Glutes, Calves, Core, Full Body.
 - modification: regression that makes the movement easier or equipment-free.
+
+─── EXERCISE VARIETY — MANDATORY ───
+
+Exercise variety is the #1 factor in keeping challenge clients engaged for 30 days. Apply these rules without exception:
+
+- NEVER repeat the same primary exercise on two strength days within the same week. If Day 1 uses "Barbell Full Squat", Day 3 must use "Romanian Deadlift" or "Bulgarian Split Squat" for legs — not Barbell Full Squat again.
+- Each week's three strength sessions MUST target different movement patterns: e.g. Week 1: push/pull/hinge, Week 2: squat/upper push/upper pull, Week 3: hip-dominant/push/row-dominant.
+- Across all 4 weeks: each week must introduce at least 4 exercises that did NOT appear the previous week. Progressive overload is achieved through sets/reps/rest, not by repeating identical exercise lists.
+- Cardio days MUST rotate format: use Circuit, EMOM, Tabata, AMRAP, and Interval Sprint formats — never two consecutive cardio days with the same format.
+- Session naming must reflect the movement pattern: "Push Power A", "Hinge & Pull B", "Squat & Core C" not just "Strength Day".
+- Use ALL categories of the exercise database. Do not default to the same 6–8 exercises throughout the programme. Every muscle group should be trained through at least 3 different exercises over the 30 days.
 
 ─── OUTPUT FORMAT ───
 
@@ -83,10 +108,11 @@ Return ONLY this JSON structure — no extra keys, no markdown:
           "warmUp": "string",
           "exercises": [
             {
-              "name": "string",
+              "name": "string — standard exercise name, clear enough to search on any fitness platform",
               "sets": 3,
               "reps": "10-12",
               "rest": "60 sec",
+              "muscleGroups": ["Quads", "Glutes"],
               "modification": "string"
             }
           ],

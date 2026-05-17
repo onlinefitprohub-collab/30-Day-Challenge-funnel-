@@ -3613,7 +3613,7 @@ export function buildApplicationLandingPageData(data: GeneratedFunnelAssets): Gh
   }
 
   // Divider heading section — add vertical breathing room so it stands out
-  const dividerSection = page.sections.find((s) => ((s as unknown as Record<string, unknown>).id as string) === "section-s7DdxkIpg2");
+  const dividerSection = page.sections.find((s) => (s as unknown as Record<string, unknown>).id === "section-s7DdxkIpg2");
   if (dividerSection) {
     const ds = (dividerSection as unknown as Record<string, unknown>).styles as Record<string, unknown> ?? {};
     ds.paddingTop    = { value: "72", unit: "px" };
