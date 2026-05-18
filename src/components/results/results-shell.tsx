@@ -557,12 +557,12 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
             className="border border-white/[0.10] bg-transparent text-zinc-300 hover:bg-white/[0.06] hover:text-zinc-100"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
-            {regenerating ? "Starting…" : "Regenerate"}
+            <span className="hidden sm:inline">{regenerating ? "Starting…" : "Regenerate"}</span>
           </Button>
           <Button size="sm" onClick={handleCopyAll} className="border border-white/[0.10] bg-transparent text-zinc-300 hover:bg-white/[0.06] hover:text-zinc-100">
             {copiedAll
-              ? <><Check className="h-3.5 w-3.5 text-green-400" /> Copied!</>
-              : <><Copy className="h-3.5 w-3.5" /> Export JSON</>
+              ? <><Check className="h-3.5 w-3.5 text-green-400" /><span className="hidden sm:inline">Copied!</span></>
+              : <><Copy className="h-3.5 w-3.5" /><span className="hidden sm:inline">Export JSON</span></>
             }
           </Button>
         </div>
@@ -652,11 +652,56 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
         );
       })()}
 
-      {/* ── Body: sidebar + content ─────────────────────────────────────── */}
-      <div className="flex gap-5 items-start">
+      {/* ── Mobile tab nav (hidden on sm+) ─────────────────────────────── */}
+      <div className="sm:hidden space-y-2">
+        {/* Group row */}
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+          {grouped.map(({ label, items }) => {
+            const isActiveGroup = items.some(t => t.id === activeTab);
+            return (
+              <button
+                key={label}
+                onClick={() => { if (!isActiveGroup) handleNavigate(items[0].id); }}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors ${
+                  isActiveGroup
+                    ? "bg-white/[0.12] text-zinc-100"
+                    : "bg-white/[0.04] text-zinc-500 active:text-zinc-300"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {/* Tab row within the active group */}
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+          {grouped.find(g => g.items.some(t => t.id === activeTab))?.items.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
+                  isActive && tab.highlight
+                    ? "bg-orange-500 text-white"
+                    : isActive
+                    ? "bg-white/[0.10] text-zinc-100"
+                    : "bg-white/[0.04] text-zinc-500 active:text-zinc-300"
+                }`}
+              >
+                <tab.icon className="h-3.5 w-3.5 shrink-0" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Sidebar */}
-        <nav className="w-56 shrink-0 rounded-2xl border border-white/[0.07] bg-[#0d0d10] py-4 overflow-hidden sticky top-4">
+      {/* ── Body: sidebar + content ─────────────────────────────────────── */}
+      <div className="sm:flex sm:gap-5 sm:items-start">
+
+        {/* Sidebar — desktop only */}
+        <nav className="hidden sm:block w-56 shrink-0 rounded-2xl border border-white/[0.07] bg-[#0d0d10] py-4 overflow-hidden sticky top-4">
           {grouped.map(({ label, items }) => {
             const isCollapsed = collapsedGroups.has(label);
             const hasActive = items.some(t => t.id === activeTab);
@@ -708,7 +753,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
         </nav>
 
         {/* Content area */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="min-w-0 sm:flex-1 space-y-4">
 
           {/* Section header */}
           <div className="flex items-center justify-between">

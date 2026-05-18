@@ -27,6 +27,14 @@
     text-wrap: balance;
   }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .gradient-text {
     @apply bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent;
   }
