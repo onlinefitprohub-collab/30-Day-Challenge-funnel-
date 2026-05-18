@@ -6,18 +6,24 @@ import { buildCoachContext } from "@/lib/ai/context";
 import { buildOfferPagesPrompt } from "@/lib/ai/prompts/offer-pages";
 import { buildSequencesPrompt } from "@/lib/ai/prompts/sequences";
 import { buildAdsCampaignPrompt } from "@/lib/ai/prompts/ads-campaign";
+import { buildContentCalendarPrompt } from "@/lib/ai/prompts/content-calendar";
+import { buildDeliveryPackPrompt } from "@/lib/ai/prompts/delivery-pack";
+import { buildCoachingToolsPrompt } from "@/lib/ai/prompts/coaching-tools";
 import { pickRandomStyle } from "@/lib/ai/copywriter-styles";
 import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
   adsCampaignResponseSchema,
+  contentCalendarResponseSchema,
+  deliveryPackResponseSchema,
+  coachingToolsResponseSchema,
 } from "@/lib/ai/validators";
 import { generateMockAssets } from "@/lib/ai/mock";
 import { wizardInputsSchema } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import type { ProjectInputRow, ProjectRow } from "@/types/project";
 
-type SectionGroup = "offer-pages" | "sequences" | "ads";
+type SectionGroup = "offer-pages" | "sequences" | "ads" | "content" | "coaching-tools";
 
 /**
  * POST /api/regenerate-section
@@ -44,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "projectId and group are required" }, { status: 400 });
     }
 
-    const validGroups: SectionGroup[] = ["offer-pages", "sequences", "ads"];
+    const validGroups: SectionGroup[] = ["offer-pages", "sequences", "ads", "content", "coaching-tools"];
     if (!validGroups.includes(group as SectionGroup)) {
       return NextResponse.json(
         { error: `group must be one of: ${validGroups.join(", ")}` },
@@ -140,8 +146,7 @@ export async function POST(request: Request) {
         smsSequence:   data.smsSequence,
         emailSequence: data.emailSequence,
       };
-    } else {
-      // ads
+    } else if (group === "ads") {
       const result = isMockMode
         ? { data: mock as GeneratedFunnelAssets, error: null, usedFallback: true }
         : await callClaudeGroup(
@@ -156,6 +161,49 @@ export async function POST(request: Request) {
         adCopy:          data.adCopy,
         creativePrompts: data.creativePrompts,
         campaignNaming:  data.campaignNaming,
+      };
+    } else if (group === "content") {
+      const [calResult, packResult] = await Promise.all([
+        isMockMode
+          ? Promise.resolve({ data: mock as GeneratedFunnelAssets, error: null, usedFallback: true })
+          : callClaudeGroup(
+              buildContentCalendarPrompt(context, style.promptDescription),
+              contentCalendarResponseSchema,
+              "content-calendar",
+              3200,
+              "claude-haiku-4-5-20251001",
+            ),
+        isMockMode
+          ? Promise.resolve({ data: mock as GeneratedFunnelAssets, error: null, usedFallback: true })
+          : callClaudeGroup(
+              buildDeliveryPackPrompt(context, style.promptDescription),
+              deliveryPackResponseSchema,
+              "delivery-pack",
+              4096,
+              "claude-haiku-4-5-20251001",
+            ),
+      ]);
+      const calData  = (calResult.data  ?? mock) as GeneratedFunnelAssets;
+      const packData = (packResult.data ?? mock) as GeneratedFunnelAssets;
+      sectionUpdates = {
+        contentCalendar: calData.contentCalendar,
+        deliveryPack:    packData.deliveryPack,
+      };
+    } else {
+      // coaching-tools
+      const result = isMockMode
+        ? { data: mock as GeneratedFunnelAssets, error: null, usedFallback: true }
+        : await callClaudeGroup(
+            buildCoachingToolsPrompt(context, style.promptDescription),
+            coachingToolsResponseSchema,
+            "coaching-tools",
+            4096,
+            "claude-haiku-4-5-20251001",
+          );
+      const data = (result.data ?? mock) as GeneratedFunnelAssets;
+      sectionUpdates = {
+        testimonialHarvestSequence: data.testimonialHarvestSequence,
+        pricingGuide:               data.pricingGuide,
       };
     }
 

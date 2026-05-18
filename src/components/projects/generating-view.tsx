@@ -60,9 +60,11 @@ export function GeneratingView({ projectId, projectName }: GeneratingViewProps) 
   useEffect(() => {
     if (status !== "generating") return;
 
-    // Stop polling after MAX_POLLS
+    // Stop polling after MAX_POLLS — mark project as error in DB so it can be resumed
     if (pollCount >= MAX_POLLS) {
       setStatus("timeout");
+      const supabase = createClient();
+      void supabase.from("projects").update({ status: "error" }).eq("id", projectId);
       return;
     }
 

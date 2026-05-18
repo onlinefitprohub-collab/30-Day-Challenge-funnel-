@@ -144,25 +144,31 @@ interface ResultsShellProps {
   notionConnected: boolean;
 }
 
-type SectionGroup = "offer-pages" | "sequences" | "ads";
+type SectionGroup = "offer-pages" | "sequences" | "ads" | "content" | "coaching-tools";
 
 const TAB_SECTION_GROUP: Partial<Record<TabId, SectionGroup>> = {
-  offerSummary:    "offer-pages",
-  landingPage:     "offer-pages",
-  optInForm:       "offer-pages",
-  thankYouPage:    "offer-pages",
-  bookingPage:     "offer-pages",
-  smsSequence:     "sequences",
-  emailSequence:   "sequences",
-  adCopy:          "ads",
-  creativePrompts: "ads",
-  campaignNaming:  "ads",
+  offerSummary:               "offer-pages",
+  landingPage:                "offer-pages",
+  optInForm:                  "offer-pages",
+  thankYouPage:               "offer-pages",
+  bookingPage:                "offer-pages",
+  smsSequence:                "sequences",
+  emailSequence:              "sequences",
+  adCopy:                     "ads",
+  creativePrompts:            "ads",
+  campaignNaming:             "ads",
+  contentCalendar:            "content",
+  deliveryPack:               "content",
+  testimonialHarvest:         "coaching-tools",
+  pricingGuide:               "coaching-tools",
 };
 
 const GROUP_LABEL: Record<SectionGroup, string> = {
-  "offer-pages": "Pages & Offer",
-  "sequences":   "Sequences",
-  "ads":         "Ads & Campaign",
+  "offer-pages":    "Pages & Offer",
+  "sequences":      "Sequences",
+  "ads":            "Ads & Campaign",
+  "content":        "Content & Delivery",
+  "coaching-tools": "Coaching Tools",
 };
 
 const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
