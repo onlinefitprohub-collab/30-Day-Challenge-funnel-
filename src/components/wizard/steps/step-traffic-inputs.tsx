@@ -17,19 +17,10 @@ const trafficOptions = [
   { value: "organic"   as const, label: "Organic content",       description: "Free posts, SEO, email" },
 ] as const;
 
-const budgetOptions = [
-  { value: "bootstrapped", label: "Bootstrapped",   description: "Organic & referrals only" },
-  { value: "small",        label: "Small budget",   description: "Up to £/$ 500/month" },
-  { value: "medium",       label: "Medium budget",  description: "£/$ 500–2,000/month" },
-  { value: "scaling",      label: "Scaling",        description: "£/$ 2,000+/month" },
-];
-
 export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) {
   const {
     handleSubmit,
     control,
-    watch,
-    setValue,
     formState: { errors },
   } = useForm<TrafficInputs>({
     resolver: zodResolver(trafficInputsSchema),
@@ -38,9 +29,6 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
       adBudgetRange:  defaultValues.adBudgetRange ?? "",
     },
   });
-
-  const selectedSources = watch("trafficSources");
-  const adBudgetRange   = watch("adBudgetRange");
 
   function onSubmit(data: TrafficInputs) {
     onNext(data as Partial<WizardInputs>);
@@ -52,7 +40,7 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
       {/* Traffic sources */}
       <div className="space-y-2">
         <Label>Where will you drive traffic from?</Label>
-        <p className="text-xs text-gray-400">Select all that apply — we'll tailor the ad copy to your platforms</p>
+        <p className="text-xs text-zinc-400">Select all that apply — we'll tailor the ad copy to your platforms</p>
         <Controller
           name="trafficSources"
           control={control}
@@ -104,31 +92,6 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
         {errors.trafficSources && (
           <p className="text-sm text-red-500">{errors.trafficSources.message}</p>
         )}
-      </div>
-
-      {/* Ad budget range */}
-      <div className="space-y-2">
-        <Label>Approximate ad budget range <span className="text-gray-400">(optional)</span></Label>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {budgetOptions.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setValue("adBudgetRange", opt.value)}
-              className={cn(
-                "rounded-lg border-2 p-2.5 text-left transition-all",
-                adBudgetRange === opt.value
-                  ? "border-orange-500 bg-orange-500/10"
-                  : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
-              )}
-            >
-              <p className={cn("text-xs font-semibold", adBudgetRange === opt.value ? "text-orange-400" : "text-zinc-100")}>
-                {opt.label}
-              </p>
-              <p className="mt-0.5 text-xs text-zinc-400">{opt.description}</p>
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="flex justify-between pt-2">

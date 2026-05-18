@@ -79,9 +79,9 @@ export function NewProjectFlow({ initialProjectId, initialData }: Props) {
     return (
       <div className="space-y-6 max-w-2xl mx-auto">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">What are you building?</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Which funnel would you like to create?</h1>
           <p className="mt-2 text-gray-500 text-sm">
-            Choose the funnel type that matches your offer.
+            Choose the type that matches your offer.
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export function NewProjectFlow({ initialProjectId, initialData }: Props) {
           })}
         </div>
 
-        <p className="text-center text-xs text-gray-400">Click a card to select and continue.</p>
+        <p className="text-center text-xs text-gray-400">Select a type to continue.</p>
 
         {selectedType && (
           <div className="flex justify-center">
