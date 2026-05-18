@@ -489,10 +489,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     nutritionPlan: liveNutritionPlan
       ? <NutritionPlanSection data={liveNutritionPlan} projectId={project.id} onRegenerate={handleNutritionGenerated} />
       : <NutritionPlanPlaceholder projectId={project.id} onGenerated={handleNutritionGenerated} />,
+    workoutPlan: liveWorkoutPlan
+      ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
+      : <WorkoutPlanPlaceholder projectId={project.id} onGenerated={handleWorkoutGenerated} />,
     ...((!isApplication) && {
-      workoutPlan: liveWorkoutPlan
-        ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
-        : <WorkoutPlanPlaceholder projectId={project.id} onGenerated={handleWorkoutGenerated} />,
       salesLetter: liveLongFormAssets
         ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,
