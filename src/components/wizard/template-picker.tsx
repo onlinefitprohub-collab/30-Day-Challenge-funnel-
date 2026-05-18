@@ -1,19 +1,22 @@
 "use client";
 
+import { Trophy, Zap } from "lucide-react";
 import { FUNNEL_TEMPLATES, type FunnelTemplate } from "@/lib/templates/funnel-templates";
 import type { WizardInputs } from "@/types/wizard";
 
 const COLOUR_MAP: Record<string, { border: string; bg: string; badge: string; text: string; emoji: string }> = {
-  rose:   { border: "border-rose-200",   bg: "bg-rose-50",   badge: "bg-rose-100 text-rose-700",   text: "text-rose-700",   emoji: "bg-rose-100" },
-  blue:   { border: "border-blue-200",   bg: "bg-blue-50",   badge: "bg-blue-100 text-blue-700",   text: "text-blue-700",   emoji: "bg-blue-100" },
-  teal:   { border: "border-teal-200",   bg: "bg-teal-50",   badge: "bg-teal-100 text-teal-700",   text: "text-teal-700",   emoji: "bg-teal-100" },
-  violet: { border: "border-violet-200", bg: "bg-violet-50", badge: "bg-violet-100 text-violet-700",text: "text-violet-700", emoji: "bg-violet-100" },
-  purple: { border: "border-purple-200", bg: "bg-purple-50", badge: "bg-purple-100 text-purple-700",text: "text-purple-700", emoji: "bg-purple-100" },
+  rose:   { border: "border-rose-200",   bg: "bg-rose-50",   badge: "bg-rose-100 text-rose-700",    text: "text-rose-700",   emoji: "bg-rose-100" },
+  blue:   { border: "border-blue-200",   bg: "bg-blue-50",   badge: "bg-blue-100 text-blue-700",    text: "text-blue-700",   emoji: "bg-blue-100" },
+  teal:   { border: "border-teal-200",   bg: "bg-teal-50",   badge: "bg-teal-100 text-teal-700",    text: "text-teal-700",   emoji: "bg-teal-100" },
+  violet: { border: "border-violet-200", bg: "bg-violet-50", badge: "bg-violet-100 text-violet-700", text: "text-violet-700", emoji: "bg-violet-100" },
+  purple: { border: "border-purple-200", bg: "bg-purple-50", badge: "bg-purple-100 text-purple-700", text: "text-purple-700", emoji: "bg-purple-100" },
 };
 
 interface Props {
+  funnelType: "challenge" | "application";
   onSelect: (prefill: Partial<WizardInputs>) => void;
   onSkip: () => void;
+  onBack: () => void;
 }
 
 function TemplateCard({ tpl, onSelect }: { tpl: FunnelTemplate; onSelect: () => void }) {
@@ -27,12 +30,9 @@ function TemplateCard({ tpl, onSelect }: { tpl: FunnelTemplate; onSelect: () => 
         <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${c.emoji}`}>
           {tpl.emoji}
         </span>
-        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${c.badge}`}>
-          {tpl.funnelType === "application" ? "Application" : "Challenge"}
-        </span>
       </div>
-      <p className={`font-bold text-gray-900 text-sm mb-1`}>{tpl.label}</p>
-      <p className="text-xs text-gray-500 leading-relaxed">{tpl.tagline}</p>
+      <p className="font-bold text-gray-900 text-sm mb-1">{tpl.label}</p>
+      <p className="text-xs text-gray-500 leading-relaxed flex-1">{tpl.tagline}</p>
       <div className={`mt-4 text-[11px] font-semibold ${c.text} flex items-center gap-1`}>
         Use this template →
       </div>
@@ -40,46 +40,47 @@ function TemplateCard({ tpl, onSelect }: { tpl: FunnelTemplate; onSelect: () => 
   );
 }
 
-export function TemplatePicker({ onSelect, onSkip }: Props) {
-  const challengeTemplates = FUNNEL_TEMPLATES.filter((t) => t.funnelType === "challenge");
-  const applicationTemplates = FUNNEL_TEMPLATES.filter((t) => t.funnelType === "application");
+export function TemplatePicker({ funnelType, onSelect, onSkip, onBack }: Props) {
+  const templates = FUNNEL_TEMPLATES.filter((t) => t.funnelType === funnelType);
+  const isChallenge = funnelType === "challenge";
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Start from a template</h1>
+        <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl mb-3 ${
+          isChallenge ? "bg-blue-100" : "bg-violet-100"
+        }`}>
+          {isChallenge
+            ? <Zap className="h-6 w-6 text-blue-600" />
+            : <Trophy className="h-6 w-6 text-violet-600" />
+          }
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {isChallenge ? "Choose a challenge template" : "Choose a coaching template"}
+        </h1>
         <p className="mt-2 text-gray-500 text-sm">
-          Pick a template to pre-fill your wizard — you can edit every detail before generating.
+          Pre-fills your wizard with niche-specific copy — edit anything before generating.
         </p>
       </div>
 
-      {/* Challenge funnels */}
-      <div>
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Challenge funnels</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {challengeTemplates.map((tpl) => (
-            <TemplateCard key={tpl.id} tpl={tpl} onSelect={() => onSelect(tpl.prefill)} />
-          ))}
-        </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {templates.map((tpl) => (
+          <TemplateCard key={tpl.id} tpl={tpl} onSelect={() => onSelect(tpl.prefill)} />
+        ))}
       </div>
 
-      {/* Application funnels */}
-      <div>
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">Application (high-ticket) funnels</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {applicationTemplates.map((tpl) => (
-            <TemplateCard key={tpl.id} tpl={tpl} onSelect={() => onSelect(tpl.prefill)} />
-          ))}
-        </div>
-      </div>
-
-      {/* Start from scratch */}
-      <div className="flex justify-center pb-4">
+      <div className="flex flex-col items-center gap-3 pb-4">
         <button
           onClick={onSkip}
           className="text-sm text-gray-400 hover:text-gray-700 underline underline-offset-4 transition-colors"
         >
           Start from scratch instead
+        </button>
+        <button
+          onClick={onBack}
+          className="text-xs text-gray-300 hover:text-gray-500 transition-colors"
+        >
+          ← Back to funnel type
         </button>
       </div>
     </div>

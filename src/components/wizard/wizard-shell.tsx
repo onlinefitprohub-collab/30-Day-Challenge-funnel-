@@ -43,11 +43,12 @@ const APPLICATION_STEP_COMPONENTS = [
 interface WizardShellProps {
   initialProjectId?: string;
   initialData?: Partial<WizardInputs>;
+  initialStepIndex?: number;
 }
 
-export function WizardShell({ initialProjectId, initialData }: WizardShellProps) {
+export function WizardShell({ initialProjectId, initialData, initialStepIndex }: WizardShellProps) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStepIndex ?? 0);
   const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
