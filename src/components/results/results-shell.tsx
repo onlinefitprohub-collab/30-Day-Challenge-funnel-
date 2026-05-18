@@ -498,7 +498,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
       ? <LaunchRoadmapSection data={liveLaunchRoadmap} projectId={project.id} onRegenerate={handleLaunchRoadmapGenerated} />
       : <LaunchRoadmapPlaceholder projectId={project.id} onGenerated={handleLaunchRoadmapGenerated} />,
     performance: <PerformanceTrackerSection projectId={project.id} />,
-    exportCopy:  <ExportSection data={assets} projectId={project.id} projectName={project.name} notionConnected={notionConnected} />,
+    exportCopy:  <ExportSection data={assets} projectId={project.id} projectName={project.name} notionConnected={notionConnected} hlConnected={hlConnected} />,
     ...(isApplication && assets.applicationLandingPage && {
       appLanding: <ApplicationLandingPageSection data={assets.applicationLandingPage} />,
     }),

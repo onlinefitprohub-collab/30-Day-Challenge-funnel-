@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2, CheckCircle2, AlertCircle, ExternalLink, Link2, Check } from "lucide-react";
+import { Download, Loader2, CheckCircle2, AlertCircle, ExternalLink, Link2, Check, Mail } from "lucide-react";
 import { generateMarkdown } from "@/lib/export/generate-markdown";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ interface Props {
   projectId: string;
   projectName: string;
   notionConnected: boolean;
+  hlConnected: boolean;
 }
 
 function extractPageId(input: string): string {
@@ -32,13 +33,19 @@ function downloadFile(content: string, filename: string, mimeType: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ExportSection({ data, projectId, projectName, notionConnected: notionConnectedProp }: Props) {
+export function ExportSection({ data, projectId, projectName, notionConnected: notionConnectedProp, hlConnected }: Props) {
   const [notionConnected, setNotionConnected] = useState(notionConnectedProp);
 
   // Notion export state
   const [notionState, setNotionState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notionUrl, setNotionUrl]     = useState<string>("");
   const [notionError, setNotionError] = useState<string>("");
+
+  // GHL email templates state
+  const [ghlEmailState, setGhlEmailState]   = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [ghlEmailCount, setGhlEmailCount]   = useState(0);
+  const [ghlEmailError, setGhlEmailError]   = useState("");
+  const [includeNurture, setIncludeNurture] = useState(false);
 
   // Inline setup state
   const [setupOpen, setSetupOpen]   = useState(!notionConnectedProp);
@@ -99,6 +106,28 @@ export function ExportSection({ data, projectId, projectName, notionConnected: n
     } catch (e) {
       setNotionError(e instanceof Error ? e.message : "Network error");
       setNotionState("error");
+    }
+  }
+
+  async function pushEmailTemplatesToGhl() {
+    setGhlEmailState("loading");
+    setGhlEmailError("");
+    try {
+      const res = await fetch("/api/highlevel/export-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, includeNurture }),
+      });
+      const d = await res.json() as { ok?: boolean; totalPushed?: number; errors?: string[]; error?: string };
+      if (!res.ok) { setGhlEmailError(d.error ?? "Export failed"); setGhlEmailState("error"); return; }
+      setGhlEmailCount(d.totalPushed ?? 0);
+      setGhlEmailState("success");
+      if (d.errors && d.errors.length > 0) {
+        toast({ title: "Some templates had errors", description: d.errors.slice(0, 3).join(", "), variant: "destructive" });
+      }
+    } catch (e) {
+      setGhlEmailError(e instanceof Error ? e.message : "Network error");
+      setGhlEmailState("error");
     }
   }
 
@@ -279,6 +308,96 @@ export function ExportSection({ data, projectId, projectName, notionConnected: n
                 </div>
                 <button
                   onClick={() => setNotionState("idle")}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── GHL Email Templates ──────────────────────────────────────────── */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50">
+            <Mail className="h-5 w-5 text-orange-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-gray-900">Push emails to HighLevel</p>
+              {hlConnected && (
+                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-700">Connected</span>
+              )}
+            </div>
+            <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+              Creates each email as a reusable template in your GHL account (Marketing → Emails → Templates).
+              No more copy-pasting — select and schedule directly in HighLevel.
+            </p>
+
+            {!hlConnected ? (
+              <div className="mt-3 rounded-lg border border-orange-100 bg-orange-50 p-3">
+                <p className="text-xs text-orange-800">
+                  Connect HighLevel first —{" "}
+                  <a href="/account" className="font-semibold underline hover:text-orange-900">
+                    go to Account → HighLevel
+                  </a>{" "}
+                  to add your API key and Location ID.
+                </p>
+              </div>
+            ) : ghlEmailState === "idle" ? (
+              <div className="mt-3 space-y-3">
+                {data.nurtureSequence && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeNurture}
+                      onChange={(e) => setIncludeNurture(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-gray-300 accent-orange-500"
+                    />
+                    <span className="text-xs text-gray-600">
+                      Also push 52-week nurture sequence <span className="text-gray-400">(adds ~52 templates)</span>
+                    </span>
+                  </label>
+                )}
+                <button
+                  onClick={pushEmailTemplatesToGhl}
+                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 active:scale-[0.98] transition-all shadow-sm"
+                >
+                  <Mail className="h-4 w-4" />
+                  Push {includeNurture && data.nurtureSequence ? "62" : "10"} emails to GHL
+                </button>
+              </div>
+            ) : ghlEmailState === "loading" ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating templates in HighLevel…
+              </div>
+            ) : ghlEmailState === "success" ? (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  {ghlEmailCount} templates created in HighLevel!
+                </div>
+                <p className="text-xs text-gray-500">
+                  Go to <strong>HighLevel → Marketing → Emails → Templates</strong> to find them.
+                </p>
+                <button
+                  onClick={() => { setGhlEmailState("idle"); setGhlEmailCount(0); }}
+                  className="text-xs text-gray-400 hover:text-gray-600 underline"
+                >
+                  Push again
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-start gap-2 text-sm text-red-700">
+                  <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                  <span>{ghlEmailError}</span>
+                </div>
+                <button
+                  onClick={() => setGhlEmailState("idle")}
                   className="text-xs text-red-600 hover:text-red-800 underline"
                 >
                   Try again
