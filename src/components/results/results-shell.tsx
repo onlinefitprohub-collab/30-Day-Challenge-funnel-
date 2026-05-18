@@ -172,7 +172,7 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
 
 const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
 const RESULTS_SEEN_KEY    = "fitpro_results_seen";
-const DEFAULT_COLLAPSED = new Set(["Getting Clients", "Nurturing Leads", "Coaching Clients", "Getting Referrals", "AD Engine"]);
+const DEFAULT_COLLAPSED = new Set(["Your Pages", "Getting Clients", "Nurturing Leads", "Coaching Clients", "Getting Referrals", "AD Engine"]);
 
 async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
   try {
@@ -270,6 +270,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
       }
     }
     setActiveTab(tabId);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   function handleWorkoutGenerated(plan: WorkoutPlan) {
@@ -653,25 +654,38 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {TOOLS.map(({ key, label, done }) => {
+                  {TOOLS.map(({ key, label, done }, idx) => {
                     const status = done ? "done" : (bulkProgress[key] ?? "idle");
+                    // If bulk is running, anything still idle after the current loading one is "queued"
+                    const prevLoading = bulkGenerating && TOOLS.slice(0, idx).some(t => !t.done && (bulkProgress[t.key] ?? "idle") === "loading");
+                    const isQueued = bulkGenerating && status === "idle" && !prevLoading;
                     return (
                       <span
                         key={key}
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-                          status === "done"    ? "bg-green-500/10 border-green-500/20 text-green-400" :
-                          status === "loading" ? "bg-blue-500/10  border-blue-500/20  text-blue-400"  :
-                          status === "error"   ? "bg-red-500/10   border-red-500/20   text-red-400"   :
-                                                 "bg-white/[0.04] border-white/[0.08] text-zinc-500"
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-all ${
+                          status === "done"    ? "bg-green-500/10  border-green-500/20  text-green-400" :
+                          status === "loading" ? "bg-orange-500/15 border-orange-500/30 text-orange-300" :
+                          status === "error"   ? "bg-red-500/10    border-red-500/20    text-red-400"   :
+                          isQueued            ? "bg-white/[0.04]  border-white/[0.06]  text-zinc-600"  :
+                                                "bg-white/[0.04]  border-white/[0.08]  text-zinc-500"
                         }`}
                       >
-                        {status === "loading" && <Loader2 className="h-3 w-3 animate-spin" />}
-                        {status === "done"    && <Check className="h-3 w-3" />}
+                        {status === "loading" && <Loader2 className="h-3 w-3 animate-spin text-orange-400" />}
+                        {status === "done"    && <Check   className="h-3 w-3" />}
                         {label}
                       </span>
                     );
                   })}
                 </div>
+                {bulkGenerating && (() => {
+                  const current = TOOLS.find(t => !t.done && (bulkProgress[t.key] ?? "idle") === "loading");
+                  return current ? (
+                    <p className="mt-2 text-xs text-zinc-500">
+                      <span className="text-orange-400 font-medium">Generating {current.label}…</span>
+                      {" "}This takes 30–90 seconds per tool.
+                    </p>
+                  ) : null;
+                })()}
               </div>
               <button
                 onClick={() => { void handleGenerateAll(); }}
@@ -782,7 +796,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
                       return (
                         <button
                           key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
+                          onClick={() => { setActiveTab(tab.id); window.scrollTo({ top: 0, behavior: "instant" }); }}
                           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left ${
                             isActive && isHL
                               ? "bg-orange-500 text-white shadow-sm"

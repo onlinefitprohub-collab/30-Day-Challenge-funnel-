@@ -275,18 +275,18 @@ export function StartHereSection({ funnelType, onNavigate }: Props) {
       ))}
 
       {/* Phase 2 — Scale */}
-      <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
         <div className="flex items-center gap-2 mb-1">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-200">
-            <TrendingUp className="h-3.5 w-3.5 text-gray-500" />
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-300">
+            <TrendingUp className="h-3.5 w-3.5 text-gray-700" />
           </div>
-          <p className="font-bold text-gray-500 text-sm">Phase 2 — Scale</p>
-          <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-500">
-            After your first challenge
+          <p className="font-bold text-gray-700 text-sm">Phase 2 — Scale</p>
+          <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+            {funnelType === "application" ? "After your first client" : "After your first challenge"}
           </span>
         </div>
-        <p className="text-xs text-gray-400 mb-4">
-          Everything below is ready and waiting. Come back to these once you've launched and have clients.
+        <p className="text-xs text-gray-500 mb-4">
+          Everything below is ready and waiting. Come back to these once you&apos;ve launched and have clients.
         </p>
 
         <div className="grid gap-2 sm:grid-cols-2">
@@ -300,13 +300,17 @@ export function StartHereSection({ funnelType, onNavigate }: Props) {
               onClick={() => onNavigate(s.tabId)}
               className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-gray-300 hover:shadow-sm transition-all"
             >
-              <Circle className="h-4 w-4 shrink-0 text-gray-300 mt-0.5" />
+              <Circle className="h-4 w-4 shrink-0 text-gray-400 mt-0.5" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-600 group-hover:text-gray-900 transition-colors">{s.label}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{s.description}</p>
-                <span className="mt-1.5 inline-block text-[10px] font-semibold text-gray-400">{s.phase}</span>
+                <p className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">{s.label}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{s.description}</p>
+                <span className="mt-1.5 inline-block text-[10px] font-semibold text-gray-500">
+                  {funnelType === "application"
+                    ? s.phase.replace("first challenge", "first client")
+                    : s.phase}
+                </span>
               </div>
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-300 group-hover:text-gray-500 mt-0.5 transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-400 group-hover:text-gray-600 mt-0.5 transition-colors" />
             </button>
           ))}
         </div>
