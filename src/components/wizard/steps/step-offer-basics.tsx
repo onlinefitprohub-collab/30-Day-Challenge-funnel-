@@ -136,18 +136,18 @@ export function StepOfferBasics({
               onClick={() => setValue("ctaType", option.value)}
               className={`rounded-lg border-2 p-3 text-left transition-all ${
                 ctaType === option.value
-                  ? "border-brand-500 bg-brand-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-orange-500 bg-orange-500/10"
+                  : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
               }`}
             >
               <p
                 className={`text-sm font-semibold ${
-                  ctaType === option.value ? "text-brand-700" : "text-gray-700"
+                  ctaType === option.value ? "text-orange-400" : "text-zinc-100"
                 }`}
               >
                 {option.label}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-zinc-400">
                 {isApplication ? option.descriptionApplication : option.descriptionChallenge}
               </p>
             </button>
@@ -205,15 +205,15 @@ export function StepOfferBasics({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="roiAnchor">
-                ROI / comparison frame <span className="text-gray-400">(optional)</span>
+                Value comparison <span className="text-gray-400">(optional)</span>
               </Label>
               <Input
                 id="roiAnchor"
-                placeholder="e.g. One new client pays for the programme"
+                placeholder="e.g. Less than £3/day · Cheaper than a PT session a week"
                 {...register("roiAnchor")}
               />
               <p className="text-xs text-gray-400">
-                The AI uses this to make the investment feel logical, not large.
+                Frames the investment as an everyday cost — makes the price feel easy to say yes to.
               </p>
             </div>
           </div>

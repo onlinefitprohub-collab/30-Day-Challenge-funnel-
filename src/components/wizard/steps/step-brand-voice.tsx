@@ -108,14 +108,14 @@ export function StepBrandVoice({ defaultValues, onNext, onBack }: StepProps) {
               onClick={() => setValue("toneOfVoice", option.value)}
               className={`rounded-lg border-2 p-3 text-left transition-all ${
                 toneOfVoice === option.value
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-orange-500 bg-orange-500/10"
+                  : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
               }`}
             >
-              <p className={`text-sm font-semibold ${toneOfVoice === option.value ? "text-orange-700" : "text-gray-700"}`}>
+              <p className={`text-sm font-semibold ${toneOfVoice === option.value ? "text-orange-400" : "text-zinc-100"}`}>
                 {option.label}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">{option.description}</p>
+              <p className="mt-0.5 text-xs text-zinc-400">{option.description}</p>
             </button>
           ))}
         </div>
@@ -136,19 +136,19 @@ export function StepBrandVoice({ defaultValues, onNext, onBack }: StepProps) {
               onClick={() => setValue("colourScheme", scheme.value)}
               className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all ${
                 colourScheme === scheme.value
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-orange-500 bg-orange-500/10"
+                  : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
               }`}
             >
               <div className="flex shrink-0 gap-1">
-                <div className="h-6 w-6 rounded-full border border-black/10" style={{ backgroundColor: scheme.preview[0] }} />
-                <div className="h-6 w-6 rounded-full border border-black/10" style={{ backgroundColor: scheme.preview[1] }} />
+                <div className="h-6 w-6 rounded-full border border-white/10" style={{ backgroundColor: scheme.preview[0] }} />
+                <div className="h-6 w-6 rounded-full border border-white/10" style={{ backgroundColor: scheme.preview[1] }} />
               </div>
               <div>
-                <p className={`text-sm font-semibold ${colourScheme === scheme.value ? "text-orange-700" : "text-gray-700"}`}>
+                <p className={`text-sm font-semibold ${colourScheme === scheme.value ? "text-orange-400" : "text-zinc-100"}`}>
                   {scheme.label}
                 </p>
-                <p className="text-xs text-gray-400">{scheme.description}</p>
+                <p className="text-xs text-zinc-400">{scheme.description}</p>
               </div>
             </button>
           ))}

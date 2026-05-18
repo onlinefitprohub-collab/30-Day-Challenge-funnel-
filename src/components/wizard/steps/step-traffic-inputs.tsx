@@ -73,14 +73,14 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
                     className={cn(
                       "flex items-start gap-3 rounded-lg border-2 p-3 text-left transition-all",
                       selected
-                        ? "border-brand-500 bg-brand-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-orange-500 bg-orange-500/10"
+                        : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
                     )}
                   >
                     <div
                       className={cn(
                         "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
-                        selected ? "border-brand-500 bg-brand-500" : "border-gray-300"
+                        selected ? "border-orange-500 bg-orange-500" : "border-zinc-500"
                       )}
                     >
                       {selected && (
@@ -90,10 +90,10 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
                       )}
                     </div>
                     <div>
-                      <p className={cn("text-sm font-semibold", selected ? "text-brand-700" : "text-gray-700")}>
+                      <p className={cn("text-sm font-semibold", selected ? "text-orange-400" : "text-zinc-100")}>
                         {opt.label}
                       </p>
-                      <p className="text-xs text-gray-400">{opt.description}</p>
+                      <p className="text-xs text-zinc-400">{opt.description}</p>
                     </div>
                   </button>
                 );
@@ -118,14 +118,14 @@ export function StepTrafficInputs({ defaultValues, onNext, onBack }: StepProps) 
               className={cn(
                 "rounded-lg border-2 p-2.5 text-left transition-all",
                 adBudgetRange === opt.value
-                  ? "border-brand-500 bg-brand-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-orange-500 bg-orange-500/10"
+                  : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
               )}
             >
-              <p className={cn("text-xs font-semibold", adBudgetRange === opt.value ? "text-brand-700" : "text-gray-700")}>
+              <p className={cn("text-xs font-semibold", adBudgetRange === opt.value ? "text-orange-400" : "text-zinc-100")}>
                 {opt.label}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">{opt.description}</p>
+              <p className="mt-0.5 text-xs text-zinc-400">{opt.description}</p>
             </button>
           ))}
         </div>

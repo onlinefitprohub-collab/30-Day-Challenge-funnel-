@@ -97,20 +97,20 @@ export function StepBusinessBasics({
               onClick={() => setValue("deliveryMode", option.value)}
               className={`rounded-lg border-2 p-3 text-left transition-all ${
                 deliveryMode === option.value
-                  ? "border-brand-500 bg-brand-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-orange-500 bg-orange-500/10"
+                  : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
               }`}
             >
               <p
                 className={`text-sm font-semibold ${
                   deliveryMode === option.value
-                    ? "text-brand-700"
-                    : "text-gray-700"
+                    ? "text-orange-400"
+                    : "text-zinc-100"
                 }`}
               >
                 {option.label}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">{option.description}</p>
+              <p className="mt-0.5 text-xs text-zinc-400">{option.description}</p>
             </button>
           ))}
         </div>
