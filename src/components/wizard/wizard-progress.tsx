@@ -24,7 +24,7 @@ export function WizardProgress({ currentStep, steps, onStepClick }: WizardProgre
       {/* Mobile: simple bar + label */}
       <div className="sm:hidden">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-zinc-300">{steps[currentStep]?.title}</span>
+          <span className="font-medium text-zinc-300 truncate mr-2">{steps[currentStep]?.title}</span>
           <span className="text-zinc-500">{currentStep + 1} / {steps.length}</span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.08]">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -224,6 +224,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkProgress, setBulkProgress]     = useState<Record<string, "idle" | "loading" | "done" | "error">>({});
 
+  // Mobile nav scroll refs — keep active pills in view
+  const mobileGroupRowRef = useRef<HTMLDivElement>(null);
+  const mobileTabRowRef   = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     try {
       if (!window.localStorage.getItem(RESULTS_SEEN_KEY)) {
@@ -232,6 +236,17 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
       }
     } catch {}
   }, []);
+
+  // Auto-scroll active group pill and tab pill into view on mobile
+  useEffect(() => {
+    const groupEl = mobileGroupRowRef.current?.querySelector<HTMLElement>('[data-active-group="true"]');
+    groupEl?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeTab]);
+
+  useEffect(() => {
+    const tabEl = mobileTabRowRef.current?.querySelector<HTMLElement>('[data-active-tab="true"]');
+    tabEl?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeTab]);
 
   function toggleGroup(label: string) {
     setCollapsedGroups((prev) => {
@@ -531,7 +546,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-zinc-100">{project.name}</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-zinc-100 truncate max-w-[56vw] sm:max-w-none">{project.name}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-0.5">
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                 isApplication
@@ -661,12 +676,13 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
       {/* ── Mobile tab nav (hidden on sm+) ─────────────────────────────── */}
       <div className="sm:hidden space-y-2">
         {/* Group row */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+        <div ref={mobileGroupRowRef} className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
           {grouped.map(({ label, items }) => {
             const isActiveGroup = items.some(t => t.id === activeTab);
             return (
               <button
                 key={label}
+                data-active-group={isActiveGroup}
                 onClick={() => { if (!isActiveGroup) handleNavigate(items[0].id); }}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors ${
                   isActiveGroup
@@ -680,12 +696,13 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
           })}
         </div>
         {/* Tab row within the active group */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+        <div ref={mobileTabRowRef} className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
           {grouped.find(g => g.items.some(t => t.id === activeTab))?.items.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                data-active-tab={isActive}
                 onClick={() => setActiveTab(tab.id)}
                 className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   isActive && tab.highlight
@@ -701,6 +718,21 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
             );
           })}
         </div>
+        {/* Active section label — persists when scrolled into content */}
+        {(() => {
+          const activeTabDef = tabs.find(t => t.id === activeTab);
+          const activeGroup  = grouped.find(g => g.items.some(t => t.id === activeTab));
+          if (!activeTabDef) return null;
+          return (
+            <div className="flex items-center gap-2 pt-0.5">
+              <activeTabDef.icon className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+              <span className="text-sm font-semibold text-zinc-200 truncate">{activeTabDef.label}</span>
+              {activeGroup && (
+                <span className="text-xs text-zinc-600 truncate">· {activeGroup.label}</span>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Body: sidebar + content ─────────────────────────────────────── */}
