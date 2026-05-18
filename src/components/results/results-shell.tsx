@@ -9,7 +9,7 @@ import {
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
   CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
-  ChevronDown, ChevronRight, X, Salad, Puzzle,
+  ChevronDown, ChevronRight, X, Salad, Puzzle, Zap, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -215,6 +215,9 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const [liveUpsellSequence, setLiveUpsellSequence]   = useState<UpsellSequence | undefined>(outputs.upsellSequence as UpsellSequence | undefined);
   const [liveLaunchRoadmap, setLiveLaunchRoadmap]     = useState<LaunchRoadmap | undefined>(outputs.launchRoadmap as LaunchRoadmap | undefined);
 
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkProgress, setBulkProgress]     = useState<Record<string, "idle" | "loading" | "done" | "error">>({});
+
   useEffect(() => {
     try {
       if (!window.localStorage.getItem(RESULTS_SEEN_KEY)) {
@@ -280,6 +283,48 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   function handleLaunchRoadmapGenerated(roadmap: LaunchRoadmap) {
     setLiveLaunchRoadmap(roadmap);
     setLiveOutputs((p: Record<string, unknown>) => ({ ...p, launchRoadmap: roadmap }));
+  }
+
+  async function handleGenerateAll() {
+    if (bulkGenerating) return;
+    const toGenerate: Array<{ key: string; endpoint: string }> = [];
+    if (!liveLongFormAssets)       toGenerate.push({ key: "longform",  endpoint: "/api/generate-longform" });
+    if (!liveNurtureSequence)      toGenerate.push({ key: "nurture",   endpoint: "/api/generate-nurture" });
+    if (!liveDiscoveryCallScript)  toGenerate.push({ key: "discovery", endpoint: "/api/generate-discovery-call" });
+    if (!liveDmScript)             toGenerate.push({ key: "dm",        endpoint: "/api/generate-dm-script" });
+    if (!liveUpsellSequence)       toGenerate.push({ key: "upsell",    endpoint: "/api/generate-upsell" });
+    if (!liveLaunchRoadmap)        toGenerate.push({ key: "roadmap",   endpoint: "/api/generate-launch-roadmap" });
+    if (toGenerate.length === 0) return;
+
+    setBulkGenerating(true);
+    const initial: Record<string, "loading"> = {};
+    for (const t of toGenerate) initial[t.key] = "loading";
+    setBulkProgress(initial);
+
+    const fetchTool = async (key: string, endpoint: string) => {
+      try {
+        const res = await fetch(endpoint, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ projectId: project.id }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json() as Record<string, unknown>;
+        if (key === "longform"  && data.longFormAssets)      handleLongFormGenerated(data.longFormAssets as LongFormSalesAssets);
+        if (key === "nurture"   && data.nurtureSequence)     handleNurtureGenerated(data.nurtureSequence as NurtureSequence);
+        if (key === "discovery" && data.discoveryCallScript) handleDiscoveryCallGenerated(data.discoveryCallScript as DiscoveryCallScript);
+        if (key === "dm"        && data.instagramDmScript)   handleDmScriptGenerated(data.instagramDmScript as InstagramDmScript);
+        if (key === "upsell"    && data.upsellSequence)      handleUpsellGenerated(data.upsellSequence as UpsellSequence);
+        if (key === "roadmap"   && data.launchRoadmap)       handleLaunchRoadmapGenerated(data.launchRoadmap as LaunchRoadmap);
+        setBulkProgress(p => ({ ...p, [key]: "done" }));
+      } catch {
+        setBulkProgress(p => ({ ...p, [key]: "error" }));
+      }
+    };
+
+    await Promise.allSettled(toGenerate.map(({ key, endpoint }) => fetchTool(key, endpoint)));
+    setBulkGenerating(false);
+    toast({ title: "All tools generated!", description: "Your Phase 2 Scale tools are ready." });
   }
 
   const { _isMock: _removed, ...cleanOutputs } = liveOutputs;
@@ -547,6 +592,65 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
           </button>
         </div>
       )}
+
+      {/* ── Generate All card ──────────────────────────────────────────── */}
+      {(() => {
+        const TOOLS = [
+          { key: "longform",  label: isApplication ? "ManyChat Flow" : "Sales Letter", done: !!liveLongFormAssets },
+          { key: "nurture",   label: "52-Wk Nurture",   done: !!liveNurtureSequence },
+          { key: "discovery", label: "Sales Script",     done: !!liveDiscoveryCallScript },
+          { key: "dm",        label: "DM Scripts",        done: !!liveDmScript },
+          { key: "upsell",    label: "Upsell Sequence",  done: !!liveUpsellSequence },
+          { key: "roadmap",   label: "Launch Roadmap",   done: !!liveLaunchRoadmap },
+        ];
+        const missingCount = TOOLS.filter(t => !t.done).length;
+        if (missingCount === 0) return null;
+        return (
+          <div className="rounded-xl border border-white/[0.08] bg-[#0d0d10] px-5 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="h-4 w-4 text-orange-400 shrink-0" />
+                  <p className="text-sm font-semibold text-zinc-100">Generate All Scale Tools</p>
+                  <span className="inline-flex items-center rounded-full bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-400">
+                    {missingCount} remaining
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {TOOLS.map(({ key, label, done }) => {
+                    const status = done ? "done" : (bulkProgress[key] ?? "idle");
+                    return (
+                      <span
+                        key={key}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                          status === "done"    ? "bg-green-500/10 border-green-500/20 text-green-400" :
+                          status === "loading" ? "bg-blue-500/10  border-blue-500/20  text-blue-400"  :
+                          status === "error"   ? "bg-red-500/10   border-red-500/20   text-red-400"   :
+                                                 "bg-white/[0.04] border-white/[0.08] text-zinc-500"
+                        }`}
+                      >
+                        {status === "loading" && <Loader2 className="h-3 w-3 animate-spin" />}
+                        {status === "done"    && <Check className="h-3 w-3" />}
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+              <button
+                onClick={() => { void handleGenerateAll(); }}
+                disabled={bulkGenerating}
+                className="shrink-0 flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60 transition-colors"
+              >
+                {bulkGenerating
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+                  : <><Zap className="h-4 w-4" /> Generate {missingCount} tool{missingCount !== 1 ? "s" : ""}</>
+                }
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Body: sidebar + content ─────────────────────────────────────── */}
       <div className="flex gap-5 items-start">
