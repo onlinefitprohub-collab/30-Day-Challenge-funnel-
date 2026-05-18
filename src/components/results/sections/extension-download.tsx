@@ -18,20 +18,6 @@ export function ExtensionDownloadSection() {
         The extension bridges FitPro and your GHL account — install it once to enable the Clone to GHL button above.
       </p>
 
-      {/* What it does */}
-      <div className="grid gap-2 sm:grid-cols-3">
-        {[
-          { title: "1-Click Funnel Clone", desc: "Inject any FitPro funnel page directly into your GHL funnel builder" },
-          { title: "AI Project Library", desc: "Browse and load your generated pages straight into GHL without copy-pasting" },
-          { title: "Page Inspector", desc: "Diagnose GHL page issues with built-in dev tools and live element inspection" },
-        ].map((f) => (
-          <div key={f.title} className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
-            <p className="mb-1 text-xs font-semibold text-zinc-200">{f.title}</p>
-            <p className="text-xs leading-relaxed text-zinc-500">{f.desc}</p>
-          </div>
-        ))}
-      </div>
-
       {/* Download + install steps side by side */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <a

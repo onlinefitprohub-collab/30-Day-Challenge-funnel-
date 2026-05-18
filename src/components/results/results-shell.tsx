@@ -72,8 +72,7 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "highlevel",          label: "Clone to GHL",      icon: Layers,                          group: "pages",     groupLabel: "Your Pages" },
   { id: "ghlInspector",       label: "GHL Inspector",     icon: Microscope,     hidden: true,    group: "pages" },
   { id: "funnelPreview",      label: "Funnel Pages",      icon: LayoutTemplate,                  group: "pages" },
-  { id: "offerSummary",       label: "Offer Summary",     icon: Target,                          group: "pages" },
-  { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "pages" },
+  { id: "offerSummary",       label: "",                  icon: Target,         hidden: true,    group: "pages" },
   { id: "exportCopy",         label: "Export Copy",       icon: Download,                        group: "pages" },
   // ── Getting Clients ─────────────────────────────────────────────────────────
   { id: "emailSequence",      label: "Email Sequence",    icon: Mail,                            group: "clients",   groupLabel: "Getting Clients" },
@@ -97,6 +96,7 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "adCopy",             label: "Ad Copy",           icon: Megaphone,                       group: "ads",       groupLabel: "AD Engine" },
   { id: "creativePrompts",    label: "Ad Creatives",      icon: ImageIcon,                       group: "ads" },
   { id: "campaignNaming",     label: "Campaign Naming",   icon: BarChart3,                       group: "ads" },
+  { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "ads" },
 ];
 
 const APPLICATION_TABS: NavTab[] = [
@@ -106,9 +106,8 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "highlevel",          label: "Clone to GHL",      icon: Layers,                          group: "pages",     groupLabel: "Your Pages" },
   { id: "ghlInspector",       label: "GHL Inspector",     icon: Microscope,     hidden: true,    group: "pages" },
   { id: "funnelPreview",      label: "Funnel Pages",      icon: LayoutTemplate,                  group: "pages" },
-  { id: "offerSummary",       label: "Offer Summary",     icon: Target,                          group: "pages" },
-  { id: "appLanding",         label: "Reg. Page Copy",    icon: FileText,                        group: "pages" },
-  { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "pages" },
+  { id: "offerSummary",       label: "",                  icon: Target,         hidden: true,    group: "pages" },
+  { id: "appLanding",         label: "",                  icon: FileText,       hidden: true,    group: "pages" },
   { id: "exportCopy",         label: "Export Copy",       icon: Download,                        group: "pages" },
   // ── Getting Clients ─────────────────────────────────────────────────────────
   { id: "emailSequence",      label: "Email Sequence",    icon: Mail,                            group: "clients",   groupLabel: "Getting Clients" },
@@ -122,6 +121,7 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "nurtureSequence",    label: "52-Wk Nurture",     icon: CalendarDays,                    group: "nurture" },
   // ── Coaching Clients ────────────────────────────────────────────────────────
   { id: "launchRoadmap",      label: "Launch Roadmap",    icon: Map,                             group: "coaching",  groupLabel: "Coaching Clients" },
+  { id: "workoutPlan",        label: "Workout Plan",      icon: Dumbbell,                        group: "coaching" },
   { id: "nutritionPlan",      label: "Nutrition Plan",    icon: Salad,                           group: "coaching" },
   // ── Getting Referrals ───────────────────────────────────────────────────────
   { id: "testimonialHarvest", label: "Testimonials",      icon: Star,                            group: "referrals", groupLabel: "Getting Referrals" },
@@ -130,6 +130,7 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "adCopy",             label: "Ad Copy",           icon: Megaphone,                       group: "ads",       groupLabel: "AD Engine" },
   { id: "creativePrompts",    label: "Ad Creatives",      icon: ImageIcon,                       group: "ads" },
   { id: "campaignNaming",     label: "Campaign Naming",   icon: BarChart3,                       group: "ads" },
+  { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "ads" },
 ];
 
 type TabId = string;
@@ -412,7 +413,19 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
         <ExtensionDownloadSection />
       </>
     ),
-    funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
+    funnelPreview: (
+      <div className="space-y-6">
+        <FunnelPreviewSection data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />
+        <div className="border-t border-white/[0.07] pt-6">
+          <OfferSummarySection data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} funnelType={funnelType} />
+        </div>
+        {isApplication && assets.applicationLandingPage && (
+          <div className="border-t border-white/[0.07] pt-6">
+            <ApplicationLandingPageSection data={assets.applicationLandingPage} />
+          </div>
+        )}
+      </div>
+    ),
     ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} funnelType={funnelType} />,
     landingPage: isApplication
