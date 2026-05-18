@@ -447,9 +447,9 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
         story: `"I'd been spinning my wheels for two years. I tried every programme out there — nothing seemed to work for someone in my situation.\n\nWhen I joined ${programmeName} everything clicked. Within 8 weeks I had more progress than I'd made in the previous two years combined. ${coachName} built everything around my life, not some generic template.\n\nIf you're on the fence, don't be. This changed everything for me."`,
       },
       {
-        storyHeadline: "CONVINCED CHANGE WAS IMPOSSIBLE AT HER AGE",
-        intro: `Meet Sarah, a 42-year-old who'd struggled with ${biggestStruggle} for years before finding ${programmeName}.`,
-        story: `"I honestly didn't think change was possible at my stage of life. I'd accepted that this was just how things were going to be.\n\nBut ${coachName} showed me exactly what I'd been missing — and the results followed almost immediately. Down 3 dress sizes, more energy than I've had in a decade.\n\nThe support and accountability made the difference. I never felt alone in the process."`,
+        storyHeadline: `CONVINCED CHANGE WAS IMPOSSIBLE AT ${isFemaleAudience ? "HER" : "HIS"} AGE`,
+        intro: `Meet ${isFemaleAudience ? "Sarah" : "Dave"}, a 42-year-old who'd struggled with ${biggestStruggle} for years before finding ${programmeName}.`,
+        story: `"I honestly didn't think change was possible at my stage of life. I'd accepted that this was just how things were going to be.\n\nBut ${coachName} showed me exactly what I'd been missing — and the results followed almost immediately. Down ${isFemaleAudience ? "3 dress sizes" : "4 trouser sizes"}, more energy than I've had in a decade.\n\nThe support and accountability made the difference. I never felt alone in the process."`,
       },
       {
         storyHeadline: "IMPOSSIBLE SCHEDULE, ZERO RESULTS, NO TIME TO SPARE",
@@ -458,12 +458,12 @@ export function buildMockApplicationLandingPage(inputs: WizardInputs): Applicati
       },
       {
         storyHeadline: "STUCK IN A CYCLE OF STARTING OVER AND GIVING UP",
-        intro: `Meet Lisa, who went from frustrated and stuck to thriving in just 12 weeks.`,
+        intro: `Meet ${isFemaleAudience ? "Lisa" : "Chris"}, who went from frustrated and stuck to thriving in just 12 weeks.`,
         story: `"I'd tried every shortcut going. Nothing was working. I was frustrated, embarrassed, and genuinely starting to wonder if I was just one of those people who couldn't change.\n\n${programmeName} showed me I was wrong. Within weeks I started seeing and feeling the difference. By week 12 I barely recognised myself.\n\nIf you're where I was — please just take the leap. You won't regret it."`,
       },
       {
         storyHeadline: "PLATEAUED FOR MONTHS WITH NO IDEA WHY",
-        intro: `Meet Rachel, who had been putting in the work but stopped seeing results months before joining ${programmeName}.`,
+        intro: `Meet ${isFemaleAudience ? "Rachel" : "Ben"}, who had been putting in the work but stopped seeing results months before joining ${programmeName}.`,
         story: `"I was already going to the gym four times a week. Eating well. Doing everything right — or so I thought.\n\nBut the scales weren't moving and I was genuinely losing motivation. ${coachName} pinpointed exactly what was missing in my approach within the first week.\n\nThree months later I'd broken through the plateau and hit a new personal best. Sometimes you just need the right eyes on your plan."`,
       },
       {
