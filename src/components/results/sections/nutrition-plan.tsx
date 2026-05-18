@@ -52,7 +52,7 @@ export function NutritionPlanPlaceholder({ projectId, onGenerated }: NutritionPl
       const json = await res.json() as { nutritionPlan: NutritionPlan; isMock?: boolean };
       onGenerated(json.nutritionPlan);
       if (json.isMock) {
-        toast({ title: "Demo plan shown", description: "AI generation unavailable — displaying a template plan. Configure your API key to generate a personalised plan.", variant: "destructive" });
+        toast({ title: "Demo plan shown", description: "No API key found — showing a template. Add your Anthropic key to generate a personalised nutrition plan." });
       } else {
         toast({ title: "Nutrition plan generated!", description: "Your client meal plan is ready." });
       }

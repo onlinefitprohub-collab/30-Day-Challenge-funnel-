@@ -506,7 +506,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
         : <VslScriptPlaceholder />,
       manyChatFlow: liveLongFormAssets
         ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
-        : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} generating />,
+        : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,
     }),
     contentCalendar:    assets.contentCalendar
       ? <ContentCalendarSection data={assets.contentCalendar as ContentCalendar} />

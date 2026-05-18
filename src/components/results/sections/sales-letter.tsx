@@ -59,7 +59,7 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
       const json = await res.json() as { longFormAssets: LongFormSalesAssets; isMock?: boolean };
       onGenerated(json.longFormAssets);
       if (json.isMock) {
-        toast({ title: "Demo assets shown", description: "AI generation unavailable — displaying template assets. Configure your API key for personalised output.", variant: "destructive" });
+        toast({ title: "Demo assets shown", description: "No API key found — showing a template. Add your Anthropic key for personalised output." });
       } else {
         toast({ title: "Sales letter + ManyChat flow generated!", description: "Your long-form assets are ready." });
       }

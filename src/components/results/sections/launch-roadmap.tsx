@@ -148,7 +148,7 @@ export function LaunchRoadmapPlaceholder({ projectId, onGenerated }: LaunchRoadm
       const json = await res.json() as { launchRoadmap: LaunchRoadmap; isMock?: boolean };
       onGenerated(json.launchRoadmap);
       if (json.isMock) {
-        toast({ title: "Demo roadmap shown", description: "AI generation unavailable — displaying a template plan. Configure your API key for personalised output.", variant: "destructive" });
+        toast({ title: "Demo roadmap shown", description: "No API key found — showing a template. Add your Anthropic key for personalised output." });
       } else {
         toast({ title: "Launch roadmap generated!", description: "Your step-by-step launch plan is ready." });
       }

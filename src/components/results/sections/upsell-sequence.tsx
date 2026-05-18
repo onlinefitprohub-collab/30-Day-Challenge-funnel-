@@ -83,7 +83,7 @@ export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderP
       const json = await res.json() as { upsellSequence: UpsellSequence; isMock?: boolean };
       onGenerated(json.upsellSequence);
       if (json.isMock) {
-        toast({ title: "Demo sequence shown", description: "AI generation unavailable — displaying a template sequence. Configure your API key for personalised output.", variant: "destructive" });
+        toast({ title: "Demo sequence shown", description: "No API key found — showing a template. Add your Anthropic key for personalised output." });
       } else {
         toast({ title: "Upsell sequence generated!", description: "Your post-challenge email sequence is ready." });
       }

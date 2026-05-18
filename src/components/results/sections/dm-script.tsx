@@ -159,7 +159,7 @@ export function DmScriptPlaceholder({ projectId, onGenerated }: DmScriptPlacehol
       const json = await res.json() as { instagramDmScript: InstagramDmScript; isMock?: boolean };
       onGenerated(json.instagramDmScript);
       if (json.isMock) {
-        toast({ title: "Demo scripts shown", description: "AI generation unavailable — displaying template scripts. Configure your API key for personalised output.", variant: "destructive" });
+        toast({ title: "Demo scripts shown", description: "No API key found — showing a template. Add your Anthropic key for personalised output." });
       } else {
         toast({ title: "DM scripts generated!", description: "Your Instagram conversation scripts are ready." });
       }

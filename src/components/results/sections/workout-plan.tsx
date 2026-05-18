@@ -52,7 +52,7 @@ export function WorkoutPlanPlaceholder({ projectId, onGenerated }: WorkoutPlanPl
       const json = await res.json() as { workoutPlan: WorkoutPlan; isMock?: boolean };
       onGenerated(json.workoutPlan);
       if (json.isMock) {
-        toast({ title: "Demo plan shown", description: "AI generation unavailable — displaying a template plan. Configure your API key to generate a personalised programme.", variant: "destructive" });
+        toast({ title: "Demo plan shown", description: "No API key found — showing a template. Add your Anthropic key to generate a personalised programme." });
       } else {
         toast({ title: "Workout plan generated!", description: "Your 30-day programme is ready." });
       }

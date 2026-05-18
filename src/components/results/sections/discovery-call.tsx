@@ -158,7 +158,7 @@ export function DiscoveryCallPlaceholder({ projectId, onGenerated }: DiscoveryCa
       const json = await res.json() as { discoveryCallScript: DiscoveryCallScript; isMock?: boolean };
       onGenerated(json.discoveryCallScript);
       if (json.isMock) {
-        toast({ title: "Demo script shown", description: "AI generation unavailable — displaying a template script. Configure your API key for personalised output.", variant: "destructive" });
+        toast({ title: "Demo script shown", description: "No API key found — showing a template. Add your Anthropic key for personalised output." });
       } else {
         toast({ title: "Discovery call script generated!", description: "Your personalised call script is ready." });
       }

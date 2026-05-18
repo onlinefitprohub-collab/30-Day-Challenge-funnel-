@@ -37,7 +37,7 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
       const json = await res.json() as { nurtureSequence: NurtureSequence; isMock?: boolean };
       onGenerated(json.nurtureSequence);
       if (json.isMock) {
-        toast({ title: "Demo sequence shown", description: "AI generation unavailable — displaying template emails. Configure your API key for a personalised 52-week sequence.", variant: "destructive" });
+        toast({ title: "Demo sequence shown", description: "No API key found — showing a template. Add your Anthropic key for a personalised 52-week sequence." });
       } else {
         toast({ title: "52-week nurture generated!", description: "A full year of emails is ready." });
       }
