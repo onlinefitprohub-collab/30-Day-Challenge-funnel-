@@ -160,6 +160,7 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
       if (!json.pageData) throw new Error("No page data returned from server");
 
       const requestId = Math.random().toString(36).slice(2);
+      const pageMeta = PAGES.find(p => p.id === page);
 
       const acked = await new Promise<boolean>((resolve) => {
         const timer = setTimeout(() => {
@@ -182,6 +183,7 @@ export function FunnelPreviewSection({ data, projectId, funnelType = "challenge"
             requestId,
             projectId: projectId ?? "",
             page,
+            pageName: pageMeta?.label ?? page,
             pageData: json.pageData,
             challengeConcept: data.offerSummary?.challengeConcept ?? "Challenge Funnel",
             appUrl: window.location.origin,

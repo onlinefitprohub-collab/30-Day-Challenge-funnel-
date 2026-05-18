@@ -190,7 +190,8 @@ function refreshCopiedCard() {
 
       } else if (copied?.type === "ai-inject" && copied?.pageData) {
         // AI-generated page (revex inject path)
-        const label = pageLabels[copied.page] || copied.pageName || "AI Page";
+        // Prefer pageName sent by the app (correct for both funnel types) over map lookup
+        const label = copied.pageName || pageLabels[copied.page] || "AI Page";
         const ago   = timeSince(copied.copiedAt);
         card.className = "copied-card has";
         card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Saved ${ago} — click Paste to inject into the builder.`;
@@ -212,7 +213,7 @@ function refreshCopiedCard() {
         chrome.storage.local.get("cfReady", (lsReady) => {
           const ready = lsReady.cfReady ?? null;
           if (ready?.pageData) {
-            const label = pageLabels[ready.page] || "AI Page";
+            const label = ready.pageName || pageLabels[ready.page] || "AI Page";
             const ago   = timeSince(ready.loadedAt);
             card.className = "copied-card has";
             card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Loaded ${ago} — open a GHL builder tab and click the orange CF button to paste.<br><button id="cf-reload-btn" style="margin-top:6px;font-size:11px;padding:3px 10px;cursor:pointer;background:#1d4ed8;color:#fff;border:none;border-radius:5px;font-weight:700;">↺ Reload from server</button>`;
@@ -1463,7 +1464,8 @@ function refreshLoadedBadge(ready, cached) {
     badge.classList.add("show");
     const funnelType = cached?.funnelType || "challenge";
     const pageLabels = getPageLabelsForFunnelType(funnelType);
-    document.getElementById("loaded-page-name").textContent = pageLabels[ready.page] || ready.page;
+    // Prefer pageName set by app (correct for all funnel types) over map lookup
+    document.getElementById("loaded-page-name").textContent = ready.pageName || pageLabels[ready.page] || ready.page;
   } else {
     badge.classList.remove("show");
   }

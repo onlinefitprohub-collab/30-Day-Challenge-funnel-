@@ -32,15 +32,18 @@
     var pageData = _payload.pageData;
     var challengeConcept = _payload.challengeConcept;
     var appUrl = _payload.appUrl;
+    // pageName is sent by the app with the correct human-readable label
+    var providedPageName = _payload.pageName;
     if (!page || !pageData) return;
 
-    var PAGE_NAMES = { landing: "Landing Page", optin: "Opt-In Form", thankyou: "Thank You Page", booking: "Booking Page" };
+    var PAGE_NAMES = { landing: "Landing Page", optin: "Opt-In Form", thankyou: "Thank You Page", booking: "Booking Page", salesletter: "Sales Letter" };
 
     var ready = {
       projectId: projectId || "",
       appUrl:    appUrl || window.location.origin,
       challengeConcept: challengeConcept || "Challenge Funnel",
       page: page,
+      pageName: providedPageName || PAGE_NAMES[page] || page || "AI Page",
       pageData: pageData,
       loadedAt: Date.now(),
     };
@@ -48,7 +51,7 @@
     var sessionCopy = {
       type:      "ai-inject",
       page: page,
-      pageName:  PAGE_NAMES[page] || page || "AI Page",
+      pageName:  providedPageName || PAGE_NAMES[page] || page || "AI Page",
       pageData: pageData,
       projectId: projectId || "",
       appUrl:    appUrl || window.location.origin,
