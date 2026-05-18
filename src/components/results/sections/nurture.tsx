@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, CalendarDays, ChevronDown, ChevronRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Copy, Check, CalendarDays, ChevronDown, ChevronRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { NurtureSequence, NurtureEmail } from "@/types/generation";
@@ -15,9 +15,11 @@ interface NurturePlaceholderProps {
 
 export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (loading) return;
+    setGenError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/generate-nurture", {
@@ -177,7 +179,7 @@ export function NurtureSection({ data, projectId, onRegenerate }: NurtureSection
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-gray-500">
             52 weekly emails — one per week for a full year, organised by quarter.

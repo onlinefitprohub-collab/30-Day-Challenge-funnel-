@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Map, Loader2, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, Map, Loader2, Zap, AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { LaunchRoadmap, RoadmapPhase, RoadmapTask } from "@/types/launch-roadmap";
 
@@ -126,9 +126,11 @@ interface LaunchRoadmapPlaceholderProps {
 
 export function LaunchRoadmapPlaceholder({ projectId, onGenerated }: LaunchRoadmapPlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (loading) return;
+    setGenError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/generate-launch-roadmap", {
@@ -152,6 +154,7 @@ export function LaunchRoadmapPlaceholder({ projectId, onGenerated }: LaunchRoadm
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
+      setGenError(msg);
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -167,6 +170,12 @@ export function LaunchRoadmapPlaceholder({ projectId, onGenerated }: LaunchRoadm
           <Map className="h-7 w-7 text-blue-600" />
         )}
       </div>
+      {genError && (
+        <div className="mb-4 flex w-full max-w-sm items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <span>{genError}</span>
+        </div>
+      )}
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
         {loading ? "Generating your launch roadmap…" : "Generate Launch Roadmap"}
       </h3>
@@ -199,7 +208,7 @@ export function LaunchRoadmapPlaceholder({ projectId, onGenerated }: LaunchRoadm
             onClick={handleGenerate}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
           >
-            <Map className="h-4 w-4" /> Generate Launch Roadmap
+            <Map className="h-4 w-4" /> {genError ? "Try again" : "Generate Launch Roadmap"}
           </button>
         </>
       )}
@@ -282,7 +291,7 @@ export function LaunchRoadmapSection({ data, projectId, onRegenerate }: LaunchRo
     <div className="space-y-5">
 
       {/* Top bar */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <p className="text-sm text-gray-500">
           A 6-phase launch roadmap tying every FitPro Launch asset to a specific week and task — from technical setup to post-challenge upsell.
         </p>

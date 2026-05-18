@@ -24,8 +24,10 @@ interface SubscriptionCardProps {
 
 export function SubscriptionCard({ status, periodEnd, upgraded }: SubscriptionCardProps) {
   const [loading, setLoading] = useState<"checkout" | "portal" | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   async function handleSubscribe() {
+    setCheckoutError(null);
     setLoading("checkout");
     try {
       const res = await fetch("/api/stripe/create-checkout", { method: "POST" });
@@ -33,11 +35,13 @@ export function SubscriptionCard({ status, periodEnd, upgraded }: SubscriptionCa
       if (error || !url) throw new Error(error ?? "No checkout URL");
       window.location.href = url;
     } catch {
+      setCheckoutError("Couldn't open checkout. Please try again.");
       setLoading(null);
     }
   }
 
   async function handlePortal() {
+    setCheckoutError(null);
     setLoading("portal");
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
@@ -45,6 +49,7 @@ export function SubscriptionCard({ status, periodEnd, upgraded }: SubscriptionCa
       if (error || !url) throw new Error(error ?? "No portal URL");
       window.location.href = url;
     } catch {
+      setCheckoutError("Couldn't open billing portal. Please try again.");
       setLoading(null);
     }
   }
@@ -93,6 +98,9 @@ export function SubscriptionCard({ status, periodEnd, upgraded }: SubscriptionCa
               {loading === "portal" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
               Manage billing
             </Button>
+            {checkoutError && (
+              <p className="text-xs text-red-500 mt-1">{checkoutError}</p>
+            )}
           </>
         )}
 
@@ -144,6 +152,9 @@ export function SubscriptionCard({ status, periodEnd, upgraded }: SubscriptionCa
                 {loading === "checkout" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 Subscribe — £97/month
               </Button>
+              {checkoutError && (
+                <p className="text-xs text-red-500 mt-1">{checkoutError}</p>
+              )}
               <p className="text-xs text-center text-brand-600">Cancel anytime. No hidden fees.</p>
             </div>
           </div>

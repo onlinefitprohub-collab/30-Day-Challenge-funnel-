@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, TrendingUp, Loader2, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, TrendingUp, Loader2, Mail, MessageSquare, CheckCircle2, AlertCircle } from "lucide-react";
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { UpsellSequence, UpsellEmail } from "@/types/upsell-sequence";
@@ -61,9 +61,11 @@ interface UpsellPlaceholderProps {
 
 export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (loading) return;
+    setGenError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/generate-upsell", {
@@ -87,6 +89,7 @@ export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderP
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
+      setGenError(msg);
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -102,6 +105,12 @@ export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderP
           <TrendingUp className="h-7 w-7 text-orange-600" />
         )}
       </div>
+      {genError && (
+        <div className="mb-4 flex w-full max-w-sm items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <span>{genError}</span>
+        </div>
+      )}
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
         {loading ? "Generating your upsell sequence…" : "Generate Upsell Email Sequence"}
       </h3>
@@ -134,7 +143,7 @@ export function UpsellPlaceholder({ projectId, onGenerated }: UpsellPlaceholderP
             onClick={handleGenerate}
             className="flex items-center gap-2 rounded-xl bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 transition-colors"
           >
-            <TrendingUp className="h-4 w-4" /> Generate Upsell Sequence
+            <TrendingUp className="h-4 w-4" /> {genError ? "Try again" : "Generate Upsell Sequence"}
           </button>
         </>
       )}
@@ -215,7 +224,7 @@ export function UpsellSection({ data, projectId, onRegenerate }: UpsellSectionPr
     <div className="space-y-5">
 
       {/* Top bar */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <p className="text-sm text-gray-500">
           A 5-email post-challenge sequence sent over 14 days — designed to convert challenge completers into your next-tier offer at peak motivation.
         </p>

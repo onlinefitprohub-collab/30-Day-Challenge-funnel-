@@ -137,7 +137,7 @@ export function ProjectList({ projects: initialProjects, subtitles }: Props) {
                       setConfirmDelete(null);
                       setMenuOpen(menuOpen === project.id ? null : project.id);
                     }}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/[0.08] hover:text-zinc-300"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-600 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-white/[0.08] hover:text-zinc-300"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>

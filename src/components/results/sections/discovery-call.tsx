@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight, Phone, Loader2, FileDown } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, Phone, Loader2, FileDown, AlertCircle } from "lucide-react";
 import { CopyableItem } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { DiscoveryCallScript, DiscoveryCallPhase } from "@/types/discovery-call";
@@ -136,9 +136,11 @@ interface DiscoveryCallPlaceholderProps {
 
 export function DiscoveryCallPlaceholder({ projectId, onGenerated }: DiscoveryCallPlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (loading) return;
+    setGenError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/generate-discovery-call", {
@@ -162,6 +164,7 @@ export function DiscoveryCallPlaceholder({ projectId, onGenerated }: DiscoveryCa
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
+      setGenError(msg);
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -177,6 +180,12 @@ export function DiscoveryCallPlaceholder({ projectId, onGenerated }: DiscoveryCa
           <Phone className="h-7 w-7 text-violet-600" />
         )}
       </div>
+      {genError && (
+        <div className="mb-4 flex w-full max-w-sm items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <span>{genError}</span>
+        </div>
+      )}
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
         {loading ? "Generating your call script…" : "Generate Discovery Call Script"}
       </h3>
@@ -190,7 +199,7 @@ export function DiscoveryCallPlaceholder({ projectId, onGenerated }: DiscoveryCa
           onClick={handleGenerate}
           className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
         >
-          <Phone className="h-4 w-4" /> Generate Call Script
+          <Phone className="h-4 w-4" /> {genError ? "Try again" : "Generate Call Script"}
         </button>
       )}
     </div>
@@ -445,7 +454,7 @@ ${objHtml}
     <div className="space-y-5">
 
       {/* Top bar */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <p className="text-sm text-gray-500">
           Word-for-word discovery call script with 8 phases, objection handlers, and a post-call follow-up email — personalised to your offer.
         </p>

@@ -209,7 +209,7 @@ export function SalesLetterSection({ data, projectId, onRegenerate }: SalesLette
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-500">Long-form direct-response sales letter. Copy each section into your page builder or email sequence.</p>
         <div className="flex shrink-0 gap-2">
           {confirming && !regenerating ? (
