@@ -38,6 +38,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 });
   }
 
+  // Fetch funnel type from project_inputs
+  let funnelType = "challenge";
+  const { data: inputs } = await supabase
+    .from("project_inputs")
+    .select("inputs")
+    .eq("project_id", projectId)
+    .single();
+
+  if (inputs?.inputs && typeof inputs.inputs === "object") {
+    const inputsObj = inputs.inputs as Record<string, unknown>;
+    if (inputsObj.funnelType === "application") {
+      funnelType = "application";
+    }
+  }
+
   let token: string;
   try {
     token = deriveProjectToken(projectId);
@@ -48,6 +63,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     projectId,
     projectName: project.name ?? "Untitled Project",
+    funnelType,
     token,
   });
 }

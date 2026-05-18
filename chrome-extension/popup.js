@@ -3,18 +3,45 @@
 // Also handles: AI project library (load → inject via revex, no API key)
 // Also handles: Capture any GHL page schema via URL → CF_FETCH_URL_PAGE
 
-const PAGES = ["landing", "optin", "thankyou", "booking", "salesletter"];
+// Pages depend on funnel type — will be set dynamically
+let PAGES = ["landing", "optin", "thankyou", "booking", "salesletter"];
 
 // Stores the full (untruncated) raw JSON from the last Native Firebase fetch
 let _nativeFirebaseRaw = null;
 
-const PAGE_LABELS = {
+// Page labels — will be set based on funnel type
+let PAGE_LABELS = {
   landing:      "Landing Page",
   optin:        "Opt-In Page",
   thankyou:     "Thank You Page",
   booking:      "Booking Page",
   salesletter:  "Sales Letter",
 };
+
+function getPageLabelsForFunnelType(funnelType) {
+  if (funnelType === "application") {
+    return {
+      registration:     "Registration Page",
+      "application-form": "Application Form",
+      "strategy-call":   "Strategy Call Page",
+      booking:          "Strategy Call Page",
+    };
+  }
+  return {
+    landing:      "Landing Page",
+    optin:        "Opt-In Page",
+    thankyou:     "Thank You Page",
+    booking:      "Booking Page",
+    salesletter:  "Sales Letter",
+  };
+}
+
+function getPagesForFunnelType(funnelType) {
+  if (funnelType === "application") {
+    return ["registration", "application-form", "strategy-call"];
+  }
+  return ["landing", "optin", "thankyou", "booking", "salesletter"];
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   initCopyPaste();
@@ -146,63 +173,64 @@ function refreshCopiedCard() {
     const clearBtn  = document.getElementById("clear-btn");
     const pasteBtn  = document.getElementById("paste-btn");
 
-    const PAGE_LABELS = {
-      landing:     "Landing Page",   optin:       "Opt-In Page",
-      thankyou:    "Thank You Page", booking:     "Booking Page",
-      salesletter: "Sales Letter",
-    };
+    // Get funnel type from cached project to determine page labels
+    chrome.storage.local.get("cfProject", (ls) => {
+      const cached = ls.cfProject ?? null;
+      const funnelType = cached?.funnelType || "challenge";
+      const pageLabels = getPageLabelsForFunnelType(funnelType);
 
-    if (copied?.funnelId && copied?.stepId) {
-      // Real GHL clone (clone-funnel-step path)
-      const name = copied.pageName || "GHL Page";
-      const ago  = timeSince(copied.copiedAt);
-      card.className = "copied-card has";
-      card.innerHTML = `<strong>Copied: ${esc(name)}</strong>GHL clone · copied ${ago} — ready to paste.`;
-      clearBtn.style.display = "";
-      pasteBtn.disabled      = false;
+      if (copied?.funnelId && copied?.stepId) {
+        // Real GHL clone (clone-funnel-step path)
+        const name = copied.pageName || "GHL Page";
+        const ago  = timeSince(copied.copiedAt);
+        card.className = "copied-card has";
+        card.innerHTML = `<strong>Copied: ${esc(name)}</strong>GHL clone · copied ${ago} — ready to paste.`;
+        clearBtn.style.display = "";
+        pasteBtn.disabled      = false;
 
-    } else if (copied?.type === "ai-inject" && copied?.pageData) {
-      // AI-generated page (revex inject path)
-      const label = PAGE_LABELS[copied.page] || copied.pageName || "AI Page";
-      const ago   = timeSince(copied.copiedAt);
-      card.className = "copied-card has";
-      card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Saved ${ago} — click Paste to inject into the builder.`;
-      clearBtn.style.display = "";
-      pasteBtn.disabled      = false;
+      } else if (copied?.type === "ai-inject" && copied?.pageData) {
+        // AI-generated page (revex inject path)
+        const label = pageLabels[copied.page] || copied.pageName || "AI Page";
+        const ago   = timeSince(copied.copiedAt);
+        card.className = "copied-card has";
+        card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Saved ${ago} — click Paste to inject into the builder.`;
+        clearBtn.style.display = "";
+        pasteBtn.disabled      = false;
 
-    } else if (copied?.type === "url-clone" && copied?.pageData) {
-      // URL-captured GHL page or AI test page (revex inject path)
-      const name = copied.pageName || "Captured Page";
-      const ago  = timeSince(copied.copiedAt);
-      card.className = "copied-card has";
-      card.innerHTML = `<strong>Captured: ${esc(name)}</strong>Queued ${ago} — click Paste to inject into the builder.`;
-      clearBtn.style.display = "";
-      pasteBtn.disabled      = false;
+      } else if (copied?.type === "url-clone" && copied?.pageData) {
+        // URL-captured GHL page or AI test page (revex inject path)
+        const name = copied.pageName || "Captured Page";
+        const ago  = timeSince(copied.copiedAt);
+        card.className = "copied-card has";
+        card.innerHTML = `<strong>Captured: ${esc(name)}</strong>Queued ${ago} — click Paste to inject into the builder.`;
+        clearBtn.style.display = "";
+        pasteBtn.disabled      = false;
 
-    } else {
-      // cf_copied_page is empty — check cfReady (local storage) as fallback.
-      // cfReady is written by "Clone to GHL" and persists across extension updates.
-      chrome.storage.local.get("cfReady", (ls) => {
-        const ready = ls.cfReady ?? null;
-        if (ready?.pageData) {
-          const label = PAGE_LABELS[ready.page] || "AI Page";
-          const ago   = timeSince(ready.loadedAt);
-          card.className = "copied-card has";
-          card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Loaded ${ago} — open a GHL builder tab and click the orange CF button to paste.<br><button id="cf-reload-btn" style="margin-top:6px;font-size:11px;padding:3px 10px;cursor:pointer;background:#1d4ed8;color:#fff;border:none;border-radius:5px;font-weight:700;">↺ Reload from server</button>`;
-          clearBtn.style.display = "";
-          pasteBtn.disabled      = false;
-          const reloadBtn = document.getElementById("cf-reload-btn");
-          if (reloadBtn) {
-            reloadBtn.addEventListener("click", () => loadPage(ready.page, reloadBtn, ready));
+      } else {
+        // cf_copied_page is empty — check cfReady (local storage) as fallback.
+        // cfReady is written by "Clone to GHL" and persists across extension updates.
+        chrome.storage.local.get("cfReady", (lsReady) => {
+          const ready = lsReady.cfReady ?? null;
+          if (ready?.pageData) {
+            const label = pageLabels[ready.page] || "AI Page";
+            const ago   = timeSince(ready.loadedAt);
+            card.className = "copied-card has";
+            card.innerHTML = `<strong>AI Page Ready: ${esc(label)}</strong>Loaded ${ago} — open a GHL builder tab and click the orange CF button to paste.<br><button id="cf-reload-btn" style="margin-top:6px;font-size:11px;padding:3px 10px;cursor:pointer;background:#1d4ed8;color:#fff;border:none;border-radius:5px;font-weight:700;">↺ Reload from server</button>`;
+            clearBtn.style.display = "";
+            pasteBtn.disabled      = false;
+            const reloadBtn = document.getElementById("cf-reload-btn");
+            if (reloadBtn) {
+              reloadBtn.addEventListener("click", () => loadPage(ready.page, reloadBtn, ready));
+            }
+          } else {
+            card.className = "copied-card none";
+            card.innerHTML = `<strong>Nothing copied yet</strong>Go to your FitPro Launch results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
+            clearBtn.style.display = "none";
+            pasteBtn.disabled      = true;
           }
-        } else {
-          card.className = "copied-card none";
-          card.innerHTML = `<strong>Nothing copied yet</strong>Go to your FitPro Launch results page and click <strong>Clone to GHL</strong>, or navigate to a GHL page and click Copy below.`;
-          clearBtn.style.display = "none";
-          pasteBtn.disabled      = true;
-        }
-      });
-    }
+        });
+      }
+    });
   });
 }
 
@@ -1345,10 +1373,12 @@ async function autoSave(appUrl, projectId) {
   if (!tokenRes.ok) throw new Error("Could not fetch project info — are you logged in to the app?");
   const tokenData = await tokenRes.json();
 
+  const funnelType = tokenData.funnelType || "challenge";
   const project = {
     projectId,
     appUrl,
     challengeConcept: tokenData.projectName || "Challenge Funnel",
+    funnelType,
     savedAt: Date.now(),
   };
 
@@ -1394,7 +1424,7 @@ function showLibrary(cached, justSaved, ready) {
     setTimeout(() => banner.classList.remove("show"), 5000);
   }
 
-  refreshLoadedBadge(ready);
+  refreshLoadedBadge(ready, cached);
 
   document.getElementById("change-btn").addEventListener("click", async () => {
     await new Promise((resolve) => chrome.storage.local.remove(["cfProject", "cfReady"], resolve));
@@ -1424,21 +1454,27 @@ function showLibrary(cached, justSaved, ready) {
     btn.addEventListener("click", () => loadPage(btn.dataset.page, btn, cached));
   });
 
-  if (ready) highlightCard(ready.page);
+  if (ready) highlightCard(ready.page, cached);
 }
 
-function refreshLoadedBadge(ready) {
+function refreshLoadedBadge(ready, cached) {
   const badge = document.getElementById("loaded-badge");
   if (ready && ready.page) {
     badge.classList.add("show");
-    document.getElementById("loaded-page-name").textContent = PAGE_LABELS[ready.page] || ready.page;
+    const funnelType = cached?.funnelType || "challenge";
+    const pageLabels = getPageLabelsForFunnelType(funnelType);
+    document.getElementById("loaded-page-name").textContent = pageLabels[ready.page] || ready.page;
   } else {
     badge.classList.remove("show");
   }
 }
 
-function highlightCard(page) {
-  PAGES.forEach((p) => {
+function highlightCard(page, cached) {
+  // Get appropriate pages list for the funnel type
+  const funnelType = cached?.funnelType || "challenge";
+  const pagesList = getPagesForFunnelType(funnelType);
+
+  pagesList.forEach((p) => {
     const card = document.getElementById(`card-${p}`);
     const btn  = document.getElementById(`btn-${p}`);
     if (!card || !btn) return;
@@ -1480,10 +1516,12 @@ async function loadPage(page, btn, cached) {
       chrome.storage.local.set({ cfReady: ready }, resolve);
     });
 
+    // Use correct page labels based on funnel type
+    const pageLabels = getPageLabelsForFunnelType(cached.funnelType || "challenge");
     const sessionCopy = {
       type:      "ai-inject",
       page,
-      pageName:  PAGE_LABELS[page] || "AI Page",
+      pageName:  pageLabels[page] || "AI Page",
       pageData:  pdJson.pageData,
       projectId: cached.projectId,
       appUrl:    cached.appUrl,
@@ -1493,12 +1531,12 @@ async function loadPage(page, btn, cached) {
       chrome.storage.session.set({ cf_copied_page: sessionCopy }, resolve);
     });
 
-    highlightCard(page);
-    refreshLoadedBadge(ready);
+    highlightCard(page, cached);
+    refreshLoadedBadge(ready, cached);
     refreshCopiedCard();
 
     showNote("info",
-      `${PAGE_LABELS[page]} loaded! Switch to your GHL builder tab and click the orange CF button to inject.`
+      `${pageLabels[page]} loaded! Switch to your GHL builder tab and click the orange CF button to inject.`
     );
   } catch (e) {
     showNote("err", `Could not load page data: ${e.message}`);
@@ -1506,7 +1544,7 @@ async function loadPage(page, btn, cached) {
   } finally {
     btn.disabled = false;
     const ready = await getReady();
-    if (ready) highlightCard(ready.page);
+    if (ready) highlightCard(ready.page, cached);
   }
 }
 
