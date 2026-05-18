@@ -49,6 +49,7 @@ export function buildCoachContext(inputs: WizardInputs): string {
     `Coach name: ${coachName}`,
     `Location: ${location}`,
     `Delivery: ${DELIVERY_LABEL[deliveryMode] ?? deliveryMode}`,
+    `Funnel type: ${isApplication ? "Application (high-ticket coaching with application form)" : "Challenge (lead gen or paid challenge)"}`,
     ...(namedMethod ? [`Named system/method: ${namedMethod}`] : []),
     ``,
     isApplication ? `=== THE PROGRAMME OFFER ===` : `=== THE CHALLENGE OFFER ===`,

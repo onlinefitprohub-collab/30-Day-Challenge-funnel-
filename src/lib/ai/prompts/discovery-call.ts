@@ -48,8 +48,8 @@ script: Greet warmly, confirm they can talk for 45 minutes, build rapport with 2
 coachingNotes: Tips on energy level, small talk, reading the prospect's mood, and the rapport-to-business transition timing.
 
 callFrameSetting (title: "Setting the Call Frame", duration: "3–5 minutes")
-script: Explain the call structure: "First I want to understand where you're at. Then I'll share what we do. At the end, if it makes sense, I'll share how we can work together — and if it's not right, I'll tell you that too." Confirm they are the decision-maker, or gently establish if a partner needs to be involved. Mention the investment range so there are no surprises at the end.
-coachingNotes: The DM check should be done without pressure. The investment mention frames the call and removes the "I need to ask my partner" ambush at close.
+script: Explain the call structure: "First I want to understand where you're at. Then I'll share what we do. At the end, if it makes sense, I'll share how we can work together — and if it's not right, I'll tell you that too." Confirm they are the decision-maker, or gently establish if a partner needs to be involved. Do NOT mention price or investment range at this stage.
+coachingNotes: The DM check should be done without pressure. Save all price and investment information for the dedicated priceReveal phase — early mention kills urgency and invites objection before discovery.
 
 painDiscovery (title: "Pain Discovery", duration: "10–15 minutes")
 script: Start with the big open question: "Tell me, what made you reach out today — what's going on?" Then ask 5–7 niche-specific probe questions drawn from this coach's audience struggles. Each question should go deeper: from surface symptom → emotional impact → cost of inaction → failed attempts → what they've tried. Use the exact struggles, language, and obstacles from the context.

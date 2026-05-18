@@ -119,6 +119,7 @@ const APPLICATION_TABS: NavTab[] = [
   // ── Nurturing Leads ─────────────────────────────────────────────────────────
   { id: "contentCalendar",    label: "Content Engine",    icon: CalendarRange,                   group: "nurture",   groupLabel: "Nurturing Leads" },
   { id: "nurtureSequence",    label: "52-Wk Nurture",     icon: CalendarDays,                    group: "nurture" },
+  { id: "manyChatFlow",       label: "ManyChat Flow",     icon: MessageCircle,                   group: "nurture" },
   // ── Coaching Clients ────────────────────────────────────────────────────────
   { id: "launchRoadmap",      label: "Launch Roadmap",    icon: Map,                             group: "coaching",  groupLabel: "Coaching Clients" },
   { id: "workoutPlan",        label: "Workout Plan",      icon: Dumbbell,                        group: "coaching" },
@@ -768,7 +769,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
       <div className="sm:flex sm:gap-5 sm:items-start">
 
         {/* Sidebar — desktop only */}
-        <nav className="hidden sm:block w-56 shrink-0 rounded-2xl border border-white/[0.07] bg-[#0d0d10] py-4 overflow-hidden sticky top-4">
+        <nav className="hidden sm:block w-56 shrink-0 rounded-2xl border border-white/[0.07] bg-[#0d0d10] py-4 overflow-y-auto max-h-[calc(100vh-8rem)] sticky top-4">
           {grouped.map(({ label, items }) => {
             const isCollapsed = collapsedGroups.has(label);
             const hasActive = items.some(t => t.id === activeTab);
