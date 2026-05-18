@@ -43,6 +43,7 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
+      setGenError(msg);
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -52,8 +53,18 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-8 py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100">
-        <CalendarDays className="h-7 w-7 text-violet-600" />
+        {loading ? (
+          <Loader2 className="h-7 w-7 text-violet-600 animate-spin" />
+        ) : (
+          <CalendarDays className="h-7 w-7 text-violet-600" />
+        )}
       </div>
+      {genError && (
+        <div className="mb-4 flex w-full max-w-sm items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <span>{genError}</span>
+        </div>
+      )}
       <h3 className="mb-2 text-lg font-semibold text-gray-900">Generate Your 52-Week Nurture Sequence</h3>
       <p className="mb-5 max-w-sm text-sm text-gray-500">
         A full year of weekly emails tailored to your challenge type and audience — ready to load straight into GHL or any email platform.
@@ -87,7 +98,7 @@ export function NurturePlaceholder({ projectId, onGenerated }: NurturePlaceholde
         ) : (
           <>
             <CalendarDays className="h-4 w-4" />
-            Generate 52-Week Nurture
+            {genError ? "Try again" : "Generate 52-Week Nurture"}
           </>
         )}
       </button>

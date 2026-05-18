@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Loader2, FileText, CheckCircle2 } from "lucide-react";
+import { Copy, Check, Loader2, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { ResultSection } from "../result-section";
 import { toast } from "@/hooks/use-toast";
 import type { LongFormSalesAssets } from "@/types/longform";
@@ -37,9 +37,11 @@ interface LongFormPlaceholderProps {
 
 export function LongFormPlaceholder({ projectId, onGenerated, generating }: LongFormPlaceholderProps) {
   const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (loading) return;
+    setGenError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/generate-longform", {
@@ -63,6 +65,7 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Please try again.";
+      setGenError(msg);
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -80,6 +83,12 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
           <FileText className="h-7 w-7 text-violet-600" />
         )}
       </div>
+      {genError && (
+        <div className="mb-4 flex w-full max-w-sm items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <span>{genError}</span>
+        </div>
+      )}
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
         {isGenerating ? "Generating your long-form assets…" : "Generate Sales Letter + ManyChat Flow"}
       </h3>
@@ -113,7 +122,7 @@ export function LongFormPlaceholder({ projectId, onGenerated, generating }: Long
             disabled={loading}
             className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60 transition-colors"
           >
-            <FileText className="h-4 w-4" /> Generate Sales Letter + ManyChat
+            <FileText className="h-4 w-4" /> {genError ? "Try again" : "Generate Sales Letter + ManyChat"}
           </button>
         </>
       )}
