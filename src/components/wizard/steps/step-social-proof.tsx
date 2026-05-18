@@ -131,14 +131,13 @@ export function StepSocialProof({
       </div>
 
       {/* Generate CTA */}
-      <div className="rounded-xl border border-brand-100 bg-gradient-to-br from-brand-50 to-accent-50 p-5">
+      <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.06] p-5">
         <div className="flex items-start gap-3">
-          <Zap className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
+          <Zap className="mt-0.5 h-5 w-5 shrink-0 text-orange-400" />
           <div>
-            <p className="font-semibold text-brand-900">You're ready to generate</p>
-            <p className="mt-1 text-sm text-brand-700">
-              We'll now build your complete challenge funnel — landing page, emails, SMS, ad copy,
-              creative prompts, and campaign setup. Takes about 30 seconds.
+            <p className="font-semibold text-zinc-100">You're ready to generate</p>
+            <p className="mt-1 text-sm text-zinc-400">
+              We'll build your complete funnel — landing page, emails, SMS, ad copy, content calendar and more. Takes 1–3 minutes.
             </p>
           </div>
         </div>
@@ -153,7 +152,7 @@ export function StepSocialProof({
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generating your funnel…
+              Starting…
             </>
           ) : (
             <>
@@ -163,13 +162,6 @@ export function StepSocialProof({
           )}
         </Button>
       </div>
-
-      {isSubmitting && (
-        <div className="space-y-2 text-center">
-          <p className="text-sm text-gray-500">Building your funnel — this takes about 30 seconds.</p>
-          <p className="text-xs text-gray-400">Don't close this tab.</p>
-        </div>
-      )}
     </form>
   );
 }

@@ -29,14 +29,45 @@ const MAX_POLLS = 80; // 80 × 3s = ~4 minutes
 interface GeneratingViewProps {
   projectId: string;
   projectName: string;
+  triggerGenerate?: boolean;
 }
 
-export function GeneratingView({ projectId, projectName }: GeneratingViewProps) {
+export function GeneratingView({ projectId, projectName, triggerGenerate }: GeneratingViewProps) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [status, setStatus] = useState<"generating" | "complete" | "error" | "timeout">("generating");
   const [pollCount, setPollCount] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // When arriving from the wizard, trigger generation here so the user sees the animated screen
+  useEffect(() => {
+    if (!triggerGenerate) return;
+    async function kickOff() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("project_inputs")
+          .select("inputs")
+          .eq("project_id", projectId)
+          .single();
+        const inputs = (data as { inputs: Record<string, unknown> } | null)?.inputs ?? {};
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId, inputs }),
+        });
+        if (!res.ok) {
+          setStatus("error");
+          const supabaseFail = createClient();
+          await supabaseFail.from("projects").update({ status: "error" }).eq("id", projectId);
+        }
+      } catch {
+        setStatus("error");
+      }
+    }
+    void kickOff();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cycle through copy steps for UX
   useEffect(() => {

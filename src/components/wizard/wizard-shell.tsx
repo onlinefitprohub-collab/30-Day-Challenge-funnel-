@@ -166,33 +166,15 @@ export function WizardShell({ initialProjectId, initialData, initialStepIndex }:
       // Save final inputs
       await persistInputs(allData, pid);
 
-      // Mark as generating
+      // Mark as generating then hand off to the generating page (which triggers the API)
       await supabase.from("projects").update({ status: "generating" }).eq("id", pid);
 
-      // Call generation API
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: pid, inputs: allData }),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error((body as { error?: string }).error ?? "Generation failed");
-      }
-
-      router.push(`/projects/${pid}/results`);
+      router.push(`/projects/${pid}/generating?trigger=1`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong";
       setSaveError(message);
       toast({ title: "Generation failed", description: message, variant: "destructive" });
       setIsSubmitting(false);
-
-      // Reset project status on failure
-      if (projectId) {
-        const supabase = createClient();
-        await supabase.from("projects").update({ status: "draft" }).eq("id", projectId);
-      }
     }
   }
 

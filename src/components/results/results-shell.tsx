@@ -72,7 +72,6 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "highlevel",          label: "Clone to GHL",      icon: Layers,                          group: "pages",     groupLabel: "Your Pages" },
   { id: "ghlInspector",       label: "GHL Inspector",     icon: Microscope,     hidden: true,    group: "pages" },
   { id: "funnelPreview",      label: "Funnel Pages",      icon: LayoutTemplate,                  group: "pages" },
-  { id: "extensionDownload",  label: "GHL Extension",     icon: Puzzle,                          group: "pages" },
   { id: "offerSummary",       label: "Offer Summary",     icon: Target,                          group: "pages" },
   { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "pages" },
   { id: "exportCopy",         label: "Export Copy",       icon: Download,                        group: "pages" },
@@ -107,7 +106,6 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "highlevel",          label: "Clone to GHL",      icon: Layers,                          group: "pages",     groupLabel: "Your Pages" },
   { id: "ghlInspector",       label: "GHL Inspector",     icon: Microscope,     hidden: true,    group: "pages" },
   { id: "funnelPreview",      label: "Funnel Pages",      icon: LayoutTemplate,                  group: "pages" },
-  { id: "extensionDownload",  label: "GHL Extension",     icon: Puzzle,                          group: "pages" },
   { id: "offerSummary",       label: "Offer Summary",     icon: Target,                          group: "pages" },
   { id: "appLanding",         label: "Reg. Page Copy",    icon: FileText,                        group: "pages" },
   { id: "performance",        label: "Performance",       icon: TrendingUp,                      group: "pages" },
@@ -408,10 +406,14 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
 
   const sections: Partial<Record<TabId, React.ReactNode>> = {
     startHere:       <StartHereSection       funnelType={funnelType} onNavigate={handleNavigate} />,
-    highlevel:       <HighLevelSection       data={assets} projectId={project.id} hlConnected={hlConnected} />,
+    highlevel: (
+      <>
+        <HighLevelSection data={assets} projectId={project.id} hlConnected={hlConnected} />
+        <ExtensionDownloadSection />
+      </>
+    ),
     funnelPreview:   <FunnelPreviewSection   data={assets} projectId={project.id} funnelType={funnelType} copywriterStyle={assets.copywriterStyle} />,
-    ghlInspector:       <GhlInspectorSection    projectId={project.id} />,
-    extensionDownload:  <ExtensionDownloadSection />,
+    ghlInspector:    <GhlInspectorSection    projectId={project.id} />,
     offerSummary:    <OfferSummarySection    data={assets.offerSummary} copywriterStyle={assets.copywriterStyle} funnelType={funnelType} />,
     landingPage: isApplication
       ? (
@@ -632,7 +634,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-orange-400 shrink-0" />
-                  <p className="text-sm font-semibold text-zinc-100">Generate All Scale Tools</p>
+                  <p className="text-sm font-semibold text-zinc-100">Generate All Tools</p>
                   <span className="inline-flex items-center rounded-full bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-400">
                     {missingCount} remaining
                   </span>
@@ -750,13 +752,13 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
                   className="flex w-full items-center justify-between px-4 pb-1.5 text-left"
                 >
                   <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                    hasActive && isCollapsed ? "text-zinc-400" : "text-zinc-600"
+                    hasActive ? "text-zinc-300" : "text-zinc-400"
                   }`}>
                     {label}
                   </span>
                   {isCollapsed
-                    ? <ChevronRight className="h-3 w-3 text-zinc-600" />
-                    : <ChevronDown  className="h-3 w-3 text-zinc-600" />
+                    ? <ChevronRight className="h-3 w-3 text-zinc-400" />
+                    : <ChevronDown  className="h-3 w-3 text-zinc-400" />
                   }
                 </button>
                 {!isCollapsed && (

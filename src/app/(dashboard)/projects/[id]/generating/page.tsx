@@ -9,10 +9,13 @@ export const metadata = {
 
 export default async function GeneratingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ trigger?: string }>;
 }) {
   const { id } = await params;
+  const { trigger } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -31,5 +34,11 @@ export default async function GeneratingPage({
   if (project.status === "error") redirect(`/projects/new?projectId=${id}`);
 
   // Still generating (or somehow draft) — show the waiting screen
-  return <GeneratingView projectId={id} projectName={project.name} />;
+  return (
+    <GeneratingView
+      projectId={id}
+      projectName={project.name}
+      triggerGenerate={trigger === "1"}
+    />
+  );
 }
