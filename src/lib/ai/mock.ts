@@ -3,6 +3,10 @@ import type {
   GeneratedFunnelAssets, ApplicationLandingPage,
   ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide,
 } from "@/types/generation";
+import type { DiscoveryCallScript } from "@/types/discovery-call";
+import type { InstagramDmScript } from "@/types/dm-script";
+import type { UpsellSequence } from "@/types/upsell-sequence";
+import type { LongFormSalesAssets } from "@/types/longform";
 
 /**
  * Mock generation — uses real wizard inputs to produce personalised placeholder output.
@@ -691,5 +695,282 @@ export function buildMockCoachStory(inputs: WizardInputs): NonNullable<Generated
     part2,
     part3,
     bridgeHeadline: `Still doing everything right — and still not getting there?`,
+  };
+}
+
+export function buildMockVslScript(inputs: WizardInputs): import("@/types/generation").VslScript {
+  const firstName = (inputs.coachName ?? "Your Coach").split(" ")[0];
+  const programme = inputs.challengeName ?? "this programme";
+  const audience  = inputs.targetAudience ?? "people like you";
+  const goal      = inputs.mainGoal ?? "transform your life";
+  const struggle  = inputs.biggestStruggle ?? "feeling stuck and frustrated with your progress";
+  const duration  = inputs.duration ? `${inputs.duration}-day` : "30-day";
+
+  return {
+    hook: `Here's something most fitness coaches will never admit to you — and once you hear it, the last several years of struggling will suddenly make complete sense. Stay with me for just 90 seconds, because what I'm about to share changes everything for ${audience}.`,
+    problemStatement: `If you've been trying to ${goal.toLowerCase()} — and you've been working hard, you've been trying — but it just isn't working the way it should… you're not broken. You're not lazy. And it's not your fault. The real problem is that ${struggle.toLowerCase()}. Most programmes are designed for someone else's life, not yours.`,
+    agitation: `And the longer you keep trying the same approaches that aren't working, the harder it gets. Not just physically — mentally. Every failed attempt chips away at your belief that this is even possible for you. You start telling yourself maybe this just isn't for people like you. Maybe you missed the window. Maybe this is just how it is now. That voice gets louder every time something doesn't stick.`,
+    coachStoryBridge: `My name is ${firstName}. And I know exactly what that feels like, because I lived it. I spent years doing everything I was told — following the plans, showing up consistently — and still not getting where I wanted to be. It wasn't until I stopped following everyone else's system and built something designed specifically for ${audience} that everything changed.`,
+    solutionReveal: `That's what the ${programme} is. It's not another generic plan. It's a ${duration} system built specifically for ${audience} who want to ${goal.toLowerCase()} — without overhauling their entire life to do it. It works because it fits the reality of your life, not the ideal version of it.`,
+    programmeWalkthrough: `Here's what you get: daily structure that takes the guesswork out of every single day. Nutrition guidance that doesn't require meal prepping on Sundays or cutting out everything you enjoy. Accountability that actually keeps you moving when motivation dips — because it always does. And a community of people at exactly the same stage, going through it alongside you.`,
+    socialProof: `The people who've been through ${programme} describe the same experience: they expected it to be hard, and it was — but they also describe a momentum they hadn't felt before. A feeling of "I'm actually doing this." The messages I get from past members are the reason I keep running it every single time.`,
+    offerPresentation: `When you join ${programme} today, you get the complete ${duration} programme, the daily check-in system, the nutrition framework, the community access, and every resource you need to actually finish what you start. Everything is included. Nothing is held back for a more expensive tier.`,
+    objectionHandling: `I know what you might be thinking. You've tried things before. You've invested time and maybe money and it hasn't worked. I hear that — and I want to be direct with you. This isn't for everyone. If you're not ready to show up consistently for ${inputs.duration ?? 30} days, this isn't your moment. But if you're tired of starting over and you want something that actually sticks — this was built for exactly that.`,
+    callToAction: `Click the button below right now and secure your place in ${programme}. The next intake is limited — not as a marketing tactic, but because the community element only works when numbers are managed. If you're watching this, there are still spots. But there won't be indefinitely.`,
+    closingScarcity: `You've already been thinking about making this change. That's why you're here. The only question is whether today is the day you actually do something about it. Click below. Join us. Let's get you the result you've been working towards.`,
+  };
+}
+
+export function buildMockDiscoveryCall(inputs: WizardInputs): DiscoveryCallScript {
+  const firstName  = (inputs.coachName ?? "Your Coach").split(" ")[0];
+  const programme  = inputs.challengeName ?? "this programme";
+  const goal       = inputs.mainGoal ?? "reach their goals";
+  const price      = inputs.price ?? "£997";
+  const audience   = inputs.targetAudience ?? "people";
+  const phase = (title: string, duration: string, script: string, coachingNotes: string) =>
+    ({ title, duration, script, coachingNotes });
+
+  return {
+    callOverview: `A 45–60 minute consultative enrolment call. Your role is to listen more than you speak. Come in curious — the energy is "let me understand your situation and see if I can genuinely help."`,
+    prepChecklist: [
+      "Review their application or DM conversation before the call",
+      "Have your payment link open in another tab",
+      "Check their social profile to understand their current situation",
+      "Close unnecessary tabs and notifications — give your full attention",
+      "Have a notepad ready to take notes during pain discovery",
+      "Find a quiet, well-lit space — treat this like a professional meeting",
+      "Set your energy: 2 minutes of breathing or movement beforehand",
+    ],
+    openingRapport: phase("Opening & Rapport", "5 minutes",
+      `"Hey [name]! It's ${firstName} — how are you doing today? … Before we dive in, can you confirm you have about 45 minutes? … Tell me a little about yourself and how you first came across what I do."`,
+      `Match their energy from the first second. The 45-minute confirm matters — if they only have 20 minutes, reschedule rather than rush.`,
+    ),
+    callFrameSetting: phase("Setting the Frame", "3–5 minutes",
+      `"Here's how I like to run these calls — I'll ask questions to understand where you're at, then share about ${programme}. If I don't think it's right for you, I'll tell you honestly. The investment is in the ${price} range — is that in the realm of possibility for you?"`,
+      `The price mention removes shock at the close. Handle negative reactions here, not at the end.`,
+    ),
+    painDiscovery: phase("Pain Discovery", "10–15 minutes",
+      `"So tell me — what made you reach out? What's going on for you right now? … Tell me more about that. … How long has this been an issue? … What impact does this have beyond the surface — on your confidence, your energy, how you feel about yourself?"`,
+      `Uncover three layers: (1) surface pain, (2) emotional impact, (3) identity cost. 'Tell me more' does 80% of the work. Never offer solutions here — just listen.`,
+    ),
+    reflectionMirroring: phase("Reflection & Mirroring", "3–5 minutes",
+      `"Let me make sure I've heard you correctly. You're dealing with [their words], you've tried [their attempts], and the real impact is [their emotional cost]. Does that sound right? And if nothing changes in the next 6 months — what does that mean for you?"`,
+      `Use their exact phrases. The 6-months question surfaces urgency internally — whatever they say is the most important sentence of the call.`,
+    ),
+    futurePacing: phase("Future Pacing", "5–10 minutes",
+      `"Let's flip this. Imagine you've solved this completely. Walk me through what that looks like… And if you had that — what does it unlock for you? … That's exactly what I help ${audience} achieve."`,
+      `Don't rush this section. The longer they stay in the possibility state, the more motivated they are to invest.`,
+    ),
+    offerPresentation: phase("Offer Presentation", "10 minutes",
+      `"Based on what you've shared, I genuinely think I can help. ${programme} is structured in three phases: Foundation — establish the exact baseline and structure you need. Momentum — build consistency and see real results with ongoing coaching. Sustainability — lock in the result so it lasts. What makes this different is that you're not doing it alone. Does that sound like what you've been looking for?"`,
+      `Connect each phase to a specific pain they mentioned in discovery. Watch their energy at the question — a yes is your green light.`,
+    ),
+    priceReveal: phase("Price Reveal", "5 minutes",
+      `"Before I share the investment — think about what you said: if nothing changes in 6 months, [their answer]. The investment for ${programme} is ${price}. We also have a payment plan if that helps. [SAY THE PRICE. STOP TALKING. Hold silence.]"`,
+      `Say the price without apology and go completely silent. The first person to speak after the price reveal is at a psychological disadvantage.`,
+    ),
+    closeAndEnroll: phase("Close & Enrol", "5–10 minutes",
+      `"Where are you at with all of that? What questions do you have? … [If ready:] Great — let me send you the payment link now. It takes 2 minutes. Once that's processed I'll send welcome info and we'll lock in your start date."`,
+      `Only push forward when you feel genuine alignment. If they hesitate, ask: 'What's the main thing holding you back?' and treat it as an objection to address.`,
+    ),
+    objectionScripts: [
+      { objection: "I need to think about it.", response: `"What specifically do you need to think through — is it whether it's right for you, the investment, or something else? Most people who say that end up going in circles. What would help you feel clear right now?"` },
+      { objection: "I can't afford it.", response: `"When you say you can't afford it — do you mean the money literally isn't there, or does it feel like a big investment for something you're not 100% sure about? The payment plan is there if it makes it more manageable."` },
+      { objection: "I need to talk to my partner.", response: `"That makes sense. What would help you feel confident presenting this to them? Let me give you everything you need — and we can book a follow-up where they can join if helpful."` },
+      { objection: "I've tried things before and they didn't work.", response: `"The reason it didn't stick isn't a reflection of you — it's a reflection of the approach. The difference with ${programme} is [unique mechanism]. You're finally doing this with the right structure and support."` },
+      { objection: "I'm not sure it will work for me.", response: `"You described [their situation] as your reality, and this programme is specifically designed for ${audience} in that situation. The question isn't whether it works — it's whether you're ready to commit. What would help you feel more confident?"` },
+    ],
+    postCallEmail: {
+      subject: `Following up on our call — ${programme}`,
+      body: `Hi [name],\n\nReally enjoyed speaking with you today.\n\nWhat stayed with me was when you described [their most powerful statement]. That clarity is exactly why I believe ${programme} could be a turning point for you.\n\n• Programme: ${programme}\n• Investment: ${price} (payment plan available)\n• Start date: [as discussed]\n\nSecure your place here: [PAYMENT LINK]\n\nAny final questions — just reply to this email.\n\nWarm regards,\n${inputs.coachName ?? "Your Coach"}`,
+    },
+    callClosingScript: `"No pressure at all — let me send you a follow-up email with everything we covered. And let's book a quick 15-minute follow-up — what day works for you? [Book it before hanging up.] Perfect. It was great speaking with you — looking forward to our next chat."`,
+  };
+}
+
+export function buildMockUpsellFromInputs(inputs: WizardInputs): UpsellSequence {
+  const firstName  = (inputs.coachName ?? "Your Coach").split(" ")[0];
+  const programme  = inputs.challengeName ?? "the challenge";
+  const audience   = inputs.targetAudience ?? "people";
+  const goal       = inputs.mainGoal ?? "reach their goals";
+  const price      = inputs.price ?? "£997";
+  const duration   = inputs.duration ?? 30;
+
+  return {
+    targetOffer: `1:1 coaching or a higher-tier programme for ${audience} who completed the ${programme} and want to go deeper`,
+    overview: `This 5-email sequence runs over 14 days immediately after the ${duration}-day ${programme} ends — when clients are at peak motivation and trust. Strategy: celebrate → plant a seed → inspire with proof → make the offer → close with warmth.`,
+    emails: [
+      {
+        day: 1, purpose: "Celebrate + Plant the seed",
+        subject: `You did it — seriously 🎉`,
+        body: `Hi [name],\n\nI just wanted to say: I'm genuinely proud of you.\n\nCompleting the ${programme} isn't easy. Most people who sign up don't finish. You did — and the results you've seen are real.\n\nI've been thinking about what you shared. The progress you made in just ${duration} days is impressive — but here's what I keep coming back to: what happens in the next ${duration} days?\n\nI'll share more on this soon. For now, take a breath, celebrate, and know this is just the beginning.\n\n${firstName}`,
+      },
+      {
+        day: 3, purpose: "The honest truth about what comes next",
+        subject: `The honest thing I need to tell you`,
+        body: `Hi [name],\n\nI've noticed a pattern with the ${audience} I work with.\n\nThe ones who complete the challenge feel amazing on day ${duration}. Full of momentum, clear.\n\nThen within 6–8 weeks, without structure and accountability, about 70% are back where they started.\n\nI don't want that for you. The ${programme} was a beginning — a foundation. The question is: what are you going to build on it?\n\nI'll share something specific tomorrow.\n\n${firstName}`,
+      },
+      {
+        day: 5, purpose: "Client story / transformation proof",
+        subject: `What happened when [client] kept going`,
+        body: `Hi [name],\n\nOne of my clients — let's call her [Sarah] — completed the challenge in a similar position to you. She decided to continue with more personalised support.\n\nWithin 3 months, she had achieved ${goal}. "I needed someone who actually knew my situation," she said. "The challenge got me started. The coaching made it permanent."\n\nThat's what I want for you. If you're thinking about what's next — just reply with "I'm interested" and I'll share more.\n\n${firstName}`,
+      },
+      {
+        day: 8, purpose: "The direct offer",
+        subject: `Working together — here's what it looks like`,
+        body: `Hi [name],\n\nI'll be direct today.\n\nI have limited spots for 1:1 coaching, and I wanted to offer you a chance before I open it more widely.\n\nWhat's included:\n• Personalised coaching around your specific situation\n• Weekly check-ins and accountability\n• Direct access to me when you need guidance\n• A clear path to ${goal}\n\nInvestment: ${price}.\n\nIf that's you, the next step is a free 20-minute call: [BOOKING LINK]\n\n${firstName}`,
+      },
+      {
+        day: 14, purpose: "Last chance / warm close",
+        subject: `Before I close this offer`,
+        body: `Hi [name],\n\nI'm closing the remaining coaching spots at the end of this week.\n\nIf you want to explore working together, book a free 20-minute call before [day]: [BOOKING LINK]\n\nAnd if it's not the right time — that's completely okay. The work you did during the ${programme} was real. Don't lose it.\n\nI'm rooting for you either way.\n\n${firstName}`,
+      },
+    ],
+    smsNudge: `Hey [name] — sent you a couple of emails about continuing your progress after the ${programme}. Worth a read if you haven't seen them! [LINK]`,
+  };
+}
+
+export function buildMockLongFormAssets(inputs: WizardInputs): LongFormSalesAssets {
+  const coachName  = inputs.coachName ?? "Your Coach";
+  const programme  = inputs.challengeName ?? "This Programme";
+  const audience   = inputs.targetAudience ?? "people like you";
+  const goal       = inputs.mainGoal ?? "transform your results";
+  const price      = inputs.price ?? "£997";
+  const struggle   = inputs.biggestStruggle ?? "feeling stuck";
+  const duration   = inputs.duration ?? 30;
+  const inclusions = inputs.inclusions ?? "coaching, resources, and support";
+
+  return {
+    salesLetter: {
+      headline: `Finally — A ${duration}-Day System Built Specifically For ${audience.split(",")[0]} Who Are Done Starting Over`,
+      subheadline: `${programme}: The proven method that helps ${audience} ${goal.toLowerCase()} — without the guesswork, the dead ends, or the frustration of doing it alone.`,
+      painPointHeadline: `If You've Been Trying To ${goal.split(" ").slice(0, 6).join(" ")} And Nothing's Working — Read This`,
+      openingHook: `I want to ask you something direct.\n\nHow many times have you started? How many plans, programmes, and promises to yourself have you made — and broken?\n\nIf the answer is more than once, here's what I want you to know: it isn't you. The problem isn't your willpower. It isn't your dedication. It isn't some personal failing that makes you different from people who've succeeded.\n\nThe problem is that ${struggle.toLowerCase()}. And until that changes, no amount of trying harder will work.\n\nI know, because I've worked with hundreds of ${audience} who felt exactly the way you do right now.`,
+      problemAgitation: `Here's what nobody talks about.\n\nEvery time you try something that doesn't work, it doesn't just fail — it takes a piece of your belief with it. Each attempt chips away at your confidence that change is even possible for you.\n\nAnd the longer this goes on, the louder the voice gets. The one that says: "Maybe this just isn't for me." The one that says: "Maybe I'm different." The one that says: "Maybe it's too late."\n\nThat voice is lying to you. But it gets louder every time you try without the right system.`,
+      problemBreakdown: [
+        { title: "The Wrong Approach", headline: "Most Methods Are Designed For Someone Else's Life", body: `Generic programmes work for generic people. But you're not generic — you have specific constraints, specific circumstances, and specific reasons why you haven't succeeded yet. Until your approach matches your reality, the results won't either.` },
+        { title: "The Accountability Gap", headline: "Doing It Alone Is The Single Biggest Predictor Of Failure", body: `Research consistently shows that people who have structured accountability and support are dramatically more likely to achieve and maintain results. Going it alone isn't noble — it's just harder than it needs to be.` },
+      ],
+      bridgeToPossibility: `But here's what I've learned from working with ${audience}: the people who finally break the cycle don't find a better willpower or more motivation. They find a system that fits their life — and the support to stay in it when it gets hard.\n\nThat's exactly what ${programme} is.`,
+      coachCredentials: `${coachName} has helped hundreds of ${audience} achieve ${goal.toLowerCase()} through a practical, sustainable approach that fits real life — not an idealised version of it. The ${programme} was built from the ground up using what actually works — not what sounds good in theory.`,
+      offerReveal: `Introducing the ${programme} — a ${duration}-day structured system designed specifically for ${audience} who want to ${goal.toLowerCase()} without overhauling their entire life to do it.\n\nThis isn't another generic programme. It's a complete system: the structure, the support, and the accountability to actually see it through.`,
+      whatYouGet: inclusions.split(";").map((item) => {
+        const trimmed = item.trim();
+        const dashIdx = trimmed.indexOf("—");
+        return dashIdx > 0
+          ? { name: trimmed.slice(0, dashIdx).trim(), description: trimmed.slice(dashIdx + 1).trim() }
+          : { name: trimmed, description: `Everything you need to ${goal.toLowerCase()} with confidence and consistency.` };
+      }).slice(0, 5),
+      testimonialCaseStudies: [
+        {
+          sectionHeadline: "Real People. Real Results.",
+          clientHeadline: `"I Finally Have The Body I've Been Working Towards For Years"`,
+          quote: `I'd tried so many different things before joining ${programme}. Within the first two weeks I knew this was completely different. The structure and support made all the difference — I wasn't guessing, I wasn't doing it alone, and I actually stuck with it.`,
+          result: `Achieved ${goal.toLowerCase()} in ${duration} days`,
+        },
+      ],
+      testimonialQuotes: [
+        `"${programme} is the first thing I've ever actually finished. And the results are real."`,
+        `"I was sceptical. I'd been let down before. But this completely delivered."`,
+        `"The support and accountability made the difference — I couldn't have done it alone."`,
+        `"If you're on the fence — just do it. Best investment I've made in myself."`,
+      ],
+      socialProofFramework: `Hundreds of ${audience} have already used ${programme} to ${goal.toLowerCase()}. The pattern is consistent: they tried other things first, they were sceptical, and they got results they hadn't seen before. The common factor isn't a special talent or more time — it's the system, and the support.`,
+      bonusStack: [
+        { name: "Quick-Start Resource Pack", description: `Everything you need to hit the ground running from day one`, valueLabel: "£97 value" },
+        { name: "Private Community Access", description: `Ongoing accountability and support from others on the same journey`, valueLabel: "£197 value" },
+      ],
+      priceReveal: `The ${programme} is available for ${price}.\n\nPayment plan options are available — book a call to discuss which option works best for your situation.`,
+      guarantee: `If you show up, do the work, and follow the system — and you don't see the results we discussed — we'll work with you until you do. I stand behind this programme completely.`,
+      objectionHandling: [
+        { objection: "I've tried things before and they didn't work.", response: `What you tried before wasn't designed for ${audience} with your specific situation. ${programme} was. That's the difference.` },
+        { objection: "I don't have time.", response: `${programme} is designed to work within the reality of your life — not the idealised version. The structure means you spend less time figuring it out and more time doing it.` },
+        { objection: "Is it worth the investment?", response: `Consider the alternative: more months or years without the result you want. The cost of not solving this is far higher than the investment to solve it properly.` },
+        { objection: "I'm not sure I can commit.", response: `You've been committed before — to the wrong things. This is a ${duration}-day commitment with the structure and support to see it through. That's very different from going it alone.` },
+      ],
+      urgencySection: `Spaces in ${programme} are limited to maintain the quality of support and accountability that gets results. When spots fill, the next intake won't open for several months.`,
+      finalCta: `The only thing standing between you and the result you've been working towards is a decision.\n\nYou've read this far for a reason. The question isn't whether this could work — it's whether you're ready to let it.\n\nClick below. Book your call. Let's talk about whether ${programme} is right for you.\n\n[APPLY NOW]`,
+    },
+    manyChatFlow: {
+      welcomeMessage: `Hey! Thanks for reaching out about the ${programme}. I'll send you all the details in just a second 👇`,
+      qualificationQ1: {
+        message: `Before I do — quick question: what's the #1 thing you're hoping to achieve in the next 30 days?`,
+        quickReplies: [`Lose weight`, `Build consistency`, `Get a plan that works`],
+      },
+      qualificationQ2: {
+        message: `Got it! And have you tried programmes or challenges like this before?`,
+        quickReplies: [`Yes, but nothing stuck`, `No, first time`, `A few times`],
+      },
+      challengeOverview: `The ${programme} is a ${duration}-day programme for ${audience}. You get: ${inclusions.split(",")[0]?.trim()}, daily support from ${coachName}, and a community of people on the same journey. It's ${price}.`,
+      signupCta: `Ready to join? Click the link below to grab your spot ⬇️`,
+      registrationConfirm: `You're in! 🎉 Welcome to the ${programme}. Check your email for your next steps — and I'll see you in the group!`,
+      dayOneReminder: `Day 1 starts tomorrow! Make sure you've joined the group and introduced yourself. ${coachName} is ready for you 💪`,
+      midpointCheckIn: `Halfway through the ${programme} — how are you getting on? Drop a reply and let me know your biggest win so far 🏆`,
+      noShowFollowUp: `Hey — I noticed you haven't started yet. Totally normal — life gets busy. Do you need help getting set up, or shall I push your start date?`,
+      setupInstructions: `To get started: (1) Join the private group using the link in your email. (2) Introduce yourself. (3) Check the pinned post for your Day 1 plan. Any issues, just reply here and ${coachName} will help.`,
+    },
+  };
+}
+
+export function buildMockDmScriptFromInputs(inputs: WizardInputs): InstagramDmScript {
+  const { coachName, targetAudience, mainGoal, challengeName, duration, price } = inputs;
+  const programme = challengeName ?? `${duration}-Day Challenge`;
+  const goal = mainGoal ?? "reach your goals";
+  const audienceShort = targetAudience.split(/\s+(who|which|that|with|and)\s+|,/i)[0].trim();
+
+  const bookingBridge = `I actually have a free 20-min strategy call I offer to a handful of people each week — no pitch, just clarity on what's holding you back and what to do about it. Would that be useful?`;
+
+  return {
+    overview: `Four conversation paths for Instagram DMs — cold outreach, warm leads, comment conversions, and inbound inquiries. Each script guides ${coachName} from first contact to a booked call using natural, non-pushy language tailored for ${audienceShort}.`,
+    coldOutreach: {
+      trigger: "New follower or someone found via hashtag/location tag",
+      opener: `Hey! I noticed you followed — thanks for that. I help ${audienceShort} ${goal.toLowerCase()} without the usual overwhelm. Is that something you're working on right now?`,
+      followUps: [
+        `No worries if the timing's off — just wanted to reach out personally. If you ever want to chat about what's been getting in the way, I'm always happy to help.`,
+        `I ask because a lot of people I work with were in a similar place before we figured out what was actually missing. What's felt hardest for you lately?`,
+      ],
+      bookingBridge,
+      coachingNotes: `Keep it conversational — you're opening a dialogue, not pitching. Wait for a real reply before moving to the booking bridge. If they go quiet after the opener, use the noResponseFollowUp once and leave it.`,
+    },
+    warmLead: {
+      trigger: "Someone liked multiple posts, viewed your Story, or replied to a poll",
+      opener: `Hey! I saw you've been engaging with my content lately — appreciate it. Are you actively trying to ${goal.toLowerCase()} at the moment, or just browsing for now?`,
+      followUps: [
+        `What's been the biggest thing standing in the way? I ask a lot of people this and the answer usually points straight to the fix.`,
+        `That's really common with ${audienceShort} — there's usually one specific gap, and once you close it things move pretty fast. Want me to share what that gap usually is?`,
+      ],
+      bookingBridge,
+      coachingNotes: `They already know you — lead with curiosity, not a pitch. Acknowledge what they've engaged with if you can ("I saw you watched the whole reel about X"). This builds rapport before you ask anything.`,
+    },
+    commentToDm: {
+      trigger: "Someone left a comment on a post or reel showing interest or pain",
+      opener: `Hey! Just saw your comment on my post — thank you for sharing that. I didn't want to go back and forth in the comments so I dropped you a message. What you said really resonated — are you dealing with that right now?`,
+      followUps: [
+        `I thought so. It's one of the most common things I hear from ${audienceShort}. What have you already tried?`,
+        `Got it. That's actually exactly why I built ${programme} — specifically for people who've been going round in circles with this.`,
+      ],
+      bookingBridge,
+      coachingNotes: `Always reference the specific comment — it shows you actually read it and aren't sending mass DMs. If their comment was vulnerable or personal, lead with empathy before curiosity.`,
+    },
+    applicationInquiry: {
+      trigger: "Someone messaged asking about the programme, pricing, or how to join",
+      opener: `Hey! Thanks for reaching out about ${programme} — really glad you did. Before I send you anything, can I ask: what's the main thing you're hoping it'll help you with?`,
+      followUps: [
+        `That's exactly the kind of person we get results for. The programme is ${price} and runs for ${duration} days — here's what's included: [send inclusions]. Does that sound like what you need?`,
+        `The next step is a quick 20-min call so I can make sure it's actually the right fit for you — I don't want to enrol someone if it's not going to work for their situation. Want to book one?`,
+      ],
+      bookingBridge: `You can grab a time here: [BOOKING LINK]. Takes two minutes and we'll know pretty quickly if this is right for you.`,
+      coachingNotes: `They're already interested — don't oversell. Ask what they want to achieve before you mention price. Use the call as a genuine fit-check, not a close. People who feel heard convert at a much higher rate.`,
+    },
+    noResponseFollowUp: `Hey — just checking in. I know life gets busy. No pressure at all — if the timing isn't right, totally fine. But if you're still thinking about ${goal.toLowerCase()}, I'm here. Even a quick chat can help clarify the next step.`,
+    dmTips: [
+      `Respond within 4 hours when possible — warm leads go cold fast on Instagram.`,
+      `Never open with a pitch or a link. Ask a question first.`,
+      `Use voice notes for warm leads — it's faster and feels personal.`,
+      `Don't use "Hey beautiful" or generic openers — ${audienceShort} can spot a template instantly.`,
+      `When someone goes quiet, follow up once only — then move on. Persistence feels like pressure.`,
+      `Track your conversations in a simple spreadsheet: name, stage, last message, follow-up date.`,
+      `Post Stories consistently — they keep you visible and give warm leads a reason to reply.`,
+    ],
   };
 }

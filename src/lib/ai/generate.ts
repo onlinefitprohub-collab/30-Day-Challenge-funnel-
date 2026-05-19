@@ -1,18 +1,24 @@
 /**
  * Core AI generation orchestrator.
  *
- * Makes 5 focused API calls in parallel for challenge funnels — 8 for application funnels.
+ * Makes 9 focused API calls in parallel for challenge funnels — 12 for application funnels.
  * Each call has its own token budget and is validated independently.
  * If a group fails (or ANTHROPIC_API_KEY is absent), it falls back to
  * personalised mock data.
  *
- * Group 1 — Strategy & Pages: offerSummary, landingPage, optInForm, thankYouPage, bookingPage, design
- * Group 2 — Follow-up Sequences: smsSequence, emailSequence
- * Group 3 — Ads & Campaign: adCopy, creativePrompts, campaignNaming
- * Group 4 — Application Landing Page (application funnels only): applicationLandingPage
- * Group 5 — Content Calendar: 30-day organic social plan
- * Group 6 — Delivery Pack: challenge participant communication templates
- * Group 7 — Coaching Tools: testimonialHarvestSequence + pricingGuide
+ * Group 1  — Strategy & Pages: offerSummary, landingPage, optInForm, thankYouPage, bookingPage, design
+ * Group 2  — Follow-up Sequences: smsSequence, emailSequence
+ * Group 3  — Ads & Campaign: adCopy, creativePrompts, campaignNaming
+ * Group 4  — Application Landing Page (application funnels only): applicationLandingPage
+ * Group 5  — Coach Story (application funnels only): coachStory
+ * Group 6  — VSL Script: 11-section video sales letter
+ * Group 7  — Content Calendar: 30-day organic social plan
+ * Group 8  — Delivery Pack: challenge participant communication templates
+ * Group 9  — Coaching Tools: testimonialHarvestSequence + pricingGuide
+ * Group 10 — Discovery Call Script: 8-phase enrolment call with objection scripts
+ * Group 11 — DM Scripts: 4 Instagram conversation paths
+ * Group 12 — Upsell Sequence: 5-email post-challenge sequence
+ * Group 13 — Sales Letter: long-form direct-response letter
  *
  * Model routing:
  *   All groups → claude-sonnet-4-6
@@ -33,7 +39,11 @@ import { buildVslScriptPrompt } from "./prompts/vsl-script";
 import { buildContentCalendarPrompt } from "./prompts/content-calendar";
 import { buildDeliveryPackPrompt } from "./prompts/delivery-pack";
 import { buildCoachingToolsPrompt } from "./prompts/coaching-tools";
-import { pickRandomStyle } from "./copywriter-styles";
+import { buildDiscoveryCallPrompt } from "./prompts/discovery-call";
+import { buildDmScriptPrompt } from "./prompts/dm-script";
+import { buildUpsellSequencePrompt } from "./prompts/upsell-sequence";
+import { buildSalesLetterPrompt } from "./prompts/longform-sales-letter";
+import { pickRandomStyle, STYLES } from "./copywriter-styles";
 import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
@@ -44,11 +54,17 @@ import {
   contentCalendarResponseSchema,
   deliveryPackResponseSchema,
   coachingToolsResponseSchema,
+  discoveryCallScriptResponseSchema,
+  instagramDmScriptResponseSchema,
+  upsellSequenceResponseSchema,
+  salesLetterSchema,
 } from "./validators";
 import {
   generateMockAssets, buildMockApplicationLandingPage, buildMockCoachStory,
   buildMockContentCalendar, buildMockDeliveryPack,
-  buildMockTestimonialHarvest, buildMockPricingGuide,
+  buildMockTestimonialHarvest, buildMockPricingGuide, buildMockVslScript,
+  buildMockDiscoveryCall, buildMockDmScriptFromInputs, buildMockUpsellFromInputs,
+  buildMockLongFormAssets,
 } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
@@ -68,6 +84,10 @@ const TOKENS = {
   contentCalendar:     4096,  // 30 posts with hook + caption + CTA
   deliveryPack:        6000,  // welcome + 4 weekly emails + 30 daily SMS + completion (was 4500)
   coachingTools:       3000,  // testimonial harvest sequence + pricing guide
+  discoveryCall:       4000,  // 8-phase call script + objection handling + follow-up email
+  dmScript:            3000,  // 4 Instagram conversation paths
+  upsellSequence:      3500,  // 5-email post-challenge upsell sequence
+  salesLetter:         6000,  // long-form direct-response sales letter (15 sections)
 } as const;
 
 interface GroupResult<T> {
@@ -102,9 +122,9 @@ export async function generateFunnelAssets(
 ): Promise<GeneratedFunnelAssets> {
   const context = buildCoachContext(inputs);
   const mock    = generateMockAssets(inputs);
-  const style   = pickRandomStyle();
+  const style = pickRandomStyle();
 
-  console.log(`[generate] Copywriter style selected: ${style.name} — ${style.tagline}`);
+  console.log(`[generate] Copywriter style: ${style.name} — ${style.tagline}`);
 
   const isApplication = inputs.funnelType === "application";
 
@@ -124,8 +144,8 @@ export async function generateFunnelAssets(
     inputs.coachPersonalResult || inputs.coachWhyCoach
   );
 
-  // Fire groups in parallel — up to 8 calls for application funnels, 5 for challenge funnels
-  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult, coachStoryResult, vslScriptResult, contentCalendarResult, deliveryPackResult, coachingToolsResult] =
+  // Fire groups in parallel — 13 calls for application funnels, 13 for challenge funnels
+  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult, coachStoryResult, vslScriptResult, contentCalendarResult, deliveryPackResult, coachingToolsResult, discoveryCallResult, dmScriptResult, upsellSequenceResult, salesLetterResult] =
     await Promise.all([
       callCopyGroup(
         buildOfferPagesPrompt(context, style.promptDescription),
@@ -205,6 +225,50 @@ export async function generateFunnelAssets(
         TOKENS.coachingTools,
         MODEL_PRIMARY,
       ),
+      // Group 8 — Discovery Call Script (all funnels)
+      (() => {
+        const built = buildDiscoveryCallPrompt(context, style.promptDescription);
+        return callCopyGroup(
+          `${built.system}\n\n${built.user}`,
+          discoveryCallScriptResponseSchema,
+          "discovery-call",
+          TOKENS.discoveryCall,
+          MODEL_PRIMARY,
+        );
+      })(),
+      // Group 9 — DM Scripts (all funnels)
+      (() => {
+        const built = buildDmScriptPrompt(context);
+        return callCopyGroup(
+          `${built.system}\n\n${built.user}`,
+          instagramDmScriptResponseSchema,
+          "dm-script",
+          TOKENS.dmScript,
+          MODEL_PRIMARY,
+        );
+      })(),
+      // Group 10 — Upsell Sequence (all funnels)
+      (() => {
+        const built = buildUpsellSequencePrompt(context);
+        return callCopyGroup(
+          `${built.system}\n\n${built.user}`,
+          upsellSequenceResponseSchema,
+          "upsell-sequence",
+          TOKENS.upsellSequence,
+          MODEL_PRIMARY,
+        );
+      })(),
+      // Group 11 — Sales Letter (all funnels)
+      (() => {
+        const built = buildSalesLetterPrompt(context, style.promptDescription);
+        return callCopyGroup(
+          `${built.system}\n\n${built.user}`,
+          salesLetterSchema,
+          "sales-letter",
+          TOKENS.salesLetter,
+          MODEL_PRIMARY,
+        );
+      })(),
     ]);
 
   console.log("[design] Claude returned:", offerPagesResult.data?.design);
@@ -227,6 +291,10 @@ export async function generateFunnelAssets(
     contentCalendarResult.error,
     deliveryPackResult.error,
     coachingToolsResult.error,
+    discoveryCallResult.error,
+    dmScriptResult.error,
+    upsellSequenceResult.error,
+    salesLetterResult.error,
   ].filter(Boolean);
   if (errors.length > 0) {
     console.warn(
@@ -273,5 +341,11 @@ export async function generateFunnelAssets(
     deliveryPack:                deliveryPackResult.data?.deliveryPack                   ?? buildMockDeliveryPack(inputs),
     testimonialHarvestSequence:  coachingToolsResult.data?.testimonialHarvestSequence   ?? buildMockTestimonialHarvest(inputs),
     pricingGuide:                coachingToolsResult.data?.pricingGuide                 ?? buildMockPricingGuide(inputs),
+    discoveryCallScript:         discoveryCallResult.data?.discoveryCallScript           ?? buildMockDiscoveryCall(inputs),
+    instagramDmScript:           dmScriptResult.data?.instagramDmScript                 ?? buildMockDmScriptFromInputs(inputs),
+    upsellSequence:              upsellSequenceResult.data?.upsellSequence               ?? buildMockUpsellFromInputs(inputs),
+    longFormAssets:              salesLetterResult.data
+      ? { salesLetter: salesLetterResult.data, manyChatFlow: buildMockLongFormAssets(inputs).manyChatFlow }
+      : buildMockLongFormAssets(inputs),
   };
 }

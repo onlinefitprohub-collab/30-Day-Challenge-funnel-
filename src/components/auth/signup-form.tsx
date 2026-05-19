@@ -166,6 +166,7 @@ export function SignupForm() {
             autoComplete="new-password"
             {...register("password")}
           />
+          <p className="text-xs text-gray-400">Min 8 characters · one uppercase letter · one number</p>
           {errors.password && (
             <p className="text-sm text-red-500">{errors.password.message}</p>
           )}

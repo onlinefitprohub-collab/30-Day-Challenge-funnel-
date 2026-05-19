@@ -12,8 +12,13 @@ function deriveSubtitle(inputs: Record<string, unknown>): string {
   const challenge = typeof inputs.challengeName === "string" ? inputs.challengeName.trim() : "";
   const audience  = typeof inputs.targetAudience === "string" ? inputs.targetAudience.trim() : "";
   if (challenge) return challenge;
-  if (audience)  return audience;
-  return "";
+  if (audience) {
+    const firstClause = audience.split(/[,;]/)[0].trim();
+    return firstClause.length > 60 ? firstClause.slice(0, 58) + "…" : firstClause;
+  }
+  const duration   = typeof inputs.duration === "number" ? inputs.duration : 30;
+  const funnelType = typeof inputs.funnelType === "string" ? inputs.funnelType : "challenge";
+  return funnelType === "application" ? "Application Funnel" : `${duration}-Day Challenge`;
 }
 
 function StatPill({
