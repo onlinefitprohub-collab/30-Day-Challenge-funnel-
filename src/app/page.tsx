@@ -696,6 +696,8 @@ export default function HomePage() {
               <span className="font-bold text-gray-300 tracking-tight">FitPro Launch</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
+              <Link href="/legal/terms" className="hover:text-gray-400 transition-colors">Terms</Link>
+              <Link href="/legal/privacy" className="hover:text-gray-400 transition-colors">Privacy</Link>
               <Link href="/login" className="hover:text-gray-400 transition-colors">Log in</Link>
               <Link href="/signup?plan=pro" className="hover:text-gray-400 transition-colors">Sign up</Link>
             </div>
