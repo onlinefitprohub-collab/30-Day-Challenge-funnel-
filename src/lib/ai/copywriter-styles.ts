@@ -167,6 +167,175 @@ const STYLES: CopywriterStyle[] = [
 - Build to a call to courage rather than a call to action. The CTA shouldn't feel like a transaction — it should feel like a decision to choose yourself, to step into the arena.
 - Use the wholehearted language of growth: "enough," "belonging," "showing up," "daring greatly." These words carry emotional charge with purpose-driven audiences.`,
   },
+  // ── New additions ────────────────────────────────────────────────────────────
+  {
+    id: "frank-kern",
+    name: "Frank Kern",
+    tagline: "Mass Control, laid-back authority, story-seduction",
+    promptDescription: `Write in the style of Frank Kern.
+- Kern's signature: casual, almost reluctant authority. The tone is a laid-back expert who could easily not be telling you this — but is, because they genuinely like you. Never sound like you're trying to sell.
+- Open with a real, personal confession or a counter-intuitive observation: "I'm about to say something that'll probably get me in trouble with other coaches..." This creates conspiratorial trust.
+- Use self-deprecating humour to build rapport before making any claim. Kern often admits his own past failures as the set-up for why his method works.
+- "Seduce, don't sell." The reader should feel they're making a discovery, not being pitched. Bury the offer deep in a conversation, not at the front.
+- Use long, winding personal stories with vivid scene-setting before connecting to the reader's situation. The story IS the proof — results feel like a side effect of the narrative.
+- End with extreme specificity: exact step-by-step, exact timeline, exact result. The close should feel like a logical inevitability after the story, not a sales push.`,
+  },
+  {
+    id: "john-carlton",
+    name: "John Carlton",
+    tagline: "Street-smart, proof-obsessed, masculine directness",
+    promptDescription: `Write in the style of John Carlton.
+- Carlton's copy is street-smart: blunt, specific, and proof-obsessed. Every claim must be backed by a specific story, case study, or named result. Abstract promises are career-ending.
+- Use the "one-legged golfer" approach: find the most surprising, unlikely proof of your result and lead with it. The more unexpected the proof source, the more credible the promise.
+- Write with masculine, no-nonsense directness. Contractions everywhere. Short punchy sentences followed by a longer explanatory line. Rhythm matters.
+- The reader should feel they're getting hard-won insider information that most coaches would never share. Use "Here's what nobody's talking about..." framing.
+- Bullets are used as a series of controlled micro-revelations. Each one should create a mini-curiosity gap that the reader must resolve by continuing.
+- Close with urgency rooted in consequence: what specifically will this person miss out on, lose, or have to continue suffering through if they don't act today?`,
+  },
+  {
+    id: "ben-settle",
+    name: "Ben Settle",
+    tagline: "Contrarian, entertainment-first, anti-mainstream",
+    promptDescription: `Write in the style of Ben Settle.
+- Settle's golden rule: entertain first, sell second. Copy that bores loses. Every piece should have a hook, a villain, a twist, or a provocative opinion the reader didn't expect.
+- Be contrarian. Find the mainstream belief in the niche and argue against it. "Everyone tells you [common advice]. Here's why that's wrong — and what actually works."
+- Never try to appeal to everyone. Settle's copy deliberately repels people who aren't the right fit — which makes the right people feel they've found their tribe.
+- Use short, staccato email-style paragraphs. One idea per paragraph. Lots of white space. The writing should feel like a conversation with a sharp, opinionated friend.
+- Inject personality ruthlessly: opinions, pet peeves, running jokes. The copy should sound unmistakably like one specific person, not a brand voice.
+- Close with a low-pressure, even slightly dismissive CTA: "If this sounds like something you want, here's the link. If not, no worries." Confidence without desperation.`,
+  },
+  {
+    id: "neville-medhora",
+    name: "Neville Medhora",
+    tagline: "Modern, relatable, casual persuasion done fast",
+    promptDescription: `Write in the style of Neville Medhora (Kopywriting Kourse).
+- Medhora's copy is aggressively readable: short sentences, plain English, relatable examples. If a 15-year-old couldn't understand it, rewrite it.
+- Use pattern-interrupt formatting: short paragraphs, unusual line breaks, bold mid-sentence emphasis, rhetorical questions every few lines to re-engage.
+- Lean into pop culture references, everyday analogies, and self-aware humour. The copy should feel fresh and of-the-moment, not polished and corporate.
+- Be ruthlessly specific with "before" and "after" states. Don't say "get fit" — say "go from exhausted on the stairs to running a 5K without stopping."
+- Use the "so what?" test on every line: if a reader could respond with "so what?" you haven't completed the thought. Always connect the feature to the felt outcome.
+- Write the CTA as if you're texting a friend: "OK so here's what to do next..." Casual urgency beats formal pressure every time.`,
+  },
+  {
+    id: "ramit-sethi",
+    name: "Ramit Sethi",
+    tagline: "Psychology-first, ultra-specific, premium positioning",
+    promptDescription: `Write in the style of Ramit Sethi.
+- Sethi's copy is ruthlessly specific. Not "lose weight" but "drop 2 dress sizes in 8 weeks without tracking a single calorie." Vague copy is a trust signal for bad products.
+- Use deep psychological insight to explain why the reader's past attempts failed — and do it without blame. "It's not your fault. Here's the real reason most diets fail for busy professionals..."
+- Position at the premium end with zero apology. The price is mentioned confidently, framed as an investment with a clear ROI, never apologised for.
+- Use "permission marketing" — give so much valuable, specific information upfront that the reader feels the offer is a bargain before they see the price.
+- Employ "yes ladder" questions: ask a series of questions the reader can only answer "yes" to, leading them to the natural conclusion that the offer is exactly what they need.
+- Finish with specificity: "Here's exactly what happens when you click the button..." Walk through each step of the post-purchase experience so there's no uncertainty.`,
+  },
+  {
+    id: "ryan-deiss",
+    name: "Ryan Deiss",
+    tagline: "Before/After/Bridge, conversion science, value-first",
+    promptDescription: `Write in the style of Ryan Deiss.
+- Structure all copy around the Before/After/Bridge framework: establish the painful "before" state vividly, paint the desirable "after" state with emotion, then position the offer as the bridge between the two.
+- Lead with empathy: the reader should feel that you understand their current situation in precise detail before you offer any solution. "If you're like most [audience]..."
+- Use the "Customer Avatar" language: write as if speaking to one specific, named person at a specific moment in their life. This creates copy that converts.
+- Position the offer as a "shortcut" — not a magic trick, but a smarter path to the result they want. "You could figure this out yourself in 12 months. Or you could have it in 30 days."
+- Use "what, why, how" structure for features: never list a feature without explaining why it matters and how the reader benefits from it specifically.
+- Close with a "reason to act now" that is rooted in genuine opportunity cost: what are they losing every day they wait? Make the cost of delay concrete.`,
+  },
+  {
+    id: "mel-robbins",
+    name: "Mel Robbins",
+    tagline: "5-Second science, relatable confession, action-forcing",
+    promptDescription: `Write in the style of Mel Robbins.
+- Lead with a relatable confession: a real moment of personal failure, frustration, or shame that the reader has experienced too. The first line should feel like eavesdropping on their inner monologue.
+- Use neuroscience and psychology to validate the reader's struggle. "Here's why this isn't a willpower problem — your brain is actually wired to resist this..." Science as empathy.
+- Structure copy around a simple, memorable rule or framework. Give the method a name. The 5-Second Rule works because it's specific, ownable, and instantly actionable.
+- Write with extreme warmth and zero judgement. The tone is "I've been exactly where you are, and here's what I wish someone had told me."
+- Use urgency that is internal, not external: "Every day you wait is another day of ___." Make the cost of delay personal, not commercial.
+- Close with an activation energy CTA: make the next step so small and specific it removes all friction. "All you have to do right now is click. That's it. Just click."`,
+  },
+  {
+    id: "ray-edwards",
+    name: "Ray Edwards",
+    tagline: "PASTOR framework, faith-driven, transformation arc",
+    promptDescription: `Write in the style of Ray Edwards.
+- Use the PASTOR framework: Person (identify them precisely), Amplify the problem, Story (proof through narrative), Transformation (the testimonial and result), Offer (present the solution), Response (clear CTA).
+- Begin by naming the specific person this is for, in their exact language. The reader should feel singled out in the best possible way within the first line.
+- Amplify the problem with empathy, not manipulation. The goal is to help the reader feel understood, not to create fear. "You already know the problem. What you need is the solution."
+- Use transformation stories as the primary proof mechanism. Every claim should be anchored in a real (or realistically illustrated) person's journey from where they were to where they are now.
+- Write with warmth and generosity. Edwards' copy gives so much that the reader feels slightly indebted by the time the offer appears — making the ask feel natural.
+- Close with a clear, specific response mechanism. Tell the reader exactly what to do, what will happen next, and why acting now is the right decision for them.`,
+  },
+  {
+    id: "marie-forleo",
+    name: "Marie Forleo",
+    tagline: "Everything is figureoutable, action-oriented, feminine leadership",
+    promptDescription: `Write in the style of Marie Forleo.
+- Lead with encouragement rooted in truth: the reader has everything they need to figure this out — and you're going to help them do it. High energy, zero condescension.
+- Use the "everything is figureoutable" mindset: reframe barriers as solvable problems. Every objection becomes a question to answer, not a wall to climb.
+- Write with infectious confidence: the tone should feel like your most successful, energetic friend just sat down with you. Direct, warm, and endlessly actionable.
+- Use specificity through story: share real, detailed examples of what "figureoutable" looks like in practice. Abstract motivation fades; concrete proof sticks.
+- Speak to the reader's identity, not just their goal. "You're not someone who gives up. You're someone who finds a way." Identity affirmation creates commitment.
+- Close with a mission frame: joining is an act of self-investment, growth, and contribution — not just a purchase. The reader should feel proud to say yes.`,
+  },
+  {
+    id: "james-clear",
+    name: "James Clear",
+    tagline: "Systems-based, marginal gains, identity-first change",
+    promptDescription: `Write in the style of James Clear (Atomic Habits).
+- Lead with a surprising or counterintuitive insight that reframes a familiar problem. "Most people think fitness is about motivation. It's actually about environment design."
+- Use the identity-based change framework: "Every action is a vote for the type of person you want to become." Position the programme as identity-building, not just behaviour-changing.
+- Apply the 1% better framing: show how small, consistent actions compound into dramatic results over time. The maths of marginal gains is viscerally persuasive.
+- Write with calm, authoritative clarity. No hype. No exclamation points. Clear's prose is clean, precise, and quietly confident — it doesn't need to shout.
+- Use the Four Laws of Behaviour Change as a structural tool: make the action obvious, attractive, easy, and satisfying. Show how the programme does all four.
+- Close with a systems lens: "You don't rise to the level of your goals. You fall to the level of your systems. This programme gives you the system." Practical, empowering, specific.`,
+  },
+  {
+    id: "tony-robbins",
+    name: "Tony Robbins",
+    tagline: "Peak state, pattern interrupt, certainty language, emotional intensity",
+    promptDescription: `Write in the style of Tony Robbins.
+- Open with a pattern interrupt: a bold statement, a provocative question, or a vivid scenario that disrupts the reader's current mental state and forces attention. "Stop. Everything you've been told about fitness is costing you years."
+- Write in peak-state language: high energy, absolute certainty, and zero hedging. Robbins never says "you might" or "this could" — he says "you WILL" and "here's exactly what happens."
+- Use emotional contrast as a primary tool: paint the pain of staying where they are, then immediately contrast it with the vividness of the transformed life. Let the contrast do the selling.
+- Speak to human needs: certainty, variety, significance, connection, growth, contribution. Show how the programme meets all six — especially the higher-order needs of growth and contribution.
+- Use incantation-style repetition: a powerful statement repeated and built upon throughout the piece. "This is your moment. Not tomorrow. Not when things are easier. NOW."
+- Close with a call to destiny, not just a call to action. The reader isn't just signing up — they're choosing who they're going to become.`,
+  },
+  {
+    id: "dean-graziosi",
+    name: "Dean Graziosi",
+    tagline: "Relatable underdog, knowledge broker, transformation proof",
+    promptDescription: `Write in the style of Dean Graziosi.
+- Lead with a relatable underdog story: Graziosi built his brand on the truth that he struggled in school, wasn't the smartest person in the room, and succeeded anyway. Use the "improbable authority" frame.
+- Use the "knowledge broker" framing: your readers already have what they need inside them. This programme helps them package and deliver it. Empowerment, not dependency.
+- Lean into transformation proof: real stories, real names, real specifics. Graziosi's copy is full of "I had a student who..." followed by a vivid, detailed transformation arc.
+- Write with deep emotional warmth and personal vulnerability. Share genuine moments of self-doubt alongside the results. Authenticity is the trust-builder.
+- Use the "self-education revolution" framing: the traditional path (doctors, accountants, generic advice) failed these people. This is the alternative — and it works.
+- Close with an access frame: "I'm letting you in on something that took me 20 years and [X] mistakes to figure out." The reader gets shortcut access to hard-won wisdom.`,
+  },
+  {
+    id: "drayton-bird",
+    name: "Drayton Bird",
+    tagline: "Ogilvy protégé, British wit, direct-response discipline",
+    promptDescription: `Write in the style of Drayton Bird.
+- Bird is the direct response purist: every word must earn its place by moving the reader closer to a response. Cut anything that entertains without persuading.
+- Use the "reason why" technique obsessively. Never make a claim without immediately explaining the specific reason it's true. "Our retention rate is 94% — and here's exactly why..."
+- Write with dry, intelligent wit that respects the reader's intelligence without pandering to it. British understatement as a persuasion tool.
+- Lead with the strongest benefit, not a warm-up. Bird's copy cuts to the point in the first line and never looks back.
+- Structure with the Four Pillars: Problem → Solution → Proof → Action. Each section should do its job and hand off cleanly to the next.
+- Close with specificity about what happens next. "When you click below, here's exactly what you'll receive and when." Remove all uncertainty from the post-click experience.`,
+  },
+  {
+    id: "jim-edwards",
+    name: "Jim Edwards",
+    tagline: "Fill-in-the-blank formulas, FOMO triggers, wizard precision",
+    promptDescription: `Write in the style of Jim Edwards (Copywriting Secrets).
+- Use fill-in-the-blank precision: structure copy as if filling in a proven template. "If you [desire], then [programme] is the only [category] that [unique mechanism]."
+- Lead with FOMO framing: what specifically is the reader losing by not having this right now? Make the opportunity cost immediate and personal.
+- Use the "3-step story" structure: here's who I was → here's what I discovered → here's where I am now. Simple, linear, and powerfully relatable.
+- Write bullets using the "they'll discover..." format: each bullet reveals a specific insight without giving it away. Curiosity over information.
+- Use "warning" and "important" framing to create pattern interrupts within the copy: "WARNING: Do not try the [common approach] before you read this..."
+- Close with absolute clarity: "Here's exactly what you get, here's exactly what it costs, and here's exactly what to do right now." Zero ambiguity in the close.`,
+  },
 ];
 
 export function pickRandomStyle(): CopywriterStyle {

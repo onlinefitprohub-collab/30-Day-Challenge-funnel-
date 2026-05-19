@@ -419,3 +419,13 @@ export interface GeneratedFunnelAssets {
 }
 
 export type OutputSection = keyof GeneratedFunnelAssets;
+
+// ─── Legal Templates ──────────────────────────────────────────────────────────
+
+export interface LegalTemplates {
+  serviceAgreement: string;
+  liabilityWaiver: string;
+  participationTerms: string;
+  refundPolicy: string;
+  jurisdiction: "UK" | "US" | "AU" | "generic";
+}

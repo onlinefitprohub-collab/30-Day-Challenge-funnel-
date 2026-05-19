@@ -9,12 +9,12 @@ import {
   ImageIcon, BarChart3, FlaskConical, Layers, LayoutTemplate, RefreshCw, Microscope,
   Dumbbell, MessageCircle, CalendarDays, Pen, Video,
   CalendarRange, Package, Star, BadgeDollarSign, Phone, Map, TrendingUp, Download, Rocket,
-  ChevronDown, ChevronRight, X, Salad, Puzzle, Zap, Loader2,
+  ChevronDown, ChevronRight, X, Salad, Puzzle, Zap, Loader2, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectRow } from "@/types/project";
-import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide, NutritionPlan } from "@/types/generation";
+import type { GeneratedFunnelAssets, WorkoutPlan, NurtureSequence, ContentCalendar, DeliveryPack, TestimonialHarvestSequence, PricingGuide, NutritionPlan, LegalTemplates } from "@/types/generation";
 import type { DiscoveryCallScript } from "@/types/discovery-call";
 import type { InstagramDmScript } from "@/types/dm-script";
 import type { UpsellSequence } from "@/types/upsell-sequence";
@@ -52,6 +52,7 @@ import { PerformanceTrackerSection } from "./sections/performance-tracker";
 import { ExportSection } from "./sections/export-section";
 import { StartHereSection } from "./sections/start-here";
 import { ExtensionDownloadSection } from "./sections/extension-download";
+import { LegalSection, LegalPlaceholder } from "./sections/legal-templates";
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 
@@ -78,9 +79,11 @@ const CHALLENGE_TABS: NavTab[] = [
   { id: "emailSequence",      label: "Email Sequence",    icon: Mail,                            group: "clients",   groupLabel: "Getting Clients" },
   { id: "smsSequence",        label: "SMS Sequence",      icon: MessageSquare,                   group: "clients" },
   { id: "dmScript",           label: "DM Scripts",        icon: MessageCircle,                   group: "clients" },
+  { id: "vslScript",          label: "VSL Script",        icon: Video,                           group: "clients" },
   { id: "discoveryCall",      label: "Sales Script",      icon: Phone,                           group: "clients" },
   { id: "salesLetter",        label: "Sales Letter",      icon: FileText,                        group: "clients" },
   { id: "pricingGuide",       label: "Pricing Guide",     icon: BadgeDollarSign,                 group: "clients" },
+  { id: "legalTemplates",     label: "Legal Templates",   icon: Shield,                          group: "clients" },
   // ── Nurturing Leads ─────────────────────────────────────────────────────────
   { id: "contentCalendar",    label: "Content Engine",    icon: CalendarRange,                   group: "nurture",   groupLabel: "Nurturing Leads" },
   { id: "nurtureSequence",    label: "52-Wk Nurture",     icon: CalendarDays,                    group: "nurture" },
@@ -116,6 +119,7 @@ const APPLICATION_TABS: NavTab[] = [
   { id: "vslScript",          label: "VSL Script",        icon: Video,                           group: "clients" },
   { id: "discoveryCall",      label: "Sales Script",      icon: Phone,                           group: "clients" },
   { id: "pricingGuide",       label: "Pricing Guide",     icon: BadgeDollarSign,                 group: "clients" },
+  { id: "legalTemplates",     label: "Legal Templates",   icon: Shield,                          group: "clients" },
   // ── Nurturing Leads ─────────────────────────────────────────────────────────
   { id: "contentCalendar",    label: "Content Engine",    icon: CalendarRange,                   group: "nurture",   groupLabel: "Nurturing Leads" },
   { id: "nurtureSequence",    label: "52-Wk Nurture",     icon: CalendarDays,                    group: "nurture" },
@@ -220,6 +224,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   const [liveDmScript, setLiveDmScript]               = useState<InstagramDmScript | undefined>(outputs.instagramDmScript as InstagramDmScript | undefined);
   const [liveUpsellSequence, setLiveUpsellSequence]   = useState<UpsellSequence | undefined>(outputs.upsellSequence as UpsellSequence | undefined);
   const [liveLaunchRoadmap, setLiveLaunchRoadmap]     = useState<LaunchRoadmap | undefined>(outputs.launchRoadmap as LaunchRoadmap | undefined);
+  const [liveLegalTemplates, setLiveLegalTemplates]   = useState<LegalTemplates | undefined>(outputs.legalTemplates as LegalTemplates | undefined);
 
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkProgress, setBulkProgress]     = useState<Record<string, "idle" | "loading" | "done" | "error">>({});
@@ -305,6 +310,10 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
   function handleLaunchRoadmapGenerated(roadmap: LaunchRoadmap) {
     setLiveLaunchRoadmap(roadmap);
     setLiveOutputs((p: Record<string, unknown>) => ({ ...p, launchRoadmap: roadmap }));
+  }
+  function handleLegalGenerated(templates: LegalTemplates) {
+    setLiveLegalTemplates(templates);
+    setLiveOutputs((p: Record<string, unknown>) => ({ ...p, legalTemplates: templates }));
   }
 
   async function handleGenerateAll() {
@@ -492,6 +501,12 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
     workoutPlan: liveWorkoutPlan
       ? <WorkoutPlanSection data={liveWorkoutPlan} projectId={project.id} onRegenerate={handleWorkoutGenerated} />
       : <WorkoutPlanPlaceholder projectId={project.id} onGenerated={handleWorkoutGenerated} />,
+    vslScript: assets.vslScript
+      ? <VslScriptSection data={assets.vslScript} />
+      : <VslScriptPlaceholder />,
+    legalTemplates: liveLegalTemplates
+      ? <LegalSection data={liveLegalTemplates} projectId={project.id} onRegenerate={handleLegalGenerated} />
+      : <LegalPlaceholder projectId={project.id} onGenerated={handleLegalGenerated} />,
     ...((!isApplication) && {
       salesLetter: liveLongFormAssets
         ? <SalesLetterSection data={liveLongFormAssets.salesLetter} projectId={project.id} onRegenerate={handleLongFormGenerated} />
@@ -501,9 +516,6 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
         : null,
     }),
     ...(isApplication && {
-      vslScript: assets.vslScript
-        ? <VslScriptSection data={assets.vslScript} />
-        : <VslScriptPlaceholder />,
       manyChatFlow: liveLongFormAssets
         ? <ManyChatFlowSection data={liveLongFormAssets.manyChatFlow} />
         : <LongFormPlaceholder projectId={project.id} onGenerated={handleLongFormGenerated} />,

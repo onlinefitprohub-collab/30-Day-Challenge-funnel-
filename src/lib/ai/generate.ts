@@ -168,13 +168,19 @@ export async function generateFunnelAssets(
         : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ coachStory: import("@/types/generation").GeneratedFunnelAssets["coachStory"] }>),
       isApplication
         ? callCopyGroup(
-            buildVslScriptPrompt(context, style.promptDescription),
+            buildVslScriptPrompt(context, style.promptDescription, "application"),
             vslScriptResponseSchema,
             "vsl-script",
             TOKENS.vslScript,
             MODEL_PRIMARY,
           )
-        : Promise.resolve({ data: null, error: null, usedFallback: false } as GroupResult<{ vslScript: import("@/types/generation").VslScript }>),
+        : callCopyGroup(
+            buildVslScriptPrompt(context, style.promptDescription, "challenge"),
+            vslScriptResponseSchema,
+            "vsl-script",
+            TOKENS.vslScript,
+            MODEL_PRIMARY,
+          ),
       // Group 5 — Content Calendar (all funnels)
       callCopyGroup(
         buildContentCalendarPrompt(context, style.promptDescription),
@@ -206,9 +212,9 @@ export async function generateFunnelAssets(
   if (isApplication) {
     console.log("=== [application-landing] ===", appLandingResult.error ? `FAILED: ${appLandingResult.error}` : "ok — AI data will be used");
     console.log("=== [coach-story] ===", coachStoryResult.error ? `FAILED: ${coachStoryResult.error}` : (coachStoryResult.data ? "ok" : "skipped (not application funnel)"));
-    console.log("=== [vsl-script] ===", vslScriptResult.error ? `FAILED: ${vslScriptResult.error}` : (vslScriptResult.data ? "ok" : "skipped"));
     console.log("=== [application-landing] usedFallback:", appLandingResult.usedFallback, "| data present:", !!appLandingResult.data);
   }
+  console.log("=== [vsl-script] ===", vslScriptResult.error ? `FAILED: ${vslScriptResult.error}` : (vslScriptResult.data ? `ok (${isApplication ? "application" : "challenge"})` : "skipped"));
 
   // Log any errors for observability
   const errors = [
@@ -242,9 +248,7 @@ export async function generateFunnelAssets(
     ? (coachStoryResult.data?.coachStory ?? buildMockCoachStory(inputs))
     : undefined;
 
-  const vslScript = isApplication
-    ? (vslScriptResult.data?.vslScript ?? undefined)
-    : undefined;
+  const vslScript = vslScriptResult.data?.vslScript ?? undefined;
 
   return {
     offerSummary:    offerPages.offerSummary,

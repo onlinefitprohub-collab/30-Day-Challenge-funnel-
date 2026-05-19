@@ -1,11 +1,12 @@
 /**
- * VSL Script — Video Sales Letter for Application Funnels
+ * VSL Script — Video Sales Letter
  *
- * Generates: vslScript (11 sections for a 10–20 minute spoken video script)
+ * Generates: vslScript (spoken video script)
  *
- * Used by application funnels only. The script draws on all wizard inputs —
- * coach story, programme details, transformations, credentials — to produce
- * a fully scripted, spoken-word VSL the coach can record directly.
+ * Application funnels: 11-section, 10–20 minute full-length VSL placed above the registration page.
+ * Challenge funnels: 7-section, 5–8 minute pitch video placed on the landing page to boost opt-ins.
+ *
+ * Both use the randomised copywriter style to ensure every word matches the selected voice.
  */
 
 import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-quality";
@@ -13,6 +14,7 @@ import { buildCopyStandardsBlock, buildAudienceAnalysisBlock } from "../copy-qua
 export function buildVslScriptPrompt(
   context: string,
   styleDescription?: string,
+  funnelType: "challenge" | "application" = "application",
 ): string {
   const styleBlock = styleDescription
     ? `=== COPYWRITER STYLE (MANDATORY — DO NOT DEVIATE) ===
@@ -27,6 +29,81 @@ The copywriter style above is not a tone suggestion — it is the creative brief
 `
     : "";
 
+  if (funnelType === "challenge") {
+    return buildChallengeVslPrompt(context, styleBlock);
+  }
+  return buildApplicationVslPrompt(context, styleBlock);
+}
+
+function buildChallengeVslPrompt(context: string, styleBlock: string): string {
+  return `${context}
+
+${styleBlock}${buildAudienceAnalysisBlock()}
+
+${buildCopyStandardsBlock()}
+
+=== YOUR TASK ===
+
+You are an elite direct response copywriter specialising in challenge funnel VSLs. Write a punchy, 5–8 minute spoken pitch video script for this challenge funnel — placed on the landing page to convert cold traffic into challenge registrants.
+
+Challenge VSLs are shorter and more action-oriented than high-ticket VSLs. The goal is a single, clear YES to join a free or low-cost challenge — not a £2,000 coaching sale. Copy must be energetic, fast-paced, and leave zero doubt about what they're signing up for and why they should do it right now.
+
+The script must:
+- Sound completely natural when spoken aloud — no corporate language, no phrasing that only reads well on paper
+- Feel like a direct, one-to-one conversation
+- Build quickly: curiosity → identification → excitement → action. No slow burns — this is a 5-minute decision.
+- Be grounded in the specific challenge, audience, and results from the context above
+- Every section must be production-ready — the coach should be able to record this word-for-word
+
+Write each section as if the coach is speaking directly to camera. Use short sentences, natural pauses, and conversational rhythm. Where you write [pause] or [beat], the coach stops for effect.
+
+=== SECTION-BY-SECTION INSTRUCTIONS ===
+
+hook (80–140 words):
+The first 20–30 seconds. Stop the scroll immediately. Open with ONE of: a direct audience callout ("If you're a [specific audience] who's tired of [specific struggle]..."), a bold result promise with a tight timeframe, or a surprising confession. Name exactly who this is for and what they'll get by the end of the video. Fast, punchy, no warm-up.
+
+problemStatement (120–200 words):
+Name their exact frustration — specifically, in the language they'd use themselves. What have they tried? Why didn't it work? What's it costing them day-to-day? Make them feel perfectly understood in under 90 seconds.
+
+challengeIntro (150–220 words):
+"That's exactly why I created [challenge name]." Introduce the challenge as the solution. State what it is, how long it lasts, and the single most compelling outcome participants get. Keep it conversational and enthusiastic — you're inviting someone to something exciting, not delivering a sales presentation.
+
+socialProof (100–160 words):
+Script 2 brief transformation snippets from real or illustrative clients. Format: "[Name] joined [challenge name] and [specific result] in [timeframe]." Keep these tight and vivid. If no specific clients are available, write illustrative examples and flag them for the coach to personalise.
+
+whatYouGet (120–180 words):
+Walk through the 3–4 key things participants get when they join. Use benefit-led language for every item — not "daily workout videos" but "a brand-new workout every morning you can do in under 30 minutes, no gym needed." End with: "And you get all of this for [price]."
+
+callToAction (80–130 words):
+Tell them exactly what to do. "Click the button below, enter your name and email, and you're in." State what happens next: confirmation email, where to access the content, when it starts. Make this feel like the easiest decision they'll make all week.
+
+closingScarcity (60–100 words):
+Final punch. Use real scarcity if available (spots, start date, deadline). If not, use time: "The challenge kicks off on [date] — if you're seeing this, there's still time." End with one short, memorable line that stays with them. Look down the camera, say their name or "friend," and close strong.
+
+=== OUTPUT FORMAT ===
+
+Respond with ONLY valid JSON. No markdown, no preamble, no explanation. All values must be strings containing natural spoken-word script.
+
+{
+  "vslScript": {
+    "hook": "...",
+    "problemStatement": "...",
+    "agitation": null,
+    "coachStoryBridge": null,
+    "solutionReveal": null,
+    "programmeWalkthrough": null,
+    "socialProof": "...",
+    "offerPresentation": "...",
+    "objectionHandling": null,
+    "callToAction": "...",
+    "closingScarcity": "...",
+    "challengeIntro": "...",
+    "whatYouGet": "..."
+  }
+}`;
+}
+
+function buildApplicationVslPrompt(context: string, styleBlock: string): string {
   return `${context}
 
 ${styleBlock}${buildAudienceAnalysisBlock()}
@@ -97,7 +174,9 @@ Respond with ONLY valid JSON. No markdown, no preamble, no explanation. All valu
     "offerPresentation": "...",
     "objectionHandling": "...",
     "callToAction": "...",
-    "closingScarcity": "..."
+    "closingScarcity": "...",
+    "challengeIntro": null,
+    "whatYouGet": null
   }
 }`;
 }
