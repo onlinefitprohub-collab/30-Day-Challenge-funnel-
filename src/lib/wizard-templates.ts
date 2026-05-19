@@ -1,4 +1,4 @@
-import type { Partial<WizardInputs> } from "@/types/wizard";
+import type { WizardInputs } from "@/types/wizard";
 
 export interface WizardTemplate {
   id: string;
@@ -21,7 +21,7 @@ export const WIZARD_TEMPLATES: WizardTemplate[] = [
     defaults: {
       funnelType: "challenge",
       duration: 30,
-      price: 37,
+      price: "£37",
       ctaType: "booking",
       colourScheme: "rose-pink",
       toneOfVoice: "friendly",
@@ -48,7 +48,7 @@ export const WIZARD_TEMPLATES: WizardTemplate[] = [
     defaults: {
       funnelType: "challenge",
       duration: 30,
-      price: 47,
+      price: "£47",
       ctaType: "booking",
       colourScheme: "navy-orange",
       toneOfVoice: "bold",
@@ -75,7 +75,7 @@ export const WIZARD_TEMPLATES: WizardTemplate[] = [
     defaults: {
       funnelType: "challenge",
       duration: 21,
-      price: 22,
+      price: "£22",
       ctaType: "booking",
       colourScheme: "teal-forest",
       toneOfVoice: "simple",
@@ -102,7 +102,7 @@ export const WIZARD_TEMPLATES: WizardTemplate[] = [
     defaults: {
       funnelType: "challenge",
       duration: 30,
-      price: 37,
+      price: "£37",
       ctaType: "booking",
       colourScheme: "rose-pink",
       toneOfVoice: "friendly",
@@ -129,7 +129,7 @@ export const WIZARD_TEMPLATES: WizardTemplate[] = [
     defaults: {
       funnelType: "application",
       duration: 84,
-      price: 3500,
+      price: "£3,500",
       ctaType: "booking",
       colourScheme: "purple-lilac",
       toneOfVoice: "premium",
