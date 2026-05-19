@@ -142,6 +142,8 @@ Exactly 3 text-based client testimonials. Each has:
 - attribution: "First Name Initial., Age/Role" — CRITICAL: the name MUST match the gender of the target audience. If audience is female (women, mums, ladies, etc.), use FEMALE names ONLY (Sarah T., Emma R., Claire B., Lisa M., etc.). If audience is male (men, dads, guys, etc.), use MALE names ONLY (James R., Mark B., Tom H., etc.). NEVER use a male name for a female audience or vice versa. E.g. for female audience: "Sarah T., 44, Busy Mum of Three". For male audience: "Mark R., 52, Business Owner".
 - result: A short bold result badge (4–8 words). E.g. "Lost 18kg in 12 weeks", "Went from burnout to thriving"
 
+IF NO TESTIMONIALS PROVIDED IN CONTEXT: Generate 3 realistic, plausible testimonials from first-time clients in the target audience. These testimonials should sound authentic and specific to the programme and results mentioned in the context. Frame them as prospective testimonials if this is a first-time coach: "Here's what your first clients can expect..."
+
 whatYouGetHeading:
 Heading for the "What's Included" section. Must name the programme. E.g. "Everything You Get When You Join [Programme Name]". 6–12 words.
 
@@ -156,7 +158,7 @@ whatYouGetItems:
 Between 6 and 8 items. Draw DIRECTLY from the wizard's 'inclusions' and 'programPillars' — list the ACTUAL things included, not invented ones. Each item follows this format:
 "[Feature name] — [specific benefit in the client's language, referencing the outcome it creates]"
 Example: "A fully customised nutrition plan — built around your daily routine, calorie target, and food preferences so you always know exactly what to eat"
-The feature name is short and specific. The benefit after the dash must be outcome-focused and personal — 12–20 words after the dash. Never use vague language like "helps you achieve your goals".
+The feature name is short and specific. The benefit after the dash must start with a LOWERCASE letter and be outcome-focused and personal — 12–20 words after the dash. Never use vague language like "helps you achieve your goals".
 
 whatYouGetBullets:
 One inner array per whatYouGetItem (same order, same count). Each inner array has exactly 3 bullets.

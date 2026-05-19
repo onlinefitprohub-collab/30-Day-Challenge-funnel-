@@ -453,6 +453,13 @@ ${objHtml}
   return (
     <div className="space-y-5">
 
+      {/* Context banner */}
+      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+        <p className="text-sm text-violet-900">
+          <span className="font-semibold">How to use:</span> Use this 8-phase script on your discovery calls. Go through each phase in order: Opening → Frame → Pain → Reflection → Future Pacing → Offer → Price → Close. Personalise the examples with your specific offer and pricing. The post-call email is your follow-up if they don't enrol on the call.
+        </p>
+      </div>
+
       {/* Top bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <p className="text-sm text-gray-500">
