@@ -175,9 +175,18 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
   "coaching-tools": "Coaching Tools",
 };
 
-const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups";
+const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups_v2";
 const RESULTS_SEEN_KEY    = "fitpro_results_seen";
-const DEFAULT_COLLAPSED = new Set(["Your Pages", "Getting Clients", "Nurturing Leads", "Coaching Clients", "Getting Referrals", "AD Engine"]);
+const DEFAULT_COLLAPSED = new Set(["Your Pages", "Getting Clients", "Nurturing Leads", "Coaching Clients", "Getting Referrals", "AD Engine", "Launch"]);
+
+const COPYWRITER_STYLE_LABELS: Record<string, string> = {
+  "Russell Brunson": "Story-Driven",
+  "Alex Hormozi":    "Bold & Proven",
+  "Gary Halbert":    "Conversational",
+  "David Ogilvy":    "Credibility-Led",
+  "Eugene Schwartz": "Empathy-First",
+  "Dan Kennedy":     "No-Nonsense",
+};
 
 async function triggerLongFormGeneration(projectId: string): Promise<LongFormSalesAssets | null> {
   try {
@@ -587,7 +596,7 @@ export function ResultsShell({ project, outputs, isMock, hlConnected, notionConn
               {typeof outputs.copywriterStyle === "string" && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-400 border border-orange-500/20">
                   <Pen className="h-3 w-3" />
-                  {outputs.copywriterStyle.split(" — ")[0]}
+                  {COPYWRITER_STYLE_LABELS[outputs.copywriterStyle.split(" — ")[0]] ?? outputs.copywriterStyle.split(" — ")[0]}
                 </span>
               )}
               {isMock && (

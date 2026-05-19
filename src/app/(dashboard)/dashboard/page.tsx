@@ -66,16 +66,7 @@ export default async function DashboardPage() {
       subtitleMap[row.project_id] = deriveSubtitle(
         (row.inputs ?? {}) as Record<string, unknown>
       );
-    }
-
-    // Count funnel types from outputs
-    const { data: outputs } = await supabase
-      .from("project_outputs")
-      .select("project_id, outputs")
-      .in("project_id", projectIds);
-
-    for (const row of outputs ?? []) {
-      const funnelType = (row.outputs as Record<string, unknown>)?.funnelType;
+      const funnelType = (row.inputs as Record<string, unknown>)?.funnelType;
       if (funnelType === "application") applicationCount++;
       else challengeCount++;
     }

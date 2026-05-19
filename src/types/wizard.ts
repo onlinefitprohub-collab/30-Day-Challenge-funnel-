@@ -16,7 +16,7 @@ export const businessBasicsSchema = z.object({
 
 // Step 2: Offer Basics
 export const offerBasicsSchema = z.object({
-  challengeName: z.string().min(2, "Challenge name is required"),
+  challengeName: z.string().min(2, "Programme name is required"),
   challengeType: z.string().optional(),
   mainGoal: z.string().min(10, "Please describe the main goal"),
   duration: z.number().min(7).max(90).default(30),
