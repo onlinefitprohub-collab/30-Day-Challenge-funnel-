@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProjectControls } from "@/components/dashboard/project-controls";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CheckoutRedirect } from "@/components/dashboard/checkout-redirect";
 import { FolderKanban, CheckCircle2, Clock, Zap, Target } from "lucide-react";
 import type { ProjectRow } from "@/types/project";
 
@@ -12,8 +13,13 @@ function deriveSubtitle(inputs: Record<string, unknown>): string {
   const challenge = typeof inputs.challengeName === "string" ? inputs.challengeName.trim() : "";
   const audience  = typeof inputs.targetAudience === "string" ? inputs.targetAudience.trim() : "";
   if (challenge) return challenge;
-  if (audience)  return audience;
-  return "";
+  if (audience) {
+    const firstClause = audience.split(/[,;]/)[0].trim();
+    return firstClause.length > 60 ? firstClause.slice(0, 58) + "…" : firstClause;
+  }
+  const duration   = typeof inputs.duration === "number" ? inputs.duration : 30;
+  const funnelType = typeof inputs.funnelType === "string" ? inputs.funnelType : "challenge";
+  return funnelType === "application" ? "Application Funnel" : `${duration}-Day Challenge`;
 }
 
 function StatPill({
@@ -80,6 +86,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
+      {/* Auto-triggers Stripe checkout when redirected from email verification with ?checkout=1 */}
+      <CheckoutRedirect />
 
       {/* Page header */}
       <div>

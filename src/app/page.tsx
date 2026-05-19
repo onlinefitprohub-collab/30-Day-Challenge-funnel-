@@ -187,12 +187,15 @@ export default function HomePage() {
             <span className="font-bold text-white tracking-tight">FitPro Launch</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/#pricing" className="hidden text-sm text-gray-400 hover:text-white transition-colors sm:block">
+              Pricing
+            </Link>
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-white/10">
                 Log in
               </Button>
             </Link>
-            <Link href="/signup">
+            <Link href="/signup?plan=pro">
               <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/25">
                 Start for $97/month →
               </Button>
@@ -212,7 +215,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-sm font-semibold text-orange-400">
             <Flame className="h-3.5 w-3.5" />
-            The AI business kit built for online fitness coaches
+            Launch your online fitness coaching business today
           </div>
 
           <h1 className="text-balance text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-[72px]">
@@ -230,7 +233,7 @@ export default function HomePage() {
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup">
+            <Link href="/signup?plan=pro">
               <Button
                 size="xl"
                 className="group w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold shadow-2xl shadow-orange-500/30 sm:w-auto"
@@ -476,7 +479,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-10 text-center">
-            <Link href="/signup">
+            <Link href="/signup?plan=pro">
               <Button
                 size="lg"
                 className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/25"
@@ -531,6 +534,76 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Pricing ────────────────────────────────────────────────────────── */}
+      <section className="bg-gray-950 px-6 py-24" id="pricing">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-3 text-center text-sm font-semibold uppercase tracking-widest text-orange-500">
+            Simple pricing
+          </div>
+          <h2 className="mb-4 text-center text-4xl font-bold text-white">
+            One plan. Everything included.
+          </h2>
+          <p className="mx-auto mb-16 max-w-xl text-center text-gray-400">
+            No tiers. No feature gates. No hidden costs. One client from your first launch more than covers your first month.
+          </p>
+
+          <div className="mx-auto max-w-md">
+            <div className="relative rounded-2xl border-2 border-orange-500/60 bg-gradient-to-b from-[#1a1a2e] to-[#0f172a] p-8 shadow-2xl shadow-orange-500/10">
+              {/* Popular badge */}
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-orange-500/30">
+                  <Flame className="h-3 w-3" /> Most popular plan
+                </span>
+              </div>
+
+              <div className="mb-6 text-center">
+                <p className="text-lg font-bold text-white">FitPro Launch</p>
+                <div className="mt-3 flex items-end justify-center gap-1">
+                  <span className="text-5xl font-extrabold text-white">$97</span>
+                  <span className="mb-2 text-gray-400">/month</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-400">Cancel any time. No contracts.</p>
+              </div>
+
+              <Link href="/signup?plan=pro">
+                <Button
+                  size="lg"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-lg shadow-orange-500/25"
+                >
+                  Get started — $97/month
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+
+              <ul className="mt-8 space-y-3">
+                {[
+                  "Unlimited funnel generations",
+                  "22+ AI-generated assets per run",
+                  "Challenge & application funnel types",
+                  "1-click GoHighLevel push",
+                  "Fresh 30-post content calendar monthly",
+                  "Discovery call script & DM scripts",
+                  "Email + SMS delivery pack",
+                  "VSL script & sales letter",
+                  "Upsell sequences & coaching tools",
+                  "Notion export",
+                  "Cancel any time",
+                ].map((feature) => (
+                  <li key={feature} className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-orange-400" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-8 rounded-xl border border-orange-500/20 bg-orange-500/5 p-4 text-center text-sm text-orange-300">
+                If your challenge costs $200+, <strong>one new client pays for your first month</strong> — everything else is profit.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Monthly Content Engine callout ─────────────────────────────────── */}
       <section className="bg-gray-950 px-6 py-20">
         <div className="mx-auto max-w-4xl">
@@ -561,7 +634,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 <div className="mt-6">
-                  <Link href="/signup">
+                  <Link href="/signup?plan=pro">
                     <Button className="bg-brand-600 hover:bg-brand-700 text-white font-semibold">
                       Start for $97/month →
                     </Button>
@@ -593,7 +666,7 @@ export default function HomePage() {
             The only thing standing between you and a full client calendar is the next button you click.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup">
+            <Link href="/signup?plan=pro">
               <Button
                 size="xl"
                 className="w-full bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-2xl shadow-black/25 sm:w-auto text-base"
@@ -623,8 +696,10 @@ export default function HomePage() {
               <span className="font-bold text-gray-300 tracking-tight">FitPro Launch</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
+              <Link href="/legal/terms" className="hover:text-gray-400 transition-colors">Terms</Link>
+              <Link href="/legal/privacy" className="hover:text-gray-400 transition-colors">Privacy</Link>
               <Link href="/login" className="hover:text-gray-400 transition-colors">Log in</Link>
-              <Link href="/signup" className="hover:text-gray-400 transition-colors">Sign up</Link>
+              <Link href="/signup?plan=pro" className="hover:text-gray-400 transition-colors">Sign up</Link>
             </div>
             <p className="text-sm text-gray-600 text-center sm:text-right">
               © {new Date().getFullYear()} FitPro Launch. All rights reserved.

@@ -9,13 +9,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { coachStorySchema, type CoachStoryInputs, type WizardInputs } from "@/types/wizard";
 import type { StepProps } from "./types";
 
+const refinedCoachStorySchema = coachStorySchema.refine(
+  (data) => {
+    const filled = [data.coachBeforeState, data.coachTurningPoint, data.coachPersonalResult, data.coachWhyCoach]
+      .filter((v) => v && v.trim().length > 10).length;
+    return filled >= 2;
+  },
+  {
+    message: "Please answer at least 2 questions — the AI needs them to write your coach bio.",
+    path: ["coachBeforeState"],
+  },
+);
+
 export function StepCoachStory({ defaultValues, onNext, onBack }: StepProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<CoachStoryInputs>({
-    resolver: zodResolver(coachStorySchema),
+    resolver: zodResolver(refinedCoachStorySchema),
     defaultValues: {
       coachBeforeState:    defaultValues.coachBeforeState    ?? "",
       coachTurningPoint:   defaultValues.coachTurningPoint   ?? "",

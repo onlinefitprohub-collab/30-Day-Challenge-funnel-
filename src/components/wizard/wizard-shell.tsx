@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, AlertCircle } from "lucide-react";
+import { Zap, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { CHALLENGE_WIZARD_STEPS, APPLICATION_WIZARD_STEPS, type WizardInputs } from "@/types/wizard";
 import { WizardProgress } from "@/components/wizard/wizard-progress";
 import { StepFunnelType } from "@/components/wizard/steps/step-funnel-type";
@@ -52,6 +52,7 @@ export function WizardShell({ initialProjectId, initialData, initialStepIndex }:
   const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [formData, setFormData] = useState<Partial<WizardInputs>>(
     initialData ?? { duration: 30, trafficSources: [], hasBeforeAfter: false }
   );
@@ -122,9 +123,16 @@ export function WizardShell({ initialProjectId, initialData, initialStepIndex }:
 
       // Persist in background only when we have a project record
       if (pid) {
-        persistInputs(merged, pid).catch((err) => {
-          console.error("Background save failed:", err);
-        });
+        setSaveStatus("saving");
+        persistInputs(merged, pid)
+          .then(() => {
+            setSaveStatus("saved");
+            setTimeout(() => setSaveStatus("idle"), 2000);
+          })
+          .catch((err) => {
+            console.error("Background save failed:", err);
+            setSaveStatus("idle");
+          });
       }
 
       setCurrentStep((s) => s + 1);
@@ -201,6 +209,21 @@ export function WizardShell({ initialProjectId, initialData, initialStepIndex }:
 
       {/* Progress bar */}
       <WizardProgress currentStep={currentStep} steps={activeSteps} onStepClick={handleJumpToStep} />
+      {saveStatus !== "idle" && (
+        <div className="flex items-center justify-end gap-1.5 text-xs">
+          {saveStatus === "saving" ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
+              <span className="text-zinc-500">Saving…</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+              <span className="text-emerald-400">Saved</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Save error banner */}
       {saveError && (

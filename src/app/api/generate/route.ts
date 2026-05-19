@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { generateFunnelAssets } from "@/lib/ai/generate";
 import { generateMockAssets } from "@/lib/ai/mock";
 import { pickLandingVariant, pickTemplateVariant } from "@/lib/highlevel/ghl-pagedata";
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitError = checkRateLimit(user.id, "generate", 3, 3_600_000);
+    if (rateLimitError) return rateLimitError;
 
     const body = await request.json() as { projectId?: string; inputs?: unknown };
     projectId = body.projectId ?? null;
