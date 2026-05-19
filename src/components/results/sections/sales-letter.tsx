@@ -218,6 +218,13 @@ export function SalesLetterSection({ data, projectId, onRegenerate }: SalesLette
 
   return (
     <div className="space-y-4">
+      {/* Context */}
+      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+        <p className="text-sm text-violet-900">
+          <span className="font-semibold">How to use:</span> This 3,000–5,000 word sales letter can be used as: (1) A long-form landing page, (2) A multi-part email sequence (split into 5–7 emails), or (3) A PDF download to send cold traffic. Load into your page builder, GHL, or send via email.
+        </p>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-500">Long-form direct-response sales letter. Copy each section into your page builder or email sequence.</p>
         <div className="flex shrink-0 gap-2">

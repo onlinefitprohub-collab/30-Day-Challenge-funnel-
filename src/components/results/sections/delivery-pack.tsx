@@ -113,6 +113,13 @@ export function DeliveryPackSection({ data }: { data: DeliveryPack }) {
 
   return (
     <div className="space-y-4">
+      {/* Context */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <p className="text-sm text-blue-900">
+          <span className="font-semibold">How to use:</span> Load the emails into your GHL automation → create a challenge campaign → set each email to send on the day specified. SMS can be sent manually via your SMS platform or integrated with GHL SMS.
+        </p>
+      </div>
+
       <p className="text-sm text-gray-500">
         Complete delivery pack — welcome messages, weekly coaching emails, daily SMS prompts, and completion messages.
       </p>

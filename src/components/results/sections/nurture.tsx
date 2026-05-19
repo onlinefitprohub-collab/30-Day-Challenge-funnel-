@@ -189,6 +189,13 @@ export function NurtureSection({ data, projectId, onRegenerate }: NurtureSection
 
   return (
     <div className="space-y-4">
+      {/* Context */}
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <p className="text-sm text-emerald-900">
+          <span className="font-semibold">How to use:</span> Load all 52 emails into your email platform (GHL, ConvertKit, Mailchimp, etc.). Set them as an automated sequence, with one email sending every 7 days. Trigger from any opt-in list. These keep you top-of-mind year-round and promote your next offer or challenge every quarter.
+        </p>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
