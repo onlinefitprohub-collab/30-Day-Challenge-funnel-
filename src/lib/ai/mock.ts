@@ -693,3 +693,26 @@ export function buildMockCoachStory(inputs: WizardInputs): NonNullable<Generated
     bridgeHeadline: `Still doing everything right — and still not getting there?`,
   };
 }
+
+export function buildMockVslScript(inputs: WizardInputs): import("@/types/generation").VslScript {
+  const firstName = (inputs.coachName ?? "Your Coach").split(" ")[0];
+  const programme = inputs.challengeName ?? "this programme";
+  const audience  = inputs.targetAudience ?? "people like you";
+  const goal      = inputs.mainGoal ?? "transform your life";
+  const struggle  = inputs.biggestStruggle ?? "feeling stuck and frustrated with your progress";
+  const duration  = inputs.duration ? `${inputs.duration}-day` : "30-day";
+
+  return {
+    hook: `Here's something most fitness coaches will never admit to you — and once you hear it, the last several years of struggling will suddenly make complete sense. Stay with me for just 90 seconds, because what I'm about to share changes everything for ${audience}.`,
+    problemStatement: `If you've been trying to ${goal.toLowerCase()} — and you've been working hard, you've been trying — but it just isn't working the way it should… you're not broken. You're not lazy. And it's not your fault. The real problem is that ${struggle.toLowerCase()}. Most programmes are designed for someone else's life, not yours.`,
+    agitation: `And the longer you keep trying the same approaches that aren't working, the harder it gets. Not just physically — mentally. Every failed attempt chips away at your belief that this is even possible for you. You start telling yourself maybe this just isn't for people like you. Maybe you missed the window. Maybe this is just how it is now. That voice gets louder every time something doesn't stick.`,
+    coachStoryBridge: `My name is ${firstName}. And I know exactly what that feels like, because I lived it. I spent years doing everything I was told — following the plans, showing up consistently — and still not getting where I wanted to be. It wasn't until I stopped following everyone else's system and built something designed specifically for ${audience} that everything changed.`,
+    solutionReveal: `That's what the ${programme} is. It's not another generic plan. It's a ${duration} system built specifically for ${audience} who want to ${goal.toLowerCase()} — without overhauling their entire life to do it. It works because it fits the reality of your life, not the ideal version of it.`,
+    programmeWalkthrough: `Here's what you get: daily structure that takes the guesswork out of every single day. Nutrition guidance that doesn't require meal prepping on Sundays or cutting out everything you enjoy. Accountability that actually keeps you moving when motivation dips — because it always does. And a community of people at exactly the same stage, going through it alongside you.`,
+    socialProof: `The people who've been through ${programme} describe the same experience: they expected it to be hard, and it was — but they also describe a momentum they hadn't felt before. A feeling of "I'm actually doing this." The messages I get from past members are the reason I keep running it every single time.`,
+    offerPresentation: `When you join ${programme} today, you get the complete ${duration} programme, the daily check-in system, the nutrition framework, the community access, and every resource you need to actually finish what you start. Everything is included. Nothing is held back for a more expensive tier.`,
+    objectionHandling: `I know what you might be thinking. You've tried things before. You've invested time and maybe money and it hasn't worked. I hear that — and I want to be direct with you. This isn't for everyone. If you're not ready to show up consistently for ${inputs.duration ?? 30} days, this isn't your moment. But if you're tired of starting over and you want something that actually sticks — this was built for exactly that.`,
+    callToAction: `Click the button below right now and secure your place in ${programme}. The next intake is limited — not as a marketing tactic, but because the community element only works when numbers are managed. If you're watching this, there are still spots. But there won't be indefinitely.`,
+    closingScarcity: `You've already been thinking about making this change. That's why you're here. The only question is whether today is the day you actually do something about it. Click below. Join us. Let's get you the result you've been working towards.`,
+  };
+}

@@ -48,7 +48,7 @@ import {
 import {
   generateMockAssets, buildMockApplicationLandingPage, buildMockCoachStory,
   buildMockContentCalendar, buildMockDeliveryPack,
-  buildMockTestimonialHarvest, buildMockPricingGuide,
+  buildMockTestimonialHarvest, buildMockPricingGuide, buildMockVslScript,
 } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
@@ -250,7 +250,7 @@ export async function generateFunnelAssets(
     ? (coachStoryResult.data?.coachStory ?? buildMockCoachStory(inputs))
     : undefined;
 
-  const vslScript = vslScriptResult.data?.vslScript ?? undefined;
+  const vslScript = vslScriptResult.data?.vslScript ?? buildMockVslScript(inputs);
 
   return {
     offerSummary:    offerPages.offerSummary,

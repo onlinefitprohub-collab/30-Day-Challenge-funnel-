@@ -1301,7 +1301,7 @@ function makeFaqPlain(
 
     const a = makeParagraph(b, sentenceBreaks(item.answer), {
       fontWeight:    ss("400"),
-      fontSize:      sv(15),
+      fontSize:      sv(17),
       paddingTop:    sv(0),
       paddingBottom: sv(8),
       color:         ss("#3a3a5c"),
@@ -2692,18 +2692,28 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
 
   // ── 1. HERO ──────────────────────────────────────────────────────────────
   {
+    // Split confirmationMessage: first sentence → headline, rest → subheadline
+    const confirmationFull = ty.confirmationMessage ?? "You're registered — we'll see you inside!";
+    const firstSentenceEnd = confirmationFull.search(/[.!?]\s/);
+    const confirmationHeadline = firstSentenceEnd > 0
+      ? confirmationFull.slice(0, firstSentenceEnd + 1)
+      : confirmationFull;
+    const confirmationSub = firstSentenceEnd > 0
+      ? confirmationFull.slice(firstSentenceEnd + 2)
+      : (ty.bookingEncouragement ?? "Book your free kick-off call below to get started.");
+
     const badge = makeParagraph(b,
       "🎉  You're in — Welcome aboard!",
       { color: ss(s.primary), fontSize: sv(13), fontWeight: ss("700"), textAlign: ss("center"), paddingBottom: sv(20), letterSpacing: ss("0.06em"), textTransform: ss("uppercase") },
     );
     const h1 = makeHeading(b,
-      ty.confirmationMessage ?? "You're registered — we'll see you inside!", "h1",
-      { color: ss(s.textColorOnDark), fontSize: sv(46), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(20), maxWidth: sv(740), marginLeft: ss("auto"), marginRight: ss("auto") },
-      { fontSize: sv(28) },
+      confirmationHeadline, "h1",
+      { color: ss(s.textColorOnDark), fontSize: sv(44), fontWeight: ss("900"), textAlign: ss("center"), lineHeight: ss("1.12"), paddingBottom: sv(16), maxWidth: sv(700), marginLeft: ss("auto"), marginRight: ss("auto") },
+      { fontSize: sv(26) },
     );
     const sub = makeParagraph(b,
-      ty.bookingEncouragement ?? "Book your free kick-off call below to get started.",
-      { color: ss("rgba(255,255,255,0.75)"), fontSize: sv(17), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(540), marginLeft: ss("auto"), marginRight: ss("auto") },
+      confirmationSub,
+      { color: ss("rgba(255,255,255,0.75)"), fontSize: sv(17), textAlign: ss("center"), lineHeight: ss("1.7"), maxWidth: sv(560), marginLeft: ss("auto"), marginRight: ss("auto") },
     );
     const c = makeCol(b, [badge, h1, sub], 100, { align: "center", padH: 32 });
     const r = makeRow(b, [c], 880);
@@ -2726,7 +2736,7 @@ export function buildThankYouPageData(data: GeneratedFunnelAssets): GhlPageData 
     );
     const stepEls = (ty.nextSteps ?? []).flatMap((step, i) => [
       makeParagraph(b, `${i + 1}. ${step}`, {
-        color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.65"),
+        color: ss(s.textColorOnLight), fontSize: sv(17), lineHeight: ss("1.65"),
         paddingTop: sv(16), paddingBottom: sv(16),
         paddingLeft: sv(20), paddingRight: sv(20),
         backgroundColor: ss(s.alt),
@@ -2815,7 +2825,7 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const whyItems = (bk.whyBook ?? []).map((reason) =>
       makeParagraph(b, `✓  ${reason}`, {
-        color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.65"), paddingBottom: sv(12),
+        color: ss(s.textColorOnLight), fontSize: sv(17), lineHeight: ss("1.65"), paddingBottom: sv(12),
       })
     );
     const expectLabel = makeParagraph(b,
@@ -2824,10 +2834,10 @@ export function buildBookingPageData(data: GeneratedFunnelAssets): GhlPageData {
     );
     const expectText = makeParagraph(b,
       bk.expectationSetting ?? "We'll walk you through your challenge plan step by step.",
-      { color: ss(s.textColorOnLight), fontSize: sv(13), lineHeight: ss("1.6") },
+      { color: ss(s.textColorOnLight), fontSize: sv(15), lineHeight: ss("1.6") },
     );
     const trustItems = ["Free 30-minute call", "No sales pressure", "100% confidential"].map((t) =>
-      makeParagraph(b, `✓  ${t}`, { color: ss(s.textColorOnLight), fontSize: sv(13), paddingBottom: sv(6) })
+      makeParagraph(b, `✓  ${t}`, { color: ss(s.textColorOnLight), fontSize: sv(15), paddingBottom: sv(6) })
     );
     const leftCol = makeCol(b,
       [whyLabel, ...whyItems, expectLabel, expectText, makeDivider(b), ...trustItems],
