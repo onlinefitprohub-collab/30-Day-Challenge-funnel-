@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProjectControls } from "@/components/dashboard/project-controls";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CheckoutRedirect } from "@/components/dashboard/checkout-redirect";
 import { FolderKanban, CheckCircle2, Clock, Zap, Target } from "lucide-react";
 import type { ProjectRow } from "@/types/project";
 
@@ -94,6 +95,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
+      {/* Auto-triggers Stripe checkout when redirected from email verification with ?checkout=1 */}
+      <CheckoutRedirect />
 
       {/* Page header */}
       <div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,11 @@ const signupSchema = z.object({
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-export function SignupForm() {
+interface SignupFormProps {
+  redirectToCheckout?: boolean;
+}
+
+export function SignupForm({ redirectToCheckout = false }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -40,12 +44,14 @@ export function SignupForm() {
     setIsLoading(true);
     try {
       const supabase = createClient();
+      // Pass ?checkout=1 in the redirect URL so the callback can trigger checkout
+      const next = redirectToCheckout ? "/dashboard?checkout=1" : "/dashboard";
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: { full_name: data.fullName },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
 
@@ -73,10 +79,11 @@ export function SignupForm() {
   async function signUpWithGoogle() {
     setIsGoogleLoading(true);
     const supabase = createClient();
+    const next = redirectToCheckout ? "/dashboard?checkout=1" : "/dashboard";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (error) {
@@ -91,9 +98,15 @@ export function SignupForm() {
         <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
         <h2 className="text-xl font-semibold text-gray-900">Check your email</h2>
         <p className="mt-2 text-gray-500">
-          We&apos;ve sent a confirmation link to your email address.
-          Click it to activate your account and start building your funnel.
+          We&apos;ve sent a confirmation link to <strong className="text-gray-700">your email address</strong>.
+          Click it to activate your account
+          {redirectToCheckout ? " and complete your subscription" : " and start building your funnel"}.
         </p>
+        {redirectToCheckout && (
+          <p className="mt-3 text-xs text-gray-400">
+            After confirming your email you&apos;ll be taken directly to the payment page.
+          </p>
+        )}
       </div>
     );
   }
@@ -183,6 +196,11 @@ export function SignupForm() {
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Creating account...
+            </>
+          ) : redirectToCheckout ? (
+            <>
+              Create account & subscribe
+              <ArrowRight className="h-4 w-4" />
             </>
           ) : (
             "Create account"
