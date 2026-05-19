@@ -31,7 +31,7 @@ const CHALLENGE_PHASES: Phase[] = [
   {
     id: "build",
     icon: Rocket,
-    title: "Week 1 — Build Your Funnel",
+    title: "Day 1 — Build Your Funnel",
     subtitle: "Get your pages live and connected to HighLevel",
     colour: {
       border: "border-orange-200",
@@ -51,7 +51,7 @@ const CHALLENGE_PHASES: Phase[] = [
   {
     id: "ads",
     icon: TrendingUp,
-    title: "Week 2 — Set Up Your Ads",
+    title: "Day 2 — Set Up Your Ads",
     subtitle: "Launch your Facebook and Instagram campaign",
     colour: {
       border: "border-blue-200",
@@ -71,7 +71,7 @@ const CHALLENGE_PHASES: Phase[] = [
   {
     id: "delivery",
     icon: Wrench,
-    title: "Week 3 — Prepare Delivery",
+    title: "Day 3 — Prepare Delivery",
     subtitle: "Set up everything clients receive before and during the challenge",
     colour: {
       border: "border-emerald-200",
@@ -95,7 +95,7 @@ const APPLICATION_PHASES: Phase[] = [
   {
     id: "build",
     icon: Rocket,
-    title: "Week 1 — Build Your Funnel",
+    title: "Day 1 — Build Your Funnel",
     subtitle: "Get your registration page and application form live in HighLevel",
     colour: {
       border: "border-violet-200",
@@ -116,7 +116,7 @@ const APPLICATION_PHASES: Phase[] = [
   {
     id: "ads",
     icon: TrendingUp,
-    title: "Week 2 — Set Up Your Ads",
+    title: "Day 2 — Set Up Your Ads",
     subtitle: "Drive application traffic with targeted Facebook and Instagram campaigns",
     colour: {
       border: "border-blue-200",
@@ -136,7 +136,7 @@ const APPLICATION_PHASES: Phase[] = [
   {
     id: "delivery",
     icon: Wrench,
-    title: "Week 3 — Prepare for Applications",
+    title: "Day 3 — Prepare for Applications",
     subtitle: "Set up the systems that convert applicants into paying clients",
     colour: {
       border: "border-emerald-200",

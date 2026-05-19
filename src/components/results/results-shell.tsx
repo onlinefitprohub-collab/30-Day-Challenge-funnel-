@@ -175,7 +175,7 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
   "coaching-tools": "Coaching Tools",
 };
 
-const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups_v2";
+const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups_v3";
 const RESULTS_SEEN_KEY    = "fitpro_results_seen";
 const DEFAULT_COLLAPSED = new Set(["Your Pages", "Getting Clients", "Nurturing Leads", "Coaching Clients", "Getting Referrals", "AD Engine", "Launch"]);
 

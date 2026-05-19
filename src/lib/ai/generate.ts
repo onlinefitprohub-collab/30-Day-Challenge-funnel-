@@ -43,6 +43,7 @@ import { buildDiscoveryCallPrompt } from "./prompts/discovery-call";
 import { buildDmScriptPrompt } from "./prompts/dm-script";
 import { buildUpsellSequencePrompt } from "./prompts/upsell-sequence";
 import { buildSalesLetterPrompt } from "./prompts/longform-sales-letter";
+import { buildLaunchRoadmapPrompt } from "./prompts/launch-roadmap";
 import { pickRandomStyle, STYLES } from "./copywriter-styles";
 import {
   offerPagesResponseSchema,
@@ -58,6 +59,7 @@ import {
   instagramDmScriptResponseSchema,
   upsellSequenceResponseSchema,
   salesLetterSchema,
+  launchRoadmapResponseSchema,
 } from "./validators";
 import {
   generateMockAssets, buildMockApplicationLandingPage, buildMockCoachStory,
@@ -65,6 +67,7 @@ import {
   buildMockTestimonialHarvest, buildMockPricingGuide, buildMockVslScript,
   buildMockDiscoveryCall, buildMockDmScriptFromInputs, buildMockUpsellFromInputs,
   buildMockLongFormAssets,
+  buildMockLaunchRoadmap,
 } from "./mock";
 import type { WizardInputs } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
@@ -88,6 +91,7 @@ const TOKENS = {
   dmScript:            3000,  // 4 Instagram conversation paths
   upsellSequence:      3500,  // 5-email post-challenge upsell sequence
   salesLetter:         6000,  // long-form direct-response sales letter (15 sections)
+  launchRoadmap:       3500,  // 5-phase launch roadmap with tasks, timing, and asset refs
 } as const;
 
 interface GroupResult<T> {
@@ -147,7 +151,7 @@ export async function generateFunnelAssets(
   );
 
   // Fire groups in parallel — 13 calls for application funnels, 13 for challenge funnels
-  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult, coachStoryResult, vslScriptResult, contentCalendarResult, deliveryPackResult, coachingToolsResult, discoveryCallResult, dmScriptResult, upsellSequenceResult, salesLetterResult] =
+  const [offerPagesResult, sequencesResult, adsCampaignResult, appLandingResult, coachStoryResult, vslScriptResult, contentCalendarResult, deliveryPackResult, coachingToolsResult, discoveryCallResult, dmScriptResult, upsellSequenceResult, salesLetterResult, launchRoadmapResult] =
     await Promise.all([
       callCopyGroup(
         buildOfferPagesPrompt(context, style.promptDescription),
@@ -271,6 +275,17 @@ export async function generateFunnelAssets(
           MODEL_PRIMARY,
         );
       })(),
+      // Group 12 — Launch Roadmap (all funnels)
+      (() => {
+        const built = buildLaunchRoadmapPrompt(context);
+        return callCopyGroup(
+          `${built.system}\n\n${built.user}`,
+          launchRoadmapResponseSchema,
+          "launch-roadmap",
+          TOKENS.launchRoadmap,
+          MODEL_PRIMARY,
+        );
+      })(),
     ]);
 
   console.log("[design] Claude returned:", offerPagesResult.data?.design);
@@ -297,6 +312,7 @@ export async function generateFunnelAssets(
     dmScriptResult.error,
     upsellSequenceResult.error,
     salesLetterResult.error,
+    launchRoadmapResult.error,
   ].filter(Boolean);
   if (errors.length > 0) {
     console.warn(
@@ -349,5 +365,6 @@ export async function generateFunnelAssets(
     longFormAssets:              salesLetterResult.data
       ? { salesLetter: salesLetterResult.data, manyChatFlow: buildMockLongFormAssets(inputs).manyChatFlow }
       : buildMockLongFormAssets(inputs),
+    launchRoadmap:               launchRoadmapResult.data?.launchRoadmap ?? buildMockLaunchRoadmap(inputs),
   };
 }

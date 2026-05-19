@@ -340,11 +340,8 @@ function GHLContextSection() {
 
           <div>
             <p className="font-semibold text-gray-900 mb-2">Do I need HighLevel?</p>
-            <p className="text-xs leading-relaxed mb-2">
-              <span className="font-semibold text-green-700">If you want to:</span> Manage leads in one dashboard, automate email follow-ups, collect bookings, track conversions, then yes — GHL makes sense.
-            </p>
             <p className="text-xs leading-relaxed">
-              <span className="font-semibold text-blue-700">Alternatives:</span> Linktree (free landing page), Beacons, Squarespace, WordPress, or manual email lists.
+              <span className="font-semibold text-green-700">If you want to:</span> Manage leads in one dashboard, automate email follow-ups, collect bookings, track conversions, then yes — GHL makes sense.
             </p>
           </div>
 

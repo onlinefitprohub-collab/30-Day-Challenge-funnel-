@@ -7,6 +7,7 @@ import type { DiscoveryCallScript } from "@/types/discovery-call";
 import type { InstagramDmScript } from "@/types/dm-script";
 import type { UpsellSequence } from "@/types/upsell-sequence";
 import type { LongFormSalesAssets } from "@/types/longform";
+import type { LaunchRoadmap } from "@/types/launch-roadmap";
 
 /**
  * Mock generation — uses real wizard inputs to produce personalised placeholder output.
@@ -972,6 +973,97 @@ export function buildMockDmScriptFromInputs(inputs: WizardInputs): InstagramDmSc
       `When someone goes quiet, follow up once only — then move on. Persistence feels like pressure.`,
       `Track your conversations in a simple spreadsheet: name, stage, last message, follow-up date.`,
       `Post Stories consistently — they keep you visible and give warm leads a reason to reply.`,
+    ],
+  };
+}
+
+export function buildMockLaunchRoadmap(inputs: WizardInputs): LaunchRoadmap {
+  const programme = inputs.challengeName ?? "Your Programme";
+  const isApplication = inputs.funnelType === "application";
+  return {
+    overview: `This roadmap takes you from zero to a live, converting ${isApplication ? "application funnel" : "challenge"} in as little as 3 days of focused work. It's built around the FitPro Launch assets you've already generated — each phase tells you exactly which assets to use and in what order. Follow the phases sequentially and don't skip ahead.`,
+    totalTimeToLaunch: "3 days of focused work",
+    quickStartPriorities: [
+      `Open FitPro Launch and copy your landing page headline and subheadline into your page builder`,
+      `Set up your HighLevel funnel with the core pages: landing, opt-in, thank-you, ${isApplication ? "application form" : "booking"}`,
+      `Connect your email and SMS automation to trigger the welcome sequence on sign-up`,
+      `Set up your payment processor and create a product for ${isApplication ? "your high-ticket coaching programme" : `the ${programme} fee`}`,
+      `Block time in your calendar for discovery calls — this is the only thing that actually closes clients`,
+    ],
+    commonMistakes: [
+      `Launching ads before the landing page and payment system are fully live and tested`,
+      `Sending traffic to a page that hasn't been tested on mobile — over 80% of your audience will view it on their phone`,
+      `Starting DM outreach without a clear call booking link ready to send`,
+      `Waiting until the challenge starts to send emails — the pre-${isApplication ? "application" : "challenge"} sequence is where most drop-off happens`,
+      `Not posting organically during the paid ads period — social proof from your own content validates your ads`,
+      `Setting a launch date and not working backwards from it — always plan by deadline, not by 'when I'm ready'`,
+    ],
+    phases: [
+      {
+        name: "Foundation — Day 1",
+        timing: "Day 1 — set everything up before any promotion starts",
+        goal: "Get all technical pieces live and tested so you can send traffic with confidence",
+        completionMarker: `You can complete a test sign-up from start to finish and receive the welcome email and SMS`,
+        tasks: [
+          { task: `Build landing page using your FitPro Launch copy (headline, bullets, FAQ, CTA)`, category: "setup", fitproAsset: "Landing Page Copy", timeEstimate: "2–3 hours" },
+          { task: `Set up opt-in form, thank-you page, and ${isApplication ? "application form" : "booking page"}`, category: "setup", fitproAsset: "Opt-in Form & Thank You Page", timeEstimate: "1 hour" },
+          { task: `Configure email automation — welcome email triggers on sign-up`, category: "setup", fitproAsset: "Email Sequence (Welcome)", timeEstimate: "1 hour" },
+          { task: `Configure SMS automation — welcome SMS triggers on sign-up`, category: "setup", fitproAsset: "SMS Sequence (Confirmation)", timeEstimate: "30 min" },
+          { task: `Set up payment processor and create your product/price`, category: "setup", timeEstimate: "45 min" },
+          { task: `Do a full end-to-end test: sign up, receive email, receive SMS, see ${isApplication ? "application form" : "booking page"}`, category: "setup", timeEstimate: "30 min" },
+        ],
+      },
+      {
+        name: "Outreach & Content — Day 2",
+        timing: "Day 2 — warm up your audience before paid ads",
+        goal: "Get your first leads into the pipeline through organic outreach and content",
+        completionMarker: `You've posted content, DM'd warm leads, and have at least 3 discovery calls booked`,
+        tasks: [
+          { task: `Post 2–3 pieces of content using your content calendar hooks and captions`, category: "content", fitproAsset: "Content Calendar", timeEstimate: "1–2 hours" },
+          { task: `DM 10–20 warm leads using the Instagram DM Script`, category: "sales", fitproAsset: "Instagram DM Script", timeEstimate: "45 min" },
+          { task: `Post Stories — behind the scenes of your setup, your why, your results`, category: "content", timeEstimate: "15 min" },
+          { task: `Share a client result or testimonial if you have one`, category: "content", timeEstimate: "20 min" },
+          { task: `Set up your Facebook and Instagram ad campaign using your FitPro ad copy`, category: "ads", fitproAsset: "Ad Copy + Creative Briefs", timeEstimate: "2 hours" },
+        ],
+      },
+      {
+        name: "Launch — Day 3",
+        timing: "Day 3 — open registration and run your first calls",
+        goal: "Convert your pipeline and first ad traffic into paid sign-ups",
+        completionMarker: `${isApplication ? "Applications are coming in and you've completed at least 2 discovery calls" : "At least 5 people have signed up and you've completed your first discovery calls"}`,
+        tasks: [
+          { task: `Send launch email to your existing list announcing ${isApplication ? "applications are open" : "registration is open"}`, category: "content", fitproAsset: "Email Sequence (Launch)", timeEstimate: "30 min" },
+          { task: `Post launch announcement across all platforms`, category: "content", timeEstimate: "30 min" },
+          { task: `Run discovery calls for all booked leads using your call script`, category: "sales", fitproAsset: "Discovery Call Script", timeEstimate: "45 min/call" },
+          { task: `Reply to every DM and comment within 1 hour throughout the day`, category: "sales", timeEstimate: "Ongoing" },
+          { task: `Send SMS follow-up to leads who haven't booked a call yet`, category: "sales", fitproAsset: "SMS Sequence", timeEstimate: "20 min" },
+        ],
+      },
+      {
+        name: `${isApplication ? "Programme" : "Challenge"} Delivery`,
+        timing: `${isApplication ? "Programme weeks" : "Challenge weeks"}`,
+        goal: `Deliver an exceptional client experience that generates testimonials and referrals`,
+        completionMarker: `All participants active, at least 3 testimonials collected, and referrals in pipeline`,
+        tasks: [
+          { task: `Send daily SMS prompts each morning using delivery pack SMS schedule`, category: "delivery", fitproAsset: "Challenge Delivery Pack (Daily SMS)", timeEstimate: "5 min/day" },
+          { task: `Send weekly coaching emails using delivery pack weekly templates`, category: "delivery", fitproAsset: "Challenge Delivery Pack (Weekly Emails)", timeEstimate: "15 min/week" },
+          { task: `Post client wins and progress publicly (with permission) each week`, category: "content", timeEstimate: "20 min/week" },
+          { task: `Continue DM outreach for next cohort — keep pipeline warm`, category: "sales", fitproAsset: "Instagram DM Script", timeEstimate: "30 min/day" },
+        ],
+      },
+      {
+        name: "Post-Launch Growth",
+        timing: "After programme ends",
+        goal: "Harvest testimonials, convert completers to next tier, and plan next launch",
+        completionMarker: "Upsell sequence sent, 3+ testimonials collected, next launch date set",
+        tasks: [
+          { task: `Send testimonial harvest email sequence to all completers`, category: "growth", fitproAsset: "Testimonial Harvest Sequence", timeEstimate: "30 min to send" },
+          { task: `Launch upsell email sequence to all completers`, category: "sales", fitproAsset: "Upsell Email Sequence", timeEstimate: "30 min to send" },
+          { task: `Book follow-up discovery calls with highest-engagement participants`, category: "sales", fitproAsset: "Discovery Call Script", timeEstimate: "1 hour/day" },
+          { task: `Post results and transformations to social media`, category: "content", timeEstimate: "1 hour" },
+          { task: `Set the date for your next launch and update your funnel`, category: "setup", timeEstimate: "30 min" },
+        ],
+      },
     ],
   };
 }
