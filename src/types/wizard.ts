@@ -51,6 +51,7 @@ export const brandVoiceSchema = z.object({
     required_error: "Please select a tone",
   }),
   colourScheme: z.enum(["navy-orange", "rose-pink", "teal-forest", "purple-lilac", "sky-blue"]).default("navy-orange"),
+  copywriterStyle: z.enum(["brunson", "hormozi", "halbert", "ogilvy", "schwartz", "kennedy"]).optional(),
   phrasesToInclude: z.string().optional(),
   phrasesToAvoid: z.string().optional(),
   coachPhotoUrl: z.string().optional(), // Coach headshot URL for image-hero templates

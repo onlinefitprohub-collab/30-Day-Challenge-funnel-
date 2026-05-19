@@ -33,7 +33,7 @@ import { buildVslScriptPrompt } from "./prompts/vsl-script";
 import { buildContentCalendarPrompt } from "./prompts/content-calendar";
 import { buildDeliveryPackPrompt } from "./prompts/delivery-pack";
 import { buildCoachingToolsPrompt } from "./prompts/coaching-tools";
-import { pickRandomStyle } from "./copywriter-styles";
+import { pickRandomStyle, STYLES } from "./copywriter-styles";
 import {
   offerPagesResponseSchema,
   sequencesResponseSchema,
@@ -102,9 +102,11 @@ export async function generateFunnelAssets(
 ): Promise<GeneratedFunnelAssets> {
   const context = buildCoachContext(inputs);
   const mock    = generateMockAssets(inputs);
-  const style   = pickRandomStyle();
+  const style = inputs.copywriterStyle
+    ? (STYLES.find((s) => s.id === inputs.copywriterStyle) ?? pickRandomStyle())
+    : pickRandomStyle();
 
-  console.log(`[generate] Copywriter style selected: ${style.name} — ${style.tagline}`);
+  console.log(`[generate] Copywriter style: ${style.name} — ${style.tagline} (${inputs.copywriterStyle ? "coach-selected" : "auto"})`);
 
   const isApplication = inputs.funnelType === "application";
 
