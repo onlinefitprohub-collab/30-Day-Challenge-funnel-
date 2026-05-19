@@ -158,7 +158,7 @@ whatYouGetItems:
 Between 6 and 8 items. Draw DIRECTLY from the wizard's 'inclusions' and 'programPillars' — list the ACTUAL things included, not invented ones. Each item follows this format:
 "[Feature name] — [specific benefit in the client's language, referencing the outcome it creates]"
 Example: "A fully customised nutrition plan — built around your daily routine, calorie target, and food preferences so you always know exactly what to eat"
-The feature name is short and specific. The benefit after the dash must start with a LOWERCASE letter and be outcome-focused and personal — 12–20 words after the dash. Never use vague language like "helps you achieve your goals".
+The feature name is short and specific. The benefit after the dash must be outcome-focused and personal — 12–20 words after the dash. IMPORTANT: The description after the dash MUST start with a LOWERCASE letter for grammatical flow (not "Personalised Training" but "personalised training"). Never use vague language like "helps you achieve your goals".
 
 whatYouGetBullets:
 One inner array per whatYouGetItem (same order, same count). Each inner array has exactly 3 bullets.

@@ -452,6 +452,12 @@ ${objHtml}
 
   return (
     <div className="space-y-5">
+      {/* Context */}
+      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+        <p className="text-sm text-violet-900">
+          <span className="font-semibold">How to use:</span> Use this 8-phase script on your discovery calls. Go through each phase in order: Opening → Frame → Pain → Reflection → Future Pacing → Offer → Price → Close. Adapt the examples to your niche and audience. Have the follow-up email ready to send post-call.
+        </p>
+      </div>
 
       {/* Context banner */}
       <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">

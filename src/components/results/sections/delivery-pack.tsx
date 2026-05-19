@@ -119,6 +119,10 @@ export function DeliveryPackSection({ data }: { data: DeliveryPack }) {
         </p>
       </div>
 
+      <p className="text-sm text-gray-500">
+        Complete delivery pack — welcome messages, weekly coaching emails, daily SMS prompts, and completion messages.
+      </p>
+
       {/* Welcome Section */}
       <SectionDivider label="Welcome" color="blue" />
       <EmailCard label="Welcome Email" timing="Immediately after purchase" email={data.welcomeEmail} />

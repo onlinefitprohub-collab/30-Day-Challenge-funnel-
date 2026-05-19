@@ -313,9 +313,61 @@ interface Props {
   hlConnected: boolean;
 }
 
+function GHLContextSection() {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-blue-100 transition-colors"
+      >
+        <div>
+          <p className="font-semibold text-gray-900 text-sm">About HighLevel (optional)</p>
+          <p className="text-xs text-gray-600 mt-0.5">Learn what GHL is and whether you need it</p>
+        </div>
+        {expanded ? <ChevronUp className="h-4 w-4 text-blue-600 shrink-0" /> : <ChevronDown className="h-4 w-4 text-blue-600 shrink-0" />}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-blue-200 px-5 py-4 space-y-4 text-sm text-gray-700">
+          <div>
+            <p className="font-semibold text-gray-900 mb-2">What is HighLevel?</p>
+            <p className="text-xs leading-relaxed">
+              HighLevel is an all-in-one client management and funnel builder platform (costs £97–£297/month). It includes landing pages, email sequences, SMS, calendar booking, CRM, and automation. If you publish your funnel to GHL, you can manage leads, send emails, collect bookings, and track everything in one place. It's powerful but optional — you can use simpler tools instead.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-gray-900 mb-2">Do I need HighLevel?</p>
+            <p className="text-xs leading-relaxed mb-2">
+              <span className="font-semibold text-green-700">If you want to:</span> Manage leads in one dashboard, automate email follow-ups, collect bookings, track conversions, then yes — GHL makes sense.
+            </p>
+            <p className="text-xs leading-relaxed">
+              <span className="font-semibold text-blue-700">Alternatives:</span> Linktree (free landing page), Beacons, Squarespace, WordPress, or manual email lists.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-gray-900 mb-2">Prerequisites</p>
+            <ul className="text-xs space-y-1.5 text-gray-700">
+              <li className="flex gap-2"><span className="shrink-0">•</span> <span><span className="font-semibold">API Key</span> — From your HighLevel account</span></li>
+              <li className="flex gap-2"><span className="shrink-0">•</span> <span><span className="font-semibold">Location ID</span> — Your GHL location (sub-account)</span></li>
+              <li className="flex gap-2"><span className="shrink-0">•</span> <span><span className="font-semibold">5 minutes to set up</span> — Add both in Account Settings, then come back here to publish</span></li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function HighLevelSection({ data: _data, projectId, hlConnected }: Props) {
   return (
     <div className="space-y-4">
+
+      {/* GHL context */}
+      <GHLContextSection />
 
       {/* One-click publish */}
       <div>
