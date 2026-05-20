@@ -148,7 +148,7 @@ interface ResultsShellProps {
   notionConnected: boolean;
 }
 
-type SectionGroup = "offer-pages" | "sequences" | "ads" | "content" | "coaching-tools";
+type SectionGroup = "offer-pages" | "sequences" | "ads" | "content" | "coaching-tools" | "vsl" | "discovery-call" | "dm-script" | "upsell-sequence" | "sales-letter" | "launch-roadmap";
 
 const TAB_SECTION_GROUP: Partial<Record<TabId, SectionGroup>> = {
   offerSummary:               "offer-pages",
@@ -165,6 +165,12 @@ const TAB_SECTION_GROUP: Partial<Record<TabId, SectionGroup>> = {
   deliveryPack:               "content",
   testimonialHarvest:         "coaching-tools",
   pricingGuide:               "coaching-tools",
+  vslScript:                  "vsl" as SectionGroup,
+  discoveryCall:              "discovery-call" as SectionGroup,
+  dmScript:                   "dm-script" as SectionGroup,
+  upsellSequence:             "upsell-sequence" as SectionGroup,
+  salesLetter:                "sales-letter" as SectionGroup,
+  launchRoadmap:              "launch-roadmap" as SectionGroup,
 };
 
 const GROUP_LABEL: Record<SectionGroup, string> = {
@@ -173,6 +179,12 @@ const GROUP_LABEL: Record<SectionGroup, string> = {
   "ads":            "Ads & Campaign",
   "content":        "Content & Delivery",
   "coaching-tools": "Coaching Tools",
+  "vsl":            "VSL Script",
+  "discovery-call": "Discovery Call Script",
+  "dm-script":      "DM Script",
+  "upsell-sequence": "Upsell Sequence",
+  "sales-letter":   "Sales Letter",
+  "launch-roadmap": "Launch Roadmap",
 };
 
 const SIDEBAR_STORAGE_KEY = "fitpro_sidebar_collapsed_groups_v3";

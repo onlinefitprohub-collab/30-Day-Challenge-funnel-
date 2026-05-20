@@ -5,6 +5,7 @@ import {
   pushEmailSequenceAsTemplates,
   pushNurtureSequenceAsTemplates,
 } from "@/lib/highlevel/email-templates";
+import { decrypt } from "@/lib/crypto";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import type { ProjectRow } from "@/types/project";
 
@@ -81,10 +82,13 @@ export async function POST(request: Request) {
 
     const challengeName = assets.offerSummary?.challengeConcept ?? project.name;
 
+    const apiKey     = decrypt(s.hl_api_key);
+    const locationId = decrypt(s.hl_location_id);
+
     // Push welcome sequence (always)
     const sequenceResult = await pushEmailSequenceAsTemplates(
-      s.hl_location_id,
-      s.hl_api_key,
+      locationId,
+      apiKey,
       assets.emailSequence,
       challengeName,
     );
@@ -93,8 +97,8 @@ export async function POST(request: Request) {
     let nurtureResult = null;
     if (includeNurture && assets.nurtureSequence) {
       nurtureResult = await pushNurtureSequenceAsTemplates(
-        s.hl_location_id,
-        s.hl_api_key,
+        locationId,
+        apiKey,
         assets.nurtureSequence,
         challengeName,
       );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { encrypt, decrypt } from "@/lib/crypto";
 import type { UserSettingsRow } from "@/types/project";
 
 export async function POST(request: Request) {
@@ -32,8 +33,8 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("user_settings").upsert(
     {
       user_id: user.id,
-      hl_api_key: hlApiKey.trim(),
-      hl_location_id: hlLocationId.trim(),
+      hl_api_key: encrypt(hlApiKey.trim()),
+      hl_location_id: encrypt(hlLocationId.trim()),
     },
     { onConflict: "user_id" }
   );
@@ -96,13 +97,13 @@ export async function GET() {
     settings?.hl_api_key && settings?.hl_location_id
   );
 
-  const maskedKey = settings?.hl_api_key
-    ? `••••••••${settings.hl_api_key.slice(-4)}`
-    : null;
+  const rawKey = settings?.hl_api_key ? decrypt(settings.hl_api_key) : null;
+  const maskedKey = rawKey ? `••••••••${rawKey.slice(-4)}` : null;
+  const locationId = settings?.hl_location_id ? decrypt(settings.hl_location_id) : null;
 
   return NextResponse.json({
     isConnected,
     maskedKey,
-    locationId: settings?.hl_location_id ?? null,
+    locationId,
   });
 }

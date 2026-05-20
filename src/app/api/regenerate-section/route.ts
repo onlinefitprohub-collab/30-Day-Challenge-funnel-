@@ -9,6 +9,12 @@ import { buildAdsCampaignPrompt } from "@/lib/ai/prompts/ads-campaign";
 import { buildContentCalendarPrompt } from "@/lib/ai/prompts/content-calendar";
 import { buildDeliveryPackPrompt } from "@/lib/ai/prompts/delivery-pack";
 import { buildCoachingToolsPrompt } from "@/lib/ai/prompts/coaching-tools";
+import { buildVslScriptPrompt } from "@/lib/ai/prompts/vsl-script";
+import { buildDiscoveryCallPrompt } from "@/lib/ai/prompts/discovery-call";
+import { buildDmScriptPrompt } from "@/lib/ai/prompts/dm-script";
+import { buildUpsellSequencePrompt } from "@/lib/ai/prompts/upsell-sequence";
+import { buildSalesLetterPrompt } from "@/lib/ai/prompts/longform-sales-letter";
+import { buildLaunchRoadmapPrompt } from "@/lib/ai/prompts/launch-roadmap";
 import { pickRandomStyle } from "@/lib/ai/copywriter-styles";
 import {
   offerPagesResponseSchema,
@@ -17,13 +23,27 @@ import {
   contentCalendarResponseSchema,
   deliveryPackResponseSchema,
   coachingToolsResponseSchema,
+  vslScriptResponseSchema,
+  discoveryCallScriptResponseSchema,
+  instagramDmScriptResponseSchema,
+  upsellSequenceResponseSchema,
+  salesLetterSchema,
+  launchRoadmapResponseSchema,
 } from "@/lib/ai/validators";
-import { generateMockAssets } from "@/lib/ai/mock";
+import {
+  generateMockAssets,
+  buildMockVslScript,
+  buildMockDiscoveryCall,
+  buildMockDmScriptFromInputs,
+  buildMockUpsellFromInputs,
+  buildMockLongFormAssets,
+  buildMockLaunchRoadmap,
+} from "@/lib/ai/mock";
 import { wizardInputsSchema } from "@/types/wizard";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import type { ProjectInputRow, ProjectRow } from "@/types/project";
 
-type SectionGroup = "offer-pages" | "sequences" | "ads" | "content" | "coaching-tools";
+type SectionGroup = "offer-pages" | "sequences" | "ads" | "content" | "coaching-tools" | "vsl" | "discovery-call" | "dm-script" | "upsell-sequence" | "sales-letter" | "launch-roadmap";
 
 /**
  * POST /api/regenerate-section
@@ -50,7 +70,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "projectId and group are required" }, { status: 400 });
     }
 
-    const validGroups: SectionGroup[] = ["offer-pages", "sequences", "ads", "content", "coaching-tools"];
+    const validGroups: SectionGroup[] = ["offer-pages", "sequences", "ads", "content", "coaching-tools", "vsl", "discovery-call", "dm-script", "upsell-sequence", "sales-letter", "launch-roadmap"];
     if (!validGroups.includes(group as SectionGroup)) {
       return NextResponse.json(
         { error: `group must be one of: ${validGroups.join(", ")}` },
@@ -189,8 +209,7 @@ export async function POST(request: Request) {
         contentCalendar: calData.contentCalendar,
         deliveryPack:    packData.deliveryPack,
       };
-    } else {
-      // coaching-tools
+    } else if (group === "coaching-tools") {
       const result = isMockMode
         ? { data: mock as GeneratedFunnelAssets, error: null, usedFallback: true }
         : await callClaudeGroup(
@@ -204,6 +223,93 @@ export async function POST(request: Request) {
       sectionUpdates = {
         testimonialHarvestSequence: data.testimonialHarvestSequence,
         pricingGuide:               data.pricingGuide,
+      };
+    } else if (group === "vsl") {
+      const storedFunnelType = (existingOutputs.funnelType as "challenge" | "application" | undefined) ?? "challenge";
+      const result = isMockMode
+        ? { data: buildMockVslScript(validatedInputs), error: null, usedFallback: true }
+        : await callClaudeGroup(
+            buildVslScriptPrompt(context, style.promptDescription, storedFunnelType),
+            vslScriptResponseSchema,
+            "vsl",
+            5000,
+            "claude-sonnet-4-6",
+          );
+      sectionUpdates = {
+        vslScript: result.data ?? buildMockVslScript(validatedInputs),
+      };
+    } else if (group === "discovery-call") {
+      const built = buildDiscoveryCallPrompt(context, style.promptDescription);
+      const result = isMockMode
+        ? { data: buildMockDiscoveryCall(validatedInputs), error: null, usedFallback: true }
+        : await callClaudeGroup(
+            `${built.system}\n\n${built.user}`,
+            discoveryCallScriptResponseSchema,
+            "discovery-call",
+            4000,
+            "claude-sonnet-4-6",
+          );
+      sectionUpdates = {
+        discoveryCallScript: result.data ?? buildMockDiscoveryCall(validatedInputs),
+      };
+    } else if (group === "dm-script") {
+      const built = buildDmScriptPrompt(context);
+      const result = isMockMode
+        ? { data: buildMockDmScriptFromInputs(validatedInputs), error: null, usedFallback: true }
+        : await callClaudeGroup(
+            `${built.system}\n\n${built.user}`,
+            instagramDmScriptResponseSchema,
+            "dm-script",
+            3000,
+            "claude-sonnet-4-6",
+          );
+      sectionUpdates = {
+        instagramDmScript: result.data ?? buildMockDmScriptFromInputs(validatedInputs),
+      };
+    } else if (group === "upsell-sequence") {
+      const built = buildUpsellSequencePrompt(context);
+      const result = isMockMode
+        ? { data: buildMockUpsellFromInputs(validatedInputs), error: null, usedFallback: true }
+        : await callClaudeGroup(
+            `${built.system}\n\n${built.user}`,
+            upsellSequenceResponseSchema,
+            "upsell-sequence",
+            3500,
+            "claude-sonnet-4-6",
+          );
+      sectionUpdates = {
+        upsellSequence: result.data ?? buildMockUpsellFromInputs(validatedInputs),
+      };
+    } else if (group === "sales-letter") {
+      const built = buildSalesLetterPrompt(context, style.promptDescription);
+      const result = isMockMode
+        ? { data: buildMockLongFormAssets(validatedInputs).salesLetter, error: null, usedFallback: true }
+        : await callClaudeGroup(
+            `${built.system}\n\n${built.user}`,
+            salesLetterSchema,
+            "sales-letter",
+            6000,
+            "claude-sonnet-4-6",
+          );
+      sectionUpdates = {
+        longFormAssets: {
+          salesLetter: result.data ?? buildMockLongFormAssets(validatedInputs).salesLetter,
+          manyChatFlow: (existingOutputs.longFormAssets as { manyChatFlow?: unknown } | undefined)?.manyChatFlow ?? buildMockLongFormAssets(validatedInputs).manyChatFlow,
+        },
+      };
+    } else if (group === "launch-roadmap") {
+      const built = buildLaunchRoadmapPrompt(context);
+      const result = isMockMode
+        ? { data: buildMockLaunchRoadmap(validatedInputs), error: null, usedFallback: true }
+        : await callClaudeGroup(
+            `${built.system}\n\n${built.user}`,
+            launchRoadmapResponseSchema,
+            "launch-roadmap",
+            3500,
+            "claude-sonnet-4-6",
+          );
+      sectionUpdates = {
+        launchRoadmap: result.data ?? buildMockLaunchRoadmap(validatedInputs),
       };
     }
 

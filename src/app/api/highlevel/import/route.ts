@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { importToHighLevel } from "@/lib/highlevel/import";
+import { decrypt } from "@/lib/crypto";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 import type { UserSettingsRow } from "@/types/project";
 
@@ -76,10 +77,13 @@ export async function POST(request: Request) {
   const outputs = outputData.outputs as Record<string, unknown>;
   const assets = outputs as unknown as GeneratedFunnelAssets;
 
+  const apiKey     = decrypt(settings.hl_api_key);
+  const locationId = decrypt(settings.hl_location_id);
+
   try {
     const result = await importToHighLevel(
-      settings.hl_location_id,
-      settings.hl_api_key,
+      locationId,
+      apiKey,
       assets
     );
 
