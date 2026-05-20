@@ -4,7 +4,10 @@ import { User, Puzzle, Download } from "lucide-react";
 import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-card";
 import { SubscriptionCard } from "@/components/account/subscription-card";
 import { NotionSettingsCard } from "@/components/account/notion-settings-card";
+import { PasswordChangeCard } from "@/components/account/password-change-card";
+import { GdprCard } from "@/components/account/gdpr-card";
 import { getUserSubscriptionStatus } from "@/lib/subscription";
+import { decrypt } from "@/lib/crypto";
 
 export const metadata = {
   title: "Account Settings | FitPro Launch",
@@ -51,9 +54,8 @@ export default async function AccountPage({ searchParams }: PageProps) {
   }
 
   const isHLConnected = Boolean(hlSettings?.hl_api_key && hlSettings?.hl_location_id);
-  const maskedKey = hlSettings?.hl_api_key
-    ? `••••••••${hlSettings.hl_api_key.slice(-4)}`
-    : null;
+  const rawKey = hlSettings?.hl_api_key ? decrypt(hlSettings.hl_api_key) : null;
+  const maskedKey = rawKey ? `••••••••${rawKey.slice(-4)}` : null;
 
   const subscriptionStatus = user
     ? await getUserSubscriptionStatus(supabase, user.id)
@@ -89,6 +91,9 @@ export default async function AccountPage({ searchParams }: PageProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Password Change */}
+      <PasswordChangeCard />
 
       {/* Subscription */}
       <SubscriptionCard
@@ -139,6 +144,9 @@ export default async function AccountPage({ searchParams }: PageProps) {
         notionApiKey={hlSettings?.notion_api_key ?? null}
         notionPageId={hlSettings?.notion_page_id ?? null}
       />
+
+      {/* GDPR / Privacy */}
+      <GdprCard userEmail={user?.email ?? ""} />
     </div>
   );
 }
