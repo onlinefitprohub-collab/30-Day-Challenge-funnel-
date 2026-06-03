@@ -1,5 +1,5 @@
 import { hlFetch } from "./client";
-import type { EmailSequence, NurtureSequence } from "@/types/generation";
+import type { EmailSequence, NurtureSequence, DeliveryPack } from "@/types/generation";
 
 export interface GhlTemplateResult {
   name: string;
@@ -140,6 +140,35 @@ export async function pushNurtureSequenceAsTemplates(
 
     results.push(result);
     if (!result.ok && result.error) errors.push(`Week ${email.week}: ${result.error}`);
+  }
+
+  return { pushed: results, errors };
+}
+
+export async function pushDeliveryPackEmailsAsTemplates(
+  locationId: string,
+  apiKey: string,
+  pack: DeliveryPack,
+  challengeName: string,
+): Promise<PushEmailTemplatesResult> {
+  const prefix = challengeName.slice(0, 25);
+  const results: GhlTemplateResult[] = [];
+  const errors: string[] = [];
+
+  const emails: { name: string; subject: string; body: string }[] = [
+    { name: `${prefix} — Delivery Welcome`, ...pack.welcomeEmail },
+    ...pack.weeklyEmails.map((e, i) => ({
+      name: `${prefix} — Delivery Week ${String(i + 1).padStart(2, "0")}: ${e.theme.slice(0, 25)}`,
+      subject: e.subject,
+      body: e.body,
+    })),
+    { name: `${prefix} — Delivery Completion`, ...pack.completionEmail },
+  ];
+
+  for (const email of emails) {
+    const result = await createTemplate(locationId, apiKey, email.name, email.subject, toHtml(email.body));
+    results.push(result);
+    if (!result.ok && result.error) errors.push(`${email.name}: ${result.error}`);
   }
 
   return { pushed: results, errors };

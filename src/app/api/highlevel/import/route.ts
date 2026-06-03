@@ -16,14 +16,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { projectId?: string };
+  let body: { projectId?: string; includeDeliveryPack?: boolean };
   try {
-    body = (await request.json()) as { projectId?: string };
+    body = (await request.json()) as { projectId?: string; includeDeliveryPack?: boolean };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { projectId } = body;
+  const { projectId, includeDeliveryPack = false } = body;
   if (!projectId) {
     return NextResponse.json({ error: "projectId is required" }, { status: 400 });
   }
@@ -84,7 +84,8 @@ export async function POST(request: Request) {
     const result = await importToHighLevel(
       locationId,
       apiKey,
-      assets
+      assets,
+      { includeDeliveryPack }
     );
 
     return NextResponse.json(result);

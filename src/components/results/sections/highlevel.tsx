@@ -31,12 +31,16 @@ interface PublishResult {
   funnelSteps?: { id: string; name: string; pageId?: string; nativePage?: boolean }[];
   nativePages?: { stepName: string; written: boolean }[];
   errors: string[];
+  emailTemplates?:  { pushed: number; failed: number; errors: string[] };
+  smsCustomValues?: { pushed: number; failed: number; errors: string[] };
+  deliveryPack?:    { emailsPushed: number; emailsFailed: number; smsPushed: number; smsFailed: number; errors: string[] };
 }
 
-function PublishCard({ projectId, hlConnected }: { projectId: string; hlConnected: boolean }) {
+function PublishCard({ projectId, hlConnected, hasDeliveryPack }: { projectId: string; hlConnected: boolean; hasDeliveryPack: boolean }) {
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [result, setResult] = useState<PublishResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [includeDeliveryPack, setIncludeDeliveryPack] = useState(false);
 
   async function publish() {
     setState("loading");
@@ -44,7 +48,7 @@ function PublishCard({ projectId, hlConnected }: { projectId: string; hlConnecte
       const res = await fetch("/api/highlevel/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({ projectId, includeDeliveryPack }),
       });
       const data = await res.json() as PublishResult & { error?: string };
 
@@ -104,8 +108,20 @@ function PublishCard({ projectId, hlConnected }: { projectId: string; hlConnecte
           <div className="flex-1">
             <p className="font-semibold text-gray-900">One-click publish to HighLevel</p>
             <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
-              Creates a new funnel in your GHL account with all pages built out — Landing Page, Opt-In, Thank You, Booking, and Sales Letter. Uses your connected API key.
+              Creates a new funnel in your GHL account with all pages built out — Landing Page, Opt-In, Thank You, Booking, and Sales Letter — plus email templates and SMS custom values pushed directly to your GHL account.
             </p>
+            {hasDeliveryPack && (
+              <label className="mt-3 flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={includeDeliveryPack}
+                  onChange={(e) => setIncludeDeliveryPack(e.target.checked)}
+                  className="rounded border-gray-300 text-[#1a56db]"
+                />
+                Also push Delivery Pack (welcome + 4 weekly emails + 30 daily SMS)
+                <span className="text-gray-400">— adds ~20 sec</span>
+              </label>
+            )}
             <button
               onClick={publish}
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#1a56db] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#1245b5] active:scale-[0.98] transition-all shadow-sm"
@@ -125,8 +141,8 @@ function PublishCard({ projectId, hlConnected }: { projectId: string; hlConnecte
         <div className="flex items-center gap-3">
           <Loader2 className="h-5 w-5 text-blue-500 animate-spin shrink-0" />
           <div>
-            <p className="font-semibold text-blue-900 text-sm">Creating your funnel…</p>
-            <p className="text-xs text-blue-600 mt-0.5">This usually takes 5–15 seconds</p>
+            <p className="font-semibold text-blue-900 text-sm">Publishing to HighLevel…</p>
+            <p className="text-xs text-blue-600 mt-0.5">Creating funnel pages, email templates, and SMS custom values — usually 15–25 seconds</p>
           </div>
         </div>
       </div>
@@ -156,7 +172,12 @@ function PublishCard({ projectId, hlConnected }: { projectId: string; hlConnecte
   // Success
   const steps = result?.funnelSteps ?? [];
   const nativePages = result?.nativePages ?? [];
-  const warnings = result?.errors ?? [];
+  const warnings = [
+    ...(result?.errors ?? []),
+    ...(result?.emailTemplates?.errors ?? []).map((e) => `Email: ${e}`),
+    ...(result?.smsCustomValues?.errors ?? []).map((e) => `SMS: ${e}`),
+    ...(result?.deliveryPack?.errors ?? []).map((e) => `Delivery: ${e}`),
+  ];
 
   return (
     <div className="rounded-xl border border-green-200 bg-green-50 p-5 space-y-4">
@@ -205,6 +226,56 @@ function PublishCard({ projectId, hlConnected }: { projectId: string; hlConnecte
               <span className="font-medium">{s.name}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Email templates */}
+      {result?.emailTemplates && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-green-700">Email templates</p>
+          <div className="flex items-center gap-2 text-xs text-green-800">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span>{result.emailTemplates.pushed} of {result.emailTemplates.pushed + result.emailTemplates.failed} email templates created in GHL</span>
+          </div>
+          {result.emailTemplates.failed > 0 && (
+            <div className="flex items-center gap-2 text-xs text-yellow-700">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>{result.emailTemplates.failed} email template(s) failed — see warnings below</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SMS custom values */}
+      {result?.smsCustomValues && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-green-700">SMS custom values</p>
+          <div className="flex items-center gap-2 text-xs text-green-800">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span>
+              {result.smsCustomValues.pushed} SMS messages saved as GHL custom values
+              {result.smsCustomValues.pushed > 0 && (
+                <> — use <code className="bg-green-100 px-1 rounded text-[10px]">{"{{custom_values.challenge_...}}"}</code> in automations</>
+              )}
+            </span>
+          </div>
+          {result.smsCustomValues.failed > 0 && (
+            <div className="flex items-center gap-2 text-xs text-yellow-700">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>{result.smsCustomValues.failed} SMS value(s) failed — see warnings below</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delivery pack (conditional) */}
+      {result?.deliveryPack && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-green-700">Delivery pack</p>
+          <div className="flex items-center gap-2 text-xs text-green-800">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span>{result.deliveryPack.emailsPushed} delivery emails + {result.deliveryPack.smsPushed} daily SMS pushed to GHL</span>
+          </div>
         </div>
       )}
 
@@ -359,7 +430,7 @@ function GHLContextSection() {
   );
 }
 
-export function HighLevelSection({ data: _data, projectId, hlConnected }: Props) {
+export function HighLevelSection({ data, projectId, hlConnected }: Props) {
   return (
     <div className="space-y-4">
 
@@ -371,7 +442,7 @@ export function HighLevelSection({ data: _data, projectId, hlConnected }: Props)
         <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">
           Publish to HighLevel
         </h3>
-        <PublishCard projectId={projectId} hlConnected={hlConnected} />
+        <PublishCard projectId={projectId} hlConnected={hlConnected} hasDeliveryPack={!!data.deliveryPack} />
       </div>
 
       {/* Chrome Extension alternative */}
