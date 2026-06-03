@@ -5,6 +5,7 @@ import { HighLevelSettingsCard } from "@/components/account/highlevel-settings-c
 import { SubscriptionCard } from "@/components/account/subscription-card";
 import { NotionSettingsCard } from "@/components/account/notion-settings-card";
 import { PasswordChangeCard } from "@/components/account/password-change-card";
+import { EmailChangeCard } from "@/components/account/email-change-card";
 import { GdprCard } from "@/components/account/gdpr-card";
 import { getUserSubscriptionStatus } from "@/lib/subscription";
 import { decrypt } from "@/lib/crypto";
@@ -94,6 +95,9 @@ export default async function AccountPage({ searchParams }: PageProps) {
 
       {/* Password Change */}
       <PasswordChangeCard />
+
+      {/* Email Change */}
+      <EmailChangeCard currentEmail={user?.email ?? ""} />
 
       {/* Subscription */}
       <SubscriptionCard

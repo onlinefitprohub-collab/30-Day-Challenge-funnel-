@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { Users, FolderKanban, CheckCircle2, AlertCircle, Clock, Pen } from "lucide-react";
+import { Users, FolderKanban, CheckCircle2, AlertCircle, Clock, Pen, Zap } from "lucide-react";
 import { AccessManager } from "@/components/admin/access-manager";
+import { CreateUserForm } from "@/components/admin/create-user-form";
 import type { GeneratedFunnelAssets } from "@/types/generation";
 
 export const dynamic = "force-dynamic";
@@ -191,6 +192,38 @@ export default async function AdminPage() {
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Create / Invite User */}
+      <div>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+          Create / Invite User
+        </h2>
+        <CreateUserForm />
+      </div>
+
+      {/* Zapier webhook info */}
+      <div>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Zapier Integration</h2>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+              <Zap className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-900 text-sm">Webhook URL for Zapier</p>
+              <p className="mt-0.5 text-xs text-gray-500">Use this in a Zapier &quot;Webhook&quot; action to automatically create accounts when someone purchases.</p>
+              <code className="mt-2 block rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-700 break-all select-all">
+                {process.env.NEXT_PUBLIC_SITE_URL ?? "https://yoursite.com"}/api/webhooks/zapier
+              </code>
+              <div className="mt-3 space-y-1 text-xs text-gray-500">
+                <p><span className="font-semibold text-gray-700">Header:</span> <code className="bg-gray-100 px-1 rounded">x-webhook-secret: {"{ZAPIER_WEBHOOK_SECRET}"}</code></p>
+                <p><span className="font-semibold text-gray-700">Body:</span> <code className="bg-gray-100 px-1 rounded">{"{ \"email\": \"user@example.com\", \"name\": \"Jane Smith\", \"action\": \"invite_and_grant\" }"}</code></p>
+                <p><span className="font-semibold text-gray-700">Actions:</span> <code className="bg-gray-100 px-1 rounded">invite_and_grant</code> (default) · <code className="bg-gray-100 px-1 rounded">grant</code> (existing user) · <code className="bg-gray-100 px-1 rounded">invite</code> (no access) · add <code className="bg-gray-100 px-1 rounded">&quot;revoke&quot;: true</code> to remove access</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
