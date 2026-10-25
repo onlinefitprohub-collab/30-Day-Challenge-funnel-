@@ -446,12 +446,13 @@ async function doInject() {
       });
     });
     if (resp && resp.ok) {
-      if (resp.method === 'vue-store') {
+      if (resp.method === 'vue2-store' || resp.method === 'vue3-store') {
         btn.textContent = '✓ Injected directly into GHL builder!';
       } else if (resp.method === 'ui-import') {
         btn.textContent = '✓ Imported via GHL dialog!';
+      } else if (resp.method === 'ghl-localstorage') {
+        btn.textContent = '✓ Written to GHL clipboard — press Ctrl+V in builder';
       } else {
-        // Clipboard fallback — ask user to Ctrl+V
         btn.textContent = '✓ Ready — click in GHL canvas then press Ctrl+V';
       }
       btn.className = 'inject-btn success';

@@ -13,34 +13,54 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       let pageData;
       try { pageData = JSON.parse(jsonStr); } catch(e) { sendResponse({ok:false,error:'Invalid JSON'}); return; }
 
-      let method = null;
-
-      // 1. Vue2 Vuex
-      try {
-        const root = findVue2Root();
-        if (root && root.$store && !method) method = tryVueStore(root.$store, pageData) ? 'vue2-store' : null;
-      } catch(_) {}
-
-      // 2. Vue3 + Vuex/Pinia
-      if (!method) {
-        try { method = tryVue3(pageData) ? 'vue3-store' : null; } catch(_) {}
-      }
-
-      // 3. Known GHL window globals
-      if (!method) {
-        try { method = tryGHLGlobals(pageData, jsonStr) ? 'ghl-global' : null; } catch(_) {}
-      }
-
-      // 4. Automate GHL import UI
-      if (!method) {
-        try { method = (await tryUIImport(jsonStr)) ? 'ui-import' : null; } catch(_) {}
-      }
-
-      // 5. localStorage + clipboard fallback
+      // ── Step 1: Write to all known generic clipboard keys ──────────────
       CLIPBOARD_KEYS.forEach(k => { try { localStorage.setItem(k, jsonStr); } catch(_) {} });
+
+      // ── Step 2: Find GHL session ID from existing ghl.*.v1.{id} keys ──
+      // GHL uses the pattern ghl.{name}.v1.{sessionId} for all its localStorage
+      // We extract the sessionId and write to every likely clipboard variant
+      const ghlSessionIds = new Set();
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        const m = k && k.match(/^ghl\.[^.]+\.v\d+\.(.+)$/);
+        if (m) ghlSessionIds.add(m[1]);
+      }
+
+      const GHL_CLIPBOARD_NAMES = [
+        'clipboard', 'builderClipboard', 'sectionClipboard', 'pageClipboard',
+        'copySection', 'copyElement', 'copyRow', 'pasteData',
+        'builderCopy', 'pageBuilderClipboard', 'sectionCopy',
+        'importPage', 'importData', 'builderImport',
+      ];
+
+      ghlSessionIds.forEach(id => {
+        GHL_CLIPBOARD_NAMES.forEach(name => {
+          ['v1','v2'].forEach(v => {
+            try { localStorage.setItem(`ghl.${name}.${v}.${id}`, jsonStr); } catch(_) {}
+          });
+        });
+      });
+
+      // ── Step 3: Try Vue/React in all frames (GHL builder may be in iframe) ──
+      let method = null;
+      try {
+        // Main frame Vue2
+        const root = findVue2Root(); if (root?.$store) method = tryVueStore(root.$store, pageData) ? 'vue2-store' : null;
+      } catch(_) {}
+      if (!method) { try { method = tryVue3(pageData) ? 'vue3-store' : null; } catch(_) {} }
+      if (!method) { try { method = tryGHLGlobals(pageData, jsonStr) ? 'ghl-global' : null; } catch(_) {} }
+      if (!method) { try { method = (await tryUIImport(jsonStr)) ? 'ui-import' : null; } catch(_) {} }
+
+      // ── Step 4: System clipboard ─────────────────────────────────────
       try { await navigator.clipboard.writeText(jsonStr); } catch(_) {}
 
-      sendResponse({ ok: true, method: method || 'clipboard', needsCtrlV: !method });
+      const ghlKeysWritten = ghlSessionIds.size > 0;
+      sendResponse({
+        ok: true,
+        method: method || (ghlKeysWritten ? 'ghl-localstorage' : 'clipboard'),
+        ghlSessionIds: [...ghlSessionIds],
+        needsCtrlV: !method,
+      });
     })();
     return true;
   }
