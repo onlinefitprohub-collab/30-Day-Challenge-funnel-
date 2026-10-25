@@ -1,193 +1,388 @@
-// ===== COMPILER =====
-function uid(p) {
-  const c = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let s = '';
-  for (let i = 0; i < 8; i++) s += c[Math.floor(Math.random() * c.length)];
-  return `${p}-${s}`;
-}
-function wv(value, unit) { return unit ? { value, unit } : { value }; }
+// ===== SHARED CONSTANTS (ported from src/lib/ghl/builder.ts) =====
+const VISIBILITY = { value: { hideDesktop: false, hideMobile: false } };
+const BG_IMAGE = { value: { mediaType:"image", url:"", opacity:"1", options:"bgCover", svgCode:"", videoUrl:"", videoThumbnail:"", videoLoop:true } };
+const BORDER_CLASS = { borders:{ value:"noBorder" }, borderRadius:{ value:"radius0" }, radiusEdge:{ value:"none" } };
+const ANIMATION_CLASS = { entranceAnimation:{ value:null }, animationScale:{ value:1 }, animationDuration:{ value:1 }, animationDelay:{ value:0 }, animationEasing:{ value:"linear" } };
+const ICON_EMPTY = { value:{ name:"", unicode:"", fontFamily:"" } };
+const ELEM_WRAPPER = { marginTop:{unit:"px",value:0}, marginBottom:{unit:"px",value:0}, marginLeft:{unit:"px",value:0}, marginRight:{unit:"px",value:0}, width:{value:"auto",unit:""}, height:{value:"auto",unit:""} };
+const ZERO_MARGIN  = { marginTop:{unit:"px",value:0}, marginBottom:{unit:"px",value:0}, marginLeft:{unit:"px",value:0}, marginRight:{unit:"px",value:0} };
 
+function ghlId(p) { return `${p}-${Math.random().toString(36).slice(2,10)}`; }
+
+function buildEnvelope() {
+  const pageStyles = `:root{\n --primary:#e91e8c;\n --secondary:#c2185b;\n --dark:#0a0a0a;\n --mid:#1a1a2e;\n --white:#ffffff;\n --black:#000000;\n --gray:#cbd5e0;\n --transparent:transparent;\n --text-color:#ffffff;\n --link-color:#e91e8c;\n --headlinefont:'Bebas Neue',sans-serif;\n --contentfont:'Poppins',sans-serif;\n}\nbody{background-color:#0a0a0a;color:#ffffff;}`;
+  return {
+    fontsForPreview: ["'Roboto'","'Montserrat'","'Bebas Neue'","'Poppins'"],
+    general: { general: {
+      colors: [
+        { label:"Primary", value:"#e91e8c" }, { label:"Secondary", value:"#c2185b" },
+        { label:"Dark", value:"#0a0a0a" }, { label:"Mid", value:"#1a1a2e" },
+        { label:"White", value:"#ffffff" }, { label:"Gray", value:"#cbd5e0" },
+        { label:"Black", value:"#000000" }, { label:"Transparent", value:"transparent" },
+      ],
+      customFonts: [],
+      fontsToLoad: ["Arial","Lato","Roboto","Open Sans","Oxygen","Oswald","Montserrat","Manrope","Poppins","Bebas Neue"],
+      fontsToLoadForPreview: ["Roboto","Montserrat","Bebas Neue","Poppins"],
+      pageStyles: "body { font-family: var(--contentfont, 'Poppins', sans-serif); background-color: var(--dark, #0a0a0a); color: #ffffff; }",
+    }},
+    id: Math.random().toString(36).slice(2,14),
+    pageStyles, popups:[], popupsList:[], settings:{}, trackingCode:"",
+  };
+}
+
+// ===== ELEMENT MAKERS =====
+function makeHeading(nodes, text, tag, gs) {
+  const id = ghlId('el');
+  const defD = tag==='h1'?48:tag==='h2'?36:24;
+  const defM = tag==='h1'?36:tag==='h2'?26:20;
+  nodes[id] = {
+    extra:{ nodeId:`c${id}`, visibility:VISIBILITY, text:{value:`<${tag}>${text}</${tag}>`},
+      mobileFontSize:{value:defM,unit:"px"}, desktopFontSize:{value:defD,unit:"px"},
+      typography:{value:"var(--headlinefont)"}, inlineTypographies:{value:[]},
+      icon:ICON_EMPTY, customClass:{value:[]}, elementVersion:{value:2} },
+    class:{ ...BORDER_CLASS, ...ANIMATION_CLASS },
+    styles:{
+      backgroundColor:{value:"var(--transparent)"}, color:{value:"var(--text-color)"},
+      inlineColors:{value:[]}, boldTextColor:{value:"var(--text-color)"},
+      italicTextColor:{value:"var(--text-color)"}, underlineTextColor:{value:"var(--text-color)"},
+      linkTextColor:{value:"var(--link-color)"}, iconColor:{value:"var(--text-color)"},
+      fontFamily:{value:""}, fontWeight:{desktop:"700",value:"normal"}, boxShadow:{value:"none"},
+      paddingLeft:{value:0,unit:"px"}, paddingRight:{value:0,unit:"px"},
+      paddingTop:{value:0,unit:"px"}, paddingBottom:{value:0,unit:"px"},
+      opacity:{value:"1"}, textShadow:{value:"none"},
+      borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      lineHeight:{value:1.3,unit:"em"}, textTransform:{value:"none"},
+      letterSpacing:{value:"0",unit:"px"}, textAlign:{value:"left"},
+      ...gs,
+    },
+    wrapper:{...ELEM_WRAPPER}, customCss:[], id,
+    mobileStyles:{}, mobileWrapper:{}, type:"element", child:[], meta:"heading", tagName:"c-heading", title:"Headline", tag,
+  };
+  return id;
+}
+
+function makeParagraph(nodes, text, gs) {
+  const id = ghlId('el');
+  nodes[id] = {
+    extra:{ nodeId:`c${id}`, visibility:VISIBILITY, text:{value:`<p>${text}</p>`},
+      mobileFontSize:{value:16,unit:"px"}, desktopFontSize:{value:16,unit:"px"},
+      typography:{value:"var(--contentfont)"}, inlineTypographies:{value:[]},
+      icon:ICON_EMPTY, customClass:{value:[]}, elementVersion:{value:2} },
+    class:{ ...BORDER_CLASS, ...ANIMATION_CLASS },
+    styles:{
+      backgroundColor:{value:"var(--transparent)"}, color:{value:"var(--text-color)"},
+      inlineColors:{value:[]}, boldTextColor:{value:"var(--text-color)"},
+      italicTextColor:{value:"var(--text-color)"}, underlineTextColor:{value:"var(--text-color)"},
+      linkTextColor:{value:"var(--link-color)"}, iconColor:{value:"var(--text-color)"},
+      fontFamily:{value:""}, fontWeight:{desktop:"400",value:"normal"}, boxShadow:{value:"none"},
+      paddingLeft:{value:0,unit:"px"}, paddingRight:{value:0,unit:"px"},
+      paddingTop:{value:8,unit:"px"}, paddingBottom:{value:8,unit:"px"},
+      opacity:{value:"1"}, textShadow:{value:"none"},
+      borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      lineHeight:{value:1.6,unit:"em"}, textTransform:{value:"none"},
+      letterSpacing:{value:"0",unit:"px"}, textAlign:{value:"left"},
+      ...gs,
+    },
+    wrapper:{...ELEM_WRAPPER}, customCss:[], id,
+    mobileStyles:{}, mobileWrapper:{}, type:"element", child:[], meta:"paragraph", tagName:"c-paragraph", title:"Paragraph", tag:"p",
+  };
+  return id;
+}
+
+function makeButton(nodes, label, action, url, gs) {
+  const id = ghlId('el');
+  nodes[id] = {
+    extra:{ nodeId:`c${id}`, visibility:VISIBILITY,
+      text:{value:label}, subText:{value:""},
+      action:{value:action||"next-step"}, url:{value:url||""},
+      icon:ICON_EMPTY, iconType:{value:"icon"}, iconPosition:{value:"right"},
+      customClass:{value:[]}, elementVersion:{value:2} },
+    class:{ ...BORDER_CLASS, ...ANIMATION_CLASS, buttonBgStyle:{value:"flat"}, buttonWidth:{value:"auto"}, borders:{value:"borderFull"} },
+    styles:{
+      backgroundColor:{value:"var(--primary)"}, color:{value:"var(--white)"},
+      borderColor:{value:"var(--primary)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      borderRadius:{value:50,unit:"px"}, boxShadow:{value:"none"},
+      paddingLeft:{value:24,unit:"px"}, paddingRight:{value:24,unit:"px"},
+      paddingTop:{value:14,unit:"px"}, paddingBottom:{value:14,unit:"px"},
+      opacity:{value:"1"}, fontWeight:{desktop:"700",value:"normal"},
+      letterSpacing:{value:"0",unit:"px"}, textTransform:{value:"none"},
+      ...gs,
+    },
+    wrapper:{...ELEM_WRAPPER}, customCss:[], id,
+    mobileStyles:{width:{value:100,unit:"%"}}, mobileWrapper:{},
+    type:"element", child:[], meta:"button", tagName:"c-button", title:"Button",
+  };
+  return id;
+}
+
+function makeImage(nodes, src, alt, gs) {
+  const id = ghlId('el');
+  nodes[id] = {
+    extra:{ nodeId:`c${id}`, visibility:VISIBILITY, src:{value:src||""}, alt:{value:alt||""},
+      loading:{value:"lazy"}, customClass:{value:[]}, elementVersion:{value:2} },
+    class:{ ...BORDER_CLASS, ...ANIMATION_CLASS },
+    styles:{
+      maxWidth:{value:100,unit:"%"}, height:{value:"auto",unit:""},
+      borderRadius:{value:0,unit:"px"}, boxShadow:{value:"none"},
+      borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      opacity:{value:"1"},
+      ...gs,
+    },
+    wrapper:{...ELEM_WRAPPER}, customCss:[], id,
+    mobileStyles:{}, mobileWrapper:{}, type:"element", child:[], meta:"image", tagName:"c-image", title:"Image",
+  };
+  return id;
+}
+
+function makeBulletList(nodes, items, gs) {
+  const id = ghlId('el');
+  nodes[id] = {
+    extra:{ nodeId:`c${id}`, visibility:VISIBILITY,
+      items:{value:items.map(t=>({text:t,icon:"check"}))},
+      typography:{value:"var(--contentfont)"}, inlineTypographies:{value:[]},
+      customClass:{value:[]}, elementVersion:{value:2} },
+    class:{ ...BORDER_CLASS, ...ANIMATION_CLASS },
+    styles:{
+      backgroundColor:{value:"var(--transparent)"}, color:{value:"var(--text-color)"},
+      iconColor:{value:"var(--primary)"}, fontFamily:{value:""},
+      fontWeight:{desktop:"400",value:"normal"}, boxShadow:{value:"none"},
+      paddingLeft:{value:0,unit:"px"}, paddingRight:{value:0,unit:"px"},
+      paddingTop:{value:8,unit:"px"}, paddingBottom:{value:8,unit:"px"},
+      opacity:{value:"1"}, lineHeight:{value:1.6,unit:"em"},
+      borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      textAlign:{value:"left"},
+      ...gs,
+    },
+    wrapper:{...ELEM_WRAPPER}, customCss:[], id,
+    mobileStyles:{}, mobileWrapper:{}, type:"element", child:[], meta:"bulletList", tagName:"c-bullet-list", title:"Bullet List",
+  };
+  return id;
+}
+
+function makeDivider(nodes, gs) {
+  const id = ghlId('el');
+  nodes[id] = {
+    extra:{ nodeId:`c${id}`, visibility:VISIBILITY, customClass:{value:[]}, elementVersion:{value:2} },
+    class:{ ...BORDER_CLASS, ...ANIMATION_CLASS },
+    styles:{
+      borderColor:{value:"var(--gray)"}, borderWidth:{value:"1",unit:"px"}, borderStyle:{value:"solid"},
+      marginTop:{value:16,unit:"px"}, marginBottom:{value:16,unit:"px"}, opacity:{value:"1"},
+      ...gs,
+    },
+    wrapper:{...ELEM_WRAPPER}, customCss:[], id,
+    mobileStyles:{}, mobileWrapper:{}, type:"element", child:[], meta:"divider", tagName:"c-divider", title:"Divider",
+  };
+  return id;
+}
+
+function makeCol(nodes, childIds, widthPct, alignStyle) {
+  const id = ghlId('col');
+  const styles = {
+    boxShadow:{value:"none"},
+    paddingLeft:{value:16,unit:"px"}, paddingRight:{value:16,unit:"px"},
+    paddingTop:{value:0,unit:"px"}, paddingBottom:{value:0,unit:"px"},
+    backgroundColor:{value:"var(--transparent)"}, background:{value:"none"},
+    backdropFilter:{value:"none"},
+    borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+    width:{value:widthPct||100,unit:"%"},
+  };
+  if (alignStyle) styles.textAlign = { value:alignStyle };
+  nodes[id] = {
+    id, type:"col", child:childIds, class:{...BORDER_CLASS}, styles,
+    extra:{ visibility:VISIBILITY, bgImage:BG_IMAGE, columnLayout:{value:"column"},
+      justifyContentColumnLayout:{value:"center"}, alignContentColumnLayout:{value:"inherit"},
+      forceColumnLayoutForMobile:{value:true}, customClass:{value:[]}, elementVersion:{value:2} },
+    wrapper:{...ZERO_MARGIN},
+    tagName:"c-column", meta:"col", mobileStyles:{}, mobileWrapper:{}, title:"1st Column", noOfColumns:1,
+  };
+  return id;
+}
+
+function makeRow(nodes, colIds) {
+  const id = ghlId('row');
+  nodes[id] = {
+    id, type:"row", child:colIds,
+    class:{ alignRow:{value:"row-align-center"}, ...BORDER_CLASS },
+    styles:{
+      boxShadow:{value:"none"},
+      paddingLeft:{value:0,unit:"px"}, paddingRight:{value:0,unit:"px"},
+      paddingTop:{value:0,unit:"px"}, paddingBottom:{value:0,unit:"px"},
+      backgroundColor:{value:"var(--transparent)"}, background:{value:"none"},
+      backdropFilter:{value:"none"},
+      borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      maxWidth:{value:1200,unit:"px"},
+    },
+    extra:{ visibility:VISIBILITY, bgImage:BG_IMAGE, rowWidth:{value:100,unit:"%"}, customClass:{value:[]} },
+    wrapper:{ marginTop:{unit:"px",value:0}, marginBottom:{unit:"px",value:0}, marginLeft:{unit:"",value:"auto"}, marginRight:{unit:"",value:"auto"} },
+    tagName:"c-row", meta:"row", mobileStyles:{}, mobileWrapper:{},
+    title: colIds.length===1?"1 Column Row":`${colIds.length} Column Row`,
+  };
+  return id;
+}
+
+function makeSection(rowIds, bgColor) {
+  const id = ghlId('section');
+  return {
+    id,
+    metaData:{
+      id, type:"section", child:rowIds,
+      class:{ width:{value:"fullSection"}, borders:{value:"noBorder"}, borderRadius:{value:"radius0"}, radiusEdge:{value:"none"} },
+      styles:{
+        boxShadow:{value:"none"},
+        paddingLeft:{value:0,unit:"px"}, paddingRight:{value:0,unit:"px"},
+        paddingTop:{value:80,unit:"px"}, paddingBottom:{value:80,unit:"px"},
+        marginTop:{value:0,unit:"px"}, marginBottom:{value:0,unit:"px"},
+        marginLeft:{value:0,unit:"px"}, marginRight:{value:0,unit:"px"},
+        backgroundColor: bgColor?{value:bgColor}:{value:"var(--transparent)"},
+        background:{value:"none"}, backdropFilter:{value:"none"},
+        borderColor:{value:"var(--black)"}, borderWidth:{value:"2",unit:"px"}, borderStyle:{value:"solid"},
+      },
+      extra:{ sticky:{value:"noneSticky"}, visibility:VISIBILITY, bgImage:BG_IMAGE,
+        allowRowMaxWidth:{value:false}, customClass:{value:[]}, elementScreenshot:{value:[]} },
+      wrapper:{}, meta:"section", tagName:"c-section", title:"Section",
+      mobileStyles:{ paddingTop:{value:48,unit:"px"}, paddingBottom:{value:48,unit:"px"} },
+      mobileWrapper:{},
+    },
+    elements:[],
+  };
+}
+
+// ===== HTML PARSER =====
 function parseCss(str) {
   const o = {};
   if (!str) return o;
-  str.split(';').forEach(r => {
-    const i = r.indexOf(':');
-    if (i < 0) return;
-    const k = r.slice(0, i).trim(), v = r.slice(i + 1).trim();
-    if (k && v) o[k] = v;
+  str.split(';').forEach(r=>{
+    const i=r.indexOf(':'); if(i<0)return;
+    const k=r.slice(0,i).trim(), v=r.slice(i+1).trim();
+    if(k&&v) o[k]=v;
   });
   return o;
 }
-function parsePx(v) { if (!v) return null; const n = parseFloat(v); return isNaN(n) ? null : n; }
+
+function cssToGhl(cssObj) {
+  const s = {};
+  if (cssObj['color'])            s.color            = { value:cssObj['color'] };
+  if (cssObj['background-color']) s.backgroundColor  = { value:cssObj['background-color'] };
+  if (cssObj['font-size'])        s.desktopFontSize  = { value:parseFloat(cssObj['font-size']), unit:'px' };
+  if (cssObj['font-weight'])      s.fontWeight       = { desktop:cssObj['font-weight'], value:'normal' };
+  if (cssObj['text-align'])       s.textAlign        = { value:cssObj['text-align'] };
+  if (cssObj['border-radius'])    s.borderRadius     = { value:cssObj['border-radius'] };
+  if (cssObj['line-height'])      s.lineHeight       = { value:parseFloat(cssObj['line-height']), unit:'em' };
+  return s;
+}
 
 function detectType(el) {
   const t = el.getAttribute('data-ghl-type');
   if (t) return t;
   const tag = el.tagName.toLowerCase();
-  const cls = el.className || '';
-  if (tag === 'h1' || tag === 'h2') return 'heading';
+  const cls = (el.className||'').toLowerCase();
+  if (tag==='h1'||tag==='h2') return 'heading';
   if (/^h[3-6]$/.test(tag)) return 'sub-heading';
-  if (tag === 'p') return 'paragraph';
-  if (tag === 'button') return 'button';
-  if (tag === 'a' && (cls.includes('btn') || cls.includes('button') || el.getAttribute('data-ghl-action'))) return 'button';
-  if (tag === 'img') return 'image';
-  if (tag === 'ul' || tag === 'ol') return 'bullet-list';
-  if (tag === 'hr') return 'divider';
-  if (tag === 'video') return 'video';
-  if (tag === 'iframe') { const s = el.getAttribute('src') || ''; if (s.includes('youtube') || s.includes('vimeo')) return 'video'; }
-  if (tag === 'form') return 'form';
-  if (tag === 'progress' || cls.includes('progress-bar')) return 'progress-bar';
-  if ((tag === 'div' || tag === 'span') && el.children.length === 0 && el.textContent.trim()) return 'paragraph';
+  if (tag==='p') return 'paragraph';
+  if (tag==='button') return 'button';
+  if (tag==='a'&&(cls.includes('btn')||cls.includes('button')||el.getAttribute('data-ghl-action'))) return 'button';
+  if (tag==='img') return 'image';
+  if (tag==='ul'||tag==='ol') return 'bullet-list';
+  if (tag==='hr') return 'divider';
+  if ((tag==='div'||tag==='span')&&el.children.length===0&&el.textContent.trim()) return 'paragraph';
   return null;
 }
 
 function isLayout(el) {
   const t = el.getAttribute('data-ghl-type');
-  if (t === 'section' || t === 'row' || t === 'col') return t;
+  if (t==='section') return 'section';
+  if (t==='row') return 'row';
+  if (t==='col') return 'col';
   const tag = el.tagName.toLowerCase();
-  const cls = el.className || '';
-  if (tag === 'section' || cls.includes('section')) return 'section';
+  const cls = (el.className||'').toLowerCase();
+  if (tag==='section') return 'section';
   if (cls.match(/\brow\b/)) return 'row';
-  if (cls.match(/\bcol(umn)?\b/) || cls.match(/\bcol-\d/)) return 'col';
+  if (cls.match(/\bcol(umn)?\b/)||cls.match(/\bcol-\d/)) return 'col';
   return null;
 }
 
-function compileLeaf(el, pool) {
+function buildLeaf(nodes, el) {
   const type = detectType(el);
   if (!type) return null;
-  const id = uid('el');
+  const gs = cssToGhl(parseCss(el.getAttribute('style')));
+  const g = k=>el.getAttribute(`data-ghl-${k}`);
+  if (type==='heading'||type==='sub-heading') return makeHeading(nodes, el.innerHTML.trim(), el.tagName.toLowerCase()||'h2', gs);
+  if (type==='paragraph') return makeParagraph(nodes, el.innerHTML.trim(), gs);
+  if (type==='button') { const url=g('url')||el.getAttribute('href')||''; return makeButton(nodes, el.textContent.trim(), g('action')||(url?'url':'next-step'), url, gs); }
+  if (type==='image') return makeImage(nodes, g('src')||el.getAttribute('src')||'', g('alt')||el.getAttribute('alt')||'', gs);
+  if (type==='bullet-list') { const lis=Array.from(el.querySelectorAll('li')); return makeBulletList(nodes, lis.length?lis.map(li=>li.textContent.trim()):[el.textContent.trim()], gs); }
+  if (type==='divider') return makeDivider(nodes, gs);
+  return null;
+}
+
+function buildCol(nodes, el) {
+  const childIds = [];
+  for (const c of el.children) { const id=buildLeaf(nodes,c); if(id) childIds.push(id); }
   const css = parseCss(el.getAttribute('style'));
-  const g = k => el.getAttribute(`data-ghl-${k}`);
-  const node = { id, type: 'element', tagName: `c-${type}`, meta: type, child: [], styles: {}, extra: {}, class: {}, mobileStyles: {}, mobileWrapper: {}, customCss: [] };
-  node.extra.visibility = { value: { hideDesktop: false, hideMobile: false } };
-  node.extra.nodeId = { value: 'c' + id };
-
-  function common() {
-    const color = g('color') || css['color']; if (color) node.styles.color = wv(color);
-    const bg = g('bg') || css['background-color'] || css['background'];
-    if (bg && !bg.includes('gradient') && !bg.includes('url')) node.styles.backgroundColor = wv(bg);
-    const fw = g('font-weight') || css['font-weight']; if (fw) node.styles.fontWeight = wv(fw);
-    const ta = g('align') || css['text-align']; if (ta) { node.styles.textAlign = wv(ta); node.class.textAlign = wv(ta); }
-    const lh = css['line-height']; if (lh) node.styles.lineHeight = wv(lh);
-    const fs = g('font-size') ? +g('font-size') : parsePx(css['font-size']); if (fs) node.extra.desktopFontSize = wv(fs, 'px');
-    const mfs = g('mobile-font-size') ? +g('mobile-font-size') : null; if (mfs) node.extra.mobileFontSize = wv(mfs, 'px');
-  }
-
-  switch (type) {
-    case 'heading': case 'sub-heading':
-      node.meta = type === 'heading' ? 'headline' : 'subHeadline';
-      node.extra.text = { value: el.innerHTML.trim() };
-      node.extra.tag = { value: g('tag') || el.tagName.toLowerCase() };
-      common(); break;
-    case 'paragraph':
-      node.meta = 'paragraph'; node.extra.text = { value: el.innerHTML.trim() }; common(); break;
-    case 'button': {
-      node.meta = 'button'; node.extra.text = { value: el.textContent.trim() };
-      node.extra.action = { value: g('action') || (el.getAttribute('href') ? 'url' : 'next-step') };
-      const href = g('url') || el.getAttribute('href'); if (href && href !== '#') node.extra.url = { value: href };
-      const bg = g('bg') || css['background-color'] || css['background'];
-      if (bg && !bg.includes('gradient')) { node.styles.backgroundColor = wv(bg); node.class.buttonBgStyle = { value: 'custom' }; }
-      const color = g('color') || css['color']; if (color) node.styles.color = wv(color);
-      const br = g('border-radius') || css['border-radius']; if (br) { node.styles.borderRadius = wv(br); node.class.borderRadius = { value: 'radius5' }; }
-      const fw = g('font-weight') || css['font-weight']; if (fw) node.styles.fontWeight = { value: '', desktop: fw };
-      const fs = g('font-size') ? +g('font-size') : parsePx(css['font-size']); if (fs) node.extra.desktopFontSize = wv(fs, 'px');
-      node.class.borders = { value: 'borderFull' }; node.mobileStyles.width = wv(100, '%'); break;
-    }
-    case 'image':
-      node.meta = 'image'; node.extra.src = { value: g('src') || el.getAttribute('src') || '' };
-      node.extra.alt = { value: g('alt') || el.getAttribute('alt') || '' };
-      { const lnk = g('link-url'); if (lnk) node.extra.linkUrl = { value: lnk };
-        const iw = parsePx(css['width']); if (iw) node.styles.width = wv(iw, 'px');
-        const ibr = css['border-radius']; if (ibr) node.styles.borderRadius = wv(ibr); } break;
-    case 'video':
-      node.meta = 'video'; node.extra.src = { value: g('src') || el.getAttribute('src') || '' };
-      node.extra.autoplay = { value: g('autoplay') === 'true' || el.hasAttribute('autoplay') };
-      node.extra.muted = { value: g('muted') !== 'false' }; node.extra.loop = { value: g('loop') === 'true' }; break;
-    case 'divider':
-      node.meta = 'divider';
-      { const dbc = g('color') || css['border-color'] || css['background-color']; if (dbc) node.styles.borderColor = wv(dbc);
-        const mt = css['margin-top']; if (mt) node.styles.marginTop = wv(mt);
-        const mb = css['margin-bottom']; if (mb) node.styles.marginBottom = wv(mb); } break;
-    case 'bullet-list': {
-      node.meta = 'bulletList';
-      const lis = Array.from(el.querySelectorAll('li'));
-      const items = lis.length ? lis.map(li => ({ text: li.textContent.trim(), icon: li.getAttribute('data-ghl-icon') || 'check' })) : [{ text: el.textContent.trim(), icon: 'check' }];
-      node.extra.items = { value: items }; common();
-      const ic = g('icon-color'); if (ic) node.styles.iconColor = wv(ic); break;
-    }
-    case 'progress-bar':
-      node.meta = 'progressBar';
-      node.extra.label = { value: g('label') || el.getAttribute('aria-label') || el.textContent.trim() || '' };
-      node.extra.percentage = { value: +(g('percent') || el.getAttribute('value') || 50) };
-      { const pbg = g('bg') || css['background-color']; if (pbg) node.styles.backgroundColor = wv(pbg);
-        const fc = g('fill-color'); if (fc) node.styles.fillColor = wv(fc);
-        const pbr = g('border-radius') || css['border-radius']; if (pbr) node.styles.borderRadius = wv(pbr); } break;
-    case 'form':
-      node.meta = 'form';
-      node.extra.formId = { value: g('form-id') || '' };
-      node.extra.redirectUrl = { value: g('redirect-url') || el.getAttribute('action') || '' };
-      node.extra.buttonText = { value: g('button-text') || 'Submit' }; break;
-    default: return null;
-  }
-  pool.push(node);
-  return id;
+  return makeCol(nodes, childIds, parseInt(el.getAttribute('data-ghl-width')||css['width']||'100')||100, el.getAttribute('data-ghl-align')||css['text-align']||null);
 }
 
-function compileCol(el, pool) {
-  const id = uid('col'); const childIds = []; const css = parseCss(el.getAttribute('style')); const g = k => el.getAttribute(`data-ghl-${k}`);
-  for (const c of el.children) { const lid = compileLeaf(c, pool); if (lid) childIds.push(lid); }
-  const node = { id, type: 'col', tagName: 'c-column', child: childIds, styles: {}, extra: {}, class: {}, mobileStyles: {}, mobileWrapper: {}, customCss: [] };
-  const w = g('width'); if (w) node.styles.width = wv(+w, '%');
-  const bg = g('bg') || css['background-color']; if (bg) node.styles.backgroundColor = wv(bg);
-  pool.push(node); return id;
-}
-
-function compileRow(el, pool) {
-  const id = uid('row'); const childIds = []; const css = parseCss(el.getAttribute('style')); const g = k => el.getAttribute(`data-ghl-${k}`);
-  const cols = Array.from(el.children).filter(c => isLayout(c) === 'col' || c.getAttribute('data-ghl-type') === 'col');
-  if (cols.length > 0) { cols.forEach(c => childIds.push(compileCol(c, pool))); }
+function buildRow(nodes, el) {
+  const cols = Array.from(el.children).filter(c=>isLayout(c)==='col'||c.getAttribute('data-ghl-type')==='col');
+  let colIds;
+  if (cols.length) { colIds = cols.map(c=>buildCol(nodes,c)); }
   else {
-    const fc = document.createElement('div'); fc.setAttribute('data-ghl-type', 'col'); fc.setAttribute('data-ghl-width', '100');
-    Array.from(el.children).forEach(c => fc.appendChild(c.cloneNode(true))); childIds.push(compileCol(fc, pool));
+    const fc=document.createElement('div'); fc.setAttribute('data-ghl-type','col');
+    Array.from(el.children).forEach(c=>fc.appendChild(c.cloneNode(true)));
+    colIds=[buildCol(nodes,fc)];
   }
-  const node = { id, type: 'row', tagName: 'c-row', child: childIds, styles: {}, extra: {}, class: {}, mobileStyles: {}, mobileWrapper: {}, customCss: [] };
-  const mw = g('max-width') || parsePx(css['max-width']); if (mw) node.styles.maxWidth = wv(+mw, 'px');
-  pool.push(node); return id;
+  return makeRow(nodes, colIds);
 }
 
-function compileSection(el) {
-  const sId = uid('section'); const pool = []; const childIds = []; const css = parseCss(el.getAttribute('style')); const g = k => el.getAttribute(`data-ghl-${k}`);
-  const rows = Array.from(el.children).filter(c => isLayout(c) === 'row' || c.getAttribute('data-ghl-type') === 'row');
-  if (rows.length > 0) { rows.forEach(c => childIds.push(compileRow(c, pool))); }
+function buildSection(nodes, el) {
+  const css = parseCss(el.getAttribute('style'));
+  const bg = el.getAttribute('data-ghl-bg')||css['background-color']||null;
+  const rows = Array.from(el.children).filter(c=>isLayout(c)==='row'||c.getAttribute('data-ghl-type')==='row');
+  let rowIds;
+  if (rows.length) { rowIds=rows.map(r=>buildRow(nodes,r)); }
   else {
-    const fr = document.createElement('div'); fr.setAttribute('data-ghl-type', 'row');
-    Array.from(el.children).forEach(c => fr.appendChild(c.cloneNode(true))); childIds.push(compileRow(fr, pool));
+    const fr=document.createElement('div'); fr.setAttribute('data-ghl-type','row');
+    Array.from(el.children).forEach(c=>fr.appendChild(c.cloneNode(true)));
+    rowIds=[buildRow(nodes,fr)];
   }
-  const section = { id: sId, type: 'section', tagName: 'c-section', child: childIds, styles: {}, extra: {}, class: {}, elements: pool };
-  const bg = g('bg') || css['background-color'] || css['background']; if (bg && !bg.includes('gradient')) section.styles.backgroundColor = wv(bg);
-  const pad = g('padding') || css['padding']; if (pad) section.styles.padding = wv(pad);
-  return section;
+  return makeSection(rowIds, bg);
 }
 
+// ===== COMPILE =====
 let autoWrapped = false;
+
 function compile(html) {
   autoWrapped = false;
-  const tmp = document.createElement('div'); tmp.innerHTML = html;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const nodes = {};
   const sections = [];
+
   function walk(node) {
     for (const c of node.children) {
-      const lt = isLayout(c), gt = c.getAttribute('data-ghl-type');
-      if (lt === 'section' || gt === 'section' || c.tagName.toLowerCase() === 'section') sections.push(compileSection(c));
+      const lt = isLayout(c);
+      if (lt==='section'||c.tagName.toLowerCase()==='section') sections.push(buildSection(nodes,c));
       else walk(c);
     }
   }
   walk(tmp);
+
   if (!sections.length && tmp.children.length) {
     autoWrapped = true;
-    const fs = document.createElement('div'); fs.setAttribute('data-ghl-type', 'section');
-    Array.from(tmp.children).forEach(c => fs.appendChild(c.cloneNode(true))); sections.push(compileSection(fs));
+    const fs=document.createElement('div'); fs.setAttribute('data-ghl-type','section');
+    Array.from(tmp.children).forEach(c=>fs.appendChild(c.cloneNode(true)));
+    sections.push(buildSection(nodes,fs));
   }
-  return { sections, settings: {}, general: {}, pageStyles: {}, trackingCode: '', fontsForPreview: [], popups: [], popupsList: [] };
+
+  // DFS flatten each section's nodes into its elements array
+  for (const sec of sections) {
+    const flat = [];
+    const dfs = ids => { for (const id of ids) { const n=nodes[id]; if(!n)continue; flat.push(n); dfs(n.child||[]); } };
+    dfs(sec.metaData.child||[]);
+    sec.elements = flat;
+  }
+
+  return { ...buildEnvelope(), sections };
 }
 
 // ===== STATE =====
@@ -198,134 +393,115 @@ function doCompile() {
   document.getElementById('errMsg').textContent = '';
   lastResult = null;
   setButtons(false);
-  if (!html) { setOutput('empty', 'Compiled GHL JSON appears here'); resetStats(); return; }
+  if (!html) { setOutput('empty','Compiled GHL JSON appears here'); resetStats(); return; }
   try {
     const r = compile(html);
-    const elCount = r.sections.reduce((a, s) => a + s.elements.filter(e => e.type === 'element').length, 0);
-    if (!r.sections.length || !elCount) throw new Error('No recognisable elements found.');
+    const elCount = r.sections.reduce((a,s)=>a+s.elements.filter(e=>e.type==='element').length,0);
+    if (!r.sections.length||!elCount) throw new Error('No recognisable elements found.');
     lastResult = r;
-    setOutput('code', JSON.stringify(r, null, 2));
-    const rowCount = r.sections.reduce((a, s) => a + s.elements.filter(e => e.type === 'row').length, 0);
+    setOutput('code', JSON.stringify(r,null,2));
+    const rowCount = r.sections.reduce((a,s)=>a+s.elements.filter(e=>e.type==='row').length,0);
     document.getElementById('sSections').textContent = r.sections.length;
     document.getElementById('sElements').textContent = elCount;
     document.getElementById('sRows').textContent = rowCount;
     const badge = document.getElementById('outputBadge');
-    badge.textContent = r.sections.length + 's · ' + elCount + 'el';
+    badge.textContent = r.sections.length+'s · '+elCount+'el';
     badge.className = 'pane-badge ok';
-    document.getElementById('autowrapNote').style.display = autoWrapped ? 'inline' : 'none';
+    document.getElementById('autowrapNote').style.display = autoWrapped?'inline':'none';
     setButtons(true);
   } catch(e) {
-    document.getElementById('errMsg').textContent = '⚠ ' + e.message;
-    setOutput('empty', 'Fix errors above, then compile again.');
+    document.getElementById('errMsg').textContent = '⚠ '+e.message;
+    setOutput('empty','Fix errors above, then compile again.');
     resetStats();
   }
 }
 
 function setOutput(mode, text) {
   const el = document.getElementById('output');
-  if (mode === 'empty') { el.className = 'output empty'; el.textContent = text; }
-  else { el.className = 'output'; el.textContent = text; }
+  if (mode==='empty') { el.className='output empty'; el.textContent=text; }
+  else { el.className='output'; el.textContent=text; }
 }
 function resetStats() {
-  ['sSections','sElements','sRows'].forEach(id => document.getElementById(id).textContent = '0');
-  document.getElementById('outputBadge').textContent = '—';
-  document.getElementById('outputBadge').className = 'pane-badge';
-  document.getElementById('autowrapNote').style.display = 'none';
+  ['sSections','sElements','sRows'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('outputBadge').textContent='—';
+  document.getElementById('outputBadge').className='pane-badge';
+  document.getElementById('autowrapNote').style.display='none';
 }
 function setButtons(on) {
-  document.getElementById('injectBtn').disabled = !on;
-  document.getElementById('copyBtn').disabled = !on;
+  document.getElementById('injectBtn').disabled=!on;
+  document.getElementById('copyBtn').disabled=!on;
 }
 
-// ===== INJECT =====
-async function doInject() {
+// ===== DOWNLOAD (same workflow as the working fitness funnel app) =====
+function doDownload() {
   if (!lastResult) return;
   const btn = document.getElementById('injectBtn');
-  btn.textContent = '⏳ Injecting…';
-  try {
-    const resp = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ type: 'GHL_INJECT', payload: lastResult }, (r) => {
-        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else resolve(r);
-      });
-    });
-    if (resp && resp.ok) {
-      btn.textContent = '✓ Done! Click in GHL canvas → Ctrl+V';
-      btn.className = 'inject-btn success';
-      setTimeout(() => { btn.textContent = '⚡ Inject into GHL Builder'; btn.className = 'inject-btn'; }, 4000);
-    } else {
-      throw new Error(resp ? resp.error : 'Injection failed');
-    }
-  } catch (e) {
-    btn.textContent = '✗ ' + e.message;
-    btn.className = 'inject-btn error';
-    setTimeout(() => { btn.textContent = '⚡ Inject into GHL Builder → then press Ctrl+V'; btn.className = 'inject-btn'; }, 5000);
-  }
+  const json = JSON.stringify(lastResult, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='ghl-page.json'; a.click();
+  URL.revokeObjectURL(url);
+  btn.textContent='✓ Downloaded! In GHL builder → Settings ⚙ → Import Page';
+  btn.className='inject-btn success';
+  setTimeout(()=>{ btn.textContent='⬇ Download GHL JSON'; btn.className='inject-btn'; },6000);
 }
 
 function copyJson() {
   if (!lastResult) return;
   const btn = document.getElementById('copyBtn');
-  navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => {
-    btn.textContent = '✓ Copied!'; btn.className = 'copy-json-btn success';
-    setTimeout(() => { btn.textContent = 'Copy JSON'; btn.className = 'copy-json-btn'; }, 2000);
+  navigator.clipboard.writeText(JSON.stringify(lastResult,null,2)).then(()=>{
+    btn.textContent='✓ Copied!'; btn.className='copy-json-btn success';
+    setTimeout(()=>{ btn.textContent='Copy JSON'; btn.className='copy-json-btn'; },2000);
   });
 }
 
 function onInput() {
   const v = document.getElementById('editor').value;
-  document.getElementById('inputBadge').textContent = v.trim() ? v.split('\n').length + ' lines' : '—';
+  document.getElementById('inputBadge').textContent = v.trim()?v.split('\n').length+' lines':'—';
 }
 
 // ===== TEMPLATES =====
 const TEMPLATES = {
-  plain: `<h1 style="color:#ffffff; font-size:52px; font-weight:700; text-align:center;">Start Your 30-Day Transformation</h1>
+  plain:`<h1 style="color:#ffffff; font-size:52px; font-weight:700; text-align:center;">Start Your 30-Day Transformation</h1>
 <p style="color:#aaaaaa; font-size:18px; text-align:center;">Join 12,000+ people who've already changed their lives.</p>
 <button style="background:#e91e8c; color:#fff; font-size:18px; font-weight:700; border-radius:50px;" data-ghl-action="next-step">Claim My Free Spot →</button>`,
 
-  hero: `<section style="background:#0a0a0a; padding:80px 0;">
+  hero:`<section style="background:#0a0a0a; padding:80px 0;">
   <h1 style="color:#fff; font-size:54px; font-weight:700; text-align:center;">The 30-Day Challenge That Changes Everything</h1>
   <p style="color:#bbb; font-size:18px; text-align:center;">Lose weight, build muscle, and transform your mindset in 30 days.</p>
   <button style="background:#e91e8c; color:#fff; font-size:18px; font-weight:700; border-radius:50px;" data-ghl-action="next-step">Start For Free Today</button>
 </section>`,
 
-  cta: `<section style="background:#e91e8c; padding:60px 0;">
+  cta:`<section style="background:#e91e8c; padding:60px 0;">
   <h2 style="color:#fff; font-size:40px; font-weight:700; text-align:center;">Ready to Transform Your Life?</h2>
   <p style="color:rgba(255,255,255,0.85); font-size:16px; text-align:center;">Limited spots available. Join now before we close.</p>
   <button style="background:#fff; color:#e91e8c; font-size:16px; font-weight:700; border-radius:8px;" data-ghl-action="next-step">Yes, I'm In — Sign Me Up</button>
 </section>`,
 
-  bullets: `<section style="background:#ffffff; padding:60px 0;">
+  bullets:`<section style="background:#ffffff; padding:60px 0;">
   <h2 style="color:#111; font-size:36px; font-weight:700; text-align:center;">What You'll Get</h2>
-  <ul style="color:#333; font-size:16px;" data-ghl-icon-color="#e91e8c">
+  <ul style="color:#333; font-size:16px;">
     <li>Daily video coaching from top fitness experts</li>
     <li>Personalised meal plan tailored to your goals</li>
     <li>Private community of 3,000+ members</li>
-    <li>Weekly live Q&A calls with the coaching team</li>
+    <li>Weekly live Q&amp;A calls with the coaching team</li>
     <li>30-day money-back guarantee</li>
   </ul>
-  <div data-ghl-type="progress-bar" data-ghl-label="Spots Remaining" data-ghl-percent="23" data-ghl-bg="#eee" data-ghl-fill-color="#e91e8c"></div>
 </section>`,
 
-  video: `<section style="background:#111; padding:60px 0;">
-  <h2 style="color:#fff; font-size:36px; text-align:center;">Watch the Overview</h2>
-  <iframe data-ghl-type="video" data-ghl-src="https://www.youtube.com/watch?v=EXAMPLE" data-ghl-autoplay="false" data-ghl-muted="true"></iframe>
-  <button style="background:#e91e8c; color:#fff; font-size:16px; font-weight:700; border-radius:50px;" data-ghl-action="next-step">Get Instant Access Now</button>
-</section>`,
-
-  full: `<section style="background:#0a0a0a; padding:80px 0;">
+  full:`<section style="background:#0a0a0a; padding:80px 0;">
   <h1 style="color:#fff; font-size:54px; font-weight:700; text-align:center;">The 30-Day Challenge</h1>
   <p style="color:#bbb; font-size:18px; text-align:center;">Transform your life in 30 days.</p>
   <button style="background:#e91e8c; color:#fff; font-size:18px; font-weight:700; border-radius:50px;" data-ghl-action="next-step">Start For Free</button>
 </section>
 <section style="background:#fff; padding:60px 0;">
   <h2 style="color:#111; font-size:36px; font-weight:700; text-align:center;">What You'll Get</h2>
-  <ul style="color:#333; font-size:16px;" data-ghl-icon-color="#e91e8c">
+  <ul style="color:#333; font-size:16px;">
     <li>Daily video coaching</li><li>Personalised nutrition blueprint</li>
     <li>Private community of 12,000+ members</li><li>30-day money-back guarantee</li>
   </ul>
   <hr style="border-color:#eee;" />
-  <div data-ghl-type="progress-bar" data-ghl-label="47 spots remaining" data-ghl-percent="76" data-ghl-bg="#f0f0f0" data-ghl-fill-color="#e91e8c"></div>
 </section>
 <section style="background:#e91e8c; padding:60px 0;">
   <h2 style="color:#fff; font-size:40px; font-weight:700; text-align:center;">Join 12,000+ People</h2>
@@ -340,46 +516,14 @@ function loadTemplate(name) {
   doCompile();
 }
 
-// ===== SNIFF =====
-async function doSniff() {
-  const btn = document.getElementById('sniffBtn');
-  const out = document.getElementById('sniffOutput');
-  btn.textContent = '⏳ Sniffing…';
-  out.style.display = 'block';
-  out.textContent = 'Reading GHL tab localStorage…';
-  try {
-    const resp = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ type: 'GHL_SNIFF' }, r => {
-        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else resolve(r);
-      });
-    });
-    if (resp && resp.snap) {
-      const keys = Object.keys(resp.snap);
-      const relevant = keys.filter(k => k.toLowerCase().match(/hl|ghl|clipboard|builder|funnel|section|copy|paste/));
-      if (relevant.length) {
-        out.textContent = 'GHL localStorage keys found:\n' + relevant.map(k => `  ${k}: ${(resp.snap[k]||'').substring(0,80)}…`).join('\n');
-      } else {
-        out.textContent = 'No GHL clipboard keys found. Try copying a section in GHL first, then sniff again.\n\nAll keys: ' + keys.slice(0, 20).join(', ');
-      }
-    } else {
-      out.textContent = resp ? JSON.stringify(resp) : 'No response from GHL tab.';
-    }
-  } catch (e) {
-    out.textContent = 'Error: ' + e.message;
-  }
-  btn.textContent = '🔍 Sniff GHL Key';
-}
-
-// ===== EVENT LISTENERS =====
+// ===== EVENTS =====
 document.getElementById('compileBtn').addEventListener('click', doCompile);
-document.getElementById('injectBtn').addEventListener('click', doInject);
+document.getElementById('injectBtn').addEventListener('click', doDownload);
 document.getElementById('copyBtn').addEventListener('click', copyJson);
-document.getElementById('sniffBtn').addEventListener('click', doSniff);
 document.getElementById('editor').addEventListener('input', onInput);
-document.getElementById('editor').addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCompile(); }
+document.getElementById('editor').addEventListener('keydown', e=>{
+  if ((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doCompile();}
 });
-document.getElementById('tplSelect').addEventListener('change', function() {
-  if (this.value) { loadTemplate(this.value); this.value = ''; }
+document.getElementById('tplSelect').addEventListener('change', function(){
+  if (this.value){loadTemplate(this.value);this.value='';}
 });
