@@ -432,19 +432,40 @@ function setButtons(on) {
   document.getElementById('copyBtn').disabled=!on;
 }
 
-// ===== DOWNLOAD (same workflow as the working fitness funnel app) =====
-function doDownload() {
+// ===== INJECT =====
+async function doInject() {
   if (!lastResult) return;
   const btn = document.getElementById('injectBtn');
-  const json = JSON.stringify(lastResult, null, 2);
-  const blob = new Blob([json], {type:'application/json'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href=url; a.download='ghl-page.json'; a.click();
-  URL.revokeObjectURL(url);
-  btn.textContent='✓ Downloaded! In GHL builder → Settings ⚙ → Import Page';
-  btn.className='inject-btn success';
-  setTimeout(()=>{ btn.textContent='⬇ Download GHL JSON'; btn.className='inject-btn'; },6000);
+  btn.textContent = '⏳ Injecting…';
+  btn.disabled = true;
+  try {
+    const resp = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ type:'GHL_INJECT', payload:lastResult }, r => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(r);
+      });
+    });
+    if (resp && resp.ok) {
+      if (resp.method === 'vue-store') {
+        btn.textContent = '✓ Injected directly into GHL builder!';
+      } else if (resp.method === 'ui-import') {
+        btn.textContent = '✓ Imported via GHL dialog!';
+      } else {
+        // Clipboard fallback — ask user to Ctrl+V
+        btn.textContent = '✓ Ready — click in GHL canvas then press Ctrl+V';
+      }
+      btn.className = 'inject-btn success';
+      btn.disabled = false;
+      setTimeout(()=>{ btn.textContent='⚡ Inject into GHL Builder'; btn.className='inject-btn'; }, 5000);
+    } else {
+      throw new Error(resp ? resp.error : 'Injection failed');
+    }
+  } catch(e) {
+    btn.textContent = '✗ ' + e.message;
+    btn.className = 'inject-btn error';
+    btn.disabled = false;
+    setTimeout(()=>{ btn.textContent='⚡ Inject into GHL Builder'; btn.className='inject-btn'; }, 5000);
+  }
 }
 
 function copyJson() {
@@ -518,7 +539,7 @@ function loadTemplate(name) {
 
 // ===== EVENTS =====
 document.getElementById('compileBtn').addEventListener('click', doCompile);
-document.getElementById('injectBtn').addEventListener('click', doDownload);
+document.getElementById('injectBtn').addEventListener('click', doInject);
 document.getElementById('copyBtn').addEventListener('click', copyJson);
 document.getElementById('editor').addEventListener('input', onInput);
 document.getElementById('editor').addEventListener('keydown', e=>{
