@@ -3,13 +3,6 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.sidePanel.open({ tabId: tab.id });
 });
 
-const CLIPBOARD_KEYS = [
-  'hl-copy-element', 'hl_copy_element', 'builder-clipboard',
-  'ghl-clipboard', 'section-clipboard', 'hl-page-clipboard',
-  'highlevel_clipboard', 'page-builder-clipboard',
-  'hl-section-copy', 'hl_section_copy', 'hl-builder-copy'
-];
-
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!['GHL_INJECT','GHL_SNIFF','GHL_DEBUG'].includes(msg.type)) return;
 
@@ -102,46 +95,42 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   if (msg.type !== 'GHL_INJECT') return;
 
-  const jsonStr = JSON.stringify(msg.payload);
+  const pageData = msg.payload;
 
-  findTab(builderTab => {
-    if (!builderTab) {
-      sendResponse({ ok: false, error: 'No page found. Open the GHL page builder in another tab first.' });
+  // Use the active tab — same as the working chrome-extension/popup.js
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (!tab) {
+      sendResponse({ ok: false, error: 'No active tab. Switch to the GHL builder tab first, then click Inject.' });
       return;
     }
 
-    // Try sending to content script first
-    chrome.tabs.sendMessage(builderTab.id, { type: 'GHL_INJECT', jsonStr }, (resp) => {
+    // Exact same approach as chrome-extension/popup.js injectPage()
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id, allFrames: true },
+      func: (data) => {
+        // Try GHL's internal builder API
+        if (typeof window.__ghl_builder_import === 'function') {
+          window.__ghl_builder_import(data);
+          return { ok: true, method: 'api', frame: location.href };
+        }
+        // Dispatch custom event — content script listener picks it up
+        window.dispatchEvent(new CustomEvent('ghl-funnel-inject', { detail: data }));
+        return { ok: true, method: 'event', frame: location.href };
+      },
+      args: [pageData],
+    }, (results) => {
       if (chrome.runtime.lastError) {
-        // Content script not ready — inject directly via scripting API
-        chrome.scripting.executeScript({
-          target: { tabId: builderTab.id, allFrames: true },
-          func: (keys, str) => {
-            keys.forEach(k => { try { localStorage.setItem(k, str); } catch(_) {} });
-            // Also extract GHL session IDs and write to ghl.* variants
-            const ids = new Set();
-            for (let i = 0; i < localStorage.length; i++) {
-              const k = localStorage.key(i);
-              const m = k && k.match(/^ghl\.[^.]+\.v\d+\.(.+)$/);
-              if (m) ids.add(m[1]);
-            }
-            const names = ['clipboard','builderClipboard','sectionClipboard','pageClipboard','copySection','copyElement','copyRow','pasteData','builderCopy','sectionCopy','importPage'];
-            ids.forEach(id => names.forEach(n => ['v1','v2'].forEach(v => { try { localStorage.setItem(`ghl.${n}.${v}.${id}`, str); } catch(_) {} })));
-            return { frame: location.href, isIframe: window.self !== window.top, ids: [...ids] };
-          },
-          args: [CLIPBOARD_KEYS, jsonStr]
-        }, (results) => {
-          if (chrome.runtime.lastError) {
-            sendResponse({ ok: false, error: chrome.runtime.lastError.message });
-          } else {
-            sendResponse({ ok: true });
-          }
-        });
-      } else {
-        sendResponse(resp || { ok: true });
+        sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+        return;
       }
+      // Pick the result from whichever frame used the API (prefer that over event)
+      const best = (results || []).map(r => r.result).find(r => r?.method === 'api')
+                || (results || [])[0]?.result
+                || { ok: true, method: 'event' };
+      sendResponse({ ok: true, method: best.method, frame: best.frame });
     });
   });
 
-  return true; // keep message channel open for async response
+  return true;
 });
