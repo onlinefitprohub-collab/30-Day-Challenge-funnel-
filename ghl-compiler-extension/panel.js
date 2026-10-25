@@ -555,7 +555,9 @@ async function doDebug() {
     if (resp && resp.report) {
       const r = resp.report;
       const lines = [
+        r.frameUrl ? `Frame: ${r.frameUrl.slice(0,80)} (${r.isIframe ? 'IFRAME' : 'main'})` : '',
         `Framework: Vue2=${r.vue2} Vue3=${r.vue3} React=${r.react}`,
+        r._allFrames ? `All frames:\n${r._allFrames.map(f=>`  [${f.isIframe?'iframe':'main '}] Vue2=${f.vue2} Vue3=${f.vue3} React=${f.react} ls=${f.ls_count} ${f.url?.slice(0,60)}`).join('\n')}` : '',
         r.vuex2_actions?.length   ? `Vuex2 actions: ${r.vuex2_actions.join(', ')}`   : '',
         r.vuex2_mutations?.length ? `Vuex2 mutations: ${r.vuex2_mutations.join(', ')}` : '',
         r.vuex2_state?.length     ? `Vuex2 state keys: ${r.vuex2_state.join(', ')}`    : '',

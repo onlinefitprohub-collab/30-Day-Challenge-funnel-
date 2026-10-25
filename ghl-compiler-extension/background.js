@@ -35,9 +35,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (chrome.runtime.lastError) {
           // Content script not running — inject the scan directly
           chrome.scripting.executeScript({
-            target: { tabId: tab.id },
+            target: { tabId: tab.id, allFrames: true },
             func: () => {
               const report = {};
+              report.frameUrl = location.href;
+              report.isIframe = window.self !== window.top;
               // Framework detection
               function findVue2() { const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_ELEMENT); let n,d=0; while((n=walker.nextNode())&&d++<800){if(n.__vue__)return n.__vue__.$root;} return null; }
               function findVue3() { const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_ELEMENT); let n,d=0; while((n=walker.nextNode())&&d++<800){if(n.__vue_app__)return n.__vue_app__;} return null; }
@@ -51,6 +53,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               return report;
             }
           }, results => {
+            if (!chrome.runtime.lastError && results && results.length > 1) {
+              // Multiple frames — merge results, prefer the iframe that found a framework
+              const merged = results.map(r => r.result).filter(Boolean);
+              const frameworkFrame = merged.find(r => r.vue2 || r.vue3 || r.react) || merged[0];
+              frameworkFrame._allFrames = merged.map(r => ({ url: r.frameUrl, isIframe: r.isIframe, vue2: r.vue2, vue3: r.vue3, react: r.react, ls_count: r.localStorage_keys?.length }));
+              sendResponse({ ok: true, report: frameworkFrame });
+              return;
+            }
             if (chrome.runtime.lastError) sendResponse({ ok: false, error: chrome.runtime.lastError.message });
             else sendResponse({ ok: true, report: results[0].result });
           });
@@ -105,10 +115,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (chrome.runtime.lastError) {
         // Content script not ready — inject directly via scripting API
         chrome.scripting.executeScript({
-          target: { tabId: builderTab.id },
+          target: { tabId: builderTab.id, allFrames: true },
           func: (keys, str) => {
-            keys.forEach(k => localStorage.setItem(k, str));
-            return true;
+            keys.forEach(k => { try { localStorage.setItem(k, str); } catch(_) {} });
+            // Also extract GHL session IDs and write to ghl.* variants
+            const ids = new Set();
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              const m = k && k.match(/^ghl\.[^.]+\.v\d+\.(.+)$/);
+              if (m) ids.add(m[1]);
+            }
+            const names = ['clipboard','builderClipboard','sectionClipboard','pageClipboard','copySection','copyElement','copyRow','pasteData','builderCopy','sectionCopy','importPage'];
+            ids.forEach(id => names.forEach(n => ['v1','v2'].forEach(v => { try { localStorage.setItem(`ghl.${n}.${v}.${id}`, str); } catch(_) {} })));
+            return { frame: location.href, isIframe: window.self !== window.top, ids: [...ids] };
           },
           args: [CLIPBOARD_KEYS, jsonStr]
         }, (results) => {
