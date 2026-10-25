@@ -15,26 +15,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   const jsonStr = JSON.stringify(msg.payload);
 
-  // Find the active GHL builder tab
-  chrome.tabs.query({
-    url: [
-      'https://*.gohighlevel.com/*',
-      'https://*.highlevel.com/*',
-      'https://*.leadconnectorhq.com/*'
-    ]
-  }, (tabs) => {
-    if (!tabs || tabs.length === 0) {
-      sendResponse({ ok: false, error: 'No GHL page found. Open the GHL page builder in another tab first.' });
+  // Query all normal tabs — works for any domain including white-label GHL
+  chrome.tabs.query({ url: '<all_urls>' }, (tabs) => {
+    // Exclude extension pages and the panel itself
+    const candidates = (tabs || []).filter(t =>
+      t.url &&
+      !t.url.startsWith('chrome') &&
+      !t.url.startsWith('about') &&
+      !t.url.startsWith('edge') &&
+      t.id !== sender.tab?.id
+    );
+
+    if (candidates.length === 0) {
+      sendResponse({ ok: false, error: 'No page found to inject into. Open the GHL page builder in another tab first.' });
       return;
     }
 
-    // Prefer a tab with "builder" in the URL, otherwise use first match
-    const builderTab = tabs.find(t => t.url && t.url.includes('builder')) || tabs[0];
+    // Prefer a tab with "builder" in URL, otherwise use the most recently active
+    const builderTab =
+      candidates.find(t => t.url.includes('builder')) ||
+      candidates.find(t => t.url.includes('gohighlevel') || t.url.includes('leadconnector') || t.url.includes('highlevel')) ||
+      candidates[0];
 
     // Try sending to content script first
     chrome.tabs.sendMessage(builderTab.id, { type: 'GHL_INJECT', jsonStr }, (resp) => {
       if (chrome.runtime.lastError) {
-        // Content script not ready — inject via scripting API directly
+        // Content script not ready — inject directly via scripting API
         chrome.scripting.executeScript({
           target: { tabId: builderTab.id },
           func: (keys, str) => {
