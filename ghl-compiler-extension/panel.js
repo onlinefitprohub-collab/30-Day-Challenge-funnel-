@@ -537,10 +537,48 @@ function loadTemplate(name) {
   doCompile();
 }
 
+// ===== DEBUG =====
+async function doDebug() {
+  const btn = document.getElementById('debugBtn');
+  const out = document.getElementById('debugOutput');
+  btn.textContent = '⏳ Scanning…';
+  out.style.display = 'block';
+  out.textContent = 'Scanning GHL builder tab…';
+  try {
+    const resp = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ type:'GHL_DEBUG' }, r => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(r);
+      });
+    });
+    if (resp && resp.report) {
+      const r = resp.report;
+      const lines = [
+        `Framework: Vue2=${r.vue2} Vue3=${r.vue3} React=${r.react}`,
+        r.vuex2_actions?.length   ? `Vuex2 actions: ${r.vuex2_actions.join(', ')}`   : '',
+        r.vuex2_mutations?.length ? `Vuex2 mutations: ${r.vuex2_mutations.join(', ')}` : '',
+        r.vuex2_state?.length     ? `Vuex2 state keys: ${r.vuex2_state.join(', ')}`    : '',
+        r.vuex3_actions?.length   ? `Vuex3 actions: ${r.vuex3_actions.join(', ')}`   : '',
+        r.pinia_stores            ? `Pinia stores: ${JSON.stringify(r.pinia_stores)}` : '',
+        r.window_globals?.length  ? `GHL globals: ${r.window_globals.join(', ')}`    : 'No GHL globals found',
+        r.localStorage_keys?.length ? `localStorage keys: ${r.localStorage_keys.join(', ')}` : 'No clipboard localStorage keys',
+        r.import_buttons?.length  ? `Import buttons: ${r.import_buttons.join(' | ')}` : 'No import buttons found',
+      ].filter(Boolean).join('\n');
+      out.textContent = lines || 'Nothing injectable found — send this screenshot to Claude';
+    } else {
+      out.textContent = JSON.stringify(resp, null, 2);
+    }
+  } catch(e) {
+    out.textContent = 'Error: ' + e.message;
+  }
+  btn.textContent = '🔍 Debug GHL';
+}
+
 // ===== EVENTS =====
 document.getElementById('compileBtn').addEventListener('click', doCompile);
 document.getElementById('injectBtn').addEventListener('click', doInject);
 document.getElementById('copyBtn').addEventListener('click', copyJson);
+document.getElementById('debugBtn').addEventListener('click', doDebug);
 document.getElementById('editor').addEventListener('input', onInput);
 document.getElementById('editor').addEventListener('keydown', e=>{
   if ((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doCompile();}

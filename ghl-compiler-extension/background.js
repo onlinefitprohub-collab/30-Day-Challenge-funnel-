@@ -11,7 +11,7 @@ const CLIPBOARD_KEYS = [
 ];
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type !== 'GHL_INJECT' && msg.type !== 'GHL_SNIFF') return;
+  if (!['GHL_INJECT','GHL_SNIFF','GHL_DEBUG'].includes(msg.type)) return;
 
   // Helper: find best GHL builder tab
   function findTab(cb) {
@@ -25,6 +25,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         candidates[0];
       cb(builderTab || null);
     });
+  }
+
+  // ── DEBUG ─────────────────────────────────────────────────────────────────
+  if (msg.type === 'GHL_DEBUG') {
+    findTab(tab => {
+      if (!tab) { sendResponse({ ok: false, error: 'No tab found' }); return; }
+      chrome.tabs.sendMessage(tab.id, { type: 'GHL_DEBUG' }, resp => {
+        if (chrome.runtime.lastError) sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+        else sendResponse(resp || { ok: false, error: 'no response' });
+      });
+    });
+    return true;
   }
 
   // ── SNIFF ────────────────────────────────────────────────────────────────
