@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "GHL Page Compiler",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Translate HTML into GHL page elements and inject directly into the page builder.",
-  "permissions": ["activeTab", "scripting", "sidePanel", "tabs"],
+  "permissions": ["activeTab", "scripting", "sidePanel", "tabs", "clipboardWrite", "clipboardRead"],
   "host_permissions": [
     "<all_urls>"
   ],

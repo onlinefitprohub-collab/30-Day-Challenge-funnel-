@@ -250,9 +250,9 @@ async function doInject() {
       });
     });
     if (resp && resp.ok) {
-      btn.textContent = '✓ Injected! Now press Ctrl+V in the GHL builder';
+      btn.textContent = '✓ Done! Click in GHL canvas → Ctrl+V';
       btn.className = 'inject-btn success';
-      setTimeout(() => { btn.textContent = '⚡ Inject into GHL Builder → then press Ctrl+V'; btn.className = 'inject-btn'; }, 4000);
+      setTimeout(() => { btn.textContent = '⚡ Inject into GHL Builder'; btn.className = 'inject-btn'; }, 4000);
     } else {
       throw new Error(resp ? resp.error : 'Injection failed');
     }
@@ -340,10 +340,42 @@ function loadTemplate(name) {
   doCompile();
 }
 
+// ===== SNIFF =====
+async function doSniff() {
+  const btn = document.getElementById('sniffBtn');
+  const out = document.getElementById('sniffOutput');
+  btn.textContent = '⏳ Sniffing…';
+  out.style.display = 'block';
+  out.textContent = 'Reading GHL tab localStorage…';
+  try {
+    const resp = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ type: 'GHL_SNIFF' }, r => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(r);
+      });
+    });
+    if (resp && resp.snap) {
+      const keys = Object.keys(resp.snap);
+      const relevant = keys.filter(k => k.toLowerCase().match(/hl|ghl|clipboard|builder|funnel|section|copy|paste/));
+      if (relevant.length) {
+        out.textContent = 'GHL localStorage keys found:\n' + relevant.map(k => `  ${k}: ${(resp.snap[k]||'').substring(0,80)}…`).join('\n');
+      } else {
+        out.textContent = 'No GHL clipboard keys found. Try copying a section in GHL first, then sniff again.\n\nAll keys: ' + keys.slice(0, 20).join(', ');
+      }
+    } else {
+      out.textContent = resp ? JSON.stringify(resp) : 'No response from GHL tab.';
+    }
+  } catch (e) {
+    out.textContent = 'Error: ' + e.message;
+  }
+  btn.textContent = '🔍 Sniff GHL Key';
+}
+
 // ===== EVENT LISTENERS =====
 document.getElementById('compileBtn').addEventListener('click', doCompile);
 document.getElementById('injectBtn').addEventListener('click', doInject);
 document.getElementById('copyBtn').addEventListener('click', copyJson);
+document.getElementById('sniffBtn').addEventListener('click', doSniff);
 document.getElementById('editor').addEventListener('input', onInput);
 document.getElementById('editor').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCompile(); }

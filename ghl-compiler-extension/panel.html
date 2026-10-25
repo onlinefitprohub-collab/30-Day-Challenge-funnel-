@@ -62,6 +62,17 @@ body {
 }
 .copy-json-btn:hover { color: var(--fg); }
 .copy-json-btn.success { color: var(--green); border-color: var(--green); }
+.sniff-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--fg-muted);
+  font-family: inherit; font-size: 11px; padding: 6px 10px; border-radius: 5px; cursor: pointer;
+  white-space: nowrap; transition: color .15s;
+}
+.sniff-btn:hover { color: var(--fg); }
+.sniff-output {
+  flex-shrink: 0; padding: 8px 12px; background: var(--code-bg);
+  border-bottom: 1px solid var(--border); font-family: monospace; font-size: 10px;
+  color: var(--yellow); max-height: 100px; overflow: auto; white-space: pre-wrap;
+}
 
 /* Panes */
 .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -127,10 +138,12 @@ body {
 
 <div class="inject-bar">
   <button class="inject-btn" id="injectBtn" disabled>
-    ⚡ Inject into GHL Builder → then press Ctrl+V
+    ⚡ Inject into GHL Builder
   </button>
   <button class="copy-json-btn" id="copyBtn" disabled>Copy JSON</button>
+  <button class="sniff-btn" id="sniffBtn" title="Detect which localStorage key GHL uses">🔍 Sniff GHL Key</button>
 </div>
+<div class="sniff-output" id="sniffOutput" style="display:none"></div>
 
 <div class="workspace">
   <div class="pane pane-a">
