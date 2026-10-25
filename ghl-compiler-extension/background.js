@@ -32,8 +32,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     findTab(tab => {
       if (!tab) { sendResponse({ ok: false, error: 'No tab found' }); return; }
       chrome.tabs.sendMessage(tab.id, { type: 'GHL_DEBUG' }, resp => {
-        if (chrome.runtime.lastError) sendResponse({ ok: false, error: chrome.runtime.lastError.message });
-        else sendResponse(resp || { ok: false, error: 'no response' });
+        if (chrome.runtime.lastError) {
+          // Content script not running — inject the scan directly
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+              const report = {};
+              // Framework detection
+              function findVue2() { const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_ELEMENT); let n,d=0; while((n=walker.nextNode())&&d++<800){if(n.__vue__)return n.__vue__.$root;} return null; }
+              function findVue3() { const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_ELEMENT); let n,d=0; while((n=walker.nextNode())&&d++<800){if(n.__vue_app__)return n.__vue_app__;} return null; }
+              function findReact() { for(const sel of['#root','#app','body']){const el=document.querySelector(sel);if(!el)continue;const k=Object.keys(el).find(k=>k.startsWith('__reactFiber')||k.startsWith('__reactInternalInstance'));if(k)return el[k];} return null; }
+              report.vue2 = !!findVue2(); report.vue3 = !!findVue3(); report.react = !!findReact();
+              try { const r=findVue2(); if(r&&r.$store){ report.vuex2_actions=Object.keys(r.$store._actions||{}).filter(k=>/page|import|load|funnel|section/i.test(k)); report.vuex2_mutations=Object.keys(r.$store._mutations||{}).filter(k=>/PAGE|IMPORT|LOAD|FUNNEL|SECTION/i.test(k)); report.vuex2_state=Object.keys(r.$store.state||{}); }} catch(e){report.vue2_err=e.message;}
+              try { const a=findVue3(); if(a){const gp=a.config?.globalProperties; if(gp?.$store){report.vuex3_actions=Object.keys(gp.$store._actions||{}).filter(k=>/page|import|load|funnel/i.test(k));} if(gp?.$pinia){const st={};gp.$pinia._s?.forEach((s,id)=>{st[id]=Object.keys(s).filter(k=>!k.startsWith('_'));});report.pinia_stores=st;}}} catch(e){report.vue3_err=e.message;}
+              report.window_globals=Object.keys(window).filter(k=>/ghl|highlevel|funnel|builder|page.*editor|editor.*page/i.test(k));
+              const ls=[]; for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/hl|ghl|clipboard|builder|funnel|section|copy/i.test(k))ls.push(k);} report.localStorage_keys=ls;
+              report.import_buttons=Array.from(document.querySelectorAll('button,[role="button"]')).map(el=>el.textContent.trim().slice(0,40)).filter(t=>/import|settings|load page/i.test(t));
+              return report;
+            }
+          }, results => {
+            if (chrome.runtime.lastError) sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+            else sendResponse({ ok: true, report: results[0].result });
+          });
+        } else {
+          sendResponse(resp || { ok: false, error: 'no response' });
+        }
       });
     });
     return true;
