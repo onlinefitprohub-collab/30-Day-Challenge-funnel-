@@ -1,13 +1,11 @@
 {
   "manifest_version": 3,
   "name": "GHL Page Compiler",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Translate HTML into GHL page elements and inject directly into the page builder.",
-  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "permissions": ["activeTab", "scripting", "sidePanel", "tabs"],
   "host_permissions": [
-    "https://*.gohighlevel.com/*",
-    "https://*.highlevel.com/*",
-    "https://*.leadconnectorhq.com/*"
+    "<all_urls>"
   ],
   "action": {
     "default_title": "Open GHL Compiler"
@@ -17,11 +15,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://*.gohighlevel.com/*",
-        "https://*.highlevel.com/*",
-        "https://*.leadconnectorhq.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
