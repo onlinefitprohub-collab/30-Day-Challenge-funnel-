@@ -111,7 +111,7 @@ body {
 <div class="header">
   <div class="logo"><span class="logo-pill">GHL</span> Compiler</div>
   <div class="header-gap"></div>
-  <select class="tpl-select" onchange="loadTemplate(this.value); this.value=''">
+  <select class="tpl-select" id="tplSelect">
     <option value="">Templates…</option>
     <option value="plain">Plain HTML</option>
     <option value="hero">Hero Section</option>
@@ -120,16 +120,16 @@ body {
     <option value="video">Video Section</option>
     <option value="full">Full Page (3 sections)</option>
   </select>
-  <button class="compile-btn" onclick="doCompile()">
+  <button class="compile-btn" id="compileBtn">
     ▶ Compile
   </button>
 </div>
 
 <div class="inject-bar">
-  <button class="inject-btn" id="injectBtn" onclick="doInject()" disabled>
+  <button class="inject-btn" id="injectBtn" disabled>
     ⚡ Inject into GHL Builder → then press Ctrl+V
   </button>
-  <button class="copy-json-btn" id="copyBtn" onclick="copyJson()" disabled>Copy JSON</button>
+  <button class="copy-json-btn" id="copyBtn" disabled>Copy JSON</button>
 </div>
 
 <div class="workspace">
@@ -138,7 +138,7 @@ body {
       <span class="pane-title">HTML Input</span>
       <span class="pane-badge" id="inputBadge">—</span>
     </div>
-    <textarea class="editor" id="editor" spellcheck="false" oninput="onInput()"
+    <textarea class="editor" id="editor" spellcheck="false"
       placeholder="Paste any HTML here.
 
 Plain tags auto-detected:
@@ -455,8 +455,16 @@ function onInput() {
   document.getElementById('inputBadge').textContent = v.trim() ? v.split('\n').length + ' lines' : '—';
 }
 
+// Wire up all event listeners (inline onclick blocked by extension CSP)
+document.getElementById('compileBtn').addEventListener('click', doCompile);
+document.getElementById('injectBtn').addEventListener('click', doInject);
+document.getElementById('copyBtn').addEventListener('click', copyJson);
+document.getElementById('editor').addEventListener('input', onInput);
 document.getElementById('editor').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCompile(); }
+});
+document.getElementById('tplSelect').addEventListener('change', function() {
+  if (this.value) { loadTemplate(this.value); this.value = ''; }
 });
 
 // ===== TEMPLATES =====
